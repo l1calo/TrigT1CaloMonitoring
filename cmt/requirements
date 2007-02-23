@@ -20,6 +20,7 @@ use TileEvent           TileEvent-00-*        TileCalorimeter
 
 use TrigT1Calo		TrigT1Calo-* 	      Trigger/TrigT1
 use TriggerRelease      TriggerRelease-*      Trigger
+use TrigT1CaloByteStream TrigT1CaloByteStream-* Trigger/TrigT1
 
 apply_pattern declare_joboptions files="*.py"
 
