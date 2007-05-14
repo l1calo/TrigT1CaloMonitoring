@@ -24,7 +24,7 @@
 #include "CaloEvent/CaloCell.h"
 #include "CaloEvent/CaloCellContainer.h"
 
-#include "TrigT1CaloMonitoring/TrigT1CaloMonTool.h"
+#include "../TrigT1CaloMonitoring/TrigT1CaloMonTool.h"
 
 #include "CLHEP/Units/SystemOfUnits.h"
 
@@ -46,15 +46,15 @@
 TrigT1CaloMonTool::TrigT1CaloMonTool(const std::string & type, 
 				 const std::string & name,
 				 const IInterface* parent)
-  : MonitorToolBase(type, name, parent)
+  :ManagedMonitorToolBase (type, name, parent)
 /*---------------------------------------------------------*/
 {
-  declareInterface<IMonitorToolBase>(this); 
-  declareProperty("DataVector<TriggerTower>",  m_TriggerTowerContainerName = "LVL1TriggerTowers");
-  declareProperty("JetElementContainer",  m_JetElementContainerName = "LVL1JetElements");
+  //declareInterface<IMonitorToolBase>(this); 
+  declareProperty("TriggerTowerLocation",  m_TriggerTowerContainerName = "LVL1TriggerTowers");
+  declareProperty("JetElementLocation",  m_JetElementContainerName = "LVL1JetElements");
   
   //ROOT File directory
-  declareProperty("histoPathBase",m_path = "/" );
+  //declareProperty("histoPathBase",m_path = "/" );
 //"/disk/f8a/home/eew/ATLAS/athena/analysis/TrigT1CaloMonitoring/run");
   /*
   declareProperty("energyThreshold",m_Threshold=50.); //Threshold in MeV
@@ -68,233 +68,291 @@ TrigT1CaloMonTool::~TrigT1CaloMonTool()
 {
 }
 
+
+
 /*---------------------------------------------------------*/
-StatusCode TrigT1CaloMonTool:: initialize()
+StatusCode TrigT1CaloMonTool::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun )
 /*---------------------------------------------------------*/
 {
-  MsgStream log(msgSvc(), name());
-  
-  StatusCode sc;
+  MsgStream log( msgSvc(), name() );
+  log << MSG::DEBUG << "in TrigT1CaloMonTool::bookHistograms" << endreq;
 
-  m_stem=m_THistSvc_streamname+m_path;
-
-   log << MSG::INFO << "ETHAN in initialize()" << endreq;
+  /** get a handle of StoreGate for access to the Event Store */
+  StatusCode sc = service("StoreGateSvc", m_StoreGate);
+  if (sc.isFailure()) 
+    {
+      log << MSG::ERROR
+	   << "Unable to retrieve pointer to StoreGateSvc"
+	   << endreq;
+      return sc;
+    }
  
-
-  sc = service( "StoreGateSvc", m_StoreGate);// m_eventStore or m_storeGate?
-  if( sc.isFailure() ) {
-    log << MSG::ERROR << name() << ": Unable to locate Service StoreGateSvc" << endreq;
-    return sc;
-  }
-
-  SetBookStatus(false);
-
-  return StatusCode::SUCCESS;
-}
-
-/*---------------------------------------------------------*/
-StatusCode TrigT1CaloMonTool::bookHists()
-/*---------------------------------------------------------*/
-{
-  MsgStream log(msgSvc(), name());
   
-  //  log << MSG::INFO << "ETHAN in bookHists()" << endreq;
-  //  log << MSG::INFO << "Using base path " << m_stem << endreq;
-    
+  if( m_environment == AthenaMonManager::online ) {
+    // book histograms that are only made in the online environment...
+  }
+	
+  if( m_dataType == AthenaMonManager::cosmics ) {
+    // book histograms that are only relevant for cosmics data...
+  }
+	
+  MonGroup RDO_Calo ( this, "Stats/RDO_Calo", expert, eventsBlock );
+
+  if( isNewEventsBlock || isNewLumiBlock ) 
+    {	
   // Bin TT & JE Histos
 
-  m_h_TT_Em_Et = book1D("TT_EM_Et","TT EM Et",255,0,255);
-  m_h_TT_Had_Et = book1D("TT_HAD_Et","TT HAD Et",255,0,255);
-  m_h_TT_eta = book1D("TT_eta","Trigger Tower eta",100,-5,5);
+  m_h_TT_Em_Et = new TH1F("TT_EM_Et","TT EM Et",255,0,255);
+  RDO_Calo.regHist(m_h_TT_Em_Et);
+  m_h_TT_Had_Et = new TH1F("TT_HAD_Et","TT HAD Et",255,0,255);
+  RDO_Calo.regHist(m_h_TT_Had_Et);
+  m_h_TT_eta = new TH1F("TT_eta","Trigger Tower eta",100,-5,5);
+  RDO_Calo.regHist(m_h_TT_eta);
   //otherwise consider plotting eta in calo regions .
-  m_h_TT_phi = book1D("TT_phi","Trigger Tower phi ",63,0,2*M_PI);
+  m_h_TT_phi = new TH1F("TT_phi","Trigger Tower phi ",63,0,2*M_PI);
+  RDO_Calo.regHist(m_h_TT_phi);
 
-  m_h_JE_Em_Et = book1D("JE_EM_Et","JE EM Et",255,0,255);
-  m_h_JE_Had_Et = book1D("JE_HAD_Et","JE HAD Et",255,0,255);
-  m_h_JE_eta = book1D("JE_eta","JE eta",100,-5,5);
-  m_h_JE_phi = book1D("JE_phi","JE phi ",64,0,2*M_PI);
+  m_h_JE_Em_Et = new TH1F("JE_EM_Et","JE EM Et",255,0,255);
+  RDO_Calo.regHist(m_h_JE_Em_Et);
+  m_h_JE_Had_Et = new TH1F("JE_HAD_Et","JE HAD Et",255,0,255);
+  RDO_Calo.regHist(m_h_JE_Had_Et);
+  m_h_JE_eta = new TH1F("JE_eta","JE eta",100,-5,5);
+  RDO_Calo.regHist(m_h_JE_eta);
+  m_h_JE_phi = new TH1F("JE_phi","JE phi ",64,0,2*M_PI);
+  RDO_Calo.regHist(m_h_JE_phi);
 
-  m_h_TT_Tot_Et = book1D("TT_Tot_Et","TT EM+HAD Et 0-10",10,0,10);
-  m_h_JE_Tot_Et = book1D("JE_Tot_Et","JE EM+HAD Et 0-10",10,0,10);
+  m_h_TT_Tot_Et = new TH1F("TT_Tot_Et","TT EM+HAD Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_TT_Tot_Et);
+  m_h_JE_Tot_Et = new TH1F("JE_Tot_Et","JE EM+HAD Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_JE_Tot_Et);
 
-  m_h_TT_Em10_Et = book1D("TT_EM10_Et","TT EM Et 0-10",10,0,10);
-  m_h_TT_Had10_Et = book1D("TT_HAD10_Et","TT HAD Et 0-10",10,0,10);
+  m_h_TT_Em10_Et = new TH1F("TT_EM10_Et","TT EM Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_TT_Em10_Et);
+  m_h_TT_Had10_Et = new TH1F("TT_HAD10_Et","TT HAD Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_TT_Had10_Et);
 
-  m_h_JE_Em10_Et = book1D("JE_EM10_Et","JE EM Et 0-10",10,0,10); 
-  m_h_JE_Had10_Et = book1D("JE_HAD10_Et","JE HAD Et 0-10",10,0,10); 
+  m_h_JE_Em10_Et = new TH1F("JE_EM10_Et","JE EM Et 0-10",10,0,10); 
+  RDO_Calo.regHist(m_h_JE_Em10_Et);
+  m_h_JE_Had10_Et = new TH1F("JE_HAD10_Et","JE HAD Et 0-10",10,0,10); 
+  RDO_Calo.regHist(m_h_JE_Had10_Et);
 
-  m_h_TT_key = book1D("TT_Key","TT Key",100,0,8000);
+  m_h_TT_key = new TH1F("TT_Key","TT Key",100,0,8000);
+  RDO_Calo.regHist(m_h_TT_key);
 
   //TT & JE Histos in Calo Regions
     
-  m_h_Barrel_TT_phi = book1D("Barrel_TT_phi","Barrel_TT phi",64,0,2*M_PI);
-  m_h_Barrel_TT_Em_Et = book1D("Barrel_TT_EM_Et","Barrel_TT EM Et",255,0,255);
-  m_h_Barrel_TT_Had_Et = book1D("Barrel_TT_HAD_Et","Barrel_TT HAD Et",255,0,255);
+  m_h_Barrel_TT_phi = new TH1F("Barrel_TT_phi","Barrel_TT phi",64,0,2*M_PI);
+  RDO_Calo.regHist(m_h_Barrel_TT_phi);
+  m_h_Barrel_TT_Em_Et = new TH1F("Barrel_TT_EM_Et","Barrel_TT EM Et",255,0,255);
+  RDO_Calo.regHist(m_h_Barrel_TT_Em_Et);
+  m_h_Barrel_TT_Had_Et = new TH1F("Barrel_TT_HAD_Et","Barrel_TT HAD Et",255,0,255);
+  RDO_Calo.regHist(m_h_Barrel_TT_Had_Et );
 
-  m_h_Barrel_JE_phi = book1D("Barrel_JE_phi","Barrel_JE phi",64,0,2*M_PI);
-  m_h_Barrel_JE_Em_Et = book1D("Barrel_JE_EM_Et","Barrel_JE EM Et",255,0,255);
-  m_h_Barrel_JE_Had_Et = book1D("Barrel_JE_HAD_Et","Barrel_JE HAD Et",255,0,255);
+  m_h_Barrel_JE_phi = new TH1F("Barrel_JE_phi","Barrel_JE phi",64,0,2*M_PI);
+  RDO_Calo.regHist(m_h_Barrel_JE_phi);
+  m_h_Barrel_JE_Em_Et = new TH1F("Barrel_JE_EM_Et","Barrel_JE EM Et",255,0,255);
+  RDO_Calo.regHist(m_h_Barrel_JE_Em_Et);
+  m_h_Barrel_JE_Had_Et = new TH1F("Barrel_JE_HAD_Et","Barrel_JE HAD Et",255,0,255);
+  RDO_Calo.regHist(m_h_Barrel_JE_Had_Et);
 
   //note EndCap == HEC 
   //the 10 in the identifier denotes looking at the low energy, 0-10 GeV, range 
-  m_h_EC10_TT_Em_Et = book1D("EC10_TT_EM_Et","EndCap_TT EM Et",10,0,10);
-  m_h_EC10_TT_Had_Et = book1D("EC10_TT_HAD_Et","EndCap_TT HAD Et",10,0,10);
+  m_h_EC10_TT_Em_Et = new TH1F("EC10_TT_EM_Et","EndCap_TT EM Et",10,0,10);
+  RDO_Calo.regHist(m_h_EC10_TT_Em_Et);
+  m_h_EC10_TT_Had_Et = new TH1F("EC10_TT_HAD_Et","EndCap_TT HAD Et",10,0,10);
+  RDO_Calo.regHist(m_h_EC10_TT_Had_Et);
 
-  m_h_EC10_JE_Em_Et = book1D("EC10_JE_EM_Et","EndCap_JE EM Et",10,0,10);
-  m_h_EC10_JE_Had_Et = book1D("EC10_JE_HAD_Et","EndCap_JE HAD Et",10,0,10);
+  m_h_EC10_JE_Em_Et = new TH1F("EC10_JE_EM_Et","EndCap_JE EM Et",10,0,10);
+  RDO_Calo.regHist(m_h_EC10_JE_Em_Et);
+  m_h_EC10_JE_Had_Et = new TH1F("EC10_JE_HAD_Et","EndCap_JE HAD Et",10,0,10);
+  RDO_Calo.regHist(m_h_EC10_JE_Had_Et);
 
-  m_h_Barrel10_TT_Em_Et = book1D("Barrel10_TT_EM_Et","Barrel TT EM Et 0-10",10,0,10);
-  m_h_Barrel10_TT_Had_Et = book1D("Barrel10_TT_HAD_Et","Barrel TT HAD Et 0-10",10,0,10);
+  m_h_Barrel10_TT_Em_Et = new TH1F("Barrel10_TT_EM_Et","Barrel TT EM Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_Barrel10_TT_Em_Et);
+  m_h_Barrel10_TT_Had_Et = new TH1F("Barrel10_TT_HAD_Et","Barrel TT HAD Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_Barrel10_TT_Had_Et);
 
-  m_h_Barrel10_JE_Em_Et = book1D("Barrel10_JE_EM_Et","Barrel JE EM Et 0-10",10,0,10);
-  m_h_Barrel10_JE_Had_Et = book1D("Barrel10_JE_HAD_Et","Barrel JE HAD Et 0-10",10,0,10);
+  m_h_Barrel10_JE_Em_Et = new TH1F("Barrel10_JE_EM_Et","Barrel JE EM Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_Barrel10_JE_Em_Et);
+  m_h_Barrel10_JE_Had_Et = new TH1F("Barrel10_JE_HAD_Et","Barrel JE HAD Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_Barrel10_JE_Had_Et);
 
-  m_h_FCAL10_TT_Em_Et = book1D("FCAL10_TT_EM_Et","FCAL TT EM Et 0-10",10,0,10);
-  m_h_FCAL10_TT_Had_Et = book1D("FCAL10_TT_HAD_Et","FCAL TT HAD Et 0-10",10,0,10);
+  m_h_FCAL10_TT_Em_Et = new TH1F("FCAL10_TT_EM_Et","FCAL TT EM Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_FCAL10_TT_Em_Et);
+  m_h_FCAL10_TT_Had_Et = new TH1F("FCAL10_TT_HAD_Et","FCAL TT HAD Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_FCAL10_TT_Had_Et);
 
-  m_h_FCAL10_JE_Em_Et = book1D("FCAL10_JE_EM_Et","FCAL JE EM Et 0-10",10,0,10);
-  m_h_FCAL10_JE_Had_Et = book1D("FCAL10_JE_HAD_Et","FCAL JE HAD Et 0-10",10,0,10);
+  m_h_FCAL10_JE_Em_Et = new TH1F("FCAL10_JE_EM_Et","FCAL JE EM Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_FCAL10_JE_Em_Et);
+  m_h_FCAL10_JE_Had_Et = new TH1F("FCAL10_JE_HAD_Et","FCAL JE HAD Et 0-10",10,0,10);
+  RDO_Calo.regHist(m_h_FCAL10_JE_Had_Et);
 
-  m_h_EC_TT_phi = book1D("EC_TT_phi","EndCap_TT phi",64,0,2*M_PI);
-  m_h_EC_TT_Em_Et = book1D("EC_TT_EM_Et","EndCap_TT EM Et",255,0,255);
-  m_h_EC_TT_Had_Et = book1D("EC_TT_HAD_Et","EndCap_TT HAD Et",255,0,255); 
+  m_h_EC_TT_phi = new TH1F("EC_TT_phi","EndCap_TT phi",64,0,2*M_PI);
+  RDO_Calo.regHist(m_h_EC_TT_phi);
+  m_h_EC_TT_Em_Et = new TH1F("EC_TT_EM_Et","EndCap_TT EM Et",255,0,255);
+  RDO_Calo.regHist(m_h_EC_TT_Em_Et);
+  m_h_EC_TT_Had_Et = new TH1F("EC_TT_HAD_Et","EndCap_TT HAD Et",255,0,255); 
+  RDO_Calo.regHist(m_h_EC_TT_Had_Et);
 
-  m_h_EC_JE_phi = book1D("EC_JE_phi","EndCap_JE phi",64,0,2*M_PI);
-  m_h_EC_JE_Em_Et = book1D("EC_JE_EM_Et","EndCap_JE EM Et",255,0,255);
-  m_h_EC_JE_Had_Et = book1D("EC_JE_HAD_Et","EndCap_JE HAD Et",255,0,255);
+  m_h_EC_JE_phi = new TH1F("EC_JE_phi","EndCap_JE phi",64,0,2*M_PI);
+  RDO_Calo.regHist(m_h_EC_JE_phi);
+  m_h_EC_JE_Em_Et = new TH1F("EC_JE_EM_Et","EndCap_JE EM Et",255,0,255);
+  RDO_Calo.regHist(m_h_EC_JE_Em_Et);
+  m_h_EC_JE_Had_Et = new TH1F("EC_JE_HAD_Et","EndCap_JE HAD Et",255,0,255);
+  RDO_Calo.regHist(m_h_EC_JE_Had_Et);
 
-  m_h_FCAL_TT_phi = book1D("FCAL_TT_phi","FCAL_TT phi",64,0,2*M_PI); 
-  m_h_FCAL_TT_Em_Et = book1D("FCAL_TT_EM_Et","FCAL_TT EM Et",255,0,255);
-  m_h_FCAL_TT_Had_Et = book1D("FCAL_TT_HAD_Et","FCAL_TT HAD Et",255,0,255);
+  m_h_FCAL_TT_phi = new TH1F("FCAL_TT_phi","FCAL_TT phi",64,0,2*M_PI); 
+  RDO_Calo.regHist(m_h_FCAL_TT_phi);
+  m_h_FCAL_TT_Em_Et = new TH1F("FCAL_TT_EM_Et","FCAL_TT EM Et",255,0,255);
+  RDO_Calo.regHist(m_h_FCAL_TT_Em_Et);
+  m_h_FCAL_TT_Had_Et = new TH1F("FCAL_TT_HAD_Et","FCAL_TT HAD Et",255,0,255);
+  RDO_Calo.regHist(m_h_FCAL_TT_Had_Et);
 
-  m_h_FCAL_JE_phi = book1D("FCAL_JE_phi","FCAL_JE phi",64,0,2*M_PI); 
-  m_h_FCAL_JE_Em_Et = book1D("FCAL_JE_EM_Et","FCAL_JE EM Et",255,0,255);
-  m_h_FCAL_JE_Had_Et = book1D("FCAL_JE_HAD_Et","FCAL_JE HAD Et",255,0,255);
+  m_h_FCAL_JE_phi = new TH1F("FCAL_JE_phi","FCAL_JE phi",64,0,2*M_PI); 
+  RDO_Calo.regHist(m_h_FCAL_JE_phi);
+  m_h_FCAL_JE_Em_Et = new TH1F("FCAL_JE_EM_Et","FCAL_JE EM Et",255,0,255);
+  RDO_Calo.regHist(m_h_FCAL_JE_Em_Et);
+  m_h_FCAL_JE_Had_Et = new TH1F("FCAL_JE_HAD_Et","FCAL_JE HAD Et",255,0,255);
+  RDO_Calo.regHist(m_h_FCAL_JE_Had_Et);
 
-  m_h_TT_etaphi = book2D("Eta_Phi_TT","TT Eta_Phi",100,-5,5, 64,0,2*M_PI);
-  m_h_TT_etaphi_hitmap = book2D("Eta_Phi_HM_TT","TT Eta_Phi_HitMap",40,-5,5, 64,0,2*M_PI);
+  m_h_TT_etaphi = new TH2F("Eta_Phi_TT","TT Eta_Phi",100,-5,5, 64,0,2*M_PI);
+  RDO_Calo.regHist(m_h_TT_etaphi);
+  m_h_TT_etaphi_hitmap = new TH2F("Eta_Phi_HM_TT","TT Eta_Phi_HitMap",40,-5,5, 64,0,2*M_PI);
+  RDO_Calo.regHist(m_h_TT_etaphi_hitmap);
 
-  m_h_JE_etaphi = book2D("Eta_Phi_JE","JE Eta_Phi",100,-5,5, 64,0,2*M_PI);
-  m_h_JE_etaphi_hitmap = book2D("Eta_Phi_HM_JE","JE Eta_Phi_HitMap",100,-5,5, 64,0,2*M_PI);
+  m_h_JE_etaphi = new TH2F("Eta_Phi_JE","JE Eta_Phi",100,-5,5, 64,0,2*M_PI);
+  RDO_Calo.regHist(m_h_JE_etaphi);
+  m_h_JE_etaphi_hitmap = new TH2F("Eta_Phi_HM_JE","JE Eta_Phi_HitMap",100,-5,5, 64,0,2*M_PI);
+  RDO_Calo.regHist(m_h_JE_etaphi_hitmap);
 
   //JE & TT plots, Et>10GeV
 
-  m_h_TT_eta_gt10 = book1D("TT_eta_gt10",">10 Gev TT eta",100,-5,5);
-  m_h_TT_phi_gt10 = book1D("TT_phi_gt10",">10 GeV TT phi",64,0,2*M_PI); 
-  m_h_TT_EC_phi_gt10 = book1D("TT_EC_phi_gt10",">10 GeV TT EndCap phi",64,0,2*M_PI); 
-  m_h_TT_Barrel_phi_gt10 = book1D("TT_Barrel_phi_gt10",">10 GeV TT Barrel phi",64,0,2*M_PI); 
-  m_h_TT_FCAL_phi_gt10 = book1D("TT_FCAL_phi_gt10",">10 GeV TT FCAL phi",64,0,2*M_PI); 
+  m_h_TT_eta_gt10 = new TH1F("TT_eta_gt10",">10 Gev TT eta",100,-5,5);
+  RDO_Calo.regHist(m_h_TT_eta_gt10);
+  m_h_TT_phi_gt10 = new TH1F("TT_phi_gt10",">10 GeV TT phi",64,0,2*M_PI); 
+  RDO_Calo.regHist(m_h_TT_phi_gt10);
+  m_h_TT_EC_phi_gt10 = new TH1F("TT_EC_phi_gt10",">10 GeV TT EndCap phi",64,0,2*M_PI); 
+  RDO_Calo.regHist(m_h_TT_EC_phi_gt10);
+  m_h_TT_Barrel_phi_gt10 = new TH1F("TT_Barrel_phi_gt10",">10 GeV TT Barrel phi",64,0,2*M_PI); 
+  RDO_Calo.regHist(m_h_TT_Barrel_phi_gt10);
+  m_h_TT_FCAL_phi_gt10 = new TH1F("TT_FCAL_phi_gt10",">10 GeV TT FCAL phi",64,0,2*M_PI); 
+  RDO_Calo.regHist(m_h_TT_FCAL_phi_gt10);
 
-  m_h_JE_eta_gt10 = book1D("JE_eta_gt10",">10 GeV JE eta",100,-5,5);
-  m_h_JE_phi_gt10 = book1D("JE_phi_gt10",">10 GeV JE phi",64,0,2*M_PI); 
-  m_h_JE_EC_phi_gt10 = book1D("JE_EC_phi_gt10",">10 GeV JE EndCap phi",64,0,2*M_PI); 
-  m_h_JE_Barrel_phi_gt10 = book1D("JE_Barrel_phi_gt10",">10 GeV JE Barrel phi",64,0,2*M_PI); 
-  m_h_JE_FCAL_phi_gt10 = book1D("JE_FCAL_phi_gt10",">10 GeV JE FCAL phi",64,0,2*M_PI); 
+  m_h_JE_eta_gt10 = new TH1F("JE_eta_gt10",">10 GeV JE eta",100,-5,5);
+  RDO_Calo.regHist(m_h_JE_eta_gt10);
+  m_h_JE_phi_gt10 = new TH1F("JE_phi_gt10",">10 GeV JE phi",64,0,2*M_PI); 
+  RDO_Calo.regHist(m_h_JE_phi_gt10);
+  m_h_JE_EC_phi_gt10 = new TH1F("JE_EC_phi_gt10",">10 GeV JE EndCap phi",64,0,2*M_PI); 
+  RDO_Calo.regHist(m_h_JE_EC_phi_gt10);
+  m_h_JE_Barrel_phi_gt10 = new TH1F("JE_Barrel_phi_gt10",">10 GeV JE Barrel phi",64,0,2*M_PI); 
+  RDO_Calo.regHist(m_h_JE_Barrel_phi_gt10);
+  m_h_JE_FCAL_phi_gt10 = new TH1F("JE_FCAL_phi_gt10",">10 GeV JE FCAL phi",64,0,2*M_PI); 
+  RDO_Calo.regHist(m_h_JE_FCAL_phi_gt10);
 
   // ====================================================================================================
   // Plots of the /Calorimeter information (combined LAr and Tile info)
   // Using CaloTowers from the ESD
   // ====================================================================================================
+/*
+  m_h_CaloT_phi = new TH1F("CaloTower_phi","CaloTower phi",64,-M_PI,M_PI); 
+  m_h_CaloT_eta = new TH1F("CaloTower_eta","CaloTower eta",100,-5,5); 
+  m_h_CaloT_phi_gt10 = new TH1F("CaloTower_phi_gt10","CaloTower phi gt 10",64,-M_PI,M_PI); 
+  m_h_CaloT_eta_gt10 = new TH1F("CaloTower_eta_gt10","CaloTower eta gt 10",100,-5,5); 
 
-  m_h_CaloT_phi = book1D("CaloTower_phi","CaloTower phi",64,-M_PI,M_PI); 
-  m_h_CaloT_eta = book1D("CaloTower_eta","CaloTower eta",100,-5,5); 
-  m_h_CaloT_phi_gt10 = book1D("CaloTower_phi_gt10","CaloTower phi gt 10",64,-M_PI,M_PI); 
-  m_h_CaloT_eta_gt10 = book1D("CaloTower_eta_gt10","CaloTower eta gt 10",100,-5,5); 
+  m_h_CaloT_Et10 = new TH1F("CaloTower_Et10","CaloTower Et (0-10 GeV)",100,0,10.*GeV); //Note, need to specify GeV 
+  m_h_CaloT_Et = new TH1F("CaloTower_Et","CaloTower Et",255,0,255.*GeV); 
 
-  m_h_CaloT_Et10 = book1D("CaloTower_Et10","CaloTower Et (0-10 GeV)",100,0,10.*GeV); //Note, need to specify GeV 
-  m_h_CaloT_Et = book1D("CaloTower_Et","CaloTower Et",255,0,255.*GeV); 
+  m_h_CaloT_etaphi = new TH2F("CaloTower_Eta_Phi","CaloTower Eta_Phi",100,-5,5, 64, -M_PI, M_PI);
+  m_h_CaloT_etaphi_hitmap = new TH2F("CaloTower_Eta_Phi_HM","CaloTower Eta_Phi_HitMap",100,-5,5,64, -M_PI, M_PI);
 
-  m_h_CaloT_etaphi = book2D("CaloTower_Eta_Phi","CaloTower Eta_Phi",100,-5,5, 64, -M_PI, M_PI);
-  m_h_CaloT_etaphi_hitmap = book2D("CaloTower_Eta_Phi_HM","CaloTower Eta_Phi_HitMap",100,-5,5,64, -M_PI, M_PI);
-
-  m_h_CaloT_key = book1D("CaloTower_Key","CaloTower Key",100,0,8000);
+  m_h_CaloT_key = new TH1F("CaloTower_Key","CaloTower Key",100,0,8000);
 
 
   // =====================================================================================================
   // =================================== Trigger Style Calo Plots ========================================
   // =====================================================================================================
 
-  m_h_Calo_phi = book1D("Calo_phi","TSCT phi",64,0,2*M_PI); 
-  m_h_Calo_eta = book1D("Calo_eta","TSCT eta",100,-5,5); 
-  m_h_Calo_phi_gt10 = book1D("Calo_phi_gt10","TSCT phi Et > 10 GeV",64,0,2*M_PI); 
-  m_h_Calo_eta_gt10 = book1D("Calo_eta_gt10","TSCT eta Et > 10 GeV",100,-5,5); 
+  m_h_Calo_phi = new TH1F("Calo_phi","TSCT phi",64,0,2*M_PI); 
+  m_h_Calo_eta = new TH1F("Calo_eta","TSCT eta",100,-5,5); 
+  m_h_Calo_phi_gt10 = new TH1F("Calo_phi_gt10","TSCT phi Et > 10 GeV",64,0,2*M_PI); 
+  m_h_Calo_eta_gt10 = new TH1F("Calo_eta_gt10","TSCT eta Et > 10 GeV",100,-5,5); 
 
-  m_h_Calo_Em_Et10 = book1D("Calo_Em_Et10","TSCT Em Et 0-10 GeV",100,0,10.*GeV); //Note, need to specify GeV 
-  m_h_Calo_Em_Et = book1D("Calo_Em_Et","TSCT Em Et",255,0,255.*GeV); 
-  m_h_Calo_Had_Et10 = book1D("Calo_Had_Et10","TSCT Had Et 0-10 GeV",100,0,10.*GeV); //Note, need to specify GeV 
-  m_h_Calo_Had_Et = book1D("Calo_Had_Et","TSCT Had Et",255,0,255.*GeV); 
+  m_h_Calo_Em_Et10 = new TH1F("Calo_Em_Et10","TSCT Em Et 0-10 GeV",100,0,10.*GeV); //Note, need to specify GeV 
+  m_h_Calo_Em_Et = new TH1F("Calo_Em_Et","TSCT Em Et",255,0,255.*GeV); 
+  m_h_Calo_Had_Et10 = new TH1F("Calo_Had_Et10","TSCT Had Et 0-10 GeV",100,0,10.*GeV); //Note, need to specify GeV 
+  m_h_Calo_Had_Et = new TH1F("Calo_Had_Et","TSCT Had Et",255,0,255.*GeV); 
 
-  m_h_Calo_etaphi = book2D("Calo_Eta_Phi","TSCT Eta_Phi",100,-5,5, 64, 0, 2*M_PI);
-  m_h_Calo_etaphi_hitmap = book2D("Calo_Eta_Phi_HM","TSCT Eta_Phi_HitMap",100,-5,5,64, 0, 2*M_PI);
+  m_h_Calo_etaphi = new TH2F("Calo_Eta_Phi","TSCT Eta_Phi",100,-5,5, 64, 0, 2*M_PI);
+  m_h_Calo_etaphi_hitmap = new TH2F("Calo_Eta_Phi_HM","TSCT Eta_Phi_HitMap",100,-5,5,64, 0, 2*M_PI);
 
-  m_h_Calo_key = book1D("Calo_Key","TSCT Key",100,0,8000);
+  m_h_Calo_key = new TH1F("Calo_Key","TSCT Key",100,0,8000);
 
   // region plots
 
-  m_h_Barrel_Calo_Em_Et = book1D("Barrel_Calo_Em_Et", "TSCT Barrel Et (Em)",100,0,100.*GeV);
-  m_h_Barrel_Calo_Had_Et = book1D("Barrel_Calo_Had_Et", "TSCT Barrel Et (Had)",100,0,100.*GeV);
-  m_h_Barrel10_Calo_Em_Et = book1D("Barrel10_Calo_Em_Et", "TSCT Barrel Et (Em, 0-10 GeV)",10,0,10.*GeV);
-  m_h_Barrel10_Calo_Had_Et = book1D("Barrel10_Calo_Had_Et", "TSCT Barrel Et (Had, 0-10 GeV)",10,0,10.*GeV);
-  m_h_Barrel_Calo_phi = book1D("Barrel_Calo_phi", "TSCT Barrel phi",64,0,2*M_PI);
+  m_h_Barrel_Calo_Em_Et = new TH1F("Barrel_Calo_Em_Et", "TSCT Barrel Et (Em)",100,0,100.*GeV);
+  m_h_Barrel_Calo_Had_Et = new TH1F("Barrel_Calo_Had_Et", "TSCT Barrel Et (Had)",100,0,100.*GeV);
+  m_h_Barrel10_Calo_Em_Et = new TH1F("Barrel10_Calo_Em_Et", "TSCT Barrel Et (Em, 0-10 GeV)",10,0,10.*GeV);
+  m_h_Barrel10_Calo_Had_Et = new TH1F("Barrel10_Calo_Had_Et", "TSCT Barrel Et (Had, 0-10 GeV)",10,0,10.*GeV);
+  m_h_Barrel_Calo_phi = new TH1F("Barrel_Calo_phi", "TSCT Barrel phi",64,0,2*M_PI);
   
-  m_h_EC_Calo_Em_Et = book1D("EC_Calo_Em_Et", "TSCT EndCap Et (Em)",100,0,100.*GeV);
-  m_h_EC_Calo_Had_Et = book1D("EC_Calo_Had_Et", "TSCT EndCap Et (Had)",100,0,100.*GeV);
-  m_h_EC10_Calo_Em_Et = book1D("EC10_Calo_Em_Et", "TSCT EndCap Et (Em, 0-10 GeV)",10,0,10.*GeV);
-  m_h_EC10_Calo_Had_Et = book1D("EC10_Calo_Had_Et", "TSCT EndCap Et (Had, 0-10 GeV)",10,0,10.*GeV);
-  m_h_EC_Calo_phi = book1D("EC_Calo_phi", "TSCT EndCap phi",64,0,2*M_PI);
+  m_h_EC_Calo_Em_Et = new TH1F("EC_Calo_Em_Et", "TSCT EndCap Et (Em)",100,0,100.*GeV);
+  m_h_EC_Calo_Had_Et = new TH1F("EC_Calo_Had_Et", "TSCT EndCap Et (Had)",100,0,100.*GeV);
+  m_h_EC10_Calo_Em_Et = new TH1F("EC10_Calo_Em_Et", "TSCT EndCap Et (Em, 0-10 GeV)",10,0,10.*GeV);
+  m_h_EC10_Calo_Had_Et = new TH1F("EC10_Calo_Had_Et", "TSCT EndCap Et (Had, 0-10 GeV)",10,0,10.*GeV);
+  m_h_EC_Calo_phi = new TH1F("EC_Calo_phi", "TSCT EndCap phi",64,0,2*M_PI);
   
-  m_h_FCAL_Calo_Em_Et = book1D("FCAL_Calo_Em_Et", "TSCT FCAL Et (Em)",100,0,100.*GeV);
-  m_h_FCAL_Calo_Had_Et = book1D("FCAL_Calo_Had_Et", "TSCT FCAL Et (Had)",100,0,100.*GeV);
-  m_h_FCAL10_Calo_Em_Et = book1D("FCAL10_Calo_Em_Et", "TSCT FCAL Et (Em, 0-10 GeV)",10,0,10.*GeV);
-  m_h_FCAL10_Calo_Had_Et = book1D("FCAL10_Calo_Had_Et", "TSCT FCAL Et (Had, 0-10 GeV)",10,0,10.*GeV);
-  m_h_FCAL_Calo_phi = book1D("FCAL_Calo_phi", "TSCT FCAL phi",64,0,2*M_PI);
+  m_h_FCAL_Calo_Em_Et = new TH1F("FCAL_Calo_Em_Et", "TSCT FCAL Et (Em)",100,0,100.*GeV);
+  m_h_FCAL_Calo_Had_Et = new TH1F("FCAL_Calo_Had_Et", "TSCT FCAL Et (Had)",100,0,100.*GeV);
+  m_h_FCAL10_Calo_Em_Et = new TH1F("FCAL10_Calo_Em_Et", "TSCT FCAL Et (Em, 0-10 GeV)",10,0,10.*GeV);
+  m_h_FCAL10_Calo_Had_Et = new TH1F("FCAL10_Calo_Had_Et", "TSCT FCAL Et (Had, 0-10 GeV)",10,0,10.*GeV);
+  m_h_FCAL_Calo_phi = new TH1F("FCAL_Calo_phi", "TSCT FCAL phi",64,0,2*M_PI);
 
   //comparisons of TT:Calo
 
   //1D Ratio plots //not implemented
-  m_h_TT_Calo_eta = book1D("TT_Calo_eta","eta TT vs TSCT",100, -5, 5);
-  m_h_TT_Calo_Et = book1D("TT_Calo_Et","Et TT vs TSCT", 255, 0, 255);
+  m_h_TT_Calo_eta = new TH1F("TT_Calo_eta","eta TT vs TSCT",100, -5, 5);
+  m_h_TT_Calo_Et = new TH1F("TT_Calo_Et","Et TT vs TSCT", 255, 0, 255);
 
   //2D plotted one against the other
-  m_h_TT_Calo_Em_EtTower = book2D("TT_Calo_Em_EtTower","TSCT and TT Tower Et (Em)",100,0,100.*GeV, 100, 0, 100);
-  m_h_TT_Calo_Had_EtTower = book2D("TT_Calo_Had_EtTower","TSCT and TT Tower Et (Had)",100,0,100.*GeV, 100, 0, 100);
-  m_h_TT_Calo_EtaTower = book2D("TT_Calo_EtaTower","TSCT and TT Tower Eta",100,-5,5, 100, -5, 5);
-  m_h_TT_Calo_PhiTower = book2D("TT_Calo_PhiTower","TSCT and TT Tower Phi",64,0,2*M_PI,64,0,2*M_PI);
+  m_h_TT_Calo_Em_EtTower = new TH2F("TT_Calo_Em_EtTower","TSCT and TT Tower Et (Em)",100,0,100.*GeV, 100, 0, 100);
+  m_h_TT_Calo_Had_EtTower = new TH2F("TT_Calo_Had_EtTower","TSCT and TT Tower Et (Had)",100,0,100.*GeV, 100, 0, 100);
+  m_h_TT_Calo_EtaTower = new TH2F("TT_Calo_EtaTower","TSCT and TT Tower Eta",100,-5,5, 100, -5, 5);
+  m_h_TT_Calo_PhiTower = new TH2F("TT_Calo_PhiTower","TSCT and TT Tower Phi",64,0,2*M_PI,64,0,2*M_PI);
 
   //TSCT Calibration plots - see calibration below
 
   //Discrepancy check plots
   
-  m_h_Ratio_D_Em_Et = book1D("Ratio_D_Em_Et","TSCT Et / TT Et (Em)",30,0,3); 
-  m_h_Ratio_D_Had_Et = book1D("Ratio_D_Had_Et","TSCT Et / TT Et (Had)",30,0,3); 
+  m_h_Ratio_D_Em_Et = new TH1F("Ratio_D_Em_Et","TSCT Et / TT Et (Em)",30,0,3); 
+  m_h_Ratio_D_Had_Et = new TH1F("Ratio_D_Had_Et","TSCT Et / TT Et (Had)",30,0,3); 
 
-  m_h_Calo_DEm_under_phi = book1D("Calo_DEm_under_phi","TSCT phi (TT<TSCT [Em])",64,0,2*M_PI); 
-  m_h_Calo_DEm_under_eta = book1D("Calo_DEm_under_eta","TSCT eta (TT<TSCT [Em])",100, -5, 5); 
-  m_h_Calo_DEm_under_Em_Et = book1D("Calo_DEm_under_Em_Et","Em Et TSCT (TT<TSCT [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_under_Had_Et = book1D("Calo_DEm_under_Had_Et","Had Et TSCT (TT<TSCT [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_under_TTEm_Et = book1D("Calo_DEm_under_TTEm_Et","Em Et TT (TT<TSCT [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_under_TTHad_Et = book1D("Calo_DEm_under_TTHad_Et","Had Et TT (TT<TSCT [Em])", 255, 0, 255.*GeV);
+  m_h_Calo_DEm_under_phi = new TH1F("Calo_DEm_under_phi","TSCT phi (TT<TSCT [Em])",64,0,2*M_PI); 
+  m_h_Calo_DEm_under_eta = new TH1F("Calo_DEm_under_eta","TSCT eta (TT<TSCT [Em])",100, -5, 5); 
+  m_h_Calo_DEm_under_Em_Et = new TH1F("Calo_DEm_under_Em_Et","Em Et TSCT (TT<TSCT [Em])", 255, 0, 255.*GeV);
+  m_h_Calo_DEm_under_Had_Et = new TH1F("Calo_DEm_under_Had_Et","Had Et TSCT (TT<TSCT [Em])", 255, 0, 255.*GeV);
+  m_h_Calo_DEm_under_TTEm_Et = new TH1F("Calo_DEm_under_TTEm_Et","Em Et TT (TT<TSCT [Em])", 255, 0, 255.*GeV);
+  m_h_Calo_DEm_under_TTHad_Et = new TH1F("Calo_DEm_under_TTHad_Et","Had Et TT (TT<TSCT [Em])", 255, 0, 255.*GeV);
 
-  m_h_Calo_DEm_over_phi = book1D("Calo_DEm_over_phi","TSCT phi (TT>TSCT [Em])",64,0,2*M_PI); 
-  m_h_Calo_DEm_over_eta = book1D("Calo_DEm_over_eta","TSCT eta (TT>TSCT [Em])",100, -5, 5); 
-  m_h_Calo_DEm_over_Em_Et = book1D("Calo_DEm_over_Em_Et","Em Et TSCT (TT>TSCT [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_over_Had_Et = book1D("Calo_DEm_over_Had_Et","Had Et TSCT (TT>TSCT [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_over_TTEm_Et = book1D("Calo_DEm_over_TTEm_Et","Em Et TT (TT>TSCT [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_over_TTHad_Et = book1D("Calo_DEm_over_TTHad_Et","Had Et TT (TT>TSCT [Em])", 255, 0, 255.*GeV);
+  m_h_Calo_DEm_over_phi = new TH1F("Calo_DEm_over_phi","TSCT phi (TT>TSCT [Em])",64,0,2*M_PI); 
+  m_h_Calo_DEm_over_eta = new TH1F("Calo_DEm_over_eta","TSCT eta (TT>TSCT [Em])",100, -5, 5); 
+  m_h_Calo_DEm_over_Em_Et = new TH1F("Calo_DEm_over_Em_Et","Em Et TSCT (TT>TSCT [Em])", 255, 0, 255.*GeV);
+  m_h_Calo_DEm_over_Had_Et = new TH1F("Calo_DEm_over_Had_Et","Had Et TSCT (TT>TSCT [Em])", 255, 0, 255.*GeV);
+  m_h_Calo_DEm_over_TTEm_Et = new TH1F("Calo_DEm_over_TTEm_Et","Em Et TT (TT>TSCT [Em])", 255, 0, 255.*GeV);
+  m_h_Calo_DEm_over_TTHad_Et = new TH1F("Calo_DEm_over_TTHad_Et","Had Et TT (TT>TSCT [Em])", 255, 0, 255.*GeV);
 
-  m_h_Calo_DHad_under_phi = book1D("Calo_DHad_under_phi","TSCT phi (TT<TSCT [Had])",64,0,2*M_PI); 
-  m_h_Calo_DHad_under_eta = book1D("Calo_DHad_under_eta","TSCT eta (TT<TSCT [Had])",100, -5, 5); 
-  m_h_Calo_DHad_under_Em_Et = book1D("Calo_DHad_under_Em_Et","Em Et TSCT (TT<TSCT [Had])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_under_Had_Et = book1D("Calo_DHad_under_Had_Et","Had Et TSCT (TT<TSCT [Had])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_under_TTEm_Et = book1D("Calo_DHad_under_TTEm_Et","Em Et TT (TT<TSCT [Had])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_under_TTHad_Et = book1D("Calo_DHad_under_TTHad_Et","Had Et TT (TT<TSCT [Had])", 255, 0, 255.*GeV);
+  m_h_Calo_DHad_under_phi = new TH1F("Calo_DHad_under_phi","TSCT phi (TT<TSCT [Had])",64,0,2*M_PI); 
+  m_h_Calo_DHad_under_eta = new TH1F("Calo_DHad_under_eta","TSCT eta (TT<TSCT [Had])",100, -5, 5); 
+  m_h_Calo_DHad_under_Em_Et = new TH1F("Calo_DHad_under_Em_Et","Em Et TSCT (TT<TSCT [Had])", 255, 0, 255.*GeV);
+  m_h_Calo_DHad_under_Had_Et = new TH1F("Calo_DHad_under_Had_Et","Had Et TSCT (TT<TSCT [Had])", 255, 0, 255.*GeV);
+  m_h_Calo_DHad_under_TTEm_Et = new TH1F("Calo_DHad_under_TTEm_Et","Em Et TT (TT<TSCT [Had])", 255, 0, 255.*GeV);
+  m_h_Calo_DHad_under_TTHad_Et = new TH1F("Calo_DHad_under_TTHad_Et","Had Et TT (TT<TSCT [Had])", 255, 0, 255.*GeV);
 
-  m_h_Calo_DHad_over_phi = book1D("Calo_DHad_over_phi","TSCT phi (TT>TSCT [Had])",64,0,2*M_PI); 
-  m_h_Calo_DHad_over_eta = book1D("Calo_DHad_over_eta","TSCT eta (TT>TSCT [Had])",100, -5, 5); 
-  m_h_Calo_DHad_over_Em_Et = book1D("Calo_DHad_over_Em_Et","Em Et TSCT (TT>TSCT [Had])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_over_Had_Et = book1D("Calo_DHad_over_Had_Et","Had Et TSCT (TT>TSCT [Had])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_over_TTEm_Et = book1D("Calo_DHad_over_TTEm_Et","Em Et TT (TT>TSCT [Had])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_over_TTHad_Et = book1D("Calo_DHad_over_TTHad_Et","Had Et TT (TT>TSCT [Had])", 255, 0, 255.*GeV);
+  m_h_Calo_DHad_over_phi = new TH1F("Calo_DHad_over_phi","TSCT phi (TT>TSCT [Had])",64,0,2*M_PI); 
+  m_h_Calo_DHad_over_eta = new TH1F("Calo_DHad_over_eta","TSCT eta (TT>TSCT [Had])",100, -5, 5); 
+  m_h_Calo_DHad_over_Em_Et = new TH1F("Calo_DHad_over_Em_Et","Em Et TSCT (TT>TSCT [Had])", 255, 0, 255.*GeV);
+  m_h_Calo_DHad_over_Had_Et = new TH1F("Calo_DHad_over_Had_Et","Had Et TSCT (TT>TSCT [Had])", 255, 0, 255.*GeV);
+  m_h_Calo_DHad_over_TTEm_Et = new TH1F("Calo_DHad_over_TTEm_Et","Em Et TT (TT>TSCT [Had])", 255, 0, 255.*GeV);
+  m_h_Calo_DHad_over_TTHad_Et = new TH1F("Calo_DHad_over_TTHad_Et","Had Et TT (TT>TSCT [Had])", 255, 0, 255.*GeV);
 
 
   // ====================================================================================
@@ -303,48 +361,53 @@ StatusCode TrigT1CaloMonTool::bookHists()
 
 
   //TT:
-  m_h_Calib_TTEM_EtEta = book2D("TTEM_EtEta", "TT (EM) Et vs eta", 100, -5, 5, 10, 0, 10);
-  m_h_Calib_TTHAD_EtEta = book2D("TTHAD_EtEta", "TT (HAD) Et vs eta", 100, -5, 5, 10, 0, 10);
+  m_h_Calib_TTEM_EtEta = new TH2F("TTEM_EtEta", "TT (EM) Et vs eta", 100, -5, 5, 10, 0, 10);
+  m_h_Calib_TTHAD_EtEta = new TH2F("TTHAD_EtEta", "TT (HAD) Et vs eta", 100, -5, 5, 10, 0, 10);
   //CaloTower
-  m_h_Calib_CaloT_EtEta = book2D("CaloT_EtEta", "ESD CaloTower Et vs eta", 100, -5, 5, 100, 0, 10.*GeV);
+  m_h_Calib_CaloT_EtEta = new TH2F("CaloT_EtEta", "ESD CaloTower Et vs eta", 100, -5, 5, 100, 0, 10.*GeV);
   
   //need to add TSCT Em and Had
-  m_h_Calib_CaloEM_EtEta = book2D("CaloEM_EtEta", "TSCT (EM) Et vs eta", 100, -5, 5, 100, 0, 10.*GeV);
-  m_h_Calib_CaloHAD_EtEta = book2D("CaloHAD_EtEta", "TSCT (HAD) Et vs eta", 100, -5, 5, 100, 0, 10.*GeV);
+  m_h_Calib_CaloEM_EtEta = new TH2F("CaloEM_EtEta", "TSCT (EM) Et vs eta", 100, -5, 5, 100, 0, 10.*GeV);
+  m_h_Calib_CaloHAD_EtEta = new TH2F("CaloHAD_EtEta", "TSCT (HAD) Et vs eta", 100, -5, 5, 100, 0, 10.*GeV);
   
   //Not implemented
-  m_h_Calib_EMRatio_ETEta = book2D("CalibEM_EtEta", "Calib (EM) Et vs eta", 100, -5, 5, 2, 0, 2);
-  m_h_Calib_HADRatio_ETEta = book2D("CalibHAD_EtEta", "Calib (HAD) Et vs eta", 100, -5, 5, 2, 0, 2);
+  m_h_Calib_EMRatio_ETEta = new TH2F("CalibEM_EtEta", "Calib (EM) Et vs eta", 100, -5, 5, 2, 0, 2);
+  m_h_Calib_HADRatio_ETEta = new TH2F("CalibHAD_EtEta", "Calib (HAD) Et vs eta", 100, -5, 5, 2, 0, 2);
+*/
+    }
   
+ if( isNewRun ) { }
 
-
-  SetBookStatus(true);
-  
   return StatusCode::SUCCESS;
 }
 
 /*---------------------------------------------------------*/
-StatusCode TrigT1CaloMonTool::fillHists()
+StatusCode TrigT1CaloMonTool::fillHistograms()
 /*---------------------------------------------------------*/
 {
   MsgStream log(msgSvc(), name());
   
-  log << MSG::DEBUG << "Ethan in fillHists()" << endreq;
+  log << MSG::DEBUG << "in fillHistograms()" << endreq;
 
   //Retrieve TriggerTowers from SG
   const TriggerTowerCollection* TriggerTowerTES = 0; 
-  StatusCode sc = m_StoreGate->retrieve(TriggerTowerTES, "LVL1TriggerTowers"); 
-  if( sc.isFailure()  ||  !TriggerTowerTES ) {
-    log << MSG::ERROR<< "No ESD LVL1::TriggerTowerCollection container found"<< endreq; 
-  }
-  
+  StatusCode sc = m_StoreGate->retrieve(TriggerTowerTES,m_TriggerTowerContainerName ); 
+  if( (sc==StatusCode::FAILURE) ) 
+    {
+      log << MSG::DEBUG << "No TriggerTowers found in TES at "  << m_TriggerTowerContainerName << endreq ;
+      return StatusCode::SUCCESS;
+    }
+
   //Retrieve JetElements from SG
   const JetElementCollection* JetElementTES = 0;
   sc=m_StoreGate->retrieve( JetElementTES, m_JetElementContainerName);
-  if( sc.isFailure()  ||  !JetElementTES ) {
-    log << MSG::ERROR<< "No ESD LVL1::JetElementCollection container found"<< endreq; 
-  }
-  
+  if( (sc==StatusCode::FAILURE) ) 
+    {
+      log << MSG::DEBUG << "No JetElements found in TES at "  << m_JetElementContainerName << endreq ;
+      return StatusCode::SUCCESS;
+    }
+
+  /*
   //Retrieve Calo Tower collection from SG
   const CaloTowerContainer* CaloTowerTES = 0; 
   sc=m_StoreGate->retrieve(CaloTowerTES, "CombinedTower"); 
@@ -360,11 +423,11 @@ StatusCode TrigT1CaloMonTool::fillHists()
   }else{
     //    log << MSG::ERROR<< "ETHAN :: CaloCellContainer found"<< endreq; 
   }
-  
+  */
 
   //Key Stuff for Trigger vs Calo Tower comparison
   TriggerTowerKey TTKey(0,0);
-  JetElementKey* JEKey; 
+  //JetElementKey* JEKey; 
   std::map<int, TriggerTower *>* m_ttContainer;
   m_ttContainer       =new std::map<int, TriggerTower*>;          //Create a map to hold the towers
   int key = 0;
@@ -376,6 +439,7 @@ StatusCode TrigT1CaloMonTool::fillHists()
 
   // TTs are only filled/stored if they contain energy, 
   // so looping over all TTs will only loop over those with energy
+  log <<MSG::DEBUG<< "TT Plots"<<endreq;
 
   TriggerTowerCollection::const_iterator TriggerTowerIterator    = TriggerTowerTES->begin(); 
   TriggerTowerCollection::const_iterator TriggerTowerIteratorEnd = TriggerTowerTES->end(); 
@@ -397,17 +461,18 @@ StatusCode TrigT1CaloMonTool::fillHists()
        }
     m_ttContainer->insert(std::map<int, TriggerTower*>::value_type(key,*TriggerTowerIterator));
 
+
+
     m_h_TT_Em_Et->Fill( (*TriggerTowerIterator)->emEnergy(), 1.); 
     m_h_TT_Had_Et->Fill( (*TriggerTowerIterator)->hadEnergy(), 1.); 
     m_h_TT_eta->Fill( (*TriggerTowerIterator)->eta(), 1.); 
     m_h_TT_phi->Fill( (*TriggerTowerIterator)->phi(), 1.); 
-
     m_h_TT_etaphi_hitmap->Fill( (*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), 1.);
     m_h_TT_etaphi->Fill( (*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), (*TriggerTowerIterator)->emEnergy()+(*TriggerTowerIterator)->hadEnergy());
 
     //Calibration plots
-    m_h_Calib_TTEM_EtEta->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->emEnergy(),1.);//Ethan et->phi
-    m_h_Calib_TTHAD_EtEta->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->hadEnergy(),1.);
+    //m_h_Calib_TTEM_EtEta->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->emEnergy(),1.);//Ethan et->phi
+    //m_h_Calib_TTHAD_EtEta->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->hadEnergy(),1.);
 
     //Fill Combined Energy plot
     m_h_TT_Tot_Et->Fill( (*TriggerTowerIterator)->hadEnergy()+(*TriggerTowerIterator)->emEnergy(), 1.); 
@@ -418,6 +483,7 @@ StatusCode TrigT1CaloMonTool::fillHists()
     //   m_h_TT_key->Fill((*TriggerTowerIterator)->key(), 1.);
 
     double eta = (*TriggerTowerIterator)->eta();
+
 
     eta*=eta;
     eta=sqrt(eta);
@@ -472,6 +538,7 @@ StatusCode TrigT1CaloMonTool::fillHists()
 
   // JEs are only filled/stored if they contain energy, 
   // so looping over all JEs will only loop over those with energy
+  log <<MSG::DEBUG<< "JE Plots"<<endreq;
 
   JetElementCollection::const_iterator JetElementIterator    = JetElementTES->begin();
   JetElementCollection::const_iterator JetElementIteratorEnd = JetElementTES->end();
@@ -537,7 +604,7 @@ StatusCode TrigT1CaloMonTool::fillHists()
     }
    
   }
-
+  /*
   // =============================================================================================
   // ================= CaloTowers (combined LAr and Tile data) From ESD ==========================
   // =============================================================================================
@@ -583,7 +650,7 @@ StatusCode TrigT1CaloMonTool::fillHists()
     m_h_CaloT_Et10->Fill( (*CaloTowerIterator)->et(), 1.);
 
   }
- 
+  
  // ==============================================================================================
  // ================================ Trigger-Style-Calo-Towers ===================================
  // ==============================================================================================
@@ -646,7 +713,7 @@ StatusCode TrigT1CaloMonTool::fillHists()
        }
      }//EO gap check     
    }
- 
+  */
  //Now loop over TT and get key, compare to internalTT - which are in fact calo-like towers.
 
 
@@ -675,7 +742,7 @@ StatusCode TrigT1CaloMonTool::fillHists()
 
    }
  */
- 
+ /*
  std::map<int, InternalTriggerTower*>::iterator TriggerStyleCaloTowerIterator = TriggerStyleCaloTowerContainer->begin();
  std::map<int, InternalTriggerTower*>::iterator TriggerStyleCaloTowerIteratorEnd = TriggerStyleCaloTowerContainer->end();
 
@@ -820,55 +887,22 @@ StatusCode TrigT1CaloMonTool::fillHists()
    }
 
  }
- 
+ */
   return StatusCode::SUCCESS;
 
 }
 
-/*---------------------------------------------------------*/
-StatusCode TrigT1CaloMonTool::finalHists()
-/*---------------------------------------------------------*/
+//_______________________________ proc  Histograms ___________________________________________
+StatusCode
+TrigT1CaloMonTool::
+procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun )
 {
-  MsgStream log(msgSvc(), name());
+        if( isEndOfEventsBlock || isEndOfLumiBlock ) 
+	  {
 
-  //   log << MSG::INFO << "Ethan in finalHists()" << endreq;
-
-  return StatusCode::SUCCESS;
-}
-
-/*---------------------------------------------------------*/
-StatusCode TrigT1CaloMonTool::checkHists(bool /* fromFinalize */)
-/*---------------------------------------------------------*/
-{
-  MsgStream log(msgSvc(), name());
-
-  //  log << MSG::INFO << "Ethan in checkHists()" << endreq;
-
-  return StatusCode::SUCCESS;
-}
-
-TH1D* TrigT1CaloMonTool::book1D(std::string nam, std::string tit, int nx, double xmin, double xmax){
-  TH1D *hist = new TH1D(TString(nam), TString(tit), nx, xmin, xmax);
+	}
+	
+	if( isEndOfRun ) { }
   
-  if(ToolRootHistSvc()->regHist(m_stem+"/"+nam, hist) != StatusCode::SUCCESS) {
-    MsgStream log(msgSvc(), name());
-    log << MSG::WARNING << "Could not register histogram : " 
-	<< m_stem+nam << endreq;
-  }
-  
-  return hist;
-}
-
-TH2D* TrigT1CaloMonTool::book2D(std::string nam, std::string tit, int nx, double xmin, double xmax,  
-	     int ny, double ymin, double ymax)
-{		
-  TH2D *hist = new TH2D(TString(nam), TString(tit), nx, xmin, xmax, ny, ymin, ymax);
-  
-  if(ToolRootHistSvc()->regHist(m_stem+"/"+nam, hist) != StatusCode::SUCCESS) {
-    MsgStream log(msgSvc(), name());
-    log << MSG::WARNING << "Could not register histogram : " 
-	<< m_stem+nam << endreq;
-  }
-  
-  return hist;
+  return StatusCode( StatusCode::SUCCESS );
 }
