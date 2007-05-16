@@ -29,7 +29,7 @@
 class JEMMon : public ManagedMonitorToolBase
 {
 public:
-        typedef DataVector<LVL1::JEMHits> JEMHitsLocation;
+        typedef DataVector<LVL1::JEMHits> JEMHitsCollection;
 	typedef DataVector<LVL1::JEMEtSums> JEMEtSumsCollection;
        
 

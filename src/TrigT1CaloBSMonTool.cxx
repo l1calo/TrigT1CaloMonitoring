@@ -388,7 +388,7 @@ StatusCode TrigT1CaloBSMonTool::fillHistograms()
 {
   MsgStream log(msgSvc(), name());
   
-  log << MSG::INFO << "in fillHistograms()" << endreq;
+  log << MSG::DEBUG << "in fillHistograms()" << endreq;
 
   //Retrieve TriggerTowers from SG
   const TriggerTowerCollection* TriggerTowerTES = 0; 

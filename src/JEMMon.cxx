@@ -30,7 +30,6 @@
 #include "TrigT1CaloMonitoring/JEMMon.h"
 //#include "TrigT1Calo/JEMEtSums.h"
 #include "TrigT1Calo/EnergyTrigger.h"
-#include "../../TrigT1CaloByteStream/src/components/TrigT1CaloByteStream_entries.cxx"
 #include "TrigT1CaloMonitoring/MonHelpers.h"
 
 
