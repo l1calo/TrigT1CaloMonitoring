@@ -30,7 +30,7 @@ ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CPMTower>/BS_CPMTo
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CPMHits>/BS_CPMHits" ]
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CMMCPHits>/BS_CMMCPHits" ]
 
-include ( "TrigT1CaloByteStream/ReadCpmRoiBS_jobOptions.py" )
+include ( "TrigT1CaloByteStream/ReadCpmRoIBS_jobOptions.py" )
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CPMRoI>/BS_CPMRoIs" ]
 
 ####################################################################################################################
