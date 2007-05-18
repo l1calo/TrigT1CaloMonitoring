@@ -20,7 +20,7 @@ ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::JEMEtSums>/BS_JEME
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CMMJetHits>/BS_CMMJetHits" ]
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CMMEtSums>/BS_CMMEtSums" ]
 
-include ( "TrigT1CaloByteStream/ReadJepRoIBS_jobOptions.py" )
+include ( "TrigT1CaloByteStream/ReadJepRoiBS_jobOptions.py" )
 ByteStreamAddressProviderSvc = Service( "ByteStreamAddressProviderSvc" )
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::JEMRoI>/BS_JEMRoIs" ]
 ByteStreamAddressProviderSvc.TypeNames += [ "LVL1::CMMRoI/BS_CMMRoIs" ]
@@ -30,7 +30,7 @@ ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CPMTower>/BS_CPMTo
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CPMHits>/BS_CPMHits" ]
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CMMCPHits>/BS_CMMCPHits" ]
 
-include ( "TrigT1CaloByteStream/ReadCpmRoIBS_jobOptions.py" )
+include ( "TrigT1CaloByteStream/ReadCpmRoiBS_jobOptions.py" )
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CPMRoI>/BS_CPMRoIs" ]
 
 ####################################################################################################################
