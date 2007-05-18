@@ -150,8 +150,8 @@ monMan.AthenaMonTools += [ "JEMMon/Sim_L1JEMMonTool" ]
 monMan.AthenaMonTools += [ "CMMMon/BS_L1CMMMonTool" ]
 monMan.AthenaMonTools += [ "CMMMon/Sim_L1CMMMonTool" ]
 #monMan.AthenaMonTools += [ "TrigT1CaloBSMonTool/L1CaloBSTool" ]
-monMan.AthenaMonTools  = [ "TrigT1CaloCpmMonTool/L1BSCPMMonTool" ]
-monMan.AthenaMonTools  = [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
+monMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1BSCPMMonTool" ]
+monMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
 
 ## get a handle on the ToolSvc
 #from AthenaCommon.AppMgr import ToolSvc as toolSvc
@@ -205,20 +205,20 @@ ToolSvc.Sim_L1CMMMonTool.PathInRootFile = "Stats/CMM/Sim"
 #ToolSvc.L1CaloBSTool.OutputLevel = DEBUG
 
 ####################### CPMs ################################
-ToolSvC.L1BSCPMMonTool.HistogramPrefix = "BS"
-ToolSvC.L1BSCPMMonTool.TriggerTowerLocation = "BS_TriggerTowers"
-ToolSvC.L1BSCPMMonTool.CPMTowerLocation = "BS_CPMTowers"
-ToolSvC.L1BSCPMMonTool.CPMHitsLocation = "BS_CPMHits"
-ToolSvC.L1BSCPMMonTool.CMMCPHitsLocation = "BS_CMMCPHits"
-ToolSvC.L1BSCPMMonTool.CPMRoILocation = "BS_CPMRoIs"
+ToolSvc.L1BSCPMMonTool.HistogramPrefix = "BS"
+ToolSvc.L1BSCPMMonTool.TriggerTowerLocation = "BS_TriggerTowers"
+ToolSvc.L1BSCPMMonTool.CPMTowerLocation = "BS_CPMTowers"
+ToolSvc.L1BSCPMMonTool.CPMHitsLocation = "BS_CPMHits"
+ToolSvc.L1BSCPMMonTool.CMMCPHitsLocation = "BS_CMMCPHits"
+ToolSvc.L1BSCPMMonTool.CPMRoILocation = "BS_CPMRoIs"
 #ToolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
 
-ToolSvC.L1SimCPMMonTool.HistogramPrefix = "Sim"
-ToolSvC.L1SimCPMMonTool.TriggerTowerLocation = "BS_TriggerTowers"
-ToolSvC.L1SimCPMMonTool.CPMTowerLocation = "Sim_CPMTowers"
-ToolSvC.L1SimCPMMonTool.CPMHitsLocation = "Sim_CPMHits"
-ToolSvC.L1SimCPMMonTool.CMMCPHitsLocation = "Sim_CMMCPHits"
-ToolSvC.L1SimCPMMonTool.CPMRoILocation = "Sim_CPMRoIs"
+ToolSvc.L1SimCPMMonTool.HistogramPrefix = "Sim"
+ToolSvc.L1SimCPMMonTool.TriggerTowerLocation = "BS_TriggerTowers"
+ToolSvc.L1SimCPMMonTool.CPMTowerLocation = "Sim_CPMTowers"
+ToolSvc.L1SimCPMMonTool.CPMHitsLocation = "Sim_CPMHits"
+ToolSvc.L1SimCPMMonTool.CMMCPHitsLocation = "Sim_CMMCPHits"
+ToolSvc.L1SimCPMMonTool.CPMRoILocation = "Sim_CPMRoIs"
 #ToolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
 
 #ToolSvc.TrigT1JetMonTool.OutputLevel = DEBUG
