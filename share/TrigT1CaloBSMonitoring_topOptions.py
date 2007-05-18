@@ -62,7 +62,6 @@ JetElementMaker.JetElementLocation ="Sim_JetElements"
 # JetTrigger
 JetTrigger = Algorithm( "JetTrigger" )
 JetTrigger.JetElementLocation="Sim_JetElements"
-#JetTrigger.JetROIOutputLocation = "Sim_JetROIs"
 JetTrigger.JEMHitsLocation = "Sim_JEMHits"
 
 # EnergyTrigger
@@ -77,12 +76,9 @@ JEPCMMMaker.JEMHitsLocation = "Sim_JEMHits"
 JEPCMMMaker.JEMEtSumsLocation = "Sim_JEMEtSums"
 JEPCMMMaker.CMMJetHitsLocation = "Sim_CMMJetHits"
 JEPCMMMaker.CMMEtSumsLocation = "Sim_CMMEtSums"
-#JEPCMMMaker.EnergyRoILocation = "Sim_EnergyROIs"
-#JEPCMMMaker.JetEtRoILocation = "Sim_JetEtROIs"
-#JEPCMMMaker.JetRoILocation = "Sim_JetROIs"
 JEPCMMMaker.JEMRoILocation = "Sim_JEMRoIs"
 JEPCMMMaker.CMMRoILocation = "Sim_CMMRoIs"
-JEPCMMMaker.OutputLevel = VERBOSE
+#JEPCMMMaker.OutputLevel = VERBOSE
 
 
 # ROD
@@ -122,59 +118,65 @@ THistSvc.Output = ["CaloBSMon DATAFILE='CaloBSMon.root' OPT='RECREATE'"]
 monMan = Algorithm( "PrimaryManager" )
 
 ## Add all the ManagedMonitorToolBase objects
-#monMan.AthenaMonTools += [ "JetElementMon/L1JetElementMonTool" ]
-#monMan.AthenaMonTools += [ "JEMMon/L1JEMMonTool" ]
-#monMan.AthenaMonTools += [ "CMMMon/L1CMMMonTool" ]
+monMan.AthenaMonTools += [ "JetElementMon/BS_L1JetElementMonTool" ]
+monMan.AthenaMonTools += [ "JetElementMon/Sim_L1JetElementMonTool" ]
+monMan.AthenaMonTools += [ "JEMMon/BS_L1JEMMonTool" ]
+monMan.AthenaMonTools += [ "JEMMon/Sim_L1JEMMonTool" ]
+monMan.AthenaMonTools += [ "CMMMon/BS_L1CMMMonTool" ]
+monMan.AthenaMonTools += [ "CMMMon/Sim_L1CMMMonTool" ]
 #monMan.AthenaMonTools += [ "TrigT1CaloBSMonTool/L1CaloBSTool" ]
-monMan.AthenaMonTools += [ "JEMRoIMon/L1BSJEMRoIMonTool" ]
-monMan.AthenaMonTools += [ "JEMRoIMon/L1SimJEMRoIMonTool" ]
-#monMan.AthenaMonTools += [ "CMMRoIMon/L1BSCMMRoIMonTool" ]
-monMan.AthenaMonTools += [ "CMMRoIMon/L1SimCMMRoIMonTool" ]
 
 ## get a handle on the ToolSvc
 #from AthenaCommon.AppMgr import ToolSvc as toolSvc
 ToolSvc = Algorithm( "ToolSvc" )
 
-#ToolSvc.L1JetElementMonTool.BS_JetElementLocation = "BS_JetElements"
-#ToolSvc.L1JetElementMonTool.Sim_JetElementLocation = "Sim_JetElements"
+####################### JetElements ################################
+ToolSvc.BS_L1JetElementMonTool.DataType = "BS"  #BS or Sim data?
+ToolSvc.BS_L1JetElementMonTool.JetElementLocation = "BS_JetElements"
+ToolSvc.BS_L1JetElementMonTool.PathInRootFile = "Stats/JetElements/BS"
+#ToolSvc.BS_L1JetElementMonTool.OutputLevel = DEBUG
 
-#ToolSvc.L1JEMMonTool.BS_JEMHitsLocation = "BS_JEMHits"
-#ToolSvc.L1JEMMonTool.BS_JEMEtSumsLocation = "BS_JEMEtSums"
-#ToolSvc.L1JEMMonTool.Sim_JEMHitsLocation = "Sim_JEMHits"
-#ToolSvc.L1JEMMonTool.Sim_JEMEtSumsLocation = "Sim_JEMEtSums"
-#ToolSvc.L1JEMMonTool.OutputLevel = DEBUG
+ToolSvc.Sim_L1JetElementMonTool.DataType = "Sim"  #BS or Sim data?
+ToolSvc.Sim_L1JetElementMonTool.JetElementLocation = "Sim_JetElements"
+ToolSvc.Sim_L1JetElementMonTool.PathInRootFile = "Stats/JetElements/Sim"
+#ToolSvc.Sim_L1JetElementMonTool.OutputLevel = DEBUG
 
-#ToolSvc.L1CMMMonTool.BS_CMMJetHitsLocation = "BS_CMMJetHits"
-#ToolSvc.L1CMMMonTool.BS_CMMEtSumsLocation = "BS_CMMEtSums"
-#ToolSvc.L1CMMMonTool.Sim_CMMJetHitsLocation = "Sim_CMMJetHits"
-#ToolSvc.L1CMMMonTool.Sim_CMMEtSumsLocation = "Sim_CMMEtSums"
-#ToolSvc.L1CMMMonTool.OutputLevel = DEBUG
+####################### JEMs ################################
+ToolSvc.BS_L1JEMMonTool.DataType = "BS"  #BS or Sim data?
+ToolSvc.BS_L1JEMMonTool.JEMHitsLocation = "BS_JEMHits"
+ToolSvc.BS_L1JEMMonTool.JEMEtSumsLocation = "BS_JEMEtSums"
+ToolSvc.BS_L1JEMMonTool.JEMRoILocation = "BS_JEMRoIs"
+ToolSvc.BS_L1JEMMonTool.PathInRootFile = "Stats/JEM/BS"
+#ToolSvc.BS_L1JEMMonTool.OutputLevel = DEBUG
 
+ToolSvc.Sim_L1JEMMonTool.DataType = "Sim"  #BS or Sim data?
+ToolSvc.Sim_L1JEMMonTool.JEMHitsLocation = "Sim_JEMHits"
+ToolSvc.Sim_L1JEMMonTool.JEMEtSumsLocation = "Sim_JEMEtSums"
+ToolSvc.Sim_L1JEMMonTool.JEMRoILocation = "Sim_JEMRoIs"
+ToolSvc.Sim_L1JEMMonTool.PathInRootFile = "Stats/JEM/Sim"
+#ToolSvc.Sim_L1JEMMonTool.OutputLevel = DEBUG
+
+####################### CMMs ################################
+ToolSvc.BS_L1CMMMonTool.DataType = "BS"  #BS or Sim data?
+ToolSvc.BS_L1CMMMonTool.CMMJetHitsLocation = "BS_CMMJetHits"
+ToolSvc.BS_L1CMMMonTool.CMMEtSumsLocation = "BS_CMMEtSums"
+ToolSvc.BS_L1CMMMonTool.CMMRoILocation = "BS_CMMRoIs"
+ToolSvc.BS_L1CMMMonTool.PathInRootFile = "Stats/CMM/BS"
+#ToolSvc.BS_L1CMMMonTool.OutputLevel = DEBUG
+
+ToolSvc.Sim_L1CMMMonTool.DataType = "Sim"  #BS or Sim data?
+ToolSvc.Sim_L1CMMMonTool.CMMJetHitsLocation = "Sim_CMMJetHits"
+ToolSvc.Sim_L1CMMMonTool.CMMEtSumsLocation = "Sim_CMMEtSums"
+ToolSvc.Sim_L1CMMMonTool.CMMRoILocation = "Sim_CMMRoIs"
+ToolSvc.Sim_L1CMMMonTool.PathInRootFile = "Stats/CMM/Sim"
+#ToolSvc.Sim_L1CMMMonTool.OutputLevel = DEBUG
+
+
+####################### Calorimeter ################################
 #ToolSvc.L1CaloBSTool.BS_TriggerTowerContainer = "BS_TriggerTowers"
 #ToolSvc.L1CaloBSTool.BS_JetElementContainer = "BS_JetElements"
 #ToolSvc.L1CaloBSTool.OutputLevel = DEBUG
 
-#JEM RoI
-ToolSvc.L1BSJEMRoIMonTool.DataType = "BS"  #BS or Sim data?
-ToolSvc.L1BSJEMRoIMonTool.JEMRoILocation = "BS_JEMRoIs"
-ToolSvc.L1BSJEMRoIMonTool.PathInRootFile = "Stats/BS_JEMRoI"
-#ToolSvc.L1BSJEMRoIMonTool.OutputLevel = DEBUG
-
-ToolSvc.L1SimJEMRoIMonTool.DataType = "Sim"  #BS or Sim data?
-ToolSvc.L1SimJEMRoIMonTool.JEMRoILocation = "Sim_JEMRoIs"
-ToolSvc.L1SimJEMRoIMonTool.PathInRootFile = "Stats/Sim_JEMRoI"
-#ToolSvc.L1SimJEMRoIMonTool.OutputLevel = DEBUG
-
-#CMM RoI
-#ToolSvc.L1BSCMMRoIMonTool.DataType = "BS"  #BS or Sim data?
-#ToolSvc.L1BSCMMRoIMonTool.CMMRoILocation = "BS_CMMRoIs"
-#ToolSvc.L1BSCMMRoIMonTool.PathInRootFile = "Stats/BS_CMMRoI"
-#ToolSvc.L1BSCMMRoIMonTool.OutputLevel = DEBUG
-
-ToolSvc.L1SimCMMRoIMonTool.DataType = "Sim"  #BS or Sim data?
-ToolSvc.L1SimCMMRoIMonTool.CMMRoILocation = "Sim_CMMRoIs"
-ToolSvc.L1SimCMMRoIMonTool.PathInRootFile = "Stats/Sim_CMMRoI"
-ToolSvc.L1SimCMMRoIMonTool.OutputLevel = DEBUG
 
 #ToolSvc.TrigT1JetMonTool.OutputLevel = DEBUG
 

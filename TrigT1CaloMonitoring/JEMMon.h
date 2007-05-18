@@ -25,12 +25,17 @@
 #include "AthenaMonitoring/AthenaMonManager.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 
+namespace LVL1 {
+  class JEMRoI;
+}
+
 
 class JEMMon : public ManagedMonitorToolBase
 {
 public:
         typedef DataVector<LVL1::JEMHits> JEMHitsCollection;
 	typedef DataVector<LVL1::JEMEtSums> JEMEtSumsCollection;
+	typedef DataVector<LVL1::JEMRoI> JemRoiCollection;
        
 
 	JEMMon( const std::string & type, const std::string & name,
@@ -48,32 +53,27 @@ protected:
    StoreGateSvc* m_storeGate;
 
    /** location of data */
-   std::string m_BS_JEMHitsLocation;
-   std::string m_BS_JEMEtSumsLocation;   
+   std::string m_JEMHitsLocation;
+   std::string m_JEMEtSumsLocation;   
+   std::string m_JEMRoILocation;
 
-   std::string m_Sim_JEMHitsLocation;
-   std::string m_Sim_JEMEtSumsLocation;   
+   std::string m_DataType;   
+   std::string m_PathInRootFile;   
 
    /** Histos */
 
    // JEM Hits
-   TH1F* m_h_BS_JEMHits_MainHits;
-   TH1F* m_h_BS_JEMHits_FwdHitsRight;
-   TH1F* m_h_BS_JEMHits_FwdHitsLeft;
-
-   TH1F* m_h_Sim_JEMHits_MainHits;
-   TH1F* m_h_Sim_JEMHits_FwdHitsRight;
-   TH1F* m_h_Sim_JEMHits_FwdHitsLeft;
+   TH1F* m_h_JEMHits_MainHits;
+   TH1F* m_h_JEMHits_FwdHitsRight;
+   TH1F* m_h_JEMHits_FwdHitsLeft;
 
    // JEM Et Sums
-   TH1F*  m_h_BS_JEMEtSums_Ex;
-   TH1F*  m_h_BS_JEMEtSums_Ey;
-   TH1F*  m_h_BS_JEMEtSums_Et;
+   TH1F*  m_h_JEMEtSums_Ex;
+   TH1F*  m_h_JEMEtSums_Ey;
+   TH1F*  m_h_JEMEtSums_Et; 
 
-   TH1F*  m_h_Sim_JEMEtSums_Ex;
-   TH1F*  m_h_Sim_JEMEtSums_Ey;
-   TH1F*  m_h_Sim_JEMEtSums_Et;
- 
+   // JEM RoI
+   TH1F* m_h_JEMRoI_Hits;
 };
 
 

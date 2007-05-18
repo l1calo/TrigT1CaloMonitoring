@@ -28,8 +28,8 @@
 #include <iostream>
 
 
-//#include "TrigT1Calo/JEMEtSums.h"
 #include "TrigT1Calo/JetElementMaker.h"
+#include "TrigT1CaloMonitoring/MonHelper.h"
 
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 #include "TrigT1Interfaces/Coordinate.h"
@@ -42,29 +42,30 @@
 // Public Methods
 // *********************************************************************
 
+/*---------------------------------------------------------*/
 JetElementMon::JetElementMon( const std::string & type, const std::string & name,
-                        const IInterface* parent )
-	: ManagedMonitorToolBase( type, name, parent )
+			      const IInterface* parent )
+  : ManagedMonitorToolBase( type, name, parent )
+/*---------------------------------------------------------*/
 {
   // This is how you declare the parameters to Gaudi so that
   // they can be over-written via the job options file
 
-  declareProperty( "BS_JetElementLocation", m_BS_JetElementLocation = LVL1::TrigT1CaloDefs::JetElementLocation); 
-  declareProperty( "Sim_JetElementLocation", m_Sim_JetElementLocation  =  LVL1::TrigT1CaloDefs::JetElementLocation ) ;
-
+  declareProperty( "JetElementLocation", m_JetElementLocation = LVL1::TrigT1CaloDefs::JetElementLocation); 
+  declareProperty( "PathInRootFile", m_PathInRootFile="Stats/JetElements") ;
+  declareProperty( "DataType", m_DataType="") ;
 }
 
-
-JetElementMon::
-~JetElementMon()
+/*---------------------------------------------------------*/
+JetElementMon::~JetElementMon()
+/*---------------------------------------------------------*/
 {
 }
 
-
-//_______________________________ book Histograms ___________________________________________
-StatusCode
-JetElementMon::
-bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun )
+/*---------------------------------------------------------*/
+StatusCode JetElementMon::bookHistograms( bool isNewEventsBlock, 
+					  bool isNewLumiBlock, bool isNewRun )
+/*---------------------------------------------------------*/
 {
   MsgStream mLog( msgSvc(), name() );
   mLog << MSG::DEBUG << "in JetElementMon::bookHistograms" << endreq;
@@ -86,80 +87,23 @@ bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun )
     // book histograms that are only relevant for cosmics data...
   }
 
-  MonGroup BS_JetElements_expert (this, "Stats/BS_JetElements",expert, eventsBlock);
-  MonGroup BS_JetElements_shift (this, "Stats/BS_JetElements",shift, eventsBlock);
-  
-  MonGroup Sim_JetElements_expert (this, "Stats/Sim_JetElements",expert, eventsBlock);
-  MonGroup Sim_JetElements_shift (this, "Stats/Sim_JetElements",shift, eventsBlock);
+  MonGroup JetElements_expert (this,m_PathInRootFile ,expert, eventsBlock);
+  HistoBooker* expert_Booker = new HistoBooker(&JetElements_expert, &mLog, m_DataType);
 
+  MonGroup JetElements_shift (this,m_PathInRootFile ,shift, eventsBlock);
+  HistoBooker* shift_Booker = new HistoBooker(&JetElements_shift, &mLog, m_DataType);
+  
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
-      // register Histograms for BS data
-      m_h_BS_je_eta     = new TH1F("eta","BS JE eta", 50,-5,5);
-      m_h_BS_je_eta -> GetXaxis() -> SetTitle("#eta");
-      BS_JetElements_expert.regHist (m_h_BS_je_eta);
-      
-      m_h_BS_je_phi     = new TH1F("phi","BS JE phi",32,0,6.4);
-      m_h_BS_je_phi -> GetXaxis() -> SetTitle("#phi");
-      BS_JetElements_expert.regHist (m_h_BS_je_phi );
+      // register Histograms for  data
+      m_h_je_eta = expert_Booker->book1F("eta", "JE eta" , 50, -5, 5, "#eta" , "#");
+      m_h_je_phi = expert_Booker->book1F("phi", "JE phi", 32, 0, 6.4, "#phi" , "#");
+      m_h_je_emenergy = expert_Booker->book1F("em_energy", "JE em energy", 100, 0, 100, "em energy [GeV]" , "#");
+      m_h_je_hadenergy  = expert_Booker->book1F("had_energy", "JE had energy", 100, 0, 100, "had energy [GeV]" , "#");
+      m_h_je_energy = expert_Booker->book1F("Et", "JE Et (em + had)", 100, 0, 100, "(em+had) energy [GeV]" , "#");
 
-      m_h_BS_je_emenergy     = new TH1F("em energy","BS JE em energy",100,0,100);
-      m_h_BS_je_emenergy -> GetXaxis() -> SetTitle("em energy [GeV]");
-      BS_JetElements_expert.regHist (m_h_BS_je_emenergy);
-
-      m_h_BS_je_hadenergy     = new TH1F("had energy","BS JE had energy",100,0,100);
-      m_h_BS_je_hadenergy -> GetXaxis() -> SetTitle("had energy [GeV]");
-      BS_JetElements_expert.regHist (m_h_BS_je_hadenergy);
-
-      m_h_BS_je_energy     = new TH1F("Et","BS JE Et (em + had)",100,0,100);
-      m_h_BS_je_energy -> GetXaxis() -> SetTitle("(em+had) energy [GeV]");
-      BS_JetElements_expert.regHist (m_h_BS_je_energy );
-
-      m_h_BS_je_etaphi      = new TH2F("eta phi", "BS JE per eta - phi", 50,-5,5,32,0,6.4);
-      m_h_BS_je_etaphi -> SetOption ("colz");
-      m_h_BS_je_etaphi -> GetXaxis() -> SetTitle("#eta");
-      m_h_BS_je_etaphi -> GetYaxis() -> SetTitle("#phi");
-      BS_JetElements_shift.regHist (m_h_BS_je_etaphi );
-
-      m_h_BS_je_energy_etaphi= new TH2F("Et per eta-phi", "BS JE Et per eta - phi", 50,-5,5,32,0,6.4);
-      m_h_BS_je_energy_etaphi -> SetOption ("colz");
-      m_h_BS_je_energy_etaphi -> GetXaxis() -> SetTitle("#eta");
-      m_h_BS_je_energy_etaphi -> GetYaxis() -> SetTitle("#phi");
-      BS_JetElements_shift.regHist (m_h_BS_je_energy_etaphi);
-	  
-      // register Histograms for Simulation data
-      m_h_Sim_je_eta     = new TH1F("eta","Sim JE eta",50,-5,5);
-      m_h_Sim_je_eta -> GetXaxis() -> SetTitle("#eta");
-      Sim_JetElements_expert.regHist (m_h_Sim_je_eta);
-      
-      m_h_Sim_je_phi     = new TH1F("phi","Sim JE phi",32,0,6.4);
-      m_h_Sim_je_phi -> GetXaxis() -> SetTitle("#phi");
-      Sim_JetElements_expert.regHist (m_h_Sim_je_phi );
-      
-      m_h_Sim_je_emenergy     = new TH1F("em energy","Sim JE em energy",100,0,100);
-      m_h_Sim_je_emenergy -> GetXaxis() -> SetTitle("em energy [GeV]");
-      Sim_JetElements_expert.regHist (m_h_Sim_je_emenergy);
-
-      m_h_Sim_je_hadenergy     = new TH1F("had energy","Sim JE had energy",100,0,100);
-      m_h_Sim_je_hadenergy -> GetXaxis() -> SetTitle("had energy [GeV]");
-      Sim_JetElements_expert.regHist (m_h_Sim_je_hadenergy);
-
-      m_h_Sim_je_energy     = new TH1F("Et","Sim JE Et (em + had)",100,0,100);
-      m_h_Sim_je_energy -> GetXaxis() -> SetTitle("(em+had) energy [GeV]");
-      Sim_JetElements_expert.regHist (m_h_Sim_je_energy );
-
-      m_h_Sim_je_etaphi      = new TH2F("eta-phi", "Sim JE per eta - phi", 50,-5,5,32,0,6.4);
-      m_h_Sim_je_etaphi -> SetOption ("colz");
-      m_h_Sim_je_etaphi -> GetXaxis() -> SetTitle("#eta");
-      m_h_Sim_je_etaphi -> GetYaxis() -> SetTitle("#phi");
-      Sim_JetElements_shift.regHist (m_h_Sim_je_etaphi );
-
-      m_h_Sim_je_energy_etaphi= new TH2F("Et per eta-phi", "Sim JE Et per eta - phi", 50,-5,5,32,0,6.4);
-      m_h_Sim_je_energy_etaphi -> SetOption ("colz");
-      m_h_Sim_je_energy_etaphi -> GetXaxis() -> SetTitle("#eta");
-      m_h_Sim_je_energy_etaphi -> GetYaxis() -> SetTitle("#phi");
-      Sim_JetElements_shift.regHist (m_h_Sim_je_energy_etaphi);
-
+      m_h_je_etaphi = shift_Booker->book2F("eta-phi", "JE per eta - phi", 50, -5, 5, 32, 0, 6.4 , "#eta", "#phi");
+      m_h_je_energy_etaphi = shift_Booker->book2F("Et_per_eta-phi", " JE Et per eta - phi",  50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
     }
 	
   if( isNewRun ) { }
@@ -168,24 +112,21 @@ bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun )
 }
 
 
-
-
-//_______________________________ fill Histograms ___________________________________________
-StatusCode
-JetElementMon::
-fillHistograms()
+/*---------------------------------------------------------*/
+StatusCode JetElementMon::fillHistograms()
+/*---------------------------------------------------------*/
 {
   MsgStream mLog( msgSvc(), name() );
 
-  //fill BS Histos
+  //fill Histos
   const JECollection* jetElements;
-  StatusCode sc = m_storeGate->retrieve(jetElements, m_BS_JetElementLocation);
+  StatusCode sc = m_storeGate->retrieve(jetElements, m_JetElementLocation);
 
   if( (sc==StatusCode::FAILURE) ) 
     {
       mLog << MSG::DEBUG
-	   << "No jetElemtns found in TES at "
-	   << m_BS_JetElementLocation
+	   << "No JetElements found in TES at "
+	   << m_JetElementLocation
 	   << endreq ;
       return StatusCode::SUCCESS;
     }
@@ -194,65 +135,34 @@ fillHistograms()
   JECollection::const_iterator it_je ;
   for( it_je = jetElements ->begin(); it_je < jetElements->end(); ++it_je )
     {	  
-      mLog << MSG::VERBOSE<<"JE has coords ("<<(*it_je)->phi()<<", "<<(*it_je)->eta()
+      mLog << MSG::VERBOSE<<m_DataType <<" JE has coords ("<<(*it_je)->phi()<<", "<<(*it_je)->eta()
 	   << " and energies : "<<(*it_je)->emEnergy()<<", "<<(*it_je)->hadEnergy()<<" (Em,Had)"<<endreq;
 
       // fill histograms
-      m_h_BS_je_eta -> Fill( (*it_je)-> eta(), 1.);
-      m_h_BS_je_phi->Fill( (*it_je)->phi() , 1.);
-      m_h_BS_je_emenergy->Fill( (*it_je)->emEnergy() , 1.);
-      m_h_BS_je_hadenergy->Fill( (*it_je)->hadEnergy() , 1.);
-      m_h_BS_je_energy->Fill( (*it_je)->energy() , 1.);
+      m_h_je_eta -> Fill( (*it_je)-> eta(), 1.);
+      m_h_je_phi->Fill( (*it_je)->phi() , 1.);
+      m_h_je_emenergy->Fill( (*it_je)->emEnergy() , 1.);
+      m_h_je_hadenergy->Fill( (*it_je)->hadEnergy() , 1.);
+      m_h_je_energy->Fill( (*it_je)->energy() , 1.);
       
-      m_h_BS_je_etaphi->Fill( (*it_je)->eta(),(*it_je)->phi() , 1.);
-      m_h_BS_je_energy_etaphi->Fill( (*it_je)->eta(),(*it_je)->phi() ,(*it_je)->energy() );  
+      m_h_je_etaphi->Fill( (*it_je)->eta(),(*it_je)->phi() , 1.);
+      m_h_je_energy_etaphi->Fill( (*it_je)->eta(),(*it_je)->phi() ,(*it_je)->energy() );  
   
     }     	
-  
-  //fill Simulation data
-  sc = m_storeGate->retrieve(jetElements, m_Sim_JetElementLocation);
-
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      mLog << MSG::VERBOSE
-	   << "No jetElemtns found in TES at "
-	   << m_Sim_JetElementLocation
-	   << endreq ;
-      return StatusCode::SUCCESS;
-    }
-
-  // Step over all cells and put into hist
-  for( it_je  =jetElements ->begin(); it_je < jetElements->end(); ++it_je )
-    {	  
-      mLog << MSG::VERBOSE<<"JE has coords ("<<(*it_je)->phi()<<", "<<(*it_je)->eta()
-	   << " and energies : "<<(*it_je)->emEnergy()<<", "<<(*it_je)->hadEnergy()<<" (Em,Had)"<<endreq;
-
-      // fill histograms
-      m_h_Sim_je_eta -> Fill( (*it_je)-> eta(), 1.);
-      m_h_Sim_je_phi->Fill( (*it_je)->phi() , 1.);
-      m_h_Sim_je_emenergy->Fill( (*it_je)->emEnergy() , 1.);
-      m_h_Sim_je_hadenergy->Fill( (*it_je)->hadEnergy() , 1.);
-      m_h_Sim_je_energy->Fill( (*it_je)->energy() , 1.);
-      
-      m_h_Sim_je_etaphi->Fill( (*it_je)->eta(),(*it_je)->phi() , 1.);
-      m_h_Sim_je_energy_etaphi->Fill( (*it_je)->eta(),(*it_je)->phi() ,(*it_je)->energy() );  
-  
-    }
-  
   return StatusCode( StatusCode::SUCCESS );
 }
 
-//_______________________________ proc  Histograms ___________________________________________
-StatusCode
-JetElementMon::
-procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun )
+/*---------------------------------------------------------*/
+StatusCode JetElementMon::procHistograms( bool isEndOfEventsBlock, 
+					  bool isEndOfLumiBlock, bool isEndOfRun )
+/*---------------------------------------------------------*/
 {
-        if( isEndOfEventsBlock || isEndOfLumiBlock ) 
-	  {
-
-	}
+  if( isEndOfEventsBlock || isEndOfLumiBlock ) 
+    {
+      
+    }
 	
-	if( isEndOfRun ) { }
+  if( isEndOfRun ) { }
   
   return StatusCode( StatusCode::SUCCESS );
 }

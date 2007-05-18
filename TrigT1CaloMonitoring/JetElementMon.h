@@ -45,28 +45,19 @@ protected:
    StoreGateSvc* m_storeGate;
 
    /** location of data */
-   std::string m_BS_JetElementLocation;
-   std::string m_Sim_JetElementLocation;
+   std::string m_JetElementLocation;
+   std::string m_DataType;
+   std::string m_PathInRootFile;
 
    /** Histos */
-   TH1F* m_h_BS_je_eta;
-   TH1F* m_h_BS_je_phi;
-   TH1F* m_h_BS_je_emenergy;
-   TH1F* m_h_BS_je_hadenergy; 
-   TH1F* m_h_BS_je_energy; 
+   TH1F* m_h_je_eta;
+   TH1F* m_h_je_phi;
+   TH1F* m_h_je_emenergy;
+   TH1F* m_h_je_hadenergy; 
+   TH1F* m_h_je_energy; 
 
-   TH2F* m_h_BS_je_etaphi;
-   TH2F* m_h_BS_je_energy_etaphi;
-
-   TH1F* m_h_Sim_je_eta;
-   TH1F* m_h_Sim_je_phi;
-   TH1F* m_h_Sim_je_emenergy;
-   TH1F* m_h_Sim_je_hadenergy; 
-   TH1F* m_h_Sim_je_energy; 
-
-   TH2F* m_h_Sim_je_etaphi;
-   TH2F* m_h_Sim_je_energy_etaphi;
-
+   TH2F* m_h_je_etaphi;
+   TH2F* m_h_je_energy_etaphi;
 };
 
 

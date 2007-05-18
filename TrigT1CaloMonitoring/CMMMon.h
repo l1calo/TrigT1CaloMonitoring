@@ -49,38 +49,29 @@ protected:
    StoreGateSvc* m_storeGate;
 
    /** location of data */
-   std::string m_BS_CMMJetHitsLocation;
-   std::string m_BS_CMMEtSumsLocation;
+   std::string m_CMMJetHitsLocation;
+   std::string m_CMMEtSumsLocation;
+   std::string m_CMMRoILocation;
 
-   std::string m_Sim_CMMJetHitsLocation;
-   std::string m_Sim_CMMEtSumsLocation;
-   std::string m_Sim_JetEtROILocation;
-   std::string m_Sim_JetROILocation;
+   std::string m_DataType;   
+   std::string m_PathInRootFile;   
 
-   /** Histos */   
+  /** Histos */   
    // CMM Jet Hits
-   TH1* m_h_BS_CMMJetHits_MainJets;
-   TH1* m_h_BS_CMMJetHits_FwdJetsRight;
-   TH1* m_h_BS_CMMJetHits_FwdJetsLeft;
-   TH1* m_h_BS_CMMJetHits_EtMap;
-
-   TH1* m_h_Sim_CMMJetHits_MainJets;
-   TH1* m_h_Sim_CMMJetHits_FwdJetsRight;
-   TH1* m_h_Sim_CMMJetHits_FwdJetsLeft;
-   TH1* m_h_Sim_CMMJetHits_EtMap;
+   TH1* m_h_CMMJetHits_MainJets;
+   TH1* m_h_CMMJetHits_FwdJetsRight;
+   TH1* m_h_CMMJetHits_FwdJetsLeft;
+   TH1* m_h_CMMJetHits_EtMap;
 
    // CMM Et Sums
-   TH1* m_h_BS_CMMEtSums_Ex;
-   TH1* m_h_BS_CMMEtSums_Ey;
-   TH1* m_h_BS_CMMEtSums_Et;
-   TH1* m_h_BS_CMMEtSums_MissingEtMap;
-   TH1* m_h_BS_CMMEtSums_SumEtMap;
+   TH1* m_h_CMMEtSums_Ex;
+   TH1* m_h_CMMEtSums_Ey;
+   TH1* m_h_CMMEtSums_Et;
+   TH1* m_h_CMMEtSums_MissingEtMap;
+   TH1* m_h_CMMEtSums_SumEtMap;
 
-   TH1* m_h_Sim_CMMEtSums_Ex;
-   TH1* m_h_Sim_CMMEtSums_Ey;
-   TH1* m_h_Sim_CMMEtSums_Et;
-   TH1* m_h_Sim_CMMEtSums_MissingEtMap;
-   TH1* m_h_Sim_CMMEtSums_SumEtMap;
+   // CMM RoI
+   TH1* m_h_CMMRoI_JetEtHits;
 
 };
 
