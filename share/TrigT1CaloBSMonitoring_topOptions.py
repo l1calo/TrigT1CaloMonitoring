@@ -20,12 +20,18 @@ ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::JEMEtSums>/BS_JEME
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CMMJetHits>/BS_CMMJetHits" ]
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CMMEtSums>/BS_CMMEtSums" ]
 
-include ( "TrigT1CaloByteStream/ReadJepBS_jobOptions.py" )
+include ( "TrigT1CaloByteStream/ReadJepRoIBS_jobOptions.py" )
 ByteStreamAddressProviderSvc = Service( "ByteStreamAddressProviderSvc" )
 ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::JEMRoI>/BS_JEMRoIs" ]
 ByteStreamAddressProviderSvc.TypeNames += [ "LVL1::CMMRoI/BS_CMMRoIs" ]
 
-#include ( "TrigT1CaloByteStream/ReadCpBS_jobOptions.py" )
+include ( "TrigT1CaloByteStream/ReadCpBS_jobOptions.py" )
+ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CPMTower>/BS_CPMTowers" ]
+ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CPMHits>/BS_CPMHits" ]
+ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CMMCPHits>/BS_CMMCPHits" ]
+
+include ( "TrigT1CaloByteStream/ReadCpmRoiBS_jobOptions.py" )
+ByteStreamAddressProviderSvc.TypeNames += [ "DataVector<LVL1::CPMRoI>/BS_CPMRoIs" ]
 
 ####################################################################################################################
 ########################################## L1Calo Simulation #######################################################
@@ -45,19 +51,32 @@ TrigT1CaloInfoLoader = Service( "TrigT1CaloInfoLoader" )
 TrigT1CaloInfoLoader.TrigT1CaloInfoName = "TrigT1CaloInfo"
 
 # TrigT1Calo : create trigger towers and run trigger sim.
+theApp.TopAlg += ["LVL1::CPMTowerMaker/CPMTowerMaker" ]
 theApp.TopAlg += ["LVL1::JetElementMaker/JetElementMaker"]       
+theApp.TopAlg += ["LVL1::EmTauTrigger/EmTauTrigger" ]
 theApp.TopAlg += ["LVL1::EnergyTrigger/EnergyTrigger" ]          
 theApp.TopAlg += ["LVL1::JetTrigger/JetTrigger" ]         
 theApp.TopAlg += ["LVL1::ROD/ROD" ]          
 theApp.TopAlg += ["LVL1::JEPCMMMaker/JEPCMMMaker" ]
+theApp.TopAlg += ["LVL1::CPCMMMaker/CPCMMMaker" ]
 
 #*************************************************************
 # Set input and output locations  
 #*************************************************************
+# CPMTowerMaker
+CPMTowerMaker = Algorithm( "CPMTowerMaker" )
+CPMTowerMaker.TriggerTowerLocation = "BS_TriggerTowers"
+CPMTowerMaker.CPMTowerLocation = "Sim_CPMTowers"
+
 # JetElementMaker
 JetElementMaker = Algorithm( "JetElementMaker" )
 JetElementMaker.TriggerTowerLocation ="BS_TriggerTowers"  
 JetElementMaker.JetElementLocation ="Sim_JetElements"
+
+# EmTauTrigger
+EmTauTrigger = Algorithm( "EmTauTrigger" )
+EmTauTrigger.TriggerTowerLocation = "BS_TriggerTowers"
+EmTauTrigger.CPMHitsLocation = "Sim_CPMHits"
 
 # JetTrigger
 JetTrigger = Algorithm( "JetTrigger" )
@@ -80,6 +99,12 @@ JEPCMMMaker.JEMRoILocation = "Sim_JEMRoIs"
 JEPCMMMaker.CMMRoILocation = "Sim_CMMRoIs"
 #JEPCMMMaker.OutputLevel = VERBOSE
 
+# CP CMMs
+CPCMMMaker = Algorithm( "CPCMMMaker" )
+CPCMMMaker.CPMTowerLocation = "Sim_CPMTowers"
+CPCMMMaker.CPMHitsLocation = "Sim_CPMHits"
+CPCMMMaker.CMMCPHitsLocation = "Sim_CMMCPHits"
+CPCMMMaker.CPMRoILocation = "Sim_CPMRoIs"
 
 # ROD
 ROD = Algorithm( "ROD" )
@@ -125,6 +150,8 @@ monMan.AthenaMonTools += [ "JEMMon/Sim_L1JEMMonTool" ]
 monMan.AthenaMonTools += [ "CMMMon/BS_L1CMMMonTool" ]
 monMan.AthenaMonTools += [ "CMMMon/Sim_L1CMMMonTool" ]
 #monMan.AthenaMonTools += [ "TrigT1CaloBSMonTool/L1CaloBSTool" ]
+monMan.AthenaMonTools  = [ "TrigT1CaloCpmMonTool/L1BSCPMMonTool" ]
+monMan.AthenaMonTools  = [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
 
 ## get a handle on the ToolSvc
 #from AthenaCommon.AppMgr import ToolSvc as toolSvc
@@ -177,6 +204,22 @@ ToolSvc.Sim_L1CMMMonTool.PathInRootFile = "Stats/CMM/Sim"
 #ToolSvc.L1CaloBSTool.BS_JetElementContainer = "BS_JetElements"
 #ToolSvc.L1CaloBSTool.OutputLevel = DEBUG
 
+####################### CPMs ################################
+ToolSvC.L1BSCPMMonTool.HistogramPrefix = "BS"
+ToolSvC.L1BSCPMMonTool.TriggerTowerLocation = "BS_TriggerTowers"
+ToolSvC.L1BSCPMMonTool.CPMTowerLocation = "BS_CPMTowers"
+ToolSvC.L1BSCPMMonTool.CPMHitsLocation = "BS_CPMHits"
+ToolSvC.L1BSCPMMonTool.CMMCPHitsLocation = "BS_CMMCPHits"
+ToolSvC.L1BSCPMMonTool.CPMRoILocation = "BS_CPMRoIs"
+#ToolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
+
+ToolSvC.L1SimCPMMonTool.HistogramPrefix = "Sim"
+ToolSvC.L1SimCPMMonTool.TriggerTowerLocation = "BS_TriggerTowers"
+ToolSvC.L1SimCPMMonTool.CPMTowerLocation = "Sim_CPMTowers"
+ToolSvC.L1SimCPMMonTool.CPMHitsLocation = "Sim_CPMHits"
+ToolSvC.L1SimCPMMonTool.CMMCPHitsLocation = "Sim_CMMCPHits"
+ToolSvC.L1SimCPMMonTool.CPMRoILocation = "Sim_CPMRoIs"
+#ToolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
 
 #ToolSvc.TrigT1JetMonTool.OutputLevel = DEBUG
 
