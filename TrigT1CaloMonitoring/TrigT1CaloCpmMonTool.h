@@ -3,7 +3,7 @@
 // NAME:     TrigT1CaloCpmMonTool.h
 // PACKAGE:  TrigT1CaloMonitoring
 //
-// AUTHOR:   
+// AUTHOR:   Peter Faulkner
 //	     
 //
 // ********************************************************************
@@ -56,13 +56,14 @@ private:
   typedef DataVector<LVL1::CPMRoI>       CpmRoiCollection;
   typedef DataVector<LVL1::TriggerTower> TriggerTowerCollection;
   
-  TH1D* book1D(MonGroup& mg, std::string nam, std::string tit,
+  TH1D* book1D(std::string nam, std::string tit,
                                     int nx, double xmin, double xmax);
-  TH2D* book2D(MonGroup& mg, std::string nam, std::string tit,
+  TH2D* book2D(std::string nam, std::string tit,
                                     int nx, double xmin, double xmax,
                                     int ny, double ymin, double ymax);
 
-  std::string m_stem;
+  std::string m_prefix;
+  MonGroup* m_monGroup;
 
   StoreGateSvc* m_StoreGate;
 
