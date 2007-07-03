@@ -53,12 +53,34 @@ class Helper
      Helper(); 
      virtual ~Helper();
 
+     //returns array with eta and phi binning for TT and JE
+     double* TTEtaBinning();
+     double* TTPhiBinning();
+     double* JEEtaBinning();
+     double* JEPhiBinning();
+
      // converts the integer Hits value into a string with lenth = NumberBits  
      std::string Binary(unsigned int Hits, int NumberBits);
 
      // gives back the multiplicity a certain threshold (ThresNo), where BitsPerThresh
      // is the number of bits that are reserved for each Threshold
      int Multiplicity(std::string BinaryHitMap,int ThreshNo, int BitsPerThresh);
+
+     //fills Hit Histos
+     void FillHitsHisto(TH1F* Histo, std::string HitWord, int minThresh, int NoThresh, int ThreshOffset, 
+			 int BitsPerThresh, MsgStream::MsgStream* log);
+			  
+ protected:
+     int NoTTEtaBins;
+     int NoTTPhiBins;
+     double *TTEtaBins;
+     double *TTPhiBins;
+     int NoJEEtaBins;
+     int NoJEPhiBins;
+     double *JEEtaBins;
+     double *JEPhiBins;
+
+     double BinContent;
 };
 
 

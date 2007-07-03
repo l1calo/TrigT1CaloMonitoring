@@ -41,7 +41,19 @@ TH1F* HistoBooker::book1F(std::string HistoName, std::string HistoTitle,
 /*---------------------------------------------------------*/
 {
   //set Histo values
-  TH1F* hist = new TH1F(TString(m_DataType + "_" + HistoName), TString(m_DataType + ": " + HistoTitle), NoBins, xmin, xmax);
+  std::string name,title;
+  if (m_DataType=="")
+    {
+      name=HistoName;
+      title=HistoTitle;
+    }
+  else
+    {
+      name=m_DataType + "_" + HistoName;
+      title=m_DataType + ": " + HistoTitle;
+    }
+
+  TH1F* hist = new TH1F(TString(name), TString(title), NoBins, xmin, xmax);
   hist -> GetXaxis() -> SetTitle(TString(xAxisTitle));
   hist -> GetYaxis() -> SetTitle(TString(yAxisTitle));
  
@@ -72,7 +84,19 @@ TH2F* HistoBooker::book2F(std::string HistoName, std::string HistoTitle,
 /*---------------------------------------------------------*/
 {
   //set Histo values
-  TH2F* hist = new TH2F(TString(m_DataType + "_" + HistoName), TString(m_DataType + ": " + HistoTitle), xBins, xmin, xmax, yBins, ymin, ymax);
+  std::string name,title;
+  if (m_DataType=="")
+    {
+      name=HistoName;
+      title=HistoTitle;
+    }
+  else
+    {
+      name=m_DataType + "_" + HistoName;
+      title=m_DataType + ": " + HistoTitle;
+    }
+
+  TH2F* hist = new TH2F(TString(name), TString(title), xBins, xmin, xmax, yBins, ymin, ymax);
   hist -> GetXaxis() -> SetTitle(TString(xAxisTitle));
   hist -> GetYaxis() -> SetTitle(TString(yAxisTitle));
   hist-> SetOption ("colz");
@@ -99,12 +123,113 @@ TH2F* HistoBooker::book2F(std::string HistoName, std::string HistoTitle,
 Helper::Helper() 
 /*---------------------------------------------------------*/
 {
+  NoTTEtaBins=67;
+  NoTTPhiBins=65;
+  TTEtaBins = new double[NoTTEtaBins];
+  TTPhiBins = new double[NoTTPhiBins];
+
+  TTEtaBins[0]=-4.9;
+  TTEtaBins[1]=-4.475;
+  TTEtaBins[2]=-4.050;
+  TTEtaBins[3]=-3.625;
+  TTEtaBins[4]=-3.2;
+  
+  BinContent=-3.1;
+  for (int i=5; i<8; i++)
+    {
+      TTEtaBins[i]=BinContent;
+      BinContent=BinContent+0.2;
+    }
+  for (int i=8; i<58; i++)
+    {
+      TTEtaBins[i]=BinContent;
+      BinContent=BinContent+0.1;
+    }
+  for (int i=58; i<62; i++)
+    {
+      TTEtaBins[i]=BinContent;
+      BinContent=BinContent+0.2;
+    }
+
+  TTEtaBins[62]=3.2;
+  TTEtaBins[63]=3.625;
+  TTEtaBins[64]=4.050;
+  TTEtaBins[65]=4.475;
+  TTEtaBins[66]=4.9;
+
+
+  
+  BinContent=0;
+  for (int i=0; i<65; i++)
+    {
+      TTPhiBins[i]=BinContent;
+      BinContent=BinContent+2*TMath::Pi()/64;
+    } 
+
+
+  NoJEEtaBins=33;
+  NoJEPhiBins=33;
+  JEEtaBins = new double[NoJEEtaBins];
+  JEPhiBins = new double[NoJEPhiBins];
+
+  BinContent=-2.4;
+
+  JEEtaBins[0]=-4.9;
+  JEEtaBins[1]=-3.2;
+  JEEtaBins[2]=-2.9;
+  JEEtaBins[3]=-2.7;
+  
+  JEEtaBins[29]=2.7;
+  JEEtaBins[30]=2.9;
+  JEEtaBins[31]=3.2;
+  JEEtaBins[32]=4.9;
+
+  for (int i=4; i<29; i++)
+    {
+      JEEtaBins[i]=BinContent;
+      BinContent=BinContent+0.2;
+    }
+  
+  BinContent=0;
+  for (int i=0; i<33; i++)
+    {
+      JEPhiBins[i]=BinContent;
+      BinContent=BinContent+2*TMath::Pi()/32;
+    } 
 }
 
 /*---------------------------------------------------------*/
 Helper::~Helper()
 /*---------------------------------------------------------*/
 {
+}
+
+/*---------------------------------------------------------*/
+double* Helper::TTEtaBinning() 
+/*---------------------------------------------------------*/
+{
+  return TTEtaBins;
+}
+
+/*---------------------------------------------------------*/
+double* Helper::TTPhiBinning() 
+/*---------------------------------------------------------*/
+{
+  return TTPhiBins;
+}
+
+/*---------------------------------------------------------*/
+double* Helper::JEEtaBinning() 
+/*---------------------------------------------------------*/
+{
+  return JEEtaBins;
+}
+
+/*---------------------------------------------------------*/
+double* Helper::JEPhiBinning() 
+/*---------------------------------------------------------*/
+{
+  return JEPhiBins;
 }
 
 /*---------------------------------------------------------*/
@@ -156,3 +281,22 @@ int Helper::Multiplicity(std::string BinaryHitMap,
 
   return mult;
 }
+
+/*---------------------------------------------------------*/
+void Helper::FillHitsHisto(TH1F* Histo, std::string HitWord, int minThresh, int NoThresh, int ThreshOffset, 
+			    int BitsPerThresh, MsgStream::MsgStream* log)
+/*---------------------------------------------------------*/
+{
+  int min=(minThresh+ThreshOffset);
+  int max=(NoThresh+ThreshOffset);
+
+  for (int i=min; i<max; i++)
+    {
+      int JetMult = Multiplicity(HitWord,i,BitsPerThresh);
+
+      *log<<MSG::VERBOSE<<"Thresh.No: "<<(i-ThreshOffset)<<" Multiplicity: "<< JetMult<<endreq;
+      Histo->Fill((i-ThreshOffset),JetMult);
+    }
+  return;
+}
+

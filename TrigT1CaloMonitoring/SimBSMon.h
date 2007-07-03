@@ -1,6 +1,6 @@
 // ********************************************************************
 //
-// NAME:        CMMMon.h
+// NAME:        SimBSMon.h
 // PACKAGE:     TrigT1CaloMonitoring  
 //
 // AUTHOR:      Johanna Fleckner (Johanna.Fleckner@uni-mainz.de)
@@ -9,8 +9,8 @@
 //
 // ********************************************************************
 
-#ifndef CMMMon_H
-#define CMMMon_H
+#ifndef SimBSMon_H
+#define SimBSMon_H
 
 #include "GaudiKernel/StatusCode.h"
 #include "CLHEP/Units/SystemOfUnits.h"
@@ -23,27 +23,31 @@
 #include "TrigT1Calo/CMMEtSums.h"
 #include "TrigT1Calo/JEMHits.h"
 #include "TrigT1Calo/JEMEtSums.h"
+#include "TrigT1Calo/JEMRoI.h"
 
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 
+namespace LVL1 {
+  class JEMRoI;
+}
 
-class CMMMon : public ManagedMonitorToolBase
+class SimBSMon : public ManagedMonitorToolBase
 {
 public:
-/*         typedef DataVector<const LVL1::CMMJetHits*> pCMMJetHitsCollection; */
         typedef DataVector<LVL1::CMMJetHits> CMMJetHitsCollection;
         typedef DataVector<const LVL1::CMMJetHits> cCMMJetHitsCollection;
         typedef DataVector<LVL1::CMMEtSums> CMMEtSumsCollection;
         typedef DataVector<LVL1::JEMHits> JEMHitsCollection;
 	typedef DataVector<LVL1::JEMEtSums> JEMEtSumsCollection;
+	typedef DataVector<LVL1::JEMRoI> JEMRoICollection;
 
 
-	CMMMon( const std::string & type, const std::string & name,
+	SimBSMon( const std::string & type, const std::string & name,
 	                 const IInterface* parent ); 
 
-	virtual ~CMMMon();
+	virtual ~SimBSMon();
 
 	virtual StatusCode bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun );
 	virtual StatusCode fillHistograms();
@@ -55,55 +59,36 @@ protected:
    StoreGateSvc* m_storeGate;
 
    /** location of data */
-   std::string m_CMMJetHitsLocation;
-   std::string m_CMMEtSumsLocation;
-   std::string m_CMMRoILocation;
+   std::string m_BS_CMMJetHitsLocation;
+   std::string m_BS_CMMEtSumsLocation;
+   std::string m_BS_CMMRoILocation;
 
-   std::string m_JEMHitsLocation;
-   std::string m_JEMEtSumsLocation;   
+   std::string m_BS_JEMHitsLocation;
+   std::string m_BS_JEMEtSumsLocation;   
+   std::string m_BS_JEMRoILocation;   
+
+   std::string m_Sim_CMMJetHitsLocation;
+   std::string m_Sim_CMMEtSumsLocation;
+   std::string m_Sim_CMMRoILocation;
+
+   std::string m_Sim_JEMHitsLocation;
+   std::string m_Sim_JEMEtSumsLocation;   
+   std::string m_Sim_JEMRoILocation;   
 
    std::string m_DataType;   
    std::string m_PathInRootFile;   
 
   /** Histos */   
-   // CMM Jet Hits
-   TH1F* m_h_CMMJetHits_MainJets;
-   TH1F* m_h_CMMJetHits_FwdJetsRight;
-   TH1F* m_h_CMMJetHits_FwdJetsLeft;
-   TH1F* m_h_CMMJetHits_EtMap;
-   // JEM Hits
-   TH1F* m_h_CMMJetHits_JEM_MainHits;
-   TH1F* m_h_CMMJetHits_JEM_FwdHitsRight;
-   TH1F* m_h_CMMJetHits_JEM_FwdHitsLeft;
-   TH1F* m_h_CMMJetHits_JEM_Crate0ParityError;
-   TH1F* m_h_CMMJetHits_JEM_Crate1ParityError;
+   // JEM 
+   TH1F*  m_h_SimBSMon_JEM_Crate0_Energy;
+   TH1F*  m_h_SimBSMon_JEM_Crate1_Energy;
 
-   // CMM Et Sums
-   TH1F* m_h_CMMEtSums_Ex;
-   TH1F* m_h_CMMEtSums_Ey;
-   TH1F* m_h_CMMEtSums_Et;
-   TH1F* m_h_CMMEtSums_MissingEtMap;
-   TH1F* m_h_CMMEtSums_SumEtMap;
-   // JEM Et Sums
-   TH1F*  m_h_CMMEtSums_JEM_Ex;
-   TH1F*  m_h_CMMEtSums_JEM_Ey;
-   TH1F*  m_h_CMMEtSums_JEM_Et; 
+   TH1F*  m_h_SimBSMon_JEM_Crate0_Hits;
+   TH1F*  m_h_SimBSMon_JEM_Crate1_Hits;
 
-   // CMM RoI
-   TH1F* m_h_CMMRoI_JetEtHits;
-   TH1F* m_h_CMMRoI_SumEtHits;
-   TH1F* m_h_CMMRoI_MissingEtHits;
+   TH1F*  m_h_SimBSMon_JEM_Crate0_RoI;
+   TH1F*  m_h_SimBSMon_JEM_Crate1_RoI;
 
-   TH1F* m_h_CMMRoI_Ex;
-   TH1F* m_h_CMMRoI_Ey;
-   TH1F* m_h_CMMRoI_Et;
-
-   //data transmission checks
-   TH1F* m_h_TransmissionCheck_Crate0_Hits;
-   TH1F* m_h_TransmissionCheck_Crate1_Hits;
-
-   TH1F* m_h_TransmissionCheck_Crate0_Energy;
-   TH1F* m_h_TransmissionCheck_Crate1_Energy;
 
 };
 

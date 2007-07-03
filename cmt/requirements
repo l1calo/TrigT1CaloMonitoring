@@ -2,27 +2,27 @@ package TrigT1CaloMonitoring
 
 author Ethan-Etienne Woehrling (eew@hep.ph.bham.ac.uk)
 
-use AtlasPolicy         AtlasPolicy-*
-use AtlasCLHEP          AtlasCLHEP-00-*       External
-use GaudiInterface      GaudiInterface-*      External
-use StoreGate           StoreGate-*           Control
-use AthenaMonitoring    AthenaMonitoring-00-* Control
+use AtlasPolicy         	AtlasPolicy-*
+use AtlasCLHEP          	AtlasCLHEP-00-*       	External
+use GaudiInterface      	GaudiInterface-*      	External
+use StoreGate           	StoreGate-*           	Control
+use AthenaMonitoring    	AthenaMonitoring-00-* 	Control
 
-use AtlasDoxygen		AtlasDoxygen-00-*		Tools
-use AtlasROOT			AtlasROOT-02-*			External
+use AtlasDoxygen		AtlasDoxygen-00-*	Tools
+use AtlasROOT			AtlasROOT-02-*		External
 
-use CaloIdentifier      CaloIdentifier-00-*   Calorimeter
-use CaloEvent           CaloEvent-*           Calorimeter
+use CaloIdentifier      	CaloIdentifier-00-*   	Calorimeter
+use CaloEvent           	CaloEvent-*           	Calorimeter
 
-use TileIdentifier      TileIdentifier-00-*   TileCalorimeter
-use TileConditions      TileConditions-00-*   TileCalorimeter
-use TileEvent           TileEvent-00-*        TileCalorimeter
-
-use TrigT1Calo		TrigT1Calo-* 	      Trigger/TrigT1
-use TrigT1Interfaces    TrigT1Interfaces-*    Trigger/TrigT1
-use TriggerRelease      TriggerRelease-*      Trigger
-use TrigT1CaloByteStream TrigT1CaloByteStream-* Trigger/TrigT1
-
+use TileIdentifier      	TileIdentifier-00-*   	TileCalorimeter
+use TileConditions      	TileConditions-00-*   	TileCalorimeter
+use TileEvent           	TileEvent-00-*        	TileCalorimeter
+	
+use TrigT1Calo			TrigT1Calo-* 	      	Trigger/TrigT1
+use TrigT1Interfaces    	TrigT1Interfaces-*    	Trigger/TrigT1
+use TriggerRelease      	TriggerRelease-*      	Trigger
+use TrigT1CaloByteStream 	TrigT1CaloByteStream-* 	Trigger/TrigT1
+	
 apply_pattern declare_joboptions files="*.py"
 
 apply_pattern dual_use_library files=*.cxx

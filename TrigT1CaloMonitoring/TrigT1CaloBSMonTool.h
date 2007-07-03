@@ -43,10 +43,15 @@ private:
   std::string m_TriggerTowerContainerName;
   std::string m_JetElementContainerName;
 
+  std::string m_DataType;
+  std::string m_PathInRootFile;
+  
   //=====================================
   //   T1Calo Control Plots
   //=====================================
-
+  
+  std::vector <std::vector<TH1F*> > m_h_TT_channels;
+  
   TH1F* m_h_TT_Em_Et;  
   TH1F* m_h_TT_Had_Et;
   TH1F* m_h_TT_eta;

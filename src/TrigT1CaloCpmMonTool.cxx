@@ -100,7 +100,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
-  MonGroup monExpert ( this, "CPM/expert", expert, eventsBlock );
+  MonGroup monExpert ( this, ("CPM/expert/"+m_prefix).c_str() , expert, eventsBlock );
 
   if ( isNewEventsBlock || isNewLumiBlock ) {	
 

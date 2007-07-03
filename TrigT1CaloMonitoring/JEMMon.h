@@ -73,7 +73,13 @@ protected:
    TH1F*  m_h_JEMEtSums_Et; 
 
    // JEM RoI
-   TH1F* m_h_JEMRoI_Hits;
+   TH1F* m_h_JEMRoI_MainHits;
+   TH1F* m_h_JEMRoI_FwdHitsRight;
+   TH1F* m_h_JEMRoI_FwdHitsLeft;
+
+   TH2F* m_h_JEMRoI_Thresh1_etaphi;
+
+
 };
 
 

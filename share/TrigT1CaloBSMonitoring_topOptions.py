@@ -80,19 +80,19 @@ EmTauTrigger.CPMHitsLocation = "Sim_CPMHits"
 
 # JetTrigger
 JetTrigger = Algorithm( "JetTrigger" )
-JetTrigger.JetElementLocation="Sim_JetElements"
+JetTrigger.JetElementLocation="BS_JetElements"
 JetTrigger.JEMHitsLocation = "Sim_JEMHits"
 
 # EnergyTrigger
 EnergyTrigger = Algorithm( "EnergyTrigger" )
-EnergyTrigger.JetElementLocation="Sim_JetElements"
+EnergyTrigger.JetElementLocation="BS_JetElements"
 EnergyTrigger.JEMEtSumsLocation="Sim_JEMEtSums"
 
 # JEP CMMs
 JEPCMMMaker = Algorithm( "JEPCMMMaker" )
-JEPCMMMaker.JetElementLocation="Sim_JetElements"
-JEPCMMMaker.JEMHitsLocation = "Sim_JEMHits"
-JEPCMMMaker.JEMEtSumsLocation = "Sim_JEMEtSums"
+JEPCMMMaker.JetElementLocation="BS_JetElements"
+JEPCMMMaker.JEMHitsLocation = "BS_JEMHits"
+JEPCMMMaker.JEMEtSumsLocation = "BS_JEMEtSums"
 JEPCMMMaker.CMMJetHitsLocation = "Sim_CMMJetHits"
 JEPCMMMaker.CMMEtSumsLocation = "Sim_CMMEtSums"
 JEPCMMMaker.JEMRoILocation = "Sim_JEMRoIs"
@@ -101,8 +101,8 @@ JEPCMMMaker.CMMRoILocation = "Sim_CMMRoIs"
 
 # CP CMMs
 CPCMMMaker = Algorithm( "CPCMMMaker" )
-CPCMMMaker.CPMTowerLocation = "Sim_CPMTowers"
-CPCMMMaker.CPMHitsLocation = "Sim_CPMHits"
+CPCMMMaker.CPMTowerLocation = "BS_CPMTowers"
+CPCMMMaker.CPMHitsLocation = "BS_CPMHits"
 CPCMMMaker.CMMCPHitsLocation = "Sim_CMMCPHits"
 CPCMMMaker.CPMRoILocation = "Sim_CPMRoIs"
 
@@ -143,29 +143,49 @@ THistSvc.Output = ["CaloBSMon DATAFILE='CaloBSMon.root' OPT='RECREATE'"]
 monMan = Algorithm( "PrimaryManager" )
 
 ## Add all the ManagedMonitorToolBase objects
+monMan.AthenaMonTools += [ "TriggerTowerMon/L1TriggerTowerMonTool" ]
+
+
 monMan.AthenaMonTools += [ "JetElementMon/BS_L1JetElementMonTool" ]
 monMan.AthenaMonTools += [ "JetElementMon/Sim_L1JetElementMonTool" ]
+
 monMan.AthenaMonTools += [ "JEMMon/BS_L1JEMMonTool" ]
 monMan.AthenaMonTools += [ "JEMMon/Sim_L1JEMMonTool" ]
+
 monMan.AthenaMonTools += [ "CMMMon/BS_L1CMMMonTool" ]
 monMan.AthenaMonTools += [ "CMMMon/Sim_L1CMMMonTool" ]
+
+monMan.AthenaMonTools += [ "SimBSMon/SimBSMonTool" ]
+
 #monMan.AthenaMonTools += [ "TrigT1CaloBSMonTool/L1CaloBSTool" ]
+<<<<<<< TrigT1CaloBSMonitoring_topOptions.py
+
 monMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1BSCPMMonTool" ]
 monMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
+=======
+monMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1BSCPMMonTool" ]
+monMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
+>>>>>>> 1.7
 
 ## get a handle on the ToolSvc
 #from AthenaCommon.AppMgr import ToolSvc as toolSvc
 ToolSvc = Algorithm( "ToolSvc" )
 
+####################### TriggerTower ################################
+#ToolSvc.L1TriggerTowerMonTool.DataType = "M3"  
+ToolSvc.L1TriggerTowerMonTool.BS_TriggerTowerContainer = "BS_TriggerTowers"
+ToolSvc.L1TriggerTowerMonTool.PathInRootFile = "Stats/TriggerTower"
+#ToolSvc.L1TriggerTowerMonTool.OutputLevel = DEBUG
+
 ####################### JetElements ################################
 ToolSvc.BS_L1JetElementMonTool.DataType = "BS"  #BS or Sim data?
 ToolSvc.BS_L1JetElementMonTool.JetElementLocation = "BS_JetElements"
-ToolSvc.BS_L1JetElementMonTool.PathInRootFile = "Stats/JetElements/BS"
+ToolSvc.BS_L1JetElementMonTool.PathInRootFile = "Stats/JEM/BS/input"
 #ToolSvc.BS_L1JetElementMonTool.OutputLevel = DEBUG
 
 ToolSvc.Sim_L1JetElementMonTool.DataType = "Sim"  #BS or Sim data?
 ToolSvc.Sim_L1JetElementMonTool.JetElementLocation = "Sim_JetElements"
-ToolSvc.Sim_L1JetElementMonTool.PathInRootFile = "Stats/JetElements/Sim"
+ToolSvc.Sim_L1JetElementMonTool.PathInRootFile = "Stats/JEM/Sim/input"
 #ToolSvc.Sim_L1JetElementMonTool.OutputLevel = DEBUG
 
 ####################### JEMs ################################
@@ -188,6 +208,8 @@ ToolSvc.BS_L1CMMMonTool.DataType = "BS"  #BS or Sim data?
 ToolSvc.BS_L1CMMMonTool.CMMJetHitsLocation = "BS_CMMJetHits"
 ToolSvc.BS_L1CMMMonTool.CMMEtSumsLocation = "BS_CMMEtSums"
 ToolSvc.BS_L1CMMMonTool.CMMRoILocation = "BS_CMMRoIs"
+ToolSvc.BS_L1CMMMonTool.JEMHitsLocation = "BS_JEMHits"
+ToolSvc.BS_L1CMMMonTool.JEMEtSumsLocation = "BS_JEMEtSums"
 ToolSvc.BS_L1CMMMonTool.PathInRootFile = "Stats/CMM/BS"
 #ToolSvc.BS_L1CMMMonTool.OutputLevel = DEBUG
 
@@ -195,13 +217,16 @@ ToolSvc.Sim_L1CMMMonTool.DataType = "Sim"  #BS or Sim data?
 ToolSvc.Sim_L1CMMMonTool.CMMJetHitsLocation = "Sim_CMMJetHits"
 ToolSvc.Sim_L1CMMMonTool.CMMEtSumsLocation = "Sim_CMMEtSums"
 ToolSvc.Sim_L1CMMMonTool.CMMRoILocation = "Sim_CMMRoIs"
+ToolSvc.Sim_L1CMMMonTool.JEMHitsLocation = "Sim_JEMHits"
+ToolSvc.Sim_L1CMMMonTool.JEMEtSumsLocation = "Sim_JEMEtSums"
 ToolSvc.Sim_L1CMMMonTool.PathInRootFile = "Stats/CMM/Sim"
 #ToolSvc.Sim_L1CMMMonTool.OutputLevel = DEBUG
 
-
 ####################### Calorimeter ################################
+#ToolSvc.L1CaloBSTool.DataType = "BS"  #BS or Sim data?
 #ToolSvc.L1CaloBSTool.BS_TriggerTowerContainer = "BS_TriggerTowers"
 #ToolSvc.L1CaloBSTool.BS_JetElementContainer = "BS_JetElements"
+#ToolSvc.L1CaloBSTool.PathInRootFile = "Stats/Calo"
 #ToolSvc.L1CaloBSTool.OutputLevel = DEBUG
 
 ####################### CPMs ################################
@@ -213,6 +238,27 @@ ToolSvc.L1BSCPMMonTool.CMMCPHitsLocation = "BS_CMMCPHits"
 ToolSvc.L1BSCPMMonTool.CPMRoILocation = "BS_CPMRoIs"
 #ToolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
 
+<<<<<<< TrigT1CaloBSMonitoring_topOptions.py
+ToolSvc.L1SimCPMMonTool.HistogramPrefix = "Sim"
+ToolSvc.L1SimCPMMonTool.TriggerTowerLocation = "BS_TriggerTowers"
+ToolSvc.L1SimCPMMonTool.CPMTowerLocation = "Sim_CPMTowers"
+ToolSvc.L1SimCPMMonTool.CPMHitsLocation = "Sim_CPMHits"
+ToolSvc.L1SimCPMMonTool.CMMCPHitsLocation = "Sim_CMMCPHits"
+ToolSvc.L1SimCPMMonTool.CPMRoILocation = "Sim_CPMRoIs"
+#ToolSvc.L1SimCPMMonTool.OutputLevel = DEBUG
+
+####################### Simulation ################################
+ToolSvc.SimBSMonTool.BS_JEMEtSumsLocation = "BS_JEMEtSums"
+ToolSvc.SimBSMonTool.Sim_JEMEtSumsLocation = "Sim_JEMEtSums"
+ToolSvc.SimBSMonTool.BS_JEMHitsLocation = "BS_JEMHits"
+ToolSvc.SimBSMonTool.Sim_JEMHitsLocation = "Sim_JEMHits"
+ToolSvc.SimBSMonTool.BS_CMMEtSumsLocation = "BS_CMMEtSums"
+ToolSvc.SimBSMonTool.Sim_CMMEtSumsLocation = "Sim_CMMEtSums"
+ToolSvc.SimBSMonTool.BS_CMMJetHitsLocation = "BS_CMMJetHits"
+ToolSvc.SimBSMonTool.Sim_CMMJetHitsLocation = "Sim_CMMJetHits"
+ToolSvc.SimBSMonTool.PathInRootFile = "Stats/JEM/SimBS"
+#ToolSvc.SimBSMonTool.OutputLevel = DEBUG
+=======
 ToolSvc.L1SimCPMMonTool.HistogramPrefix = "Sim"
 ToolSvc.L1SimCPMMonTool.TriggerTowerLocation = "BS_TriggerTowers"
 ToolSvc.L1SimCPMMonTool.CPMTowerLocation = "Sim_CPMTowers"
@@ -220,8 +266,8 @@ ToolSvc.L1SimCPMMonTool.CPMHitsLocation = "Sim_CPMHits"
 ToolSvc.L1SimCPMMonTool.CMMCPHitsLocation = "Sim_CMMCPHits"
 ToolSvc.L1SimCPMMonTool.CPMRoILocation = "Sim_CPMRoIs"
 #ToolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
+>>>>>>> 1.7
 
-#ToolSvc.TrigT1JetMonTool.OutputLevel = DEBUG
 
 ## FileKey must match that given to THistSvc
 monMan.FileKey = "CaloBSMon"

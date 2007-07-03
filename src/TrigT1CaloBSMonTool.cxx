@@ -25,7 +25,8 @@
 #include "CaloEvent/CaloCell.h"
 #include "CaloEvent/CaloCellContainer.h"
 
-#include "../TrigT1CaloMonitoring/TrigT1CaloBSMonTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloBSMonTool.h"
+#include "TrigT1CaloMonitoring/MonHelper.h"
 
 #include "CLHEP/Units/SystemOfUnits.h"
 
@@ -53,12 +54,9 @@ TrigT1CaloBSMonTool::TrigT1CaloBSMonTool(const std::string & type, const std::st
   declareProperty("BS_TriggerTowerContainer",  m_TriggerTowerContainerName = "LVL1TriggerTowers");
   declareProperty("BS_JetElementContainer",  m_JetElementContainerName = "LVL1JetElements");
   
-  //ROOT File directory
-  //declareProperty("histoPathBase",m_path = "/" );
-//"/disk/f8a/home/eew/ATLAS/athena/analysis/TrigT1CaloMonitoring/run");
-  /*
-  declareProperty("energyThreshold",m_Threshold=50.); //Threshold in MeV
-  */
+  declareProperty( "PathInRootFile", m_PathInRootFile="Stats/CMM") ;
+  declareProperty( "DataType", m_DataType="") ;
+
   declareProperty("towersContainerName",m_towersContName="CombinedTower"); //SG Tower Container
 }
 
@@ -94,286 +92,144 @@ StatusCode TrigT1CaloBSMonTool::bookHistograms( bool isNewEventsBlock, bool isNe
   if( m_dataType == AthenaMonManager::cosmics ) {
     // book histograms that are only relevant for cosmics data...
   }
-	
-  MonGroup BS_Calo ( this, "Stats/BS_Calo", expert, eventsBlock );
 
+  MonGroup Calo_TriggerTower ( this, (m_PathInRootFile+"/TriggerTower").c_str(), expert, eventsBlock );
+  HistoBooker* TriggerTower_Booker = new HistoBooker(&Calo_TriggerTower, &log, m_DataType);
+
+  MonGroup TT_ChannelEnergy( this, (m_PathInRootFile+"/ChannelEnergy").c_str(), expert, eventsBlock );
+  HistoBooker* ChannelEnergy_Booker = new HistoBooker(&TT_ChannelEnergy, &log, m_DataType);
+
+  MonGroup Calo_JetElements ( this, (m_PathInRootFile+"/JetElements").c_str(), expert, eventsBlock );
+  HistoBooker* JetElements_Booker = new HistoBooker(&Calo_JetElements, &log, m_DataType);
 
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
+   //Energy distribution per Channel
+      TH1F* help1;
+      std::vector <TH1F*> help2;
+      std::string name,title;
+      std::stringstream buffer1, buffer2, etabuffer, phibuffer;
+
+      double eta,phi;
+
+   for (int i=0;i<4;i++)
+     {
+       buffer1.str("");
+       //buffer1.clear();
+       buffer1<<i;
+
+       help2.clear();
+
+       eta=-4.9+i*0.425;
+       etabuffer.str("");
+       etabuffer<<eta;
+       log << MSG::DEBUG << "eta " << etabuffer.str()<< endreq;
+
+       for (int j=0;j<16;j++)
+	 {
+	   buffer2.str("");
+	   //buffer2.clear();
+	   buffer2<<j;
+
+	   phi=j*2*M_PI/16;
+	   phibuffer.str("");
+	   phibuffer<<phi;
+
+	   name = "TTChannelNo_" + buffer1.str() + "_" + buffer2.str();
+	   title = "TT Energy distribution: eta=" + etabuffer.str() + ", phi=" + phibuffer.str();
+	   
+	   log << MSG::DEBUG << "title" <<title<< endreq;
+
+	   help1=ChannelEnergy_Booker->book1F(name,title,255,0,255,"Et [GeV]");
+	   help2.push_back(help1);
+	 }
+       m_h_TT_channels.push_back(help2);
+     }
+
   // Bin TT & JE Histos
+  m_h_TT_Em_Et = TriggerTower_Booker->book1F("TT_EM_Et","TT EM Et monitor",255,0,255,"Et [GeV]");
+  m_h_TT_Had_Et = TriggerTower_Booker->book1F("TT_HAD_Et","TT HAD Et monitor",255,0,255,"Et [GeV]");
 
-  m_h_TT_Em_Et = new TH1F("TT_EM_Et","TT EM Et monitor",255,0,255);
-  BS_Calo.regHist(m_h_TT_Em_Et);
-  m_h_TT_Had_Et = new TH1F("TT_HAD_Et","TT HAD Et monitor",255,0,255);
-  BS_Calo.regHist(m_h_TT_Had_Et);
-  m_h_TT_eta = new TH1F("TT_eta","Trigger Tower eta",100,-5,5);
-  BS_Calo.regHist(m_h_TT_eta);
-  //otherwise consider plotting eta in calo regions .
-  m_h_TT_phi = new TH1F("TT_phi","Trigger Tower phi ",64,0,2*M_PI);
-  BS_Calo.regHist(m_h_TT_phi);
-
-  m_h_JE_Em_Et = new TH1F("JE_EM_Et","JE EM Et monitor",255,0,255);
-  BS_Calo.regHist(m_h_JE_Em_Et);
-  m_h_JE_Had_Et = new TH1F("JE_HAD_Et","JE HAD Et monitor",255,0,255);
-  BS_Calo.regHist(m_h_JE_Had_Et);
-  m_h_JE_eta = new TH1F("JE_eta","JE eta",100,-5,5);
-  BS_Calo.regHist(m_h_JE_eta);
-  m_h_JE_phi = new TH1F("JE_phi","JE phi ",64,0,2*M_PI);
-  BS_Calo.regHist(m_h_JE_phi);
-
-  m_h_TT_Tot_Et = new TH1F("TT_Tot_Et","TT EM+HAD Et monitor",10,0,10);
-  BS_Calo.regHist(m_h_TT_Tot_Et);
-  m_h_JE_Tot_Et = new TH1F("JE_Tot_Et","JE EM+HAD Et monitor",10,0,10);
-  BS_Calo.regHist(m_h_JE_Tot_Et);
-
-  m_h_TT_Em10_Et = new TH1F("TT_EM10_Et","TT EM Et magnified",11,-1,10);
-  BS_Calo.regHist(m_h_TT_Em10_Et);
-  m_h_TT_Had10_Et = new TH1F("TT_HAD10_Et","TT HAD Et magnified",11,-1,10);
-  BS_Calo.regHist(m_h_TT_Had10_Et);
-
-  m_h_JE_Em10_Et = new TH1F("JE_EM10_Et","JE EM Et magnified",11,-1,10); 
-  BS_Calo.regHist(m_h_JE_Em10_Et);
-  m_h_JE_Had10_Et = new TH1F("JE_HAD10_Et","JE HAD Et magnified",11,-1,10); 
-  BS_Calo.regHist(m_h_JE_Had10_Et);
-
-  m_h_TT_key = new TH1F("TT_Key","TT Key",100,0,8000);
-  BS_Calo.regHist(m_h_TT_key);
-
-  //TT & JE Histos in Calo Regions
-    
-  m_h_Barrel_TT_phi = new TH1F("Barrel_TT_phi","Barrel_TT phi",64,0,2*M_PI);
-  BS_Calo.regHist(m_h_Barrel_TT_phi);
-  m_h_Barrel_TT_Em_Et = new TH1F("Barrel_TT_EM_Et","Barrel_TT EM Et",255,0,255);
-  BS_Calo.regHist(m_h_Barrel_TT_Em_Et);
-  m_h_Barrel_TT_Had_Et = new TH1F("Barrel_TT_HAD_Et","Barrel_TT HAD Et",255,0,255);
-  BS_Calo.regHist(m_h_Barrel_TT_Had_Et);
-
-  m_h_Barrel_JE_phi = new TH1F("Barrel_JE_phi","Barrel_JE phi",64,0,2*M_PI);
-  BS_Calo.regHist(m_h_Barrel_JE_phi);
-  m_h_Barrel_JE_Em_Et = new TH1F("Barrel_JE_EM_Et","Barrel_JE EM Et",255,0,255);
-  BS_Calo.regHist(m_h_Barrel_JE_Em_Et);
-  m_h_Barrel_JE_Had_Et = new TH1F("Barrel_JE_HAD_Et","Barrel_JE HAD Et",255,0,255);
-  BS_Calo.regHist(m_h_Barrel_JE_Had_Et);
-
-  //note EndCap == HEC 
-  //the 10 in the identifier denotes looking at the low energy, 0-10 GeV, range 
-  m_h_EC10_TT_Em_Et = new TH1F("EC10_TT_EM_Et","EndCap_TT EM Et",10,0,10);
-  BS_Calo.regHist(m_h_EC10_TT_Em_Et);
-  m_h_EC10_TT_Had_Et = new TH1F("EC10_TT_HAD_Et","EndCap_TT HAD Et",10,0,10);
-  BS_Calo.regHist(m_h_EC10_TT_Had_Et);
-
-  m_h_EC10_JE_Em_Et = new TH1F("EC10_JE_EM_Et","EndCap_JE EM Et",10,0,10);
-  BS_Calo.regHist(m_h_EC10_JE_Em_Et);
-  m_h_EC10_JE_Had_Et = new TH1F("EC10_JE_HAD_Et","EndCap_JE HAD Et",10,0,10);
-  BS_Calo.regHist(m_h_EC10_JE_Had_Et);
-
-  m_h_Barrel10_TT_Em_Et = new TH1F("Barrel10_TT_EM_Et","Barrel10_TT EM Et",10,0,10);
-  BS_Calo.regHist(m_h_Barrel10_TT_Em_Et);
-  m_h_Barrel10_TT_Had_Et = new TH1F("Barrel10_TT_HAD_Et","Barrel10_TT HAD Et",10,0,10);
-  BS_Calo.regHist(m_h_Barrel10_TT_Had_Et);
-
-  m_h_Barrel10_JE_Em_Et = new TH1F("Barrel10_JE_EM_Et","Barrel10_JE EM Et",10,0,10);
-  BS_Calo.regHist(m_h_Barrel10_JE_Em_Et);
-  m_h_Barrel10_JE_Had_Et = new TH1F("Barrel10_JE_HAD_Et","Barrel10_JE HAD Et",10,0,10);
-  BS_Calo.regHist(m_h_Barrel10_JE_Had_Et);
-
-  m_h_FCAL10_TT_Em_Et = new TH1F("FCAL10_TT_EM_Et","FCAL10_TT EM Et",10,0,10);
-  BS_Calo.regHist(m_h_FCAL10_TT_Em_Et);
-  m_h_FCAL10_TT_Had_Et = new TH1F("FCAL10_TT_HAD_Et","FCAL10_TT HAD Et",10,0,10);
-  BS_Calo.regHist(m_h_FCAL10_TT_Had_Et);
-
-  m_h_FCAL10_JE_Em_Et = new TH1F("FCAL10_JE_EM_Et","FCAL10_JE EM Et",10,0,10);
-  BS_Calo.regHist(m_h_FCAL10_JE_Em_Et);
-  m_h_FCAL10_JE_Had_Et = new TH1F("FCAL10_JE_HAD_Et","FCAL10_JE HAD Et",10,0,10);
-  BS_Calo.regHist(m_h_FCAL10_JE_Had_Et);
-
-  m_h_EC_TT_phi = new TH1F("EC_TT_phi","EC_TT phi",64,0,2*M_PI);
-  BS_Calo.regHist(m_h_EC_TT_phi);
-  m_h_EC_TT_Em_Et = new TH1F("EC_TT_EM_Et","EC_TT EM Et",255,0,255);
-  BS_Calo.regHist(m_h_EC_TT_Em_Et);
-  m_h_EC_TT_Had_Et = new TH1F("EC_TT_HAD_Et","EC_TT HAD Et",255,0,255); 
-  BS_Calo.regHist(m_h_EC_TT_Had_Et);
-
-  m_h_EC_JE_phi = new TH1F("EC_JE_phi","EC_JE phi",64,0,2*M_PI);
-  BS_Calo.regHist(m_h_EC_JE_phi);
-  m_h_EC_JE_Em_Et = new TH1F("EC_JE_EM_Et","EC_JE EM Et",255,0,255);
-  BS_Calo.regHist(m_h_EC_JE_Em_Et);
-  m_h_EC_JE_Had_Et = new TH1F("EC_JE_HAD_Et","EC_JE HAD Et",255,0,255);
-  BS_Calo.regHist(m_h_EC_JE_Had_Et);
-
-  m_h_FCAL_TT_phi = new TH1F("FCAL_TT_phi","FCAL_TT phi",64,0,2*M_PI); 
-  BS_Calo.regHist(m_h_FCAL_TT_phi);
-  m_h_FCAL_TT_Em_Et = new TH1F("FCAL_TT_EM_Et","FCAL_TT EM Et",255,0,255);
-  BS_Calo.regHist(m_h_FCAL_TT_Em_Et);
-  m_h_FCAL_TT_Had_Et = new TH1F("FCAL_TT_HAD_Et","FCAL_TT HAD Et",255,0,255);
-  BS_Calo.regHist(m_h_FCAL_TT_Had_Et);
-
-  m_h_FCAL_JE_phi = new TH1F("FCAL_JE_phi","FCAL_JE phi",64,0,2*M_PI); 
-  BS_Calo.regHist(m_h_FCAL_JE_phi);
-  m_h_FCAL_JE_Em_Et = new TH1F("FCAL_JE_EM_Et","FCAL_JE EM Et",255,0,255);
-  BS_Calo.regHist(m_h_FCAL_JE_Em_Et);
-  m_h_FCAL_JE_Had_Et = new TH1F("FCAL_JE_HAD_Et","FCAL_JE HAD Et",255,0,255);
-  BS_Calo.regHist(m_h_FCAL_JE_Had_Et);
-
-  m_h_TT_etaphi = new TH2F("Eta_Phi_TT","TT Eta_Phi",100,-5,5, 64,0,2*M_PI);
-  BS_Calo.regHist(m_h_TT_etaphi);
-  m_h_TT_etaphi_hitmap = new TH2F("Eta_Phi_HM_TT","TT Eta_Phi_HitMap",40,-5,5, 64,0,2*M_PI);
-  BS_Calo.regHist(m_h_TT_etaphi_hitmap);
-
-  m_h_JE_etaphi = new TH2F("Eta_Phi_JE","JE Eta_Phi",100,-5,5, 64,0,2*M_PI);
-  BS_Calo.regHist(m_h_JE_etaphi);
-  m_h_JE_etaphi_hitmap = new TH2F("Eta_Phi_HM_JE","JE Eta_Phi_HitMap",100,-5,5, 64,0,2*M_PI);
-  BS_Calo.regHist(m_h_JE_etaphi_hitmap);
-
-  //JE & TT plots, Et>10GeV
-
-  m_h_TT_eta_gt10 = new TH1F("TT_eta_gt10","10 Gev TT eta",100,-5,5);
-  BS_Calo.regHist(m_h_TT_eta_gt10);
-  m_h_TT_phi_gt10 = new TH1F("TT_phi_gt10","10GeV TT phi",64,0,2*M_PI); 
-  BS_Calo.regHist(m_h_TT_phi_gt10);
-  m_h_TT_EC_phi_gt10 = new TH1F("TT_EC_phi_gt10","10GeV TT EC phi",64,0,2*M_PI); 
-  BS_Calo.regHist(m_h_TT_EC_phi_gt10 );
-  m_h_TT_Barrel_phi_gt10 = new TH1F("TT_Barrel_phi_gt10","10GeV TT Barrel phi",64,0,2*M_PI); 
-  BS_Calo.regHist(m_h_TT_Barrel_phi_gt10);
-  m_h_TT_FCAL_phi_gt10 = new TH1F("TT_FCAL_phi_gt10","10GeV TT FCAL phi",64,0,2*M_PI); 
-  BS_Calo.regHist(m_h_TT_FCAL_phi_gt10);
-
-  m_h_JE_eta_gt10 = new TH1F("JE_eta_gt10","10Gev JE eta",100,-5,5);
-  BS_Calo.regHist(m_h_JE_eta_gt10);
-  m_h_JE_phi_gt10 = new TH1F("JE_phi_gt10","10GeV JE phi",64,0,2*M_PI); 
-  BS_Calo.regHist(m_h_JE_phi_gt10);
-  m_h_JE_EC_phi_gt10 = new TH1F("JE_EC_phi_gt10","10GeV JE EC phi",64,0,2*M_PI); 
-  BS_Calo.regHist(m_h_JE_EC_phi_gt10);
-  m_h_JE_Barrel_phi_gt10 = new TH1F("JE_Barrel_phi_gt10","10GeV JE Barrel phi",64,0,2*M_PI); 
-  BS_Calo.regHist(m_h_JE_Barrel_phi_gt10);
-  m_h_JE_FCAL_phi_gt10 = new TH1F("JE_FCAL_phi_gt10","10GeV JE FCAL phi",64,0,2*M_PI); 
-  BS_Calo.regHist(m_h_JE_FCAL_phi_gt10);
-
-  // ====================================================================================================
-  // Plots of the /Calorimeter information (combined LAr and Tile info)
-  // Using CaloTowers from the ESD
-  // ====================================================================================================
-
-  /*m_h_CaloT_phi = new TH1F("CaloTower_phi","CaloTower phi",64,-M_PI,M_PI); 
-  m_h_CaloT_eta = new TH1F("CaloTower_eta","CaloTower eta",100,-5,5); 
-  m_h_CaloT_phi_gt10 = new TH1F("CaloTower_phi_gt10","CaloTower phi gt 10",64,-M_PI,M_PI); 
-  m_h_CaloT_eta_gt10 = new TH1F("CaloTower_eta_gt10","CaloTower eta gt 10",100,-5,5); 
-
-  m_h_CaloT_Et10 = new TH1F("CaloTower_Et10","CaloTower Et",100,0,10.*GeV); //Note, need to specify GeV 
-  m_h_CaloT_Et = new TH1F("CaloTower_Et","CaloTower Et",255,0,255.*GeV); 
-
-  m_h_CaloT_etaphi = new TH2F("CaloTower_Eta_Phi","CaloTower Eta_Phi",100,-5,5, 64, -M_PI, M_PI);
-  m_h_CaloT_etaphi_hitmap = new TH2F("CaloTower_Eta_Phi_HM","CaloTower Eta_Phi_HitMap",100,-5,5,64, -M_PI, M_PI);
-
-  m_h_CaloT_key = new TH1F("CaloTower_Key","CaloTower Key",100,0,8000);
-
-
-  // =====================================================================================================
-  // =================================== Trigger Style Calo Plots ========================================
-  // =====================================================================================================
-
-  m_h_Calo_phi = new TH1F("Calo_phi","Calo phi",64,0,2*M_PI); 
-  m_h_Calo_eta = new TH1F("Calo_eta","Calo eta",100,-5,5); 
-  m_h_Calo_phi_gt10 = new TH1F("Calo_phi_gt10","Calo phi gt 10",64,0,2*M_PI); 
-  m_h_Calo_eta_gt10 = new TH1F("Calo_eta_gt10","Calo eta gt 10",100,-5,5); 
-
-  m_h_Calo_Em_Et10 = new TH1F("Calo_Em_Et10","Calo Em Et",100,0,10.*GeV); //Note, need to specify GeV 
-  m_h_Calo_Em_Et = new TH1F("Calo_Em_Et","Calo Em Et",255,0,255.*GeV); 
-  m_h_Calo_Had_Et10 = new TH1F("Calo_Had_Et10","Calo Had Et",100,0,10.*GeV); //Note, need to specify GeV 
-  m_h_Calo_Had_Et = new TH1F("Calo_Had_Et","Calo Had Et",255,0,255.*GeV); 
-
-  m_h_Calo_etaphi = new TH2F("Calo_Eta_Phi","Calo Eta_Phi",100,-5,5, 64, 0, 2*M_PI);
-  m_h_Calo_etaphi_hitmap = new TH2F("Calo_Eta_Phi_HM","Calo Eta_Phi_HitMap",100,-5,5,64, 0, 2*M_PI);
-
-  m_h_Calo_key = new TH1F("Calo_Key","Calo Key",100,0,8000);
-
-  // region plots
-
-  m_h_Barrel_Calo_Em_Et = new TH1F("Barrel_Calo_Em_Et", "Calo Barrel Et (Em)",100,0,100.*GeV);
-  m_h_Barrel_Calo_Had_Et = new TH1F("Barrel_Calo_Had_Et", "Calo Barrel Et (Had)",100,0,100.*GeV);
-  m_h_Barrel10_Calo_Em_Et = new TH1F("Barrel10_Calo_Em_Et", "Calo Barrel Et (Em, 0-10GeV)",10,0,10.*GeV);
-  m_h_Barrel10_Calo_Had_Et = new TH1F("Barrel10_Calo_Had_Et", "Calo Barrel Et (Had, 0-10GeV)",10,0,10.*GeV);
-  m_h_Barrel_Calo_phi = new TH1F("Barrel_Calo_phi", "Calo Barrel phi",64,0,2*M_PI);
+  m_h_TT_eta = TriggerTower_Booker->book1F("TT_eta","Trigger Tower eta",100,-5,5,"#eta");
+  m_h_TT_phi = TriggerTower_Booker->book1F("TT_phi","Trigger Tower phi ",64,0,2*M_PI,"#phi");
   
-  m_h_EC_Calo_Em_Et = new TH1F("EC_Calo_Em_Et", "Calo EC Et (Em)",100,0,100.*GeV);
-  m_h_EC_Calo_Had_Et = new TH1F("EC_Calo_Had_Et", "Calo EC Et (Had)",100,0,100.*GeV);
-  m_h_EC10_Calo_Em_Et = new TH1F("EC10_Calo_Em_Et", "Calo EC Et (Em, 0-10GeV)",10,0,10.*GeV);
-  m_h_EC10_Calo_Had_Et = new TH1F("EC10_Calo_Had_Et", "Calo EC Et (Had, 0-10GeV)",10,0,10.*GeV);
-  m_h_EC_Calo_phi = new TH1F("EC_Calo_phi", "Calo EC phi",64,0,2*M_PI);
-  
-  m_h_FCAL_Calo_Em_Et = new TH1F("FCAL_Calo_Em_Et", "Calo FCAL Et (Em)",100,0,100.*GeV);
-  m_h_FCAL_Calo_Had_Et = new TH1F("FCAL_Calo_Had_Et", "Calo FCAL Et (Had)",100,0,100.*GeV);
-  m_h_FCAL10_Calo_Em_Et = new TH1F("FCAL10_Calo_Em_Et", "Calo FCAL Et (Em, 0-10GeV)",10,0,10.*GeV);
-  m_h_FCAL10_Calo_Had_Et = new TH1F("FCAL10_Calo_Had_Et", "Calo FCAL Et (Had, 0-10GeV)",10,0,10.*GeV);
-  m_h_FCAL_Calo_phi = new TH1F("FCAL_Calo_phi", "Calo FCAL phi",64,0,2*M_PI);
+  m_h_TT_Em10_Et = TriggerTower_Booker->book1F("TT_EM10_Et","TT EM Et magnified",11,-1,10,"Et [GeV]");
+  m_h_TT_Had10_Et = TriggerTower_Booker->book1F("TT_HAD10_Et","TT HAD Et magnified",11,-1,10,"Et [GeV]");
+  m_h_TT_Tot_Et = TriggerTower_Booker->book1F("TT_Tot_Et","TT EM+HAD Et magnified",10,0,10,"Et [GeV]");
 
-  //comparisons of TT:Calo
+  //m_h_TT_key = TriggerTower_Booker->book1F("TT_Key","TT Key",100,0,8000,"Key");
 
-  //1D Ratio plots //not implemented
-  m_h_TT_Calo_eta = new TH1F("TT_Calo_eta","eta TT vs Calo",100, -5, 5);
-  m_h_TT_Calo_Et = new TH1F("TT_Calo_Et","Et TT vs Calo", 255, 0, 255);
+  m_h_Barrel_TT_phi = TriggerTower_Booker->book1F("Barrel_TT_phi","Barrel_TT phi",64,0,2*M_PI, "#phi");
+  m_h_Barrel_TT_Em_Et = TriggerTower_Booker->book1F("Barrel_TT_EM_Et","Barrel_TT EM Et",255,0,255,"Et [GeV]");
+  m_h_Barrel_TT_Had_Et = TriggerTower_Booker->book1F("Barrel_TT_HAD_Et","Barrel_TT HAD Et",255,0,255,"Et [GeV]");
+  m_h_Barrel10_TT_Em_Et = TriggerTower_Booker->book1F("Barrel10_TT_EM_Et","Barrel10_TT EM Et",10,0,10,"Et [GeV]");
+  m_h_Barrel10_TT_Had_Et = TriggerTower_Booker->book1F("Barrel10_TT_HAD_Et","Barrel10_TT HAD Et",10,0,10,"Et [GeV]");
 
-  //2D plotted one against the other
-  m_h_TT_Calo_Em_EtTower = new TH2F("TT_Calo_Em_EtTower","Calo and TT Tower Et (Em)",100,0,100.*GeV, 100, 0, 100);
-  m_h_TT_Calo_Had_EtTower = new TH2F("TT_Calo_Had_EtTower","Calo and TT Tower Et (Had)",100,0,100.*GeV, 100, 0, 100);
-  m_h_TT_Calo_EtaTower = new TH2F("TT_Calo_EtaTower","Calo and TT Tower Eta",100,-5,5, 100, -5, 5);
-  m_h_TT_Calo_PhiTower = new TH2F("TT_Calo_PhiTower","Calo and TT Tower Phi",64,0,2*M_PI,64,0,2*M_PI);
+  m_h_EC_TT_phi = TriggerTower_Booker->book1F("EC_TT_phi","EC_TT phi",64,0,2*M_PI, "#phi");
+  m_h_EC_TT_Em_Et = TriggerTower_Booker->book1F("EC_TT_EM_Et","EC_TT EM Et",255,0,255,"Et [GeV]");
+  m_h_EC_TT_Had_Et = TriggerTower_Booker->book1F("EC_TT_HAD_Et","EC_TT HAD Et",255,0,255,"Et [GeV]"); 
+  m_h_EC10_TT_Em_Et = TriggerTower_Booker->book1F("EC10_TT_EM_Et","EndCap_TT EM Et",10,0,10,"Et [GeV]");
+  m_h_EC10_TT_Had_Et = TriggerTower_Booker->book1F("EC10_TT_HAD_Et","EndCap_TT HAD Et",10,0,10,"Et [GeV]");
 
-  //TSCT Calibration plots - see calibration below
+  m_h_FCAL_TT_phi = TriggerTower_Booker->book1F("FCAL_TT_phi","FCAL_TT phi",64,0,2*M_PI, "#phi"); 
+  m_h_FCAL_TT_Em_Et = TriggerTower_Booker->book1F("FCAL_TT_EM_Et","FCAL_TT EM Et",255,0,255,"Et [GeV]");
+  m_h_FCAL_TT_Had_Et = TriggerTower_Booker->book1F("FCAL_TT_HAD_Et","FCAL_TT HAD Et",255,0,255,"Et [GeV]");
+  m_h_FCAL10_TT_Em_Et = TriggerTower_Booker->book1F("FCAL10_TT_EM_Et","FCAL10_TT EM Et",10,0,10,"Et [GeV]");
+  m_h_FCAL10_TT_Had_Et = TriggerTower_Booker->book1F("FCAL10_TT_HAD_Et","FCAL10_TT HAD Et",10,0,10,"Et [GeV]");
 
-  //Discrepancy check plots
-  
-  m_h_Ratio_D_Em_Et = new TH1F("Ratio_D_Em_Et","Calo Et / TT Et (Em)",30,0,3); 
-  m_h_Ratio_D_Had_Et = new TH1F("Ratio_D_Had_Et","Calo Et / TT Et (Had)",30,0,3); 
+  m_h_TT_eta_gt10 = TriggerTower_Booker->book1F("TT_eta_gt10","10 Gev TT eta",100,-5,5, "#eta");
+  m_h_TT_phi_gt10 = TriggerTower_Booker->book1F("TT_phi_gt10","10GeV TT phi",64,0,2*M_PI, "#phi"); 
+  m_h_TT_Barrel_phi_gt10 = TriggerTower_Booker->book1F("TT_Barrel_phi_gt10","10GeV TT Barrel phi",64,0,2*M_PI, "#phi"); 
+  m_h_TT_EC_phi_gt10 = TriggerTower_Booker->book1F("TT_EC_phi_gt10","10GeV TT EC phi",64,0,2*M_PI, "#phi"); 
+  m_h_TT_FCAL_phi_gt10 = TriggerTower_Booker->book1F("TT_FCAL_phi_gt10","10GeV TT FCAL phi",64,0,2*M_PI, "#phi"); 
 
-  m_h_Calo_DEm_under_phi = new TH1F("Calo_DEm_under_phi","Calo phi (TT<Calo [Em])",64,0,2*M_PI); 
-  m_h_Calo_DEm_under_eta = new TH1F("Calo_DEm_under_eta","Calo eta (TT<Calo [Em])",100, -5, 5); 
-  m_h_Calo_DEm_under_Em_Et = new TH1F("Calo_DEm_under_Em_Et","Em Et Calo (TT<Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_under_Had_Et = new TH1F("Calo_DEm_under_Had_Et","Had Et Calo (TT<Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_under_TTEm_Et = new TH1F("Calo_DEm_under_TTEm_Et","Em Et TT (TT<Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_under_TTHad_Et = new TH1F("Calo_DEm_under_TTHad_Et","Had Et TT (TT<Calo [Em])", 255, 0, 255.*GeV);
-
-  m_h_Calo_DEm_over_phi = new TH1F("Calo_DEm_over_phi","Calo phi (TT>Calo [Em])",64,0,2*M_PI); 
-  m_h_Calo_DEm_over_eta = new TH1F("Calo_DEm_over_eta","Calo eta (TT>Calo [Em])",100, -5, 5); 
-  m_h_Calo_DEm_over_Em_Et = new TH1F("Calo_DEm_over_Em_Et","Em Et Calo (TT>Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_over_Had_Et = new TH1F("Calo_DEm_over_Had_Et","Had Et Calo (TT>Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_over_TTEm_Et = new TH1F("Calo_DEm_over_TTEm_Et","Em Et TT (TT>Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DEm_over_TTHad_Et = new TH1F("Calo_DEm_over_TTHad_Et","Had Et TT (TT>Calo [Em])", 255, 0, 255.*GeV);
-
-  m_h_Calo_DHad_under_phi = new TH1F("Calo_DHad_under_phi","Calo phi (TT<Calo [Em])",64,0,2*M_PI); 
-  m_h_Calo_DHad_under_eta = new TH1F("Calo_DHad_under_eta","Calo eta (TT<Calo [Em])",100, -5, 5); 
-  m_h_Calo_DHad_under_Em_Et = new TH1F("Calo_DHad_under_Em_Et","Em Et Calo (TT<Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_under_Had_Et = new TH1F("Calo_DHad_under_Had_Et","Had Et Calo (TT<Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_under_TTEm_Et = new TH1F("Calo_DHad_under_TTEm_Et","Em Et TT (TT<Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_under_TTHad_Et = new TH1F("Calo_DHad_under_TTHad_Et","Had Et TT (TT<Calo [Em])", 255, 0, 255.*GeV);
-
-  m_h_Calo_DHad_over_phi = new TH1F("Calo_DHad_over_phi","Calo phi (TT>Calo [Em])",64,0,2*M_PI); 
-  m_h_Calo_DHad_over_eta = new TH1F("Calo_DHad_over_eta","Calo eta (TT>Calo [Em])",100, -5, 5); 
-  m_h_Calo_DHad_over_Em_Et = new TH1F("Calo_DHad_over_Em_Et","Em Et Calo (TT>Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_over_Had_Et = new TH1F("Calo_DHad_over_Had_Et","Had Et Calo (TT>Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_over_TTEm_Et = new TH1F("Calo_DHad_over_TTEm_Et","Em Et TT (TT>Calo [Em])", 255, 0, 255.*GeV);
-  m_h_Calo_DHad_over_TTHad_Et = new TH1F("Calo_DHad_over_TTHad_Et","Had Et TT (TT>Calo [Em])", 255, 0, 255.*GeV);
- */
-
-  // ====================================================================================
-  // Calibration Plots:
-  // ====================================================================================
+  m_h_TT_etaphi = TriggerTower_Booker->book2F("Eta_Phi_TT","TT Eta_Phi",100,-5,5, 64,0,2*M_PI, "#eta", "#phi");
+  m_h_TT_etaphi_hitmap = TriggerTower_Booker->book2F("Eta_Phi_HM_TT","TT Eta_Phi_HitMap",40,-5,5, 64,0,2*M_PI, "#eta", "#phi");
+  m_h_Calib_TTEM_EtEta = TriggerTower_Booker->book2F("TTEM_EtEta", "TT (EM) Et vs eta", 50, -5, 5, 10, 0, 10, "#eta", "Et [GeV]");
+  m_h_Calib_TTHAD_EtEta = TriggerTower_Booker->book2F("TTHAD_EtEta", "TT (HAD) Et vs eta", 50, -5, 5, 10, 0, 10, "#eta", "Et [GeV]");
 
 
-  //TT:
-  m_h_Calib_TTEM_EtEta = new TH2F("TTEM_EtEta", "TT (EM) Et vs eta", 50, -5, 5, 10, 0, 10);
-  m_h_Calib_TTHAD_EtEta = new TH2F("TTHAD_EtEta", "TT (HAD) Et vs eta", 50, -5, 5, 10, 0, 10);
-  //CaloTower
-  m_h_Calib_CaloT_EtEta = new TH2F("CaloT_EtEta", "ESD Calo Et vs eta", 50, -5, 5, 100, 0, 10.*GeV);
-  
-  //need to add TSCT Em and Had
-  m_h_Calib_CaloEM_EtEta = new TH2F("CaloEM_EtEta", "TSCT (EM) Et vs eta", 50, -5, 5, 100, 0, 10.*GeV);
-  m_h_Calib_CaloHAD_EtEta = new TH2F("CaloHAD_EtEta", "TSCT (HAD) Et vs eta", 50, -5, 5, 100, 0, 10.*GeV);
-  
-  //Not implemented
-  m_h_Calib_EMRatio_ETEta = new TH2F("CalibEM_EtEta", "Calib (EM) Et vs eta", 50, -5, 5, 2, 0, 2);
-  m_h_Calib_HADRatio_ETEta = new TH2F("CalibHAD_EtEta", "Calib (HAD) Et vs eta", 50, -5, 5, 2, 0, 2);
-  
+
+  m_h_JE_Em_Et = JetElements_Booker->book1F("JE_EM_Et","JE EM Et monitor",255,0,255,"Et [GeV]");
+  m_h_JE_Had_Et = JetElements_Booker->book1F("JE_HAD_Et","JE HAD Et monitor",255,0,255,"Et [GeV]");
+  m_h_JE_Tot_Et = JetElements_Booker->book1F("JE_Tot_Et","JE EM+HAD Et monitor",10,0,10,"Et [GeV]");
+
+  m_h_JE_eta = JetElements_Booker->book1F("JE_eta","JE eta",100,-5,5,"#eta");
+  m_h_JE_phi = JetElements_Booker->book1F("JE_phi","JE phi ",64,0,2*M_PI,"#phi");
+
+  m_h_JE_Tot_Et = JetElements_Booker->book1F("JE_Tot_Et","JE EM+HAD Et monitor",10,0,10,"Et [GeV]");
+  m_h_JE_Em10_Et = JetElements_Booker->book1F("JE_EM10_Et","JE EM Et magnified",11,-1,10,"Et [GeV]"); 
+  m_h_JE_Had10_Et = JetElements_Booker->book1F("JE_HAD10_Et","JE HAD Et magnified",11,-1,10,"Et [GeV]"); 
+
+  m_h_Barrel_JE_phi = JetElements_Booker->book1F("Barrel_JE_phi","Barrel_JE phi",64,0,2*M_PI, "#phi");
+  m_h_Barrel_JE_Em_Et = JetElements_Booker->book1F("Barrel_JE_EM_Et","Barrel_JE EM Et",255,0,255,"Et [GeV]");
+  m_h_Barrel_JE_Had_Et = JetElements_Booker->book1F("Barrel_JE_HAD_Et","Barrel_JE HAD Et",255,0,255,"Et [GeV]");
+
+  m_h_EC10_JE_Em_Et = JetElements_Booker->book1F("EC10_JE_EM_Et","EndCap_JE EM Et",10,0,10,"Et [GeV]");
+  m_h_EC10_JE_Had_Et = JetElements_Booker->book1F("EC10_JE_HAD_Et","EndCap_JE HAD Et",10,0,10,"Et [GeV]");
+
+  m_h_Barrel10_JE_Em_Et = JetElements_Booker->book1F("Barrel10_JE_EM_Et","Barrel10_JE EM Et",10,0,10,"Et [GeV]");
+  m_h_Barrel10_JE_Had_Et = JetElements_Booker->book1F("Barrel10_JE_HAD_Et","Barrel10_JE HAD Et",10,0,10,"Et [GeV]");
+
+  m_h_FCAL10_JE_Em_Et = JetElements_Booker->book1F("FCAL10_JE_EM_Et","FCAL10_JE EM Et",10,0,10,"Et [GeV]");
+  m_h_FCAL10_JE_Had_Et = JetElements_Booker->book1F("FCAL10_JE_HAD_Et","FCAL10_JE HAD Et",10,0,10,"Et [GeV]");
+
+  m_h_EC_JE_phi = JetElements_Booker->book1F("EC_JE_phi","EC_JE phi",64,0,2*M_PI, "#phi");
+  m_h_EC_JE_Em_Et = JetElements_Booker->book1F("EC_JE_EM_Et","EC_JE EM Et",255,0,255,"Et [GeV]");
+  m_h_EC_JE_Had_Et = JetElements_Booker->book1F("EC_JE_HAD_Et","EC_JE HAD Et",255,0,255,"Et [GeV]");
+
+  m_h_FCAL_JE_phi = JetElements_Booker->book1F("FCAL_JE_phi","FCAL_JE phi",64,0,2*M_PI, "#phi"); 
+  m_h_FCAL_JE_Em_Et = JetElements_Booker->book1F("FCAL_JE_EM_Et","FCAL_JE EM Et",255,0,255,"Et [GeV]");
+  m_h_FCAL_JE_Had_Et = JetElements_Booker->book1F("FCAL_JE_HAD_Et","FCAL_JE HAD Et",255,0,255,"Et [GeV]");
+
+  m_h_JE_etaphi = JetElements_Booker->book2F("Eta_Phi_JE","JE Eta_Phi",100,-5,5, 64,0,2*M_PI, "#eta", "#phi");
+  m_h_JE_etaphi_hitmap = JetElements_Booker->book2F("Eta_Phi_HM_JE","JE Eta_Phi_HitMap",100,-5,5, 64,0,2*M_PI, "#eta", "#phi");
+
+  m_h_JE_eta_gt10 = JetElements_Booker->book1F("JE_eta_gt10","10Gev JE eta",100,-5,5, "#eta");
+  m_h_JE_phi_gt10 = JetElements_Booker->book1F("JE_phi_gt10","10GeV JE phi",64,0,2*M_PI, "#phi"); 
+  m_h_JE_EC_phi_gt10 = JetElements_Booker->book1F("JE_EC_phi_gt10","10GeV JE EC phi",64,0,2*M_PI, "#phi"); 
+  m_h_JE_Barrel_phi_gt10 = JetElements_Booker->book1F("JE_Barrel_phi_gt10","10GeV JE Barrel phi",64,0,2*M_PI, "#phi"); 
+  m_h_JE_FCAL_phi_gt10 = JetElements_Booker->book1F("JE_FCAL_phi_gt10","10GeV JE FCAL phi",64,0,2*M_PI, "#phi"); 
  
     }
 
@@ -411,30 +267,9 @@ StatusCode TrigT1CaloBSMonTool::fillHistograms()
       return StatusCode::SUCCESS;
     }
 
-  /*
-  //Retrieve Calo Tower collection from SG
-  const CaloTowerContainer* CaloTowerTES = 0; 
-  sc=m_storeGate->retrieve(CaloTowerTES, "CombinedTower"); 
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      log << MSG::DEBUG << "No Combined Towers found in TES at CombinedTower"   << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  
-  
-  //Retreive Calo Cell collection from SG
-  const CaloCellContainer* CaloCellTES = 0;
-  sc=m_storeGate->retrieve(CaloCellTES, "AllCalo"); 
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      log << MSG::DEBUG << "No CaloCells found in TES at AllCalo "  << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  */
-
   //Key Stuff for Trigger vs Calo Tower comparison
   TriggerTowerKey TTKey(0,0);
-  JetElementKey* JEKey; 
+  //JetElementKey* JEKey; 
   std::map<int, TriggerTower *>* m_ttContainer;
   m_ttContainer       =new std::map<int, TriggerTower*>;          //Create a map to hold the towers
   int key = 0;
@@ -465,7 +300,10 @@ StatusCode TrigT1CaloBSMonTool::fillHistograms()
        }
     m_ttContainer->insert(std::map<int, TriggerTower*>::value_type(key,*TriggerTowerIterator));
 
-    log << MSG::DEBUG << "Ethan:: EmEt = "<<(*TriggerTowerIterator)->emEnergy()<<endreq;
+    log << MSG::DEBUG << "Johanna:: eta = "<<(*TriggerTowerIterator)->eta()<<endreq;
+    log << MSG::DEBUG << "Johanna:: phi = "<<(*TriggerTowerIterator)->phi()<<endreq;
+
+    m_h_TT_channels[0][0]->Fill((*TriggerTowerIterator)->emEnergy(), 1.); 
 
     m_h_TT_Em_Et->Fill( (*TriggerTowerIterator)->emEnergy(), 1.); 
     m_h_TT_Had_Et->Fill( (*TriggerTowerIterator)->hadEnergy(), 1.); 
@@ -494,7 +332,7 @@ StatusCode TrigT1CaloBSMonTool::fillHistograms()
 
     //Et (EM+Had) >10 :
     if (((*TriggerTowerIterator)->emEnergy()+(*TriggerTowerIterator)->hadEnergy())>10){
-      m_h_TT_key->Fill((*TriggerTowerIterator)->key(), 1.);
+      //m_h_TT_key->Fill((*TriggerTowerIterator)->key(), 1.);
 
       m_h_TT_eta_gt10->Fill( (*TriggerTowerIterator)->eta(),1.);      
       m_h_TT_phi_gt10->Fill( (*TriggerTowerIterator)->phi(), 1.); 
@@ -531,8 +369,6 @@ StatusCode TrigT1CaloBSMonTool::fillHistograms()
     m_h_FCAL_TT_Em_Et->Fill( (*TriggerTowerIterator)->emEnergy(), 1.); 
     m_h_FCAL_TT_Had_Et->Fill( (*TriggerTowerIterator)->hadEnergy(), 1.); 
     }
-
-
   }
   
   
@@ -608,285 +444,6 @@ StatusCode TrigT1CaloBSMonTool::fillHistograms()
    
   }
   
-  // =============================================================================================
-  // ================= CaloTowers (combined LAr and Tile data) From ESD ==========================
-  // =============================================================================================
-  // CaloTowers exist irrespective of how low the Energy is, 
-  // so need an Et cut to select only those towers with a deposited energy
-  /*
-  int TTkey; 
-  CaloTowerContainer::const_iterator CaloTowerIterator    = CaloTowerTES->begin();
-  CaloTowerContainer::const_iterator CaloTowerIteratorEnd = CaloTowerTES->end();
-
-  int TTkey; //change this to key and use previous int
-  double TTtoCaloEnergyRatio;
-
- for (; CaloTowerIterator != CaloTowerIteratorEnd; ++CaloTowerIterator)
-  {
-
-    //select only Towers with an energy deposit
-    if((*CaloTowerIterator)->et()>0.*GeV){
-      m_h_CaloT_phi->Fill( (*CaloTowerIterator)->phi(), 1.);
-      m_h_CaloT_eta->Fill( (*CaloTowerIterator)->eta(), 1.);
-
-      if((*CaloTowerIterator)->et()>1.*GeV){
-
-	m_h_Calib_CaloT_EtEta->Fill( (*CaloTowerIterator)->eta(), (*CaloTowerIterator)->et(), 1.);
-
-
-	// Everything Below is Calo-TT comparison, should be in the TSCT part
-	//
-	//determine phi in the 0->2Pi range so that it will work with TT functionality
-	double calophi = (*CaloTowerIterator)->phi();
-	if(calophi>M_PI)calophi-=2*M_PI; //Fixme, wrong way round
-	TTkey = TTKey.ttKey(calophi,(*CaloTowerIterator)->eta());
-	m_h_CaloT_key->Fill(TTkey,1);
-	m_h_CaloT_phi_gt10->Fill( (*CaloTowerIterator)->phi(), 1.);
-	m_h_CaloT_eta_gt10->Fill( (*CaloTowerIterator)->eta(), 1.);
-	m_h_CaloT_etaphi_hitmap->Fill( (*CaloTowerIterator)->eta(), (*CaloTowerIterator)->phi(), 1.);
-	m_h_CaloT_etaphi->Fill( (*CaloTowerIterator)->eta(), (*CaloTowerIterator)->phi(), (*CaloTowerIterator)->et());
-	
-	m_h_CaloT_Et->Fill( (*CaloTowerIterator)->et(), 1.);
-      }//eo calotower et>Xgev
-    }//eo calotower et>0gev
-
-    m_h_CaloT_Et10->Fill( (*CaloTowerIterator)->et(), 1.);
-
-  }
- 
-  */
- // ==============================================================================================
- // ================================ Trigger-Style-Calo-Towers ===================================
- // ==============================================================================================
-
- 
- //Start by creating Trigger-Style-Calo-Towers - use a TrigT1Calo objext, InternalTriggerTower
- /* 
- InternalTriggerTower* TriggerStyleCaloTower = 0;
- //For each event create a map for TriggerStyleCaloTowers
- std::map<int, InternalTriggerTower*> * TriggerStyleCaloTowerContainer = new std::map<int, InternalTriggerTower*>;
-
- CaloCellContainer::const_iterator CaloCellIterator    = CaloCellTES->begin();
- CaloCellContainer::const_iterator CaloCellIteratorEnd = CaloCellTES->end();
- for (; CaloCellIterator != CaloCellIteratorEnd; ++CaloCellIterator)
-   {
-     const CaloDetDescrElement* cell_DDE = (*CaloCellIterator)->caloDDE(); // check acceptedCaloCell arguments
-     cell_DDE = (*CaloCellIterator)->caloDDE(); // check acceptedCaloCell arguments
-
-     //em is cell_DDE->getSampling()== CaloCell_ID::FCAL0 || LAREM
-     //had is everything else
-
-     //check if cell is in a tile gap
-     CaloSampling::CaloSample  sampl = CaloSampling::getSampling(**CaloCellIterator);
-     if ( cell_DDE->getSubCalo()!=CaloCell_ID::TILE || CaloSampling::TileGap3 != sampl ){
-       //Either not Tile, OR if it is a Tile, it's not in the TileGap
-
-       //Obtain TT Key from CaloCell
-
-       double calocellphi = (*CaloCellIterator)->phi();
-       //convert calocellphi from -pi->pi range to TT 0->2pi
-       if(calocellphi<0)calocellphi+=2*M_PI;
-
-
-       TTkey = TTKey.ttKey(calocellphi,(*CaloCellIterator)->eta());
-       double tt_phi = TTKey.phi();
-       double tt_eta = TTKey.eta();
-
-       //check to see if TriggerStyleCaloTower exists or need to add it to the map of TriggerStyleCaloTowers
-       std::map<int, InternalTriggerTower*>::iterator TriggerStyleCaloTowerIterator = TriggerStyleCaloTowerContainer->find( TTkey );
-       if (TriggerStyleCaloTowerIterator == TriggerStyleCaloTowerContainer->end()){//i.e. no TriggerStyleCaloTower at that key
-	 TriggerStyleCaloTower = new InternalTriggerTower(tt_phi,tt_eta, TTkey);
-	 TriggerStyleCaloTowerContainer->insert(std::map<int, InternalTriggerTower*>::value_type(TTkey,TriggerStyleCaloTower));//Add TT to map
-       }else{//TriggerStyleCaloTower already exists at that key
-	 TriggerStyleCaloTower=(TriggerStyleCaloTowerIterator->second);
-       }
-
-       if ( cell_DDE->getSubCalo()==CaloCell_ID::LAREM ||  
-	    cell_DDE->getSampling()==CaloCell_ID::FCAL0 ) {//Em 
-	 TriggerStyleCaloTower->addEMPeak((*CaloCellIterator)->et());
-	 std::vector<double> emamp = TriggerStyleCaloTower->EmAmps();
-	 //log << MSG::ERROR << "emamp.at3 = "<<emamp.at(3)<<endreq ;
-	 //	 if(emamp.at(3)<-0.2*GeV) log << MSG::ERROR <<// "-ve CellEt = "<<(*CaloCellIterator)->et()<<
-	 //  " emamp.at3= "<<emamp.at(3)*GeV<<endreq ;
-	   
-       }else{//Had
-	 TriggerStyleCaloTower->addHadPeak((*CaloCellIterator)->et());
-	 //std::vector<double> hadamp = TriggerStyleCaloTower->HadAmps();
-	 // log << MSG::ERROR << "hadamp.at(3)= "<<hadamp.at(3)<<endreq ;
-
-       }
-     }//EO gap check     
-   }
- */
- //Now loop over TT and get key, compare to internalTT - which are in fact calo-like towers.
- 
- /*
- // ========================================================================================
- //  Fill Plots with TriggerTower and Trigger-Style-Calo-Tower Comparisons
- // ========================================================================================
- 
- //put TriggerTowerIterator back to the start (previously used in TT plots)
- TriggerTowerIterator    = TriggerTowerTES->begin(); 
-
- //use already defined TriggerTowerIterator
-
- for (; TriggerTowerIterator != TriggerTowerIteratorEnd; ++TriggerTowerIterator) 
-   {
-     //Find Key for the Trigger Tower     
-     key = TTKey.ttKey((*TriggerTowerIterator)->phi(),(*TriggerTowerIterator)->eta());
-
-     //Get the TriggerStyleCaloTower for that Key
-     std::map<int, InternalTriggerTower*>::iterator TriggerStyleCaloTowerIterator = TriggerStyleCaloTowerContainer->find(key);
-
-     //Get EmAmps vector for the TriggerStyleCaloTower
-     //Get 3rd (peak) element
-     m_h_TT_Calo_over_EtTower->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),(*TriggerTowerIterator)->emEnergy(),1);
-
-     //log << MSG::ERROR << "emamp "<<(TriggerStyleCaloTowerIterator->second->EmAmps()).at(3)<<" EMEt "<<(*TriggerTowerIterator)->emEnergy()<<endreq ;
-
-   }
- */
- 
- /*
- std::map<int, InternalTriggerTower*>::iterator TriggerStyleCaloTowerIterator = TriggerStyleCaloTowerContainer->begin();
- std::map<int, InternalTriggerTower*>::iterator TriggerStyleCaloTowerIteratorEnd = TriggerStyleCaloTowerContainer->end();
-
- for (; TriggerStyleCaloTowerIterator != TriggerStyleCaloTowerIteratorEnd; ++TriggerStyleCaloTowerIterator){
-
-   double EmEt = (TriggerStyleCaloTowerIterator->second->EmAmps()).at(3);
-   double HadEt = (TriggerStyleCaloTowerIterator->second->HadAmps()).at(3);
-
-   if((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3)>1.*GeV){
-    //    log << MSG::ERROR << "emamp.at3 = "<<(TriggerStyleCaloTowerIterator->second->EmAmps()).at(3)<<endreq ;
-
-   m_h_Calo_Em_Et->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1.);
-   m_h_Calo_phi->Fill(TriggerStyleCaloTowerIterator->second->phi(),1.);
-   m_h_Calo_eta->Fill(TriggerStyleCaloTowerIterator->second->eta(),1.);
-   m_h_Calib_CaloEM_EtEta->Fill(TriggerStyleCaloTowerIterator->second->eta(),(TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1.);
-
-   }
-   if((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3)>1.*GeV){
-     m_h_Calo_Had_Et->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1.);
-     m_h_Calib_CaloHAD_EtEta->Fill(TriggerStyleCaloTowerIterator->second->eta(),(TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1.);
-   }
-
-   m_h_Calo_etaphi_hitmap->Fill( TriggerStyleCaloTowerIterator->second->eta(),TriggerStyleCaloTowerIterator->second->phi(), 1.);
-   m_h_Calo_etaphi->Fill(TriggerStyleCaloTowerIterator->second->eta(),TriggerStyleCaloTowerIterator->second->phi(), HadEt+EmEt );
-
-   //Et>10GeV
-   if((HadEt+EmEt)>10.*GeV){
-    
-     m_h_Calo_Em_Et10->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1.);
-     m_h_Calo_Had_Et10->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1.);
-     m_h_Calo_phi_gt10->Fill(TriggerStyleCaloTowerIterator->second->phi(),1.);
-     m_h_Calo_eta_gt10->Fill(TriggerStyleCaloTowerIterator->second->eta(),1.);
-
-   }
-   //Region Plots
-
-   double eta = TriggerStyleCaloTowerIterator->second->eta();
-   
-   if(1.5 < eta && eta< 3.2){//EndCap
-
-     m_h_EC_Calo_Em_Et->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1.);
-     m_h_EC_Calo_Had_Et->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1.);
-     m_h_EC_Calo_phi->Fill(TriggerStyleCaloTowerIterator->second->phi(),1.);
-     if((HadEt+EmEt)>10.*GeV){
-       m_h_EC10_Calo_Em_Et->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1.);
-       m_h_EC10_Calo_Had_Et->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1.);
-     }
-   }else if(0.1 < eta && eta < 1.5){//Barrel
-
-     m_h_Barrel_Calo_Em_Et->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1.);
-     m_h_Barrel_Calo_Had_Et->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1.);
-     m_h_Barrel_Calo_phi->Fill(TriggerStyleCaloTowerIterator->second->phi(),1.);
-     if((HadEt+EmEt)>10.*GeV){
-       m_h_Barrel10_Calo_Em_Et->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1.);
-       m_h_Barrel10_Calo_Had_Et->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1.);
-     }
-
-   }else if(3.2 < eta && eta< 4.9){//FCAL
-  
-     m_h_FCAL_Calo_Em_Et->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1.);
-     m_h_FCAL_Calo_Had_Et->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1.);
-     m_h_FCAL_Calo_phi->Fill(TriggerStyleCaloTowerIterator->second->phi(),1.);
-     if((HadEt+EmEt)>10.*GeV){
-       m_h_FCAL10_Calo_Em_Et->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1.);
-       m_h_FCAL10_Calo_Had_Et->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1.);
-     }
-   }
-
-
-   //TT and TSCT comparison plots ============================================
-
-   TTkey = TTKey.ttKey(TriggerStyleCaloTowerIterator->second->phi(),eta);
-   m_h_Calo_key->Fill(TTkey,1);
-
-   //loop over triggertowers and make tt:calo comparison plots
-   std::map<int, TriggerTower *>::iterator test=m_ttContainer->find( TTkey ); 
-
-   if (test != m_ttContainer->end()){//If TT exists
-
-     m_h_TT_Calo_Em_EtTower->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),(test->second)->emEnergy(),1);
-     m_h_TT_Calo_Had_EtTower->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),(test->second)->hadEnergy(),1);
-     //Fixme, want one for Em and one for Had
-     m_h_TT_Calo_PhiTower->Fill(TriggerStyleCaloTowerIterator->second->phi(), (test->second)->phi(),1);
-     m_h_TT_Calo_EtaTower->Fill(eta,(test->second)->eta(),1);
-
-     if((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3)>0.8*GeV && (test->second)->emEnergy()>0){
-       double TSCToverTTEmEnergyRatio = ((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3)/1000)
-	                                                                   /(test->second)->emEnergy();
-       //log << MSG::ERROR << "Ethan TSCToverTTEmEnergyRatio = " << TSCToverTTEmEnergyRatio <<endreq;
-
-       m_h_Ratio_D_Em_Et->Fill(TSCToverTTEmEnergyRatio,1);
-
-       if(TSCToverTTEmEnergyRatio>1.2){//TSCT>TT -> "under"
-	 m_h_Calo_DEm_under_Em_Et->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1);
-	 m_h_Calo_DEm_under_phi->Fill(TriggerStyleCaloTowerIterator->second->phi(),1);
-	 m_h_Calo_DEm_under_eta->Fill(eta,1);
-	 m_h_Calo_DEm_under_Had_Et->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1); 
-	 m_h_Calo_DEm_under_TTEm_Et->Fill((test->second)->emEnergy()); 
-	 m_h_Calo_DEm_under_TTHad_Et->Fill((test->second)->hadEnergy()); 
-       }
-       else if (TSCToverTTEmEnergyRatio<0.8){//TSCT<TT -> "over"
-       	 m_h_Calo_DEm_over_Em_Et->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1);
-	 m_h_Calo_DEm_over_phi->Fill(TriggerStyleCaloTowerIterator->second->phi(),1);
-	 m_h_Calo_DEm_over_eta->Fill(eta,1);
-	 m_h_Calo_DEm_over_Had_Et->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1); 
-	 m_h_Calo_DEm_over_TTEm_Et->Fill((test->second)->emEnergy()); 
-	 m_h_Calo_DEm_over_TTHad_Et->Fill((test->second)->hadEnergy()); 
-       }
-     }
-
-     if((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3)>0.8*GeV && (test->second)->hadEnergy()>0){
-       double TSCToverTTHadEnergyRatio = ((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3)/1000)
-	                                                                   /(test->second)->hadEnergy();
-
-       m_h_Ratio_D_Had_Et->Fill(TSCToverTTHadEnergyRatio,1);
-
-       if(TSCToverTTHadEnergyRatio>1.2){//TSCT>TT -> "under"
-	 m_h_Calo_DHad_under_Em_Et->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1);
-	 m_h_Calo_DHad_under_phi->Fill(TriggerStyleCaloTowerIterator->second->phi(),1);
-	 m_h_Calo_DHad_under_eta->Fill(eta,1);
-	 m_h_Calo_DHad_under_Had_Et->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1); 
-	 m_h_Calo_DHad_under_TTEm_Et->Fill((test->second)->emEnergy()); 
-	 m_h_Calo_DHad_under_TTHad_Et->Fill((test->second)->hadEnergy()); 
-       }
-       else if (TSCToverTTHadEnergyRatio<0.8){//TSCT<TT -> "over"
-       	 m_h_Calo_DHad_over_Em_Et->Fill((TriggerStyleCaloTowerIterator->second->EmAmps()).at(3),1);
-	 m_h_Calo_DHad_over_phi->Fill(TriggerStyleCaloTowerIterator->second->phi(),1);
-	 m_h_Calo_DHad_over_eta->Fill(eta,1);
-	 m_h_Calo_DHad_over_Had_Et->Fill((TriggerStyleCaloTowerIterator->second->HadAmps()).at(3),1); 
-	 m_h_Calo_DHad_over_TTEm_Et->Fill((test->second)->emEnergy()); 
-	 m_h_Calo_DHad_over_TTHad_Et->Fill((test->second)->hadEnergy()); 
-       }
-
-     }
-
-   }
-
- }
- */ 
   return StatusCode( StatusCode::SUCCESS );
 
 }

@@ -95,15 +95,30 @@ StatusCode JetElementMon::bookHistograms( bool isNewEventsBlock,
   
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
-      // register Histograms for  data
-      m_h_je_eta = expert_Booker->book1F("eta", "JE eta" , 50, -5, 5, "#eta" , "#");
-      m_h_je_phi = expert_Booker->book1F("phi", "JE phi", 32, 0, 6.4, "#phi" , "#");
-      m_h_je_emenergy = expert_Booker->book1F("em_energy", "JE em energy", 100, 0, 100, "em energy [GeV]" , "#");
-      m_h_je_hadenergy  = expert_Booker->book1F("had_energy", "JE had energy", 100, 0, 100, "had energy [GeV]" , "#");
-      m_h_je_energy = expert_Booker->book1F("Et", "JE Et (em + had)", 100, 0, 100, "(em+had) energy [GeV]" , "#");
+      Helper* Help = new Helper();
 
-      m_h_je_etaphi = shift_Booker->book2F("eta-phi", "JE per eta - phi", 50, -5, 5, 32, 0, 6.4 , "#eta", "#phi");
-      m_h_je_energy_etaphi = shift_Booker->book2F("Et_per_eta-phi", " JE Et per eta - phi",  50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
+      // register Histograms for  data
+      m_h_je_eta = expert_Booker->book1F("eta_JEM_input", "JE eta  --  JEM input" , 50, -5, 5, "#eta" , "#");
+      m_h_je_eta ->SetBins(32,Help->JEEtaBinning());
+
+      m_h_je_phi = expert_Booker->book1F("phi_JEM_input", "JE phi  --  JEM input", 32, 0, 6.4, "#phi" , "#");
+      m_h_je_phi->SetBins(32,Help->JEPhiBinning());
+
+      m_h_je_emenergy = expert_Booker->book1F("EmEnergy_JEM_input", "JE em energy  --  JEM input", 
+					      100, 0, 100, "em energy [GeV]" , "#");
+      m_h_je_hadenergy  = expert_Booker->book1F("HadEnergy_JEM_input", "JE had energy  --  JEM input", 
+						100, 0, 100, "had energy [GeV]" , "#");
+      m_h_je_energy = expert_Booker->book1F("Et_JEM_input", "JE Et (em + had)  --  JEM input", 
+					    100, 0, 100, "(em+had) energy [GeV]" , "#");
+
+
+      m_h_je_etaphi = shift_Booker->book2F("eta-phi_JEM_input", "JE per eta - phi  --  JEM input", 
+					   50, -5, 5, 32, 0, 6.4 , "#eta", "#phi");
+      m_h_je_etaphi->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
+
+      m_h_je_energy_etaphi = shift_Booker->book2F("Et_eta-phi_JEM_input", "JE Et per eta - phi  --  JEM input",  
+						  50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
+      m_h_je_etaphi->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
     }
 	
   if( isNewRun ) { }
@@ -124,7 +139,7 @@ StatusCode JetElementMon::fillHistograms()
 
   if( (sc==StatusCode::FAILURE) ) 
     {
-      mLog << MSG::DEBUG
+      mLog << MSG::INFO
 	   << "No JetElements found in TES at "
 	   << m_JetElementLocation
 	   << endreq ;
