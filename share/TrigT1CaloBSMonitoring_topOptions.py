@@ -158,14 +158,8 @@ monMan.AthenaMonTools += [ "CMMMon/Sim_L1CMMMonTool" ]
 monMan.AthenaMonTools += [ "SimBSMon/SimBSMonTool" ]
 
 #monMan.AthenaMonTools += [ "TrigT1CaloBSMonTool/L1CaloBSTool" ]
-<<<<<<< TrigT1CaloBSMonitoring_topOptions.py
-
 monMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1BSCPMMonTool" ]
 monMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
-=======
-monMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1BSCPMMonTool" ]
-monMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
->>>>>>> 1.7
 
 ## get a handle on the ToolSvc
 #from AthenaCommon.AppMgr import ToolSvc as toolSvc
@@ -238,7 +232,6 @@ ToolSvc.L1BSCPMMonTool.CMMCPHitsLocation = "BS_CMMCPHits"
 ToolSvc.L1BSCPMMonTool.CPMRoILocation = "BS_CPMRoIs"
 #ToolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
 
-<<<<<<< TrigT1CaloBSMonitoring_topOptions.py
 ToolSvc.L1SimCPMMonTool.HistogramPrefix = "Sim"
 ToolSvc.L1SimCPMMonTool.TriggerTowerLocation = "BS_TriggerTowers"
 ToolSvc.L1SimCPMMonTool.CPMTowerLocation = "Sim_CPMTowers"
@@ -258,15 +251,6 @@ ToolSvc.SimBSMonTool.BS_CMMJetHitsLocation = "BS_CMMJetHits"
 ToolSvc.SimBSMonTool.Sim_CMMJetHitsLocation = "Sim_CMMJetHits"
 ToolSvc.SimBSMonTool.PathInRootFile = "Stats/JEM/SimBS"
 #ToolSvc.SimBSMonTool.OutputLevel = DEBUG
-=======
-ToolSvc.L1SimCPMMonTool.HistogramPrefix = "Sim"
-ToolSvc.L1SimCPMMonTool.TriggerTowerLocation = "BS_TriggerTowers"
-ToolSvc.L1SimCPMMonTool.CPMTowerLocation = "Sim_CPMTowers"
-ToolSvc.L1SimCPMMonTool.CPMHitsLocation = "Sim_CPMHits"
-ToolSvc.L1SimCPMMonTool.CMMCPHitsLocation = "Sim_CMMCPHits"
-ToolSvc.L1SimCPMMonTool.CPMRoILocation = "Sim_CPMRoIs"
-#ToolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
->>>>>>> 1.7
 
 
 ## FileKey must match that given to THistSvc
