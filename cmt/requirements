@@ -7,6 +7,8 @@ use AtlasCLHEP          	AtlasCLHEP-00-*       	External
 use GaudiInterface      	GaudiInterface-*      	External
 use StoreGate           	StoreGate-*           	Control
 use AthenaMonitoring    	AthenaMonitoring-00-* 	Control
+use DataModel 			DataModell-*		Control 
+use Identifier 			Identifier-*		DetectorDescription
 
 use AtlasDoxygen		AtlasDoxygen-00-*	Tools
 use AtlasROOT			AtlasROOT-02-*		External
@@ -14,14 +16,16 @@ use AtlasROOT			AtlasROOT-02-*		External
 use CaloIdentifier      	CaloIdentifier-00-*   	Calorimeter
 use CaloEvent           	CaloEvent-*           	Calorimeter
 
-use TileIdentifier      	TileIdentifier-00-*   	TileCalorimeter
-use TileConditions      	TileConditions-00-*   	TileCalorimeter
-use TileEvent           	TileEvent-00-*        	TileCalorimeter
+#use TileIdentifier      	TileIdentifier-00-*   	TileCalorimeter
+#use TileConditions      	TileConditions-00-*   	TileCalorimeter
+#use TileEvent           	TileEvent-00-*        	TileCalorimeter
 	
 use TrigT1Calo			TrigT1Calo-* 	      	Trigger/TrigT1
 use TrigT1Interfaces    	TrigT1Interfaces-*    	Trigger/TrigT1
-use TriggerRelease      	TriggerRelease-*      	Trigger
-use TrigT1CaloByteStream 	TrigT1CaloByteStream-* 	Trigger/TrigT1
+#use TriggerRelease      	TriggerRelease-*      	Trigger
+#use TrigT1CaloByteStream 	TrigT1CaloByteStream-* 	Trigger/TrigT1
+use TrigT1CaloCalibTools	TrigT1CaloCalibTools-*	Trigger/TrigT1
+
 	
 apply_pattern declare_joboptions files="*.py"
 
