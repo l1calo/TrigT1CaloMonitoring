@@ -1,5 +1,10 @@
-2007-07-03  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
+2007-07-25  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
+	* update cmt/requirment
+	* further development of monitoring: TriggerTowerMon, JetElementMon, JEMMon, CMMMon, SimBSMon
+	* updating JobOptions
+	* removing TrigT1CaloMonitoring_L1CaloBSConverter.py, TrigT1CaloBSMonTool.h, TrigT1CaloMonTool.h
 
+2007-07-03  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
         * Tag TrigT1CaloMonitoring-00-01-01
 	* Add TriggerTowerMon.h for Monitoring the TriggerTowers
 	* Add SimBSMon.h for Checking against Simulation

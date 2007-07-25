@@ -99,11 +99,7 @@ protected:
    TH1F* m_h_CMMRoI_Et;
 
    //data transmission checks
-   TH1F* m_h_TransmissionCheck_Crate0_Hits;
-   TH1F* m_h_TransmissionCheck_Crate1_Hits;
-
-   TH1F* m_h_TransmissionCheck_Crate0_Energy;
-   TH1F* m_h_TransmissionCheck_Crate1_Energy;
+   TH2F* m_h_TransCheck_JEP;
 
 };
 

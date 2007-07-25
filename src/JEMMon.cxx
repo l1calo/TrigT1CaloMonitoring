@@ -98,36 +98,33 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 	
+  ManagedMonitorToolBase::LevelOfDetail_t LevelOfDetail=shift;
+  if (m_DataType=="Sim") LevelOfDetail = expert;
+
   MonGroup JEM_DAQ ( this, (m_PathInRootFile+"/DAQ").c_str(), expert, eventsBlock );
   HistoBooker* DAQ_Booker = new HistoBooker(&JEM_DAQ, &mLog, m_DataType);
 
-  MonGroup JEM_RoI ( this, (m_PathInRootFile+"/RoI").c_str(), expert, eventsBlock );
+  MonGroup JEM_RoI ( this, (m_PathInRootFile+"/RoI").c_str(), LevelOfDetail, eventsBlock );
   HistoBooker* RoI_Booker = new HistoBooker(&JEM_RoI, &mLog, m_DataType);
 
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
       Helper* Help = new Helper();
 	  
-      m_h_JEMHits_MainHits = DAQ_Booker->book1F("MainHits_JEM_DAQ", "Main Hits  --  JEM DAQ", 
-						8, -0.5, 7.5,  "Threshold No.", "#");
-      m_h_JEMHits_FwdHitsRight = DAQ_Booker->book1F("FwdHitsRight_JEM_DAQ", "Forward Hits Right  --  JEM DAQ", 
-						    4, -0.5, 3.5, "Threshold No.", "#");
-      m_h_JEMHits_FwdHitsLeft = DAQ_Booker->book1F("FwdHitsLeft_JEM_DAQ", "Forward HitsLeft  --  JEM DAQ", 
-						   4, -0.5, 3.5, "Threshold No.", "#");
+      m_h_JEMHits_MainHits = DAQ_Booker->book1F("MainHits_JEM_DAQ", "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ", 8, -0.5, 7.5,  "Threshold No.", "#");
+      m_h_JEMHits_FwdHitsRight = DAQ_Booker->book1F("FwdHitsRight_JEM_DAQ", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "#");
+      m_h_JEMHits_FwdHitsLeft = DAQ_Booker->book1F("FwdHitsLeft_JEM_DAQ", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "#");
 
-      m_h_JEMEtSums_Ex = DAQ_Booker->book1F("Ex_JEM_DAQ", "Ex  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
-      m_h_JEMEtSums_Ey = DAQ_Booker->book1F("Ey_JEM_DAQ", "Ey  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
-      m_h_JEMEtSums_Et = DAQ_Booker->book1F("Et_JEM_DAQ", "Et  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
+      m_h_JEMEtSums_Ex = DAQ_Booker->book1F("Ex_JEM_DAQ", "JEM E_{x}  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
+      m_h_JEMEtSums_Ey = DAQ_Booker->book1F("Ey_JEM_DAQ", "JEM E_{y}  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
+      m_h_JEMEtSums_Et = DAQ_Booker->book1F("Et_JEM_DAQ", "JEM E_{t}  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
 
       // JEM RoI
-      m_h_JEMRoI_MainHits = RoI_Booker->book1F("MainHits_JEM_RoI", "Main Hits  --  JEM RoI", 
-						  8, -0.5, 7.5,  "Threshold No.", "#");      
-      m_h_JEMRoI_FwdHitsRight = RoI_Booker->book1F("FwdHitsRight_JEM_RoI", "Forward Hits Right  --  JEM RoI", 
-						      4, -0.5, 3.5, "Threshold No.", "#");
-      m_h_JEMRoI_FwdHitsLeft = RoI_Booker->book1F("FwdHitsLeft_JEM_RoI", "Forward HitsLeft  --  JEM RoI", 
-						     4, -0.5, 3.5, "Threshold No.", "#");
-      m_h_JEMRoI_Thresh1_etaphi = RoI_Booker->book2F("Thresh1_eta-phi_JEM_RoI", "Threshold 1 per eta-phi  --  JEM RoI", 
-						     50, -5, 5, 32,0,6.4, "#eta", "#phi");
+      m_h_JEMRoI_MainHits = RoI_Booker->book1F("MainHits_JEM_RoI", "Main Jet Hit Multiplicity per Threshold  --  JEM RoI", 8, -0.5, 7.5,  "Threshold No.", "#");      
+      m_h_JEMRoI_FwdHitsRight = RoI_Booker->book1F("FwdHitsRight_JEM_RoI", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "#");
+      m_h_JEMRoI_FwdHitsLeft = RoI_Booker->book1F("FwdHitsLeft_JEM_RoI", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "#");
+
+      m_h_JEMRoI_Thresh1_etaphi = RoI_Booker->book2F("Thresh1_eta-phi_JEM_RoI", "#eta - #phi Map of Hits passing Threshold <ThreshNo>  --  JEM RoI", 50, -5, 5, 32,0,6.4, "#eta", "#phi");
       m_h_JEMRoI_Thresh1_etaphi->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
 
     }

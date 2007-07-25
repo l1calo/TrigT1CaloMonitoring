@@ -79,16 +79,8 @@ protected:
    std::string m_PathInRootFile;   
 
   /** Histos */   
-   // JEM 
-   TH1F*  m_h_SimBSMon_JEM_Crate0_Energy;
-   TH1F*  m_h_SimBSMon_JEM_Crate1_Energy;
-
-   TH1F*  m_h_SimBSMon_JEM_Crate0_Hits;
-   TH1F*  m_h_SimBSMon_JEM_Crate1_Hits;
-
-   TH1F*  m_h_SimBSMon_JEM_Crate0_RoI;
-   TH1F*  m_h_SimBSMon_JEM_Crate1_RoI;
-
+   // JEP 
+   TH2F* m_h_SimBSMon_JEP;
 
 };
 

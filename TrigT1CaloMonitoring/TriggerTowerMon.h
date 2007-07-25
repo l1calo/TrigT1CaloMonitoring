@@ -19,6 +19,7 @@
 #include "CaloIdentifier/CaloIdManager.h"
 #include "CaloIdentifier/CaloLVL1_ID.h"
 #include "Identifier/Identifier.h"
+#include "TrigT1CaloCalibTools/L1CaloTTIdTools.h"
 
 
 #include "TH1.h"
@@ -41,20 +42,12 @@ class TriggerTowerMon: public ManagedMonitorToolBase
   virtual StatusCode procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun );
 
 private:
-  // to get eta/phi position from the offline TT Id fields
-  double IDeta(const Identifier& id);
-  double IDphi(const Identifier& id);
-
-  int pos_neg_z(double eta) const;
-  int region(double eta) const; 
-
-  double etaWidth(double eta) const;
-  double phiWidth(double eta) const; 
-
-  int etaIndex(double eta) const; 
-  int phiIndex(double eta, double phi) const; 
-
   std::string m_TriggerTowerContainerName;
+  int m_TT_HitMap_Thresh0;
+  int m_TT_HitMap_Thresh1;
+  int m_TT_HitMap_Thresh2;
+  int m_TT_ADC_HitMap_Thresh;
+  int m_SliceNo;
 
   std::string m_DataType;
   std::string m_PathInRootFile;
@@ -67,6 +60,9 @@ private:
   std::map <Identifier, TH1F*>  m_h_TT_HadADCPeak;
   std::map <Identifier, TH1F*>  m_h_TT_EmLUTPeak;
   std::map <Identifier, TH1F*>  m_h_TT_HadLUTPeak;
+
+  std::map <int,TH2F*> m_h_TT_HitMap_emADC;
+  std::map <int,TH2F*> m_h_TT_HitMap_hadADC;
   
 protected:
    /** a handle on Store Gate for access to the Event Store */
@@ -78,21 +74,17 @@ protected:
    const CaloIdManager* m_caloMgr;
    // CaloLVL1_ID Id helper
    const CaloLVL1_ID* m_lvl1Helper;
-
+   const L1CaloTTIdTools* m_l1CaloTTIdTools;
 
    //hitmaps
 
-   TH2F* m_h_TT_EmHitMap_30GeV;
-   TH2F* m_h_TT_EmHitMap_10GeV;
-   TH2F* m_h_TT_EmHitMap_5GeV;
-   TH2F* m_h_TT_EmHitMap_2GeV;
-   TH2F* m_h_TT_EmHitMap_1GeV;
+   TH2F* m_h_TT_HitMap_emLUT_Thresh0;
+   TH2F* m_h_TT_HitMap_emLUT_Thresh1;
+   TH2F* m_h_TT_HitMap_emLUT_Thresh2;
 
-   TH2F* m_h_TT_HadHitMap_30GeV;
-   TH2F* m_h_TT_HadHitMap_10GeV;
-   TH2F* m_h_TT_HadHitMap_5GeV;
-   TH2F* m_h_TT_HadHitMap_2GeV;
-   TH2F* m_h_TT_HadHitMap_1GeV;
+   TH2F* m_h_TT_HitMap_hadLUT_Thresh0;
+   TH2F* m_h_TT_HitMap_hadLUT_Thresh1;
+   TH2F* m_h_TT_HitMap_hadLUT_Thresh2;
 
 };
 

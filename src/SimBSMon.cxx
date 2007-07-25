@@ -33,7 +33,7 @@
 #include "TrigT1CaloMonitoring/JEMMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
 
-#include "TrigT1Calo/EnergyTrigger.h"
+//#include "TrigT1Calo/EnergyTrigger.h"
 #include "TrigT1Calo/LVL1TriggerMenuDefs.h"
 #include "TrigT1Calo/LVL1TriggerMenu.h"
 #include "TrigT1Calo/InternalJetROI.h"
@@ -120,16 +120,38 @@ StatusCode SimBSMon::bookHistograms( bool isNewEventsBlock,
   
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
-      m_h_SimBSMon_JEM_Crate0_Energy=JEM_Booker->book1F("JEP_CalcError_Crate0_Energy", "JEP Calculation error - Crate0 Energy", 17,-0.5,16.5, "ModuleNo.", "#");
-      m_h_SimBSMon_JEM_Crate1_Energy=JEM_Booker->book1F("JEP_CalcError_Crate1_Energy", "JEP Calculation error - Crate1 Energy", 17,-0.5,16.5, "ModuleNo.", "#");
-
-      m_h_SimBSMon_JEM_Crate0_Hits=JEM_Booker->book1F("JEP_CalcError_Crate0_Hits", "JEP Calculation error - Crate0 Hits", 17,-0.5,16.5, "ModuleNo.", "#");
-      m_h_SimBSMon_JEM_Crate1_Hits=JEM_Booker->book1F("JEP_CalcError_Crate1_Hits", "JEP Calculation error - Crate1 Hits", 17,-0.5,16.5, "ModuleNo.", "#");
-
-      m_h_SimBSMon_JEM_Crate0_RoI=JEM_Booker->book1F("JEP_CalcError_Crate0_RoI", "JEP Calculation error - Crate0 RoI", 17,-0.5,16.5, "ModuleNo.", "#");
-      m_h_SimBSMon_JEM_Crate1_RoI=JEM_Booker->book1F("JEP_CalcError_Crate1_RoI", "JEP Calculation error - Crate1 RoI", 17,-0.5,16.5, "ModuleNo.", "#");
-    }
   
+  m_h_SimBSMon_JEP=JEM_Booker->book2F("JEP_Calc_Error", "JEP Hardware Output compared to Simulation: Differences", 3,0.5,3.5,36,-0.5,35.5, "Calculated Magnitude", "");
+  //m_h_SimBSMon_JEP-> SetOption ("text");
+
+  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(1, "Energy");
+  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(2, "Hits");
+  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(3, "RoI");
+
+  std::string name;
+  std::stringstream buffer;
+    
+  for (int i = 0; i < 16; i++)
+    {
+      buffer.str("");
+      buffer<<i;
+      
+      name = "JEM " + buffer.str();
+      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel((i+1), name.c_str());
+      
+      buffer.str("");
+      buffer<<i;
+      
+      name = "JEM " + buffer.str();
+      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel((i+1+18), name.c_str());
+    }
+      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(17, "CMM");
+      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(18, "Crate 1: ");
+      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(35, "CMM");
+      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(36, "Crate 0: ");
+
+    }
+
   if( isNewRun ) { }
   
   return StatusCode( StatusCode::SUCCESS );
@@ -221,8 +243,14 @@ StatusCode SimBSMon::fillHistograms()
 		    mLog<<MSG::DEBUG<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums).Ey()<<endreq;
 		    mLog<<MSG::DEBUG<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums).Et()<<endreq;
 
-		    if ((*it_BS_JEMEtSums).crate()==0) m_h_SimBSMon_JEM_Crate0_Energy-> Fill((*it_BS_JEMEtSums).module(),1);
-		    else m_h_SimBSMon_JEM_Crate1_Energy-> Fill((*it_BS_JEMEtSums).module(),1);
+		    if ((*it_BS_JEMEtSums).crate()==0) 
+		    {
+		      m_h_SimBSMon_JEP->Fill(1,((*it_BS_JEMEtSums).module()+18),1);
+		    }
+		    else 
+		    {
+		      m_h_SimBSMon_JEP->Fill(1,((*it_BS_JEMEtSums).module()+18),1);
+		    }
 		  }
 
 		vBS_JEMEtSums.erase(it_BS_JEMEtSums);
@@ -245,8 +273,14 @@ StatusCode SimBSMon::fillHistograms()
 	    mLog<<MSG::DEBUG<<"BS: Ey (compressed)"<<(*it_BS_JEMEtSums).Ey()<<endreq;
 	    mLog<<MSG::DEBUG<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums).Et()<<endreq;
 	    
-	    if ((*it_BS_JEMEtSums).crate()==0) m_h_SimBSMon_JEM_Crate0_Energy-> Fill((*it_BS_JEMEtSums).module(),1);
-	    else m_h_SimBSMon_JEM_Crate1_Energy-> Fill((*it_BS_JEMEtSums).module(),1);
+	    if ((*it_BS_JEMEtSums).crate()==0) 
+	      {
+		m_h_SimBSMon_JEP->Fill(1,((*it_BS_JEMEtSums).module()+18),1);
+	      }
+	    else 
+	      {
+		m_h_SimBSMon_JEP->Fill(1,((*it_BS_JEMEtSums).module()),1);
+	      }
 	  }
       }
 
@@ -262,8 +296,14 @@ StatusCode SimBSMon::fillHistograms()
 	    mLog<<MSG::DEBUG<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums).Ey()<<endreq;
 	    mLog<<MSG::DEBUG<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums).Et()<<endreq;
 	    
-	    if ((*it_Sim_JEMEtSums).crate()==0) m_h_SimBSMon_JEM_Crate0_Energy-> Fill((*it_Sim_JEMEtSums).module(),1);
-	    else m_h_SimBSMon_JEM_Crate1_Energy-> Fill((*it_Sim_JEMEtSums).module(),1);
+	    if ((*it_BS_JEMEtSums).crate()==0) 
+	      {
+		m_h_SimBSMon_JEP->Fill(1,((*it_BS_JEMEtSums).module()+18),1);
+	      }
+	    else 
+	      {
+		m_h_SimBSMon_JEP->Fill(1,((*it_BS_JEMEtSums).module()),1);
+	      }
 	  }
       }
   //*******************************************************
@@ -352,8 +392,15 @@ StatusCode SimBSMon::fillHistograms()
 		    mLog<<MSG::DEBUG<<"Sim: Ey (compressed)"<<(*it_Sim_CMMEtSums).Ey()<<endreq;
 		    mLog<<MSG::DEBUG<<"Sim: Et (compressed)"<<(*it_Sim_CMMEtSums).Et()<<endreq;
 
-		    if ((*it_BS_CMMEtSums).crate()==0) m_h_SimBSMon_JEM_Crate0_Energy-> Fill(16,1);
-		    else m_h_SimBSMon_JEM_Crate1_Energy-> Fill(16,1);
+		    if ((*it_BS_JEMEtSums).crate()==0) 
+		      {
+			m_h_SimBSMon_JEP->Fill(1,(16+18),1);
+		      }
+		    else 
+		      {
+			m_h_SimBSMon_JEP->Fill(1,16,1);
+		      }
+		    
 		  }
 
 		vBS_CMMEtSums.erase(it_BS_CMMEtSums);
@@ -376,8 +423,15 @@ StatusCode SimBSMon::fillHistograms()
 	    mLog<<MSG::DEBUG<<"BS: Ey (compressed)"<<(*it_BS_CMMEtSums).Ey()<<endreq;
 	    mLog<<MSG::DEBUG<<"BS: Et (compressed)"<<(*it_BS_CMMEtSums).Et()<<endreq;
 	    
-	    if ((*it_BS_CMMEtSums).crate()==0) m_h_SimBSMon_JEM_Crate0_Energy-> Fill(16,1);
-	    else m_h_SimBSMon_JEM_Crate1_Energy-> Fill(16,1);
+	    if ((*it_BS_JEMEtSums).crate()==0) 
+	      {
+		m_h_SimBSMon_JEP->Fill(1,(16+18),1);
+	      }
+	    else 
+	      {
+		m_h_SimBSMon_JEP->Fill(1,16,1);
+	      }
+
 	  }
       }
 
@@ -392,9 +446,16 @@ StatusCode SimBSMon::fillHistograms()
 	    mLog<<MSG::DEBUG<<"Sim: Ex (compressed)"<<(*it_Sim_CMMEtSums).Ex()<<endreq;
 	    mLog<<MSG::DEBUG<<"Sim: Ey (compressed)"<<(*it_Sim_CMMEtSums).Ey()<<endreq;
 	    mLog<<MSG::DEBUG<<"Sim: Et (compressed)"<<(*it_Sim_CMMEtSums).Et()<<endreq;
-	    
-	    if ((*it_Sim_CMMEtSums).crate()==0) m_h_SimBSMon_JEM_Crate0_Energy-> Fill(16,1);
-	    else m_h_SimBSMon_JEM_Crate1_Energy-> Fill(16,1);
+
+	    if ((*it_BS_JEMEtSums).crate()==0) 
+	      {
+		m_h_SimBSMon_JEP->Fill(1,(16+18),1);
+	      }
+	    else 
+	      {
+		m_h_SimBSMon_JEP->Fill(1,16,1);
+	      }
+
 	  }
       }
 
@@ -468,8 +529,15 @@ StatusCode SimBSMon::fillHistograms()
 		    mLog<<MSG::DEBUG<<"BS: Hits "<<Help->Binary((*it_BS_JEMHits).JetHits(),24)<<endreq;
 		    mLog<<MSG::DEBUG<<"Sim: Hits "<<Help->Binary((*it_Sim_JEMHits).JetHits(),24)<<endreq;
 	
-		    if ((*it_BS_JEMHits).crate()==0) m_h_SimBSMon_JEM_Crate0_Hits-> Fill((*it_BS_JEMHits).module(),1);
-		    else m_h_SimBSMon_JEM_Crate1_Hits-> Fill((*it_BS_JEMHits).module(),1);
+		    if ((*it_BS_JEMHits).crate()==0) 
+		      {
+			m_h_SimBSMon_JEP->Fill(2,((*it_BS_JEMHits).module()+18),1);
+		      }
+		    else 
+		      {
+			m_h_SimBSMon_JEP->Fill(2,(*it_BS_JEMHits).module(),1);
+		      }
+
 		  }
 
 		vBS_JEMHits.erase(it_BS_JEMHits);
@@ -490,8 +558,15 @@ StatusCode SimBSMon::fillHistograms()
 	    mLog<<MSG::INFO<<"BS: Crate "<<(*it_BS_JEMHits).crate()<<" Module "<<(*it_BS_JEMHits).module()<<endreq;
 	    mLog<<MSG::DEBUG<<"BS: Hits "<<Help->Binary((*it_BS_JEMHits).JetHits(),24)<<endreq;
 	    
-	    if ((*it_BS_JEMHits).crate()==0) m_h_SimBSMon_JEM_Crate0_Hits-> Fill((*it_BS_JEMHits).module(),1);
-	    else m_h_SimBSMon_JEM_Crate1_Hits-> Fill((*it_BS_JEMHits).module(),1);
+	    if ((*it_BS_JEMHits).crate()==0) 
+	      {
+		m_h_SimBSMon_JEP->Fill(2,((*it_BS_JEMHits).module()+18),1);
+	      }
+	    else 
+	      {
+		m_h_SimBSMon_JEP->Fill(2,(*it_BS_JEMHits).module(),1);
+	      }
+	    
 	  }
       }
 
@@ -505,8 +580,15 @@ StatusCode SimBSMon::fillHistograms()
 	    mLog<<MSG::INFO<<"Sim: Crate "<<(*it_Sim_JEMHits).crate()<<" Module "<<(*it_Sim_JEMHits).module()<<endreq;
 	    mLog<<MSG::DEBUG<<"Sim: Hits "<<Help->Binary((*it_Sim_JEMHits).JetHits(),24)<<endreq;
 	    
-	    if ((*it_Sim_JEMHits).crate()==0) m_h_SimBSMon_JEM_Crate0_Hits-> Fill((*it_Sim_JEMHits).module(),1);
-	    else m_h_SimBSMon_JEM_Crate1_Hits-> Fill((*it_Sim_JEMHits).module(),1);
+	    if ((*it_BS_JEMHits).crate()==0) 
+	      {
+		m_h_SimBSMon_JEP->Fill(2,((*it_BS_JEMHits).module()+18),1);
+	      }
+	    else 
+	      {
+		m_h_SimBSMon_JEP->Fill(2,(*it_BS_JEMHits).module(),1);
+	      }
+	    
 	  }
       }
 
@@ -586,8 +668,15 @@ StatusCode SimBSMon::fillHistograms()
 
 		    mLog<<MSG::DEBUG<<"Sim: Hits"<<Help->Binary((*it_Sim_CMMJetHits).Hits(),24)<<endreq;
 
-		    if ((*it_BS_CMMJetHits).crate()==0) m_h_SimBSMon_JEM_Crate0_Hits-> Fill(16,1);
-		    else m_h_SimBSMon_JEM_Crate1_Hits-> Fill(16,1);
+		    if ((*it_BS_JEMHits).crate()==0) 
+		      {
+			m_h_SimBSMon_JEP->Fill(2,(16+18),1);
+		      }
+		    else 
+		      {
+			m_h_SimBSMon_JEP->Fill(2,16,1);
+		      }
+
 		  }
 
 		vBS_CMMJetHits.erase(it_BS_CMMJetHits);
@@ -608,8 +697,15 @@ StatusCode SimBSMon::fillHistograms()
 	    mLog<<MSG::INFO<<"BS: Crate "<<(*it_BS_CMMJetHits).crate()<<" DataId "<<(*it_BS_CMMJetHits).dataID()<<endreq;
 	    mLog<<MSG::DEBUG<<"BS: Hits"<<Help->Binary((*it_BS_CMMJetHits).Hits(),24)<<endreq;
 	    
-	    if ((*it_BS_CMMJetHits).crate()==0) m_h_SimBSMon_JEM_Crate0_Hits-> Fill(16,1);
-	    else m_h_SimBSMon_JEM_Crate1_Hits-> Fill(16,1);
+	    if ((*it_BS_JEMHits).crate()==0) 
+	      {
+		m_h_SimBSMon_JEP->Fill(2,(16+18),1);
+	      }
+	    else 
+	      {
+		m_h_SimBSMon_JEP->Fill(2,16,1);
+	      }
+	    
 	  }
       }
 
@@ -623,8 +719,15 @@ StatusCode SimBSMon::fillHistograms()
 	    mLog<<MSG::INFO<<"Sim: Crate "<<(*it_Sim_CMMJetHits).crate()<<" DataId "<<(*it_Sim_CMMJetHits).dataID()<<endreq;
 	    mLog<<MSG::DEBUG<<"Sim: Hits"<<Help->Binary((*it_Sim_CMMJetHits).Hits(),24)<<endreq;
 	    
-	    if ((*it_Sim_CMMJetHits).crate()==0) m_h_SimBSMon_JEM_Crate0_Hits-> Fill(16,1);
-	    else m_h_SimBSMon_JEM_Crate1_Hits-> Fill(16,1);
+	    if ((*it_BS_JEMHits).crate()==0) 
+	      {
+		m_h_SimBSMon_JEP->Fill(2,(16+18),1);
+	      }
+	    else 
+	      {
+		m_h_SimBSMon_JEP->Fill(2,16,1);
+	      }
+
 	  }
       }
 
@@ -697,8 +800,15 @@ StatusCode SimBSMon::fillHistograms()
 		    mLog<<MSG::DEBUG<<"BS: RoI "<<Help->Binary((*it_BS_JEMRoI).hits(),8)<<endreq;
 		    mLog<<MSG::DEBUG<<"Sim: RoI "<<Help->Binary((*it_Sim_JEMRoI).hits(),8)<<endreq;
 	
-		    if ((*it_BS_JEMRoI).crate()==0) m_h_SimBSMon_JEM_Crate0_RoI-> Fill((*it_BS_JEMRoI).jem(),1);
-		    else m_h_SimBSMon_JEM_Crate1_RoI-> Fill((*it_BS_JEMRoI).jem(),1);
+		    if ((*it_BS_JEMRoI).crate()==0) 
+		      {
+			m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMRoI).jem()+18),1);
+		      }
+		    else 
+		      {
+			m_h_SimBSMon_JEP->Fill(3,(*it_BS_JEMRoI).jem(),1);
+		      }
+		    
 		  }
 
 		vBS_JEMRoI.erase(it_BS_JEMRoI);
@@ -719,8 +829,15 @@ StatusCode SimBSMon::fillHistograms()
 	    mLog<<MSG::INFO<<"BS: Crate "<<(*it_BS_JEMRoI).crate()<<" Module "<<(*it_BS_JEMRoI).jem()<<endreq;
 	    mLog<<MSG::DEBUG<<"BS: RoI "<<Help->Binary((*it_BS_JEMRoI).hits(),8)<<endreq;
 	    
-	    if ((*it_BS_JEMRoI).crate()==0) m_h_SimBSMon_JEM_Crate0_RoI-> Fill((*it_BS_JEMRoI).jem(),1);
-	    else m_h_SimBSMon_JEM_Crate1_RoI-> Fill((*it_BS_JEMRoI).jem(),1);
+	    if ((*it_BS_JEMRoI).crate()==0) 
+	      {
+		m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMRoI).jem()+18),1);
+	      }
+	    else 
+	      {
+		m_h_SimBSMon_JEP->Fill(3,(*it_BS_JEMRoI).jem(),1);
+	      }
+	    
 	  }
       }
 
@@ -734,11 +851,21 @@ StatusCode SimBSMon::fillHistograms()
 	    mLog<<MSG::INFO<<"Sim: Crate "<<(*it_Sim_JEMRoI).crate()<<" Module "<<(*it_Sim_JEMRoI).jem()<<endreq;
 	    mLog<<MSG::DEBUG<<"Sim: RoI "<<Help->Binary((*it_Sim_JEMRoI).hits(),8)<<endreq;
 	    
-	    if ((*it_Sim_JEMRoI).crate()==0) m_h_SimBSMon_JEM_Crate0_RoI-> Fill((*it_Sim_JEMRoI).jem(),1);
-	    else m_h_SimBSMon_JEM_Crate1_RoI-> Fill((*it_Sim_JEMRoI).jem(),1);
+	    if ((*it_BS_JEMRoI).crate()==0) 
+	      {
+		m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMRoI).jem()+18),1);
+	      }
+	    else 
+	      {
+		m_h_SimBSMon_JEP->Fill(3,(*it_BS_JEMRoI).jem(),1);
+	      }
+
 	  }
       }
 
+  //*******************************************************
+  //************** CMM RoI ********************************
+  //*******************************************************
 
 
 

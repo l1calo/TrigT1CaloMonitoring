@@ -48,16 +48,20 @@ protected:
    std::string m_JetElementLocation;
    std::string m_DataType;
    std::string m_PathInRootFile;
+   int m_SliceNo;
 
    /** Histos */
    TH1F* m_h_je_eta;
    TH1F* m_h_je_phi;
    TH1F* m_h_je_emenergy;
    TH1F* m_h_je_hadenergy; 
-   TH1F* m_h_je_energy; 
 
-   TH2F* m_h_je_etaphi;
-   TH2F* m_h_je_energy_etaphi;
+   TH2F* m_h_je_energy_emHitMap;
+   TH2F* m_h_je_energy_hadHitMap;
+   std::map <int, TH2F*> m_h_je_emHitMap;
+   std::map <int, TH2F*> m_h_je_hadHitMap;
+
+
 };
 
 

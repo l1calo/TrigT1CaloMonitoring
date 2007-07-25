@@ -53,6 +53,7 @@ JetElementMon::JetElementMon( const std::string & type, const std::string & name
 
   declareProperty( "JetElementLocation", m_JetElementLocation = LVL1::TrigT1CaloDefs::JetElementLocation); 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/JetElements") ;
+  declareProperty( "NumberOfSlices", m_SliceNo = 5);
   declareProperty( "DataType", m_DataType="") ;
 }
 
@@ -86,11 +87,13 @@ StatusCode JetElementMon::bookHistograms( bool isNewEventsBlock,
   if( m_dataType == AthenaMonManager::cosmics ) {
     // book histograms that are only relevant for cosmics data...
   }
+  ManagedMonitorToolBase::LevelOfDetail_t LevelOfDetail=shift;
+  if (m_DataType=="Sim") LevelOfDetail = expert;
 
   MonGroup JetElements_expert (this,m_PathInRootFile ,expert, eventsBlock);
   HistoBooker* expert_Booker = new HistoBooker(&JetElements_expert, &mLog, m_DataType);
 
-  MonGroup JetElements_shift (this,m_PathInRootFile ,shift, eventsBlock);
+  MonGroup JetElements_shift (this,m_PathInRootFile ,LevelOfDetail, eventsBlock);
   HistoBooker* shift_Booker = new HistoBooker(&JetElements_shift, &mLog, m_DataType);
   
   if( isNewEventsBlock || isNewLumiBlock ) 
@@ -98,28 +101,47 @@ StatusCode JetElementMon::bookHistograms( bool isNewEventsBlock,
       Helper* Help = new Helper();
 
       // register Histograms for  data
-      m_h_je_eta = expert_Booker->book1F("eta_JEM_input", "JE eta  --  JEM input" , 50, -5, 5, "#eta" , "#");
+      m_h_je_eta = expert_Booker->book1F("eta_JEM_input", "JE distribution per #eta  --  JEM input" , 50, -5, 5, "#eta" , "#");
       m_h_je_eta ->SetBins(32,Help->JEEtaBinning());
-
-      m_h_je_phi = expert_Booker->book1F("phi_JEM_input", "JE phi  --  JEM input", 32, 0, 6.4, "#phi" , "#");
+      m_h_je_phi = expert_Booker->book1F("phi_JEM_input", "JE distribution per #phi  --  JEM input", 32, 0, 6.4, "#phi" , "#");
       m_h_je_phi->SetBins(32,Help->JEPhiBinning());
 
-      m_h_je_emenergy = expert_Booker->book1F("EmEnergy_JEM_input", "JE em energy  --  JEM input", 
-					      100, 0, 100, "em energy [GeV]" , "#");
-      m_h_je_hadenergy  = expert_Booker->book1F("HadEnergy_JEM_input", "JE had energy  --  JEM input", 
-						100, 0, 100, "had energy [GeV]" , "#");
-      m_h_je_energy = expert_Booker->book1F("Et_JEM_input", "JE Et (em + had)  --  JEM input", 
-					    100, 0, 100, "(em+had) energy [GeV]" , "#");
+
+      m_h_je_emenergy = expert_Booker->book1F("EmEnergy_JEM_input", "JE EM energy distribution  --  JEM input", 100, 0, 100, "em energy [GeV]" , "#");
+      m_h_je_hadenergy  = expert_Booker->book1F("HadEnergy_JEM_input", "JE HAD energy distribution  --  JEM input", 100, 0, 100, "had energy [GeV]" , "#");
 
 
-      m_h_je_etaphi = shift_Booker->book2F("eta-phi_JEM_input", "JE per eta - phi  --  JEM input", 
-					   50, -5, 5, 32, 0, 6.4 , "#eta", "#phi");
-      m_h_je_etaphi->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
+      m_h_je_energy_emHitMap = shift_Booker->book2F("JE_EM_HitMap_energy_JEM_input", "#eta - #phi map of EM JE weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4 , "#eta", "#phi");
+      m_h_je_energy_emHitMap->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
 
-      m_h_je_energy_etaphi = shift_Booker->book2F("Et_eta-phi_JEM_input", "JE Et per eta - phi  --  JEM input",  
-						  50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
-      m_h_je_etaphi->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
-    }
+      m_h_je_energy_hadHitMap = shift_Booker->book2F("JE_HAD_HitMap_energy_JEM_input", "#eta - #phi map of HAD JE weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
+      m_h_je_energy_hadHitMap->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
+
+      if (m_DataType=="BS")
+	{
+	  std::string name,title;
+	  std::stringstream buffer;
+	  
+	  for (int i = 0; i < m_SliceNo; i++)
+	    {
+	      buffer.str("");
+	      buffer<<i;
+	      
+	      name = "JE_EM_HitMap_" + buffer.str() + "_JEM_input";
+	      title = "#eta - #phi map of EM JE for Timeslice " + buffer.str() +  "  --  JEM input";
+	      m_h_je_emHitMap[i]=shift_Booker->book2F(name,title,50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
+	      m_h_je_emHitMap[i]->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
+	      
+	      buffer.str("");
+	      buffer<<i;
+	      
+	      name = "JE_HAD_HitMap_" + buffer.str() + "_JEM_input";
+	      title = "#eta - #phi map of HAD JE for Timeslice " + buffer.str() +  "  --  JEM input";
+	      m_h_je_hadHitMap[i]=shift_Booker->book2F(name,title,50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
+	      m_h_je_hadHitMap[i]->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
+	    }
+	}
+}
 	
   if( isNewRun ) { }
   
@@ -156,14 +178,25 @@ StatusCode JetElementMon::fillHistograms()
       // fill histograms
       m_h_je_eta -> Fill( (*it_je)-> eta(), 1.);
       m_h_je_phi->Fill( (*it_je)->phi() , 1.);
+
       m_h_je_emenergy->Fill( (*it_je)->emEnergy() , 1.);
       m_h_je_hadenergy->Fill( (*it_je)->hadEnergy() , 1.);
-      m_h_je_energy->Fill( (*it_je)->energy() , 1.);
       
-      m_h_je_etaphi->Fill( (*it_je)->eta(),(*it_je)->phi() , 1.);
-      m_h_je_energy_etaphi->Fill( (*it_je)->eta(),(*it_je)->phi() ,(*it_je)->energy() );  
-  
-    }     	
+      m_h_je_energy_emHitMap->Fill( (*it_je)->eta(),(*it_je)->phi() , (*it_je)->emEnergy());
+      m_h_je_energy_hadHitMap->Fill( (*it_je)->eta(),(*it_je)->phi() ,(*it_je)->hadEnergy() ); 
+
+      if (m_DataType=="BS")
+	{
+	  for (int i = 0; i < m_SliceNo; i++)
+	    {
+	      if (i < ((*it_je)->emEnergyVec()).size())
+		{
+		  if ((*it_je)->emEnergyVec()[i] != 0) m_h_je_emHitMap[i]-> Fill( (*it_je)->eta(),(*it_je)->phi() ,1);
+		  if ((*it_je)->hadEnergyVec()[i] != 0) m_h_je_hadHitMap[i]-> Fill( (*it_je)->eta(),(*it_je)->phi() ,1);
+		} 
+	    }
+	}     	
+    }
   return StatusCode( StatusCode::SUCCESS );
 }
 
