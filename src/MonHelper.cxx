@@ -6,7 +6,7 @@
 // AUTHOR:      Johanna Fleckner (Johanna.Fleckner@uni-mainz.de)
 //           
 // DESCRIPTION: collection of useful functions that are used by several
-//              classes
+//              classes in the TrigT1CaloMonitoring-package
 //
 // ********************************************************************
 
@@ -19,6 +19,7 @@
 #include "TrigT1CaloMonitoring/MonHelper.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 
+// this class helps booking histograms in 1- and 2-dimensions
 /*---------------------------------------------------------*/
 HistoBooker::HistoBooker(ManagedMonitorToolBase::MonGroup* MonitoringGroup, 
 			 MsgStream::MsgStream* log, std::string DataType) 
@@ -119,6 +120,11 @@ TH2F* HistoBooker::book2F(std::string HistoName, std::string HistoTitle,
   return hist;
 }
 
+// Helper class that provides:
+// - bin widths for TriggerTower and JetElements in eta and phi (respects the changing bin widt)
+// - helps treating hit multiplicity information:
+//    - for debug purposes: converts bit information (int-value) into string
+//    - fills histograms with hit multiplicity
 /*---------------------------------------------------------*/
 Helper::Helper() 
 /*---------------------------------------------------------*/

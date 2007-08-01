@@ -1,4 +1,4 @@
-#// ********************************************************************
+// ********************************************************************
 //
 // NAME:     TriggerTowerMon.h
 // PACKAGE:  TrigT1CaloMonitoring
@@ -48,22 +48,12 @@ private:
   int m_TT_HitMap_Thresh2;
   int m_TT_ADC_HitMap_Thresh;
   int m_SliceNo;
+  bool m_TT_DistPerChannel;
+  bool m_TT_DistPerChannelAndTimeSlice;
 
   std::string m_DataType;
   std::string m_PathInRootFile;
-  
-  //=====================================
-  //   T1Calo Control Plots
-  //=====================================
-  
-  std::map <Identifier, TH1F*>  m_h_TT_EmADCPeak;
-  std::map <Identifier, TH1F*>  m_h_TT_HadADCPeak;
-  std::map <Identifier, TH1F*>  m_h_TT_EmLUTPeak;
-  std::map <Identifier, TH1F*>  m_h_TT_HadLUTPeak;
-
-  std::map <int,TH2F*> m_h_TT_HitMap_emADC;
-  std::map <int,TH2F*> m_h_TT_HitMap_hadADC;
-  
+      
 protected:
    /** a handle on Store Gate for access to the Event Store */
    StoreGateSvc* m_storeGate;
@@ -76,8 +66,17 @@ protected:
    const CaloLVL1_ID* m_lvl1Helper;
    const L1CaloTTIdTools* m_l1CaloTTIdTools;
 
-   //hitmaps
+   // histos per channel
+  std::map <Identifier, TH1F*>  m_h_TT_EmADCPeak;
+  std::map <Identifier, TH1F*>  m_h_TT_HadADCPeak;
+  std::map <Identifier, TH1F*>  m_h_TT_EmLUTPeak;
+  std::map <Identifier, TH1F*>  m_h_TT_HadLUTPeak;
 
+  //ADC Hitmaps per TimeSlice
+  std::map <int,TH2F*> m_h_TT_HitMap_emADC;
+  std::map <int,TH2F*> m_h_TT_HitMap_hadADC;
+
+  //LUT Hitmaps per threshold
    TH2F* m_h_TT_HitMap_emLUT_Thresh0;
    TH2F* m_h_TT_HitMap_emLUT_Thresh1;
    TH2F* m_h_TT_HitMap_emLUT_Thresh2;
@@ -86,6 +85,27 @@ protected:
    TH2F* m_h_TT_HitMap_hadLUT_Thresh1;
    TH2F* m_h_TT_HitMap_hadLUT_Thresh2;
 
+   //distribution of LUT peak per detector region
+   TH1F* m_h_TT_emLUT;
+   TH1F* m_h_TT_emLUT_eta;
+   TH1F* m_h_TT_emLUT_phi;
+   /*TH1F* m_h_TT_emLUT_barrel;
+   TH1F* m_h_TT_emLUT_EC;
+   TH1F* m_h_TT_emLUT_Quadrant[NoQuadrant];
+   TH1F* m_h_TT_emLUT_DetSide[Side];*/
+
+   TH1F* m_h_TT_hadLUT; 
+   TH1F* m_h_TT_hadLUT_eta;
+   TH1F* m_h_TT_hadLUT_phi;
+   /*TH1F* m_h_TT_hadLUT_barrel;
+   TH1F* m_h_TT_hadLUT_EC;
+   TH1F* m_h_TT_hadLUT_Quadrant[NoQuadrant];
+   TH1F* m_h_TT_hadLUT_DetSide[Side];*/
+
+   // number of triggered slice
+   TH1F* m_h_TT_triggeredSlice_em;
+   TH1F* m_h_TT_triggeredSlice_had;
+     
 };
 
 #endif

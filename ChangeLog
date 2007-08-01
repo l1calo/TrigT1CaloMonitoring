@@ -1,3 +1,9 @@
+2007-08-01  Johanna Fleckner  <fleckner@lxplus203.cern.ch>
+	* add comments in all tools
+	* add CaloTTMon for comparison of Calorimeter data with TriggerTower
+	* expand monitoring with queries (some histograms like transmission check will only produced for BS data)
+	* HitMap thresholds for TT are now configurable from JO
+
 2007-07-25  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
 	* update cmt/requirment
 	* further development of monitoring: TriggerTowerMon, JetElementMon, JEMMon, CMMMon, SimBSMon

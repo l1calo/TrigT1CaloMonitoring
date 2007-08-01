@@ -5,14 +5,15 @@
 from AthenaCommon.GlobalFlags  import globalflags
 
 from TrigT1Calo.TrigT1CaloConf import LVL1__TriggerTowerMaker
+#from TrigT1Calo.TrigT1CaloConfig import TriggerTowerMaker_Cell
 from TrigT1Calo.TrigT1CaloConf import LVL1__CPMTowerMaker
 from TrigT1Calo.TrigT1CaloConf import LVL1__JetElementMaker
 from TrigT1Calo.TrigT1CaloConf import LVL1__EmTauTrigger
 from TrigT1Calo.TrigT1CaloConf import LVL1__JetTrigger
 from TrigT1Calo.TrigT1CaloConf import LVL1__EnergyTrigger
+from TrigT1Calo.TrigT1CaloConf import LVL1__ROD
 from TrigT1Calo.TrigT1CaloConf import LVL1__CPCMMMaker
 from TrigT1Calo.TrigT1CaloConf import LVL1__JEPCMMMaker
-from TrigT1Calo.TrigT1CaloConf import LVL1__ROD
 #from TrigT1Calo.TrigT1CaloConf import LVL1__Tester
 #from TrigT1Calo.TrigT1CaloConf import LVL1__DumpTriggerObjects
 
@@ -20,38 +21,61 @@ from TrigT1Calo.TrigT1CaloConf import LVL1__ROD
 from AthenaCommon.AlgSequence import AlgSequence
 job = AlgSequence()
 
+# Add the required algorithms to the sequence
+#triggerTowerMaker = TriggerTowerMaker_Cell()
+#job += [triggerTowerMaker]
 job += LVL1__CPMTowerMaker( 'CPMTowerMaker' )
 job += LVL1__JetElementMaker( 'JetElementMaker' )
 job += LVL1__EmTauTrigger( 'EmTauTrigger' )
 job += LVL1__EnergyTrigger( 'EnergyTrigger' )
 job += LVL1__JetTrigger( 'JetTrigger' )
+job += LVL1__ROD( 'ROD' )
 job += LVL1__JEPCMMMaker( 'JEPCMMMaker' )
 job += LVL1__CPCMMMaker( 'CPCMMMaker' )
-job += LVL1__ROD( 'ROD' )
 
 
 #*************************************************************
 # Set input and output locations  
 #*************************************************************
+
+
+if ATLASCosmicFlags.doLAr and  ATLASCosmicFlags.doTile: 
+    job += LVL1__TriggerTowerMaker( 'TriggerTowerMaker' )
+    job.TriggerTowerMaker.CellType = 1
+    #input (from BS)
+    job.TriggerTowerMaker.CaloCellLocation = "AllCalo"
+    job.TriggerTowerMaker.atlfastCellLocation = "AllCalo"
+    #output
+    job.TriggerTowerMaker.TriggerTowerLocation = "Calo_TriggerTowers"
+    #job.TriggerTowerMaker.OutputLevel = DEBUG
+
 # CPMTowerMaker
+#input (from BS)
 job.CPMTowerMaker.TriggerTowerLocation = "TriggerTowers"
+#output
 job.CPMTowerMaker.CPMTowerLocation = "Sim_CPMTowers"
 #job.CPMTowerMaker.OutputLevel = DEBUG
 
 # JetElementMaker
+#input (from BS)
 job.JetElementMaker.TriggerTowerLocation ="TriggerTowers"  
+#output
 job.JetElementMaker.JetElementLocation ="Sim_JetElements"
 #job.JetElementMaker.OutputLevel = DEBUG
 
 # EmTauTrigger
+#input (from BS)
 job.EmTauTrigger.TriggerTowerLocation = "TriggerTowers"
+#output
 job.EmTauTrigger.CPMHitsLocation = "Sim_CPMHits"
 job.EmTauTrigger.EmTauROILocation = "Sim_EmTauRoIs"
 #job.EmTauTrigger.LVL1ConfigSvc = ""
 #job.EmTauTrigger.OutputLevel = DEBUG
 
 # JetTrigger
-job.JetTrigger.JetElementLocation="Sim_JetElements"
+#input (from BS)
+job.JetTrigger.JetElementLocation="JetElements"
+#output (from BS)
 job.JetTrigger.JEMHitsLocation = "Sim_JEMHits"
 job.JetTrigger.JetROIOutputLocation= "Sim_JetRoIs"
 #job.JetTrigger.LVL1ConfigSvc = ""
@@ -63,7 +87,9 @@ job.JetTrigger.JetROIOutputLocation= "Sim_JetRoIs"
 #job.JetTrigger.OutputLevel=DEBUG
 
 # EnergyTrigger
-job.EnergyTrigger.JetElementLocation="Sim_JetElements"
+#input (from BS)
+job.EnergyTrigger.JetElementLocation="JetElements"
+#output
 job.EnergyTrigger.JEMEtSumsLocation="Sim_JEMEtSums"
 job.EnergyTrigger.EnergyRoILocation = "Sim_EnergyRoIs"
 #job.EnergyTrigger.EnergyCTPLocation = ""
@@ -73,39 +99,49 @@ job.EnergyTrigger.EnergyRoILocation = "Sim_EnergyRoIs"
 #job.EnergyTrigger.ExEyRanges = ""
 #job.EnergyTrigger.OutputLevel=DEBUG
 
-# JEP CMMs
-job.JEPCMMMaker.JetElementLocation="Sim_JetElements"
-job.JEPCMMMaker.JEMHitsLocation = "Sim_JEMHits"
-job.JEPCMMMaker.JEMEtSumsLocation = "Sim_JEMEtSums"
-job.JEPCMMMaker.CMMJetHitsLocation = "Sim_CMMJetHits"
-job.JEPCMMMaker.CMMEtSumsLocation = "Sim_CMMEtSums"
-job.JEPCMMMaker.JEMRoILocation = "Sim_JEMRoIs"
-job.JEPCMMMaker.CMMRoILocation = "Sim_CMMRoIs"
-job.JEPCMMMaker.JetEtRoILocation = "Sim_JetEtRoIs"
-job.JEPCMMMaker.EnergyRoILocation = "Sim_EnergyRoIs"
-job.JEPCMMMaker.EtMapsLocation = "Sim_CMMEtSumsMAPS"
-job.JEPCMMMaker.JetRoILocation = "Sim_JetRoIs"
-job.JEPCMMMaker.JEPBSCollectionLocation = "Sim_JEPBS"
-job.JEPCMMMaker.JEPRoIBSCollectionLocation = "Sim_JEPRoIBS"
-job.JEPCMMMaker.OutputLevel = DEBUG
-
-# CP CMMs
-job.CPCMMMaker.CPMTowerLocation = "Sim_CPMTowers"
-job.CPCMMMaker.CPMHitsLocation = "Sim_CPMHits"
-job.CPCMMMaker.CMMCPHitsLocation = "Sim_CMMCPHits"
-job.CPCMMMaker.CPMRoILocation = "Sim_CPMRoIs"
-job.CPCMMMaker.EmTauROILocation = "Sim_EmTauRoIs"
-job.CPCMMMaker.CPBSCollectionLocation = "Sim_CPBS"
-#job.CPCMMMaker.OutputLevel = DEBUG
-
-#job.ROD.LVL1ConfigSvc = ""
+#ROD
+#input (from Simulation - intermediate data)
 job.ROD.EmTauRoILocation = "Sim_EmTauRoIs"
+job.ROD.JetRoILocation = "Sim_JetRoIs"
+job.ROD.EnergyRoILocation = "Sim_EnergyRoIs"
+#output
+job.ROD.JetEtRoILocation = "Sim_JetEtRoIs"
+#job.ROD.LVL1ConfigSvc = ""
 #job.ROD.EmTauCTPLocation = "Sim_EmTauCTP"
 #job.ROD.EmTauSlinkLocation = "Sim_EmTauSlink"
 #job.ROD.JEPSlinkLocation = "Sim_JEPSlink"
 #job.ROD.EnergySlinkLocation = "Sim_EnergySlink"
-job.ROD.JetRoILocation = "Sim_JetRoIs"
 #job.ROD.JetCTPLocation = "Sim_JetCTP"
-job.ROD.JetEtRoILocation = "Sim_JetEtRoIs"
-job.ROD.EnergyRoILocation = "Sim_EnergyRoIs"
 #job.ROD.OutputLevel = DEBUG
+
+# JEP CMMs
+#input (from BS)
+job.JEPCMMMaker.JetElementLocation="JetElements"
+job.JEPCMMMaker.JEMHitsLocation = "JEMHits"
+job.JEPCMMMaker.JEMEtSumsLocation = "JEMEtSums"
+#input (from Simulation - intermediate data)
+job.JEPCMMMaker.JetEtRoILocation = "Sim_JetEtRoIs"
+job.JEPCMMMaker.EnergyRoILocation = "Sim_EnergyRoIs"
+job.JEPCMMMaker.EtMapsLocation = "Sim_CMMEtSumsMAPS"
+job.JEPCMMMaker.JetRoILocation = "Sim_JetRoIs"
+#output
+job.JEPCMMMaker.JEMRoILocation = "Sim_JEMRoIs"
+job.JEPCMMMaker.CMMJetHitsLocation = "Sim_CMMJetHits"
+job.JEPCMMMaker.CMMEtSumsLocation = "Sim_CMMEtSums"
+job.JEPCMMMaker.CMMRoILocation = "Sim_CMMRoIs"
+job.JEPCMMMaker.JEPBSCollectionLocation = "Sim_JEPBS"
+job.JEPCMMMaker.JEPRoIBSCollectionLocation = "Sim_JEPRoIBS"
+#job.JEPCMMMaker.OutputLevel = DEBUG
+
+# CP CMMs
+#input (from BS)
+job.CPCMMMaker.CPMTowerLocation = "CPMTowers"
+job.CPCMMMaker.CPMHitsLocation = "CPMHits"
+job.CPCMMMaker.CPMRoILocation = "CPMRoIs"
+#input (from Simulation - intermediate data)
+job.CPCMMMaker.EmTauROILocation = "Sim_EmTauRoIs"
+#output
+job.CPCMMMaker.CMMCPHitsLocation = "Sim_CMMCPHits"
+job.CPCMMMaker.CPBSCollectionLocation = "Sim_CPBS"
+#job.CPCMMMaker.OutputLevel = DEBUG
+

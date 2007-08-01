@@ -41,11 +41,6 @@
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
-
-// *********************************************************************
-// Public Methods
-// *********************************************************************
-
 /*---------------------------------------------------------*/
 JEMMon::JEMMon( const std::string & type, const std::string & name,
 		const IInterface* parent )
@@ -111,22 +106,23 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
     {	
       Helper* Help = new Helper();
 	  
+      //---------------------------- DAQ histos -----------------------------
       m_h_JEMHits_MainHits = DAQ_Booker->book1F("MainHits_JEM_DAQ", "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ", 8, -0.5, 7.5,  "Threshold No.", "#");
       m_h_JEMHits_FwdHitsRight = DAQ_Booker->book1F("FwdHitsRight_JEM_DAQ", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "#");
       m_h_JEMHits_FwdHitsLeft = DAQ_Booker->book1F("FwdHitsLeft_JEM_DAQ", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "#");
-
+      
       m_h_JEMEtSums_Ex = DAQ_Booker->book1F("Ex_JEM_DAQ", "JEM E_{x}  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
       m_h_JEMEtSums_Ey = DAQ_Booker->book1F("Ey_JEM_DAQ", "JEM E_{y}  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
       m_h_JEMEtSums_Et = DAQ_Booker->book1F("Et_JEM_DAQ", "JEM E_{t}  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
-
-      // JEM RoI
+      
+      //---------------------------- RoI histos -----------------------------
       m_h_JEMRoI_MainHits = RoI_Booker->book1F("MainHits_JEM_RoI", "Main Jet Hit Multiplicity per Threshold  --  JEM RoI", 8, -0.5, 7.5,  "Threshold No.", "#");      
       m_h_JEMRoI_FwdHitsRight = RoI_Booker->book1F("FwdHitsRight_JEM_RoI", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "#");
       m_h_JEMRoI_FwdHitsLeft = RoI_Booker->book1F("FwdHitsLeft_JEM_RoI", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "#");
-
+      
       m_h_JEMRoI_Thresh1_etaphi = RoI_Booker->book2F("Thresh1_eta-phi_JEM_RoI", "#eta - #phi Map of Hits passing Threshold <ThreshNo>  --  JEM RoI", 50, -5, 5, 32,0,6.4, "#eta", "#phi");
       m_h_JEMRoI_Thresh1_etaphi->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
-
+      
     }
   
   if( isNewRun ) { }
@@ -143,66 +139,64 @@ StatusCode JEMMon::fillHistograms()
   MsgStream mLog( msgSvc(), name() );
   Helper* Help = new Helper();
 
-  //******************************* 
-  //********* JEM Hits  *********** 
-  //******************************* 
-
-  // fill  Histos
+  // =============================================================================================
+  // ================= Container: JEM Hits =======================================================
+  // =============================================================================================
+  // retrieve JEMHits collection from storegate
   const JEMHitsCollection* JEMHits;
   StatusCode sc = m_storeGate->retrieve(JEMHits, m_JEMHitsLocation);
-
   if( (sc==StatusCode::FAILURE) ) 
     {
-      mLog << MSG::INFO << "No JEMHits found in TES at "
-	   << m_JEMHitsLocation << endreq ;
+      mLog << MSG::INFO << "No JEMHits found in TES at " << m_JEMHitsLocation << endreq ;
       return StatusCode::SUCCESS;
     }
-
+  
   mLog<<MSG::DEBUG<<"-------------- "<< m_DataType<<" JEM Hits ---------------"<<endreq;
-
-  // Step over all cells and put into hist
+  
+  // Step over all cells and process
   JEMHitsCollection::const_iterator it_JEMHits ;
-
   for( it_JEMHits  = JEMHits ->begin(); it_JEMHits < JEMHits -> end(); ++it_JEMHits )
     {	  
-      std::string JEMHit = Help->Binary((*it_JEMHits)-> JetHits(),24);
       // the binary hit information is represented by an integer number, 
       //that is converted to a string in order
       // to get the real binary information
       // later the multiplicities of the several thresholds are retrieved from this string
+      std::string JEMHit = Help->Binary((*it_JEMHits)-> JetHits(),24);
 
       mLog<<MSG::DEBUG<<"Crate: "<< (*it_JEMHits)->crate()<<"  Module: "<<(*it_JEMHits)->module()
 	  << "  JetHits: " <<JEMHit<<   endreq;
       
-      if  ((*it_JEMHits)->forward()==0) //Main Jets
+      //Main Jets
+      if  ((*it_JEMHits)->forward()==0) 
 	{
 	  Help->FillHitsHisto(m_h_JEMHits_MainHits,JEMHit, 0, 8, 0, 3, &mLog);
 	}
-
-      if  ((*it_JEMHits)->forward()==1) //fwd jets a bit complicated!
-	// fwd and main hits are contained in the same hitword
-	{
-	  if (((*it_JEMHits)-> module()==0) or((*it_JEMHits)-> module()==8) )//left fwd hits
-	    // JEMs No 0 and 8 are processing forward left hits,
-	    // JEMs No 7 and 15 forward right hits
-	    {
-	      Help->FillHitsHisto(m_h_JEMHits_FwdHitsLeft, JEMHit, 0, 4, 8, 2, &mLog);
-	    }
-	  if (((*it_JEMHits)-> module()==7) or((*it_JEMHits)-> module()==15) )//right fwd hits
-	    {
-	      Help->FillHitsHisto(m_h_JEMHits_FwdHitsRight, JEMHit, 0, 4, 8, 2, &mLog);
-	    }
-	  Help->FillHitsHisto(m_h_JEMHits_MainHits , JEMHit, 0, 8, 0, 2, &mLog);
-	}
+      
+      //fwd jets a bit complicated!
+      // fwd and main hits are contained in the same hitword
+      if  ((*it_JEMHits)->forward()==1) 	{
+	// JEMs No 0 and 8 are processing forward left hits,
+	// JEMs No 7 and 15 forward right hits
+	//left fwd hits
+	if (((*it_JEMHits)-> module()==0) or((*it_JEMHits)-> module()==8) )
+	  {
+	    Help->FillHitsHisto(m_h_JEMHits_FwdHitsLeft, JEMHit, 0, 4, 8, 2, &mLog);
+	  }
+	//right fwd hits
+	if (((*it_JEMHits)-> module()==7) or((*it_JEMHits)-> module()==15) )
+	  {
+	    Help->FillHitsHisto(m_h_JEMHits_FwdHitsRight, JEMHit, 0, 4, 8, 2, &mLog);
+	  }
+	// main hits
+	Help->FillHitsHisto(m_h_JEMHits_MainHits , JEMHit, 0, 8, 0, 2, &mLog);
+      }
     }
-
-  //******************************* 
-  //********* JEM Et Sums ********* 
-  //******************************* 
-
+  
+  // =============================================================================================
+  // ================= Container: JEM Et Sums ====================================================
+  // =============================================================================================
   const JEMEtSumsCollection* JEMEtSums;
   sc = m_storeGate->retrieve(JEMEtSums, m_JEMEtSumsLocation);
-
   if( (sc==StatusCode::FAILURE) ) 
     {
       mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_JEMEtSumsLocation << endreq ;
@@ -211,7 +205,7 @@ StatusCode JEMMon::fillHistograms()
 
   mLog<<MSG::DEBUG<<"-------------- "<< m_DataType<<" JEM Et Sums ---------------"<<endreq;
 
-  // Step over all cells and put into hist
+  // Step over all cells
   JEMEtSumsCollection::const_iterator it_JEMEtSums ;
   LVL1::QuadLinear expand;
   //  expand = new QuadLinear();
@@ -221,6 +215,7 @@ StatusCode JEMMon::fillHistograms()
 
   for( it_JEMEtSums  = JEMEtSums ->begin(); it_JEMEtSums < JEMEtSums -> end(); ++it_JEMEtSums )
     {	       
+      // note: the energy values are compressed -> expand!
       ex=expand.Expand( (*it_JEMEtSums)-> Ex());
       ey=expand.Expand( (*it_JEMEtSums)-> Ey());
       et=expand.Expand( (*it_JEMEtSums)-> Et() );
@@ -235,12 +230,11 @@ StatusCode JEMMon::fillHistograms()
     }   
 
 
-  //******************************* 
-  //********* JEM RoI ************* 
-  //******************************* 
+  // ==============================================================================================
+  // ================= Container: JEM RoI =========================================================
+  // ==============================================================================================
   const JemRoiCollection* JEMRoIs = 0;
   sc = m_storeGate->retrieve (JEMRoIs, m_JEMRoILocation);
-    	 
   if (sc==StatusCode::FAILURE)
     {
       mLog <<MSG::INFO<<"No JEM RoIs found in TES at"<< m_JEMRoILocation<<endreq;
@@ -249,13 +243,14 @@ StatusCode JEMMon::fillHistograms()
 
   mLog<<MSG::DEBUG<<"-------------- "<< m_DataType<<" JEM RoIs ---------------"<<endreq;
 
-  // Step over all cells and put into hist
+  // Step over all cells
   JemRoiCollection::const_iterator it_JEMRoIs ;
 
   for( it_JEMRoIs  = JEMRoIs ->begin(); it_JEMRoIs < JEMRoIs -> end(); ++it_JEMRoIs )
     {	  
       std::string JEMRoIHits ;
-      if  ((*it_JEMRoIs)->forward()==0) //Main Jets
+      //Main Jets
+      if  ((*it_JEMRoIs)->forward()==0) 
 	{
 	  JEMRoIHits = Help->Binary((*it_JEMRoIs)-> hits(),8);
 	  Help->FillHitsHisto(m_h_JEMRoI_MainHits , JEMRoIHits, 0, 8, 0, 1, &mLog);
@@ -263,16 +258,16 @@ StatusCode JEMMon::fillHistograms()
       else 
 	{
 	  JEMRoIHits = Help->Binary((*it_JEMRoIs)-> hits(),4);
-
-	  if (((*it_JEMRoIs)-> jem()==0) or((*it_JEMRoIs)-> jem()==8) )//left fwd hits
-	    // JEMs No 0 and 8 are processing forward left hits,
-	    // JEMs No 7 and 15 forward right hits
+	  
+	  // JEMs No 0 and 8 are processing forward left hits,
+	  // JEMs No 7 and 15 forward right hits
+	  //left fwd hits
+	  if (((*it_JEMRoIs)-> jem()==0) or((*it_JEMRoIs)-> jem()==8) )
 	    {
 	      Help->FillHitsHisto(m_h_JEMRoI_FwdHitsLeft, JEMRoIHits, 0, 4, 0, 1, &mLog);
 	    }
-	  if (((*it_JEMRoIs)-> jem()==7) or((*it_JEMRoIs)-> jem()==15) )//right fwd hits
-	    // JEMs No 0 and 8 are processing forward left hits,
-	    // JEMs No 7 and 15 forward right hits
+	  //right fwd hits
+	  if (((*it_JEMRoIs)-> jem()==7) or((*it_JEMRoIs)-> jem()==15) )
 	    {
 	      Help->FillHitsHisto(m_h_JEMRoI_FwdHitsRight, JEMRoIHits, 0, 4, 0, 1, &mLog);
 	    }
@@ -282,15 +277,15 @@ StatusCode JEMMon::fillHistograms()
       mLog<<MSG::DEBUG<<"Crate: "<<(*it_JEMRoIs)->crate()<<"; JEM: "<<(*it_JEMRoIs)->jem()
 	  <<"; forward: "<<(*it_JEMRoIs)->forward() <<"; Hits: "<<JEMRoIHits<<endreq;
       //mLog<<"Frame: "<<(*it_JEMRoIs)->frame()Location: "<<(*it_JEMRoIs)->location()<<"<<endreq;
-
+      
       //RoI-Hits per Threshold and eta-phi
       LVL1::JEPRoIDecoder decoder;
       LVL1::CoordinateRange coordRange = decoder.coordinate((*it_JEMRoIs)->roiWord());
       double eta = coordRange.eta();
       double phi = coordRange.phi();
-
+      
       JEMRoIHits = Help->Binary((*it_JEMRoIs)-> hits(),8);
-
+      
       if ((Help->Multiplicity(JEMRoIHits,1,1))!=0)
 	{
 	  m_h_JEMRoI_Thresh1_etaphi->Fill(eta,phi,1);

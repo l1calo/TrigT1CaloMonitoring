@@ -35,7 +35,7 @@ THistSvc = Algorithm("THistSvc")
 
 ## The string "TestMon" in the argument below is the 'FileKey'
 ## used by Athena to access the output file internally
-THistSvc.Output = ["L1CaloMon DATAFILE='L1CaloMon.root' OPT='RECREATE'"]
+#THistSvc.Output = ["L1CaloMon DATAFILE='L1CaloMon.root' OPT='RECREATE'"]
 
 ## AthenaMonManager is the Algorithm that manages many classes inheriting
 ## from ManagedMonitorToolBase
@@ -50,6 +50,8 @@ from AthenaCommon.AppMgr import ToolSvc as toolSvc
 monMan.AthenaMonTools += [ "TriggerTowerMon/L1TriggerTowerMonTool" ]
 #toolSvc.L1TriggerTowerMonTool.DataType = "M3"  
 toolSvc.L1TriggerTowerMonTool.BS_TriggerTowerContainer = "TriggerTowers"
+toolSvc.L1TriggerTowerMonTool.DistPerChannel = False
+toolSvc.L1TriggerTowerMonTool.DistPerChannelAndTimeSlice = False
 toolSvc.L1TriggerTowerMonTool.LUTHitMap_Thresh0 = 1
 toolSvc.L1TriggerTowerMonTool.LUTHitMap_Thresh1 = 3
 toolSvc.L1TriggerTowerMonTool.LUTHitMap_Thresh2 = 7
@@ -112,13 +114,15 @@ if doL1CaloSim:
     toolSvc.Sim_L1CMMMonTool.PathInRootFile = "Stats/L1Calo/JEP/CMM/Sim"
     #toolSvc.Sim_L1CMMMonTool.OutputLevel = DEBUG
 
-####################### Calorimeter ################################
-#monMan.AthenaMonTools += [ "TrigT1CaloBSMonTool/L1CaloBSTool" ]
-#toolSvc.L1CaloBSTool.DataType = "BS"  #BS or Sim data?
-#toolSvc.L1CaloBSTool.BS_TriggerTowerContainer = "TriggerTowers"
-#toolSvc.L1CaloBSTool.BS_JetElementContainer = "JetElements"
-#toolSvc.L1CaloBSTool.PathInRootFile = "Stats/L1Calo/Calo"
-#toolSvc.L1CaloBSTool.OutputLevel = DEBUG
+####################### CaloTriggerTower ################################
+if ATLASCosmicFlags.doLAr and  ATLASCosmicFlags.doTile: 
+    monMan.AthenaMonTools += [ "CaloTTMon/L1CaloTTMonTool" ]
+    toolSvc.L1CaloTTMonTool.CaloTTContainer = "Calo_TriggerTowers"
+    toolSvc.L1CaloTTMonTool.Calo_HitMap_Thresh0 = 1
+    toolSvc.L1CaloTTMonTool.Calo_HitMap_Thresh1 = 3
+    toolSvc.L1CaloTTMonTool.Calo_HitMap_Thresh2 = 7
+    toolSvc.L1CaloTTMonTool.PathInRootFile = "Stats/L1Calo/CaloTT"
+    #toolSvc.L1CaloTTMonTool.OutputLevel = DEBUG
 
 ####################### CPMs ################################
 #monMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1BSCPMMonTool" ]
@@ -160,17 +164,17 @@ if doL1CaloSim:
 
 
 # FileKey must match that given to THistSvc
-monMan.FileKey = "L1CaloMon"
-#monMan.FileKey = "stat"
+#monMan.FileKey = "L1CaloMon"
+monMan.FileKey = "stat"
 
 # Set global monitoring parameters: see the AthenaMonManager class
 # in the Control/AthenaMonitoring package
-monMan.ManualDataTypeSetup = True
-monMan.DataType            = "collisions"
-monMan.Environment         = "tier0"
-monMan.ManualRunLBSetup    = True
-monMan.Run                 = 1
-monMan.LumiBlock           = 1
+#monMan.ManualDataTypeSetup = True
+#monMan.DataType            = "collisions"
+#monMan.Environment         = "tier0"
+#monMan.ManualRunLBSetup    = True
+#monMan.Run                 = 1
+#monMan.LumiBlock           = 1
 
 ####################################################################################################################
 ###################################### Ende ########################################################################

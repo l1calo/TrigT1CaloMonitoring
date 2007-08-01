@@ -165,10 +165,10 @@ StatusCode SimBSMon::fillHistograms()
   MsgStream mLog( msgSvc(), name() );
   Helper* Help = new Helper();
   
-  //*******************************************************
-  //************** JEMEtSums ******************************
-  //*******************************************************
-
+  // =============================================================================================
+  // ================= Container: JEM Et Sums ====================================================
+  // =============================================================================================
+  // retrieve JEMEtSums information from simulation and bytestream... 
   const JEMEtSumsCollection* BS_JEMEtSums;
   StatusCode sc = m_storeGate->retrieve(BS_JEMEtSums, m_BS_JEMEtSumsLocation);
   if( (sc==StatusCode::FAILURE) ) 
@@ -176,7 +176,6 @@ StatusCode SimBSMon::fillHistograms()
       mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_BS_JEMEtSumsLocation << endreq ;
       return StatusCode::SUCCESS;
     }
-
   const JEMEtSumsCollection* Sim_JEMEtSums;
   sc = m_storeGate->retrieve(Sim_JEMEtSums, m_Sim_JEMEtSumsLocation);
   if( (sc==StatusCode::FAILURE) ) 
@@ -185,15 +184,16 @@ StatusCode SimBSMon::fillHistograms()
       return StatusCode::SUCCESS;
     }
 
+  // compare simulation-vector with bytestream-vector, erase corresponding entries
+  // -> the remaining vectors contain faulty transmissions! 
+  // use standard vector instead of datavector for transmissioncheck:
+  // datavector erases not only the pointer  in the vector, but also the referenced object
+  // -> segmentation fault!
   std::vector <LVL1::JEMEtSums>  vBS_JEMEtSums;
   std::vector <LVL1::JEMEtSums>  vSim_JEMEtSums;
-  //use standard vector instead of datavector for transmissioncheck:
-  //datavector erases not only the pointer  in the vector, but also the referenced object
-  //-> segmentation fault!
 
-  //fill vectors
+  //fill vectors with simulation and bytestream data
   JEMEtSumsCollection::const_iterator it_JEMEtSums ;
-
   for( it_JEMEtSums  = BS_JEMEtSums->begin(); it_JEMEtSums < BS_JEMEtSums->end(); ++it_JEMEtSums )
     {
       vBS_JEMEtSums.push_back(**it_JEMEtSums);	       
@@ -205,6 +205,7 @@ StatusCode SimBSMon::fillHistograms()
 
   // Step over all cells and compare
     bool foundModule;
+    int noMatch = 0; // used to fill: "0" if a match is found; "1" if no match is found
     std::vector <LVL1::JEMEtSums>::iterator it_BS_JEMEtSums;
     std::vector <LVL1::JEMEtSums>::iterator it_Sim_JEMEtSums;
 
@@ -228,6 +229,7 @@ StatusCode SimBSMon::fillHistograms()
 		and((*it_BS_JEMEtSums).module()==(*it_Sim_JEMEtSums).module()))
 	      {
 		foundModule=1;
+		noMatch = 0;
 
 		if (((*it_BS_JEMEtSums).Ex()!=(*it_Sim_JEMEtSums).Ex())
 		    or ((*it_BS_JEMEtSums).Ey()!=(*it_Sim_JEMEtSums).Ey())
@@ -243,16 +245,11 @@ StatusCode SimBSMon::fillHistograms()
 		    mLog<<MSG::DEBUG<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums).Ey()<<endreq;
 		    mLog<<MSG::DEBUG<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums).Et()<<endreq;
 
-		    if ((*it_BS_JEMEtSums).crate()==0) 
-		    {
-		      m_h_SimBSMon_JEP->Fill(1,((*it_BS_JEMEtSums).module()+18),1);
-		    }
-		    else 
-		    {
-		      m_h_SimBSMon_JEP->Fill(1,((*it_BS_JEMEtSums).module()+18),1);
-		    }
+		    noMatch = 1;
 		  }
-
+		if ((*it_BS_JEMEtSums).crate()==0) m_h_SimBSMon_JEP->Fill(1,((*it_BS_JEMEtSums).module()+18),noMatch);
+		else m_h_SimBSMon_JEP->Fill(1,((*it_BS_JEMEtSums).module()+18),noMatch);
+		
 		vBS_JEMEtSums.erase(it_BS_JEMEtSums);
 		vSim_JEMEtSums.erase(it_Sim_JEMEtSums);
 	      }

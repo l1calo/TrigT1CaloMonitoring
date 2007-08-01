@@ -61,6 +61,10 @@ protected:
    std::map <int, TH2F*> m_h_je_emHitMap;
    std::map <int, TH2F*> m_h_je_hadHitMap;
 
+   // number of triggered slice
+   TH1F* m_h_je_triggeredSlice;
+
+
 
 };
 

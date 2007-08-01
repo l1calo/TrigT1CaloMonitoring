@@ -38,10 +38,6 @@
 #include "TrigT1CaloMonitoring/JetElementMon.h"
 
 
-// *********************************************************************
-// Public Methods
-// *********************************************************************
-
 /*---------------------------------------------------------*/
 JetElementMon::JetElementMon( const std::string & type, const std::string & name,
 			      const IInterface* parent )
@@ -96,6 +92,9 @@ StatusCode JetElementMon::bookHistograms( bool isNewEventsBlock,
   MonGroup JetElements_shift (this,m_PathInRootFile ,LevelOfDetail, eventsBlock);
   HistoBooker* shift_Booker = new HistoBooker(&JetElements_shift, &mLog, m_DataType);
   
+  MonGroup JE_TriggeredSlice( this, (m_PathInRootFile).c_str(), shift, eventsBlock );
+  HistoBooker* TriggeredSlice_Booker = new HistoBooker(&JE_TriggeredSlice, &mLog, m_DataType);
+
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
       Helper* Help = new Helper();
@@ -141,6 +140,8 @@ StatusCode JetElementMon::bookHistograms( bool isNewEventsBlock,
 	      m_h_je_hadHitMap[i]->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
 	    }
 	}
+      // number of triggered slice
+      m_h_je_triggeredSlice=TriggeredSlice_Booker->book1F("JE_TriggeredSlice","Number of the Triggered Slice for JE",7,-0.5,6.5,"#Slice");
 }
 	
   if( isNewRun ) { }
@@ -155,20 +156,20 @@ StatusCode JetElementMon::fillHistograms()
 {
   MsgStream mLog( msgSvc(), name() );
 
-  //fill Histos
+  // =============================================================================================
+  // ================= Container: JetElements ====================================================
+  // =============================================================================================
+  // retrieve JetElements
   const JECollection* jetElements;
   StatusCode sc = m_storeGate->retrieve(jetElements, m_JetElementLocation);
 
   if( (sc==StatusCode::FAILURE) ) 
     {
-      mLog << MSG::INFO
-	   << "No JetElements found in TES at "
-	   << m_JetElementLocation
-	   << endreq ;
+      mLog << MSG::INFO << "No JetElements found in TES at " << m_JetElementLocation << endreq ;
       return StatusCode::SUCCESS;
     }
 
-  // Step over all cells and put into hist
+  // Step over all cells 
   JECollection::const_iterator it_je ;
   for( it_je = jetElements ->begin(); it_je < jetElements->end(); ++it_je )
     {	  
@@ -185,6 +186,10 @@ StatusCode JetElementMon::fillHistograms()
       m_h_je_energy_emHitMap->Fill( (*it_je)->eta(),(*it_je)->phi() , (*it_je)->emEnergy());
       m_h_je_energy_hadHitMap->Fill( (*it_je)->eta(),(*it_je)->phi() ,(*it_je)->hadEnergy() ); 
 
+      // number of triggered slice
+      m_h_je_triggeredSlice->Fill((*it_je)->peak(),1);
+
+      // fill HitMaps for several time slices only for ByteStream data
       if (m_DataType=="BS")
 	{
 	  for (int i = 0; i < m_SliceNo; i++)
@@ -198,7 +203,7 @@ StatusCode JetElementMon::fillHistograms()
 	}     	
     }
   return StatusCode( StatusCode::SUCCESS );
-}
+
 
 /*---------------------------------------------------------*/
 StatusCode JetElementMon::procHistograms( bool isEndOfEventsBlock, 
