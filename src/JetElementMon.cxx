@@ -203,7 +203,7 @@ StatusCode JetElementMon::fillHistograms()
 	}     	
     }
   return StatusCode( StatusCode::SUCCESS );
-
+}
 
 /*---------------------------------------------------------*/
 StatusCode JetElementMon::procHistograms( bool isEndOfEventsBlock, 
