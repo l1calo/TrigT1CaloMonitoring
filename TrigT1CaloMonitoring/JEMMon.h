@@ -59,6 +59,7 @@ protected:
 
    std::string m_DataType;   
    std::string m_PathInRootFile;   
+   std::string m_ErrorPathInRootFile;
 
    /** Histos */
 
@@ -77,9 +78,11 @@ protected:
    TH1F* m_h_JEMRoI_FwdHitsRight;
    TH1F* m_h_JEMRoI_FwdHitsLeft;
 
-   TH2F* m_h_JEMRoI_Thresh1_etaphi;
-
-
+   std::map <int, TH2F*> m_h_JEMRoI_MainThreshPerEtaPhi;
+   std::map <int, TH2F*> m_h_JEMRoI_FwdThreshPerEtaPhi;
+ 
+   // errors and saturation
+   TH2F* m_h_JEMRoI_error;
 };
 
 

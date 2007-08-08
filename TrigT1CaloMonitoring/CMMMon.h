@@ -64,6 +64,7 @@ protected:
 
    std::string m_DataType;   
    std::string m_PathInRootFile;   
+   std::string m_ErrorPathInRootFile;
 
   /** Histos */   
    // CMM Jet Hits
@@ -99,6 +100,9 @@ protected:
    TH1F* m_h_CMMRoI_Et;
 
    //data transmission checks
+   TH2F* m_h_CMMJet_error;
+   TH2F* m_h_CMMEnergy_error;
+   TH1F* m_h_CMMRoI_error;
    TH2F* m_h_TransCheck_JEP;
 
 };

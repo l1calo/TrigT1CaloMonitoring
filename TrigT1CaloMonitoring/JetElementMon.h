@@ -48,6 +48,7 @@ protected:
    std::string m_JetElementLocation;
    std::string m_DataType;
    std::string m_PathInRootFile;
+   std::string m_ErrorPathInRootFile;
    int m_SliceNo;
 
    /** Histos */
@@ -56,10 +57,14 @@ protected:
    TH1F* m_h_je_emenergy;
    TH1F* m_h_je_hadenergy; 
 
+   // HitMaps
    TH2F* m_h_je_energy_emHitMap;
    TH2F* m_h_je_energy_hadHitMap;
    std::map <int, TH2F*> m_h_je_emHitMap;
    std::map <int, TH2F*> m_h_je_hadHitMap;
+
+   // error maps
+   TH2F* m_h_je_error;
 
    // number of triggered slice
    TH1F* m_h_je_triggeredSlice;

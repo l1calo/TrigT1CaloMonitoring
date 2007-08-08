@@ -30,6 +30,8 @@
 
 #include "TrigT1Calo/JetElementMaker.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
+#include "TrigT1Calo/DataError.h"
+#include "TrigT1Calo/CoordToHardware.h"
 
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 #include "TrigT1Interfaces/Coordinate.h"
@@ -49,6 +51,7 @@ JetElementMon::JetElementMon( const std::string & type, const std::string & name
 
   declareProperty( "JetElementLocation", m_JetElementLocation = LVL1::TrigT1CaloDefs::JetElementLocation); 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/JetElements") ;
+  declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
   declareProperty( "NumberOfSlices", m_SliceNo = 5);
   declareProperty( "DataType", m_DataType="") ;
 }
@@ -71,9 +74,7 @@ StatusCode JetElementMon::bookHistograms( bool isNewEventsBlock,
   StatusCode sc = service("StoreGateSvc", m_storeGate);
   if (sc.isFailure()) 
     {
-      mLog << MSG::ERROR
-	   << "Unable to retrieve pointer to StoreGateSvc"
-	   << endreq;
+      mLog << MSG::ERROR << "Unable to retrieve pointer to StoreGateSvc"<< endreq;
       return sc;
     }
  
@@ -94,6 +95,9 @@ StatusCode JetElementMon::bookHistograms( bool isNewEventsBlock,
   
   MonGroup JE_TriggeredSlice( this, (m_PathInRootFile).c_str(), shift, eventsBlock );
   HistoBooker* TriggeredSlice_Booker = new HistoBooker(&JE_TriggeredSlice, &mLog, m_DataType);
+
+  MonGroup JEM_Error( this, (m_ErrorPathInRootFile).c_str(), shift, eventsBlock );
+  HistoBooker* Error_Booker = new HistoBooker(&JEM_Error, &mLog, "");
 
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
@@ -139,7 +143,41 @@ StatusCode JetElementMon::bookHistograms( bool isNewEventsBlock,
 	      m_h_je_hadHitMap[i]=shift_Booker->book2F(name,title,50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
 	      m_h_je_hadHitMap[i]->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
 	    }
+
+	  // ----------------------------------- Error Histos ------------------------------------------------------
+	  m_h_je_error = Error_Booker->book2F("JEM_Error","JEM S-Link Error per Module and Crate",12,0.5,12.5,35,0.5,35.5,"","");
+	  //m_h_je_error -> SetOption ("text");
+	  m_h_je_error->GetXaxis()->SetBinLabel(1, "EM Parity");
+	  m_h_je_error->GetXaxis()->SetBinLabel(2, "HAD Parity");
+	  m_h_je_error->GetXaxis()->SetBinLabel(3, "PPM Link down");
+
+	  m_h_je_error->GetXaxis()->SetBinLabel(5, "GLinkParity");
+	  m_h_je_error->GetXaxis()->SetBinLabel(6, "GLinkProtocol");
+	  m_h_je_error->GetXaxis()->SetBinLabel(7, "BCNMismatch");
+	  m_h_je_error->GetXaxis()->SetBinLabel(8, "FIFOOverflow");
+	  m_h_je_error->GetXaxis()->SetBinLabel(9, "ModuleError");
+	  m_h_je_error->GetXaxis()->SetBinLabel(10, "GLinkDown");
+	  m_h_je_error->GetXaxis()->SetBinLabel(11, "GLinkTimeout");
+	  m_h_je_error->GetXaxis()->SetBinLabel(12, "FailingBCN");
+      
+	  for (int i = 0; i < 16; i++)
+	    {
+	      buffer.str("");
+	      buffer<<i;
+	      name = "JEM " + buffer.str();
+	      m_h_je_error->GetYaxis()->SetBinLabel((i+1), name.c_str());
+	      
+	      buffer.str("");
+	      buffer<<i;
+	      name = "JEM " + buffer.str();
+	      m_h_je_error->GetYaxis()->SetBinLabel((i+19), name.c_str());
+	    }
+	  m_h_je_error->GetYaxis()->SetBinLabel(17, "Crate 0: ");
+	  m_h_je_error->GetYaxis()->SetBinLabel(35, "Crate 1: ");
 	}
+
+
+
       // number of triggered slice
       m_h_je_triggeredSlice=TriggeredSlice_Booker->book1F("JE_TriggeredSlice","Number of the Triggered Slice for JE",7,-0.5,6.5,"#Slice");
 }
@@ -176,7 +214,6 @@ StatusCode JetElementMon::fillHistograms()
       mLog << MSG::VERBOSE<<m_DataType <<" JE has coords ("<<(*it_je)->phi()<<", "<<(*it_je)->eta()
 	   << " and energies : "<<(*it_je)->emEnergy()<<", "<<(*it_je)->hadEnergy()<<" (Em,Had)"<<endreq;
 
-      // fill histograms
       m_h_je_eta -> Fill( (*it_je)-> eta(), 1.);
       m_h_je_phi->Fill( (*it_je)->phi() , 1.);
 
@@ -189,9 +226,12 @@ StatusCode JetElementMon::fillHistograms()
       // number of triggered slice
       m_h_je_triggeredSlice->Fill((*it_je)->peak(),1);
 
-      // fill HitMaps for several time slices only for ByteStream data
+      // ------------------------------------------------------------------------------------------
+      // ----------------- Histos filled only for BS data -----------------------------------------
+      // ------------------------------------------------------------------------------------------
       if (m_DataType=="BS")
 	{
+	  // ----------------- HitMaps per time slice -----------------------------------------
 	  for (int i = 0; i < m_SliceNo; i++)
 	    {
 	      if (i < ((*it_je)->emEnergyVec()).size())
@@ -200,8 +240,42 @@ StatusCode JetElementMon::fillHistograms()
 		  if ((*it_je)->hadEnergyVec()[i] != 0) m_h_je_hadHitMap[i]-> Fill( (*it_je)->eta(),(*it_je)->phi() ,1);
 		} 
 	    }
-	}     	
+
+	  // ----------------- Error Histos -----------------------------------------
+	  LVL1::DataError err((*it_je)->emError());
+	  LVL1::DataError haderr((*it_je)->hadError());
+	  LVL1::CoordToHardware ToHW;
+	  LVL1::Coordinate coord((*it_je)->phi(),(*it_je)->eta());
+
+	  int crate = ToHW.jepCrate(coord);
+	  int module=ToHW.jepModule(coord);
+	  // EM Parity
+	  m_h_je_error->Fill(1,(crate*18 + module+1),err.get(1));
+	  // HAD Parity
+	  m_h_je_error->Fill(1,(crate*18 + module+1),haderr.get(1));
+	  // PPM Link down
+	  m_h_je_error->Fill(3,(crate*18 + module+1),err.get(2));
+
+	  // GLinkParity
+	  m_h_je_error->Fill(5,(crate*18 + module+1),err.get(16));
+          // GLinkProtocol
+	  m_h_je_error->Fill(6,(crate*18 + module+1),err.get(17));
+	  // BCNMismatch
+	  m_h_je_error->Fill(7,(crate*18 + module+1),err.get(18));
+	  // FIFOOverflow
+	  m_h_je_error->Fill(8,(crate*18 + module+1),err.get(19));
+	  // Module Error
+	  m_h_je_error->Fill(9,(crate*18 + module+1),err.get(20));
+
+	  // GLinkDown
+	  m_h_je_error->Fill(10,(crate*18 + module+1),err.get(22));
+	  // GLinkTimeout
+	  m_h_je_error->Fill(11,(crate*18 + module+1),err.get(23));
+	  // FailingBCN
+	  if (err.get(24)!=0) m_h_je_error->Fill(12,(crate*18 + module+1),1);
+	}   
     }
+  
   return StatusCode( StatusCode::SUCCESS );
 }
 

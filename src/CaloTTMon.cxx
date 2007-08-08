@@ -142,7 +142,7 @@ StatusCode CaloTTMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock
    m_h_CaloTT_HitMap_hadLUT_Thresh2=HitMaps_Booker->book2F("CaloTTHadLUT"+buffer.str(),"#eta - #phi Map of CaloTT Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
    m_h_CaloTT_HitMap_hadLUT_Thresh2->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning());  
 
-   //distribution of LUT peak per detector region
+   //distribution of CaloTT LUT peak per detector region
    m_h_CaloTT_emLUT=EnergyDistribution_Booker->book1F("CaloTTEMLUT_Dist","CaloTT EM LUT Distribution of Peak",256,-0.5,255.5,"em LUT Peak [GeV]");
    m_h_CaloTT_emLUT_eta=EnergyDistribution_Booker->book1F("CaloTTEMLUT_eta","CaloTT EM LUT Distribution of Peak per #eta",21,-0.5,255.5,"#eta");
    m_h_CaloTT_emLUT_eta->SetBins(66,Help->TTEtaBinning());
@@ -211,8 +211,8 @@ StatusCode CaloTTMon::fillHistograms()
      }//eo calotower et>0gev
   }
 
-  // =============================================================================================
-  // ================= CaloCells  ==============
+  // ============================================================================================
+  // ================= CaloCells  ===============================================================
   // ============================================================================================
 
   // CaloCells exist irrespective of how low the Energy is, 
@@ -238,12 +238,9 @@ StatusCode CaloTTMon::fillHistograms()
   }
 
 
-
-
-
-
-
-
+  // =========================================================================================
+  // ============================= Calo TriggerTower Plots ===================================
+  // =========================================================================================
 
   //Retrieve Calo TriggerTowers from SG
   const TriggerTowerCollection* TriggerTowerTES = 0; 
@@ -253,14 +250,6 @@ StatusCode CaloTTMon::fillHistograms()
       log << MSG::INFO << "No TriggerTower found in TES at "<< m_CaloTTContainerName<< endreq ;
       return StatusCode::SUCCESS;
     }
-
-
-  // =========================================================================================
-  // ================================== TriggerTower Plots ===================================
-  // =========================================================================================
-
-  // Calos are only filled/stored if they contain energy, 
-  // so looping over all Calos will only loop over those with energy
 
   TriggerTowerCollection::const_iterator TriggerTowerIterator    = TriggerTowerTES->begin(); 
   TriggerTowerCollection::const_iterator TriggerTowerIteratorEnd = TriggerTowerTES->end(); 

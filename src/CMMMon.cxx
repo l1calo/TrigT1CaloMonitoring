@@ -1,4 +1,3 @@
-
 // ********************************************************************
 //
 // NAME:        CMMMon.cxx
@@ -27,7 +26,7 @@
 #include <math.h>
 #include <functional>
 #include <iostream>
-
+#include <cstdlib>
 
 #include "TrigT1CaloMonitoring/CMMMon.h"
 #include "TrigT1CaloMonitoring/JEMMon.h"
@@ -39,7 +38,7 @@
 #include "TrigT1Calo/InternalJetROI.h"
 #include "TrigT1Calo/CMMRoI.h"
 #include "TrigT1Calo/QuadLinear.h"
-
+#include "TrigT1Calo/DataError.h"
 
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 #include "TrigT1Interfaces/Coordinate.h"
@@ -72,6 +71,7 @@ CMMMon::CMMMon( const std::string & type, const std::string & name,
   declareProperty( "JEMEtSumsLocation", m_JEMEtSumsLocation=   LVL1::TrigT1CaloDefs::JEMEtSumsLocation) ;
 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/CMM") ;
+  declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
   declareProperty( "DataType", m_DataType="") ;
 }
 
@@ -113,8 +113,8 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
   MonGroup CMM_RoI ( this, (m_PathInRootFile + "/RoI").c_str(), LevelOfDetail, eventsBlock );
   HistoBooker* RoI_Booker = new HistoBooker(&CMM_RoI, &mLog, m_DataType);
   
-  MonGroup CMM_transmission ( this, (m_PathInRootFile + "/TransmissionCheck").c_str(), shift, eventsBlock );
-  HistoBooker* transmission_Booker = new HistoBooker(&CMM_transmission, &mLog, m_DataType);
+  MonGroup CMM_transmission ( this, (m_ErrorPathInRootFile ).c_str(), shift, eventsBlock );
+  HistoBooker* transmission_Booker = new HistoBooker(&CMM_transmission, &mLog, "");
   
   if( m_environment == AthenaMonManager::online ) {
     // book histograms that are only made in the online environment...
@@ -127,7 +127,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
 
-      // CMM Input data
+      //----------------------------------  CMM Input data from JEMs -----------------------------
       m_h_CMMJetHits_JEM_MainHits=input_Booker->book1F("MainHits_CMM_input", "Main Jet Hit Multiplicity per Threshold  --  CMM input", 8, -0.5, 7.5, "Threshold No.", "#");
       m_h_CMMJetHits_JEM_FwdHitsRight=input_Booker->book1F("FwdHitsRight_CMM_input", "Forward Right Jet Hit Multiplicity per Threshold  --  CMM input",4 , -0.5, 3.5, "Threshold No.", "#");
       m_h_CMMJetHits_JEM_FwdHitsLeft=input_Booker->book1F("FwdHitsLeft_CMM_input", "Forward Left Jet Hit Multiplicity per Threshold  --  CMM input", 4 , -0.5, 3.5,  "Threshold No.", "#");
@@ -137,7 +137,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       m_h_CMMEtSums_JEM_Et=input_Booker->book1F("Et_CMM_input", "CMM E_{t}  --  CMM input", 250, 0,250, "Ex [GeV]", "#");
       
 
-      // CMM DAQ data
+      //---------------------------------- CMM output to DAQ -----------------------------
       m_h_CMMJetHits_MainJets = DAQ_Booker->book1F("TotalMainHits_CMM_DAQ", "Main Jet Hit Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "#");
       m_h_CMMJetHits_FwdJetsRight = DAQ_Booker->book1F("TotalFwdHitsRight_CMM_DAQ", "Forward Right Jet Hit Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5, "Threshold No.", "#");
       m_h_CMMJetHits_FwdJetsLeft = DAQ_Booker->book1F("TotalFwdHitsLeft_CMM_DAQ", "Forward Left Jet Hit Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5,  "Threshold No.", "#");
@@ -150,7 +150,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       m_h_CMMEtSums_Et = DAQ_Booker->book1F("Et_CMM_DAQ", "CMM E_{t}  --  CMM DAQ", 250, 0,250, "Ex [GeV]", "#");
 
 
-      //CMM RoI data
+      //---------------------------------- CMM output to RoI -----------------------------
       m_h_CMMRoI_JetEtHits =RoI_Booker->book1F("JetEtHits_CMM_RoI","JetEt Hit Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","#");
       m_h_CMMRoI_MissingEtHits =RoI_Booker->book1F("MissingEtHits_CMM_RoI","MissingEt Hit Multiplicity per Threshold  --  CMM RoI", 8, -0.5,7.5,"Threshold No.","#");
       m_h_CMMRoI_SumEtHits =RoI_Booker->book1F("SumEtHits_CMM_RoI","SumEt Hit Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","#");
@@ -162,20 +162,74 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 
       if (m_DataType=="BS")
 	{
-	  //Parity Errors
-	  m_h_CMMJetHits_JEM_Crate0ParityError = transmission_Booker->book1F("Crate0JEMHitsParityError_CMM_transmission", "Crate0 JEM Hits Parity Error  --  CMM Transmission",
-									     16, -0.5, 15.5, "Module No.", "#");
-	  m_h_CMMJetHits_JEM_Crate1ParityError = transmission_Booker->book1F("Crate1JEMHitsParityError_CMM_transmission", "Crate1 JEM Hits Parity Error  --  CMM Transmission",
-									     16, -0.5, 15.5, "Module No.", "#");
-	  
-	  //transmission checks
-	  m_h_TransCheck_JEP=transmission_Booker->book2F("JEP_TransCheck", "JEP Backplane Transmission Check JEM -> CMM per Module and Crate", 2,0.5,2.5,37,-0,36, "", "");
-	  //m_h_TransCheck_JEP-> SetOption ("text");
-	  m_h_TransCheck_JEP->GetXaxis()->SetBinLabel(1, "Energy");
-	  m_h_TransCheck_JEP->GetXaxis()->SetBinLabel(2, "Hits");
-      
-	  std::string name;
+	  //---------------------------------- S-Link errors -----------------------------
+	  m_h_CMMJet_error=transmission_Booker->book2F("CMMJet_errors", "CMM Jet S-Link Errors per per Module and Crate",10,0.5,10.5,37,0.5,37.5,"","");
+	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(1, "Parity");
+
+	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(3, "GLinkParity");
+	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(4, "GLinkProtocol");
+	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(5, "BCNMismatch");
+	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(6, "FIFOOverflow");
+	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(7, "ModuleError");
+	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(8, "GLinkDown");
+	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(9, "GLinkTimeout");
+	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(10, "FailingBCN");
+
+	  m_h_CMMEnergy_error=transmission_Booker->book2F("CMMEnergy_errors", "CMM Energy S-Link Errors per per Module and Crate",10,0.5,10.5,37,0.5,37.5,"","");
+	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(1, "Parity");
+
+	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(3, "GLinkParity");
+	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(4, "GLinkProtocol");
+	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(5, "BCNMismatch");
+	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(6, "FIFOOverflow");
+	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(7, "ModuleError");
+	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(8, "GLinkDown");
+	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(9, "GLinkTimeout");
+	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(10, "FailingBCN");
+
+ 	  std::string name;
 	  std::stringstream buffer;
+     
+	  for (int i = 0; i < 16; i++)
+	    {
+	      buffer.str("");
+	      buffer<<i;
+	      name = "JEM " + buffer.str();
+	      m_h_CMMJet_error->GetYaxis()->SetBinLabel((i+1), name.c_str());
+	      m_h_CMMEnergy_error->GetYaxis()->SetBinLabel((i+1), name.c_str());
+	      
+	      buffer.str("");
+	      buffer<<i;
+	      name = "JEM " + buffer.str();
+	      m_h_CMMJet_error->GetYaxis()->SetBinLabel((i+1+19), name.c_str());
+	      m_h_CMMEnergy_error->GetYaxis()->SetBinLabel((i+1+19), name.c_str());
+	    }
+	  m_h_CMMJet_error->GetYaxis()->SetBinLabel(17, "C J CMM ");
+	  m_h_CMMJet_error->GetYaxis()->SetBinLabel(18, "Crate 0: ");
+	  m_h_CMMJet_error->GetYaxis()->SetBinLabel(36, "S J CMM ");
+	  m_h_CMMJet_error->GetYaxis()->SetBinLabel(37, "Crate 1: ");
+
+	  m_h_CMMEnergy_error->GetYaxis()->SetBinLabel(17, "C E CMM ");
+	  m_h_CMMEnergy_error->GetYaxis()->SetBinLabel(18, "Crate 0: ");
+	  m_h_CMMEnergy_error->GetYaxis()->SetBinLabel(36, "C E CMM ");
+	  m_h_CMMEnergy_error->GetYaxis()->SetBinLabel(37, "Crate 1: ");
+	
+
+	  m_h_CMMRoI_error=transmission_Booker->book1F("CMMRoI_errors", "CMM RoI S-Link Parity and Overflow",8,0.5,8.5,"");
+	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(1, "Parity (Ex)");
+	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(2, "Parity (Ey,SumEtMap)");
+	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(3, "Parity (Et,MissingEtMap)");
+	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(4, "Parity (JetEtMap)");
+
+	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(6, "Overflow (Ex)");
+	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(7, "Overflow (Ey)");
+	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(8, "Overflow (Et)");
+
+	  //---------------------------------- Backplane transmission checks -----------------------------
+	  m_h_TransCheck_JEP=transmission_Booker->book2F("JEP_TransCheck", "JEP Backplane Transmission Check JEM -> CMM per Module and Crate", 2,0.5,2.5,37,0.5,3.5, "", "");
+	  //m_h_TransCheck_JEP-> SetOption ("text");
+	  m_h_TransCheck_JEP->GetXaxis()->SetBinLabel(1, "Hits");
+	  m_h_TransCheck_JEP->GetXaxis()->SetBinLabel(2, "Energy");
       
 	  for (int i = 0; i < 16; i++)
 	    {
@@ -191,14 +245,9 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	      name = "JEM " + buffer.str();
 	      m_h_TransCheck_JEP->GetYaxis()->SetBinLabel((i+1+20), name.c_str());
 	    }
-	  m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(17, "E CMM_crate");
-	  m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(18, "J CMM_crate");
+	  m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(17, "C E CMM");
+	  m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(18, "C J CMM");
 	  m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(19, "Crate 0: ");
-	  
-	  //m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(36, "CE CMM");
-	  //m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(37, "SE CMM");
-	  //m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(38, "CJ CMM");
-	  //m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(39, "SJ CMM");
 	  m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(37, "Crate 1: ");
 	}
     }
@@ -214,7 +263,6 @@ StatusCode CMMMon::fillHistograms()
 {
   MsgStream mLog( msgSvc(), name() );
   Helper* Help = new Helper();
-  
   
   // =============================================================================================
   // ================= Container: CMM Jet Hits ===================================================
@@ -259,30 +307,65 @@ StatusCode CMMMon::fillHistograms()
 		  Help->FillHitsHisto(m_h_CMMJetHits_JEM_FwdHitsRight, CMMHit, 0, 4, 8, 2, &mLog);
 		  Help->FillHitsHisto(m_h_CMMJetHits_JEM_MainHits, CMMHit, 0, 8, 0, 2, &mLog);
 		}
-	      //Main Hits for modules 0,7,8,15
+	      //Main Hits for all other modules
 	      else 
 		{
 		  Help->FillHitsHisto(m_h_CMMJetHits_JEM_MainHits, CMMHit, 0, 8, 0, 3, &mLog);
 		}
 	    }
+	}
+      // ------------------------------------------------------------------------------------------
+      // ----------------- Histos with S-Link errors -----------------------------
+      // ------------------------------------------------------------------------------------------
+      //only for Bytestream data
+      if (m_DataType=="BS")
+	{
+	  LVL1::DataError err((*it_CMMJetHits)-> Error());
+	  //input data from JEMs have dataID 0..15   ---  fill only parity errors
 	  
-	  // ------------------------------------------------------------------------------------------
-	  // ----------------- Histos with Parity Errors for JEMs -> CMM  -----------------------------
-	  // ------------------------------------------------------------------------------------------
-	  //only for Bytestream data
-	  if (m_DataType=="BS")
+	  int crate = (*it_CMMJetHits)->crate();
+	  int module = (*it_CMMJetHits)-> dataID();
+	  
+	  if (module<16)
 	    {
-	      if ((*it_CMMJetHits)-> crate()==0) //Fill ErrorCounter
-		{
-		  m_h_CMMJetHits_JEM_Crate0ParityError -> Fill(((*it_CMMJetHits)-> dataID()),((*it_CMMJetHits)-> Error()));
-		}
-	      if ((*it_CMMJetHits)-> crate()==1) //Fill ErrorCounter
-		{
-		  m_h_CMMJetHits_JEM_Crate1ParityError -> Fill(((*it_CMMJetHits)-> dataID()),((*it_CMMJetHits)-> Error()));
-		}
+	      // Parity
+	      m_h_CMMJet_error->Fill(1,(crate*19 + 1 + module),err.get(1));
+	    }
+	  
+	  // errors from crate CMM
+	  // fill parity and L1CaloSubStatus 
+	  if (module==16)
+	    {
+	      // Parity; set only for crate CMM -> system CMM 
+	      if (crate==1) m_h_CMMJet_error->Fill(1,(1 + 16),err.get(1));
+	      
+	      // set L1CaloSubStatus for both Crate and System CMM
+	      // GLinkParity
+	      m_h_CMMJet_error->Fill(5,(crate*19 + 1 + 16),err.get(16));
+	      // GLinkProtocol
+	      m_h_CMMJet_error->Fill(6,(crate*19 + 1 + 16),err.get(17));
+	      // BCNMismatch
+	      m_h_CMMJet_error->Fill(7,(crate*19 + 1 + 16),err.get(18));
+	      // FIFOOverflow
+	      m_h_CMMJet_error->Fill(8,(crate*19 + 1 + 16),err.get(19));
+	      // ModuleError
+	      m_h_CMMJet_error->Fill(9,(crate*19 + 1 + 16),err.get(20));
+	      
+	      // GLinkDown
+	      m_h_CMMJet_error->Fill(10,(crate*19 + 1 + 16),err.get(22));
+	      // GLinkTimeout
+	      m_h_CMMJet_error->Fill(11,(crate*19 + 1 + 16),err.get(23));
+	      // FailingBCN
+	      if (err.get(24)!=0) m_h_CMMJet_error->Fill(12,(crate*19 + 1 + 16),1);
+	    }
+	  // fill parity for remote fwd hits
+	  if ((module==19)and (crate==1))
+	    {
+	      // Parity
+	      m_h_CMMJet_error->Fill(1,( 1 + 16),err.get(1));
 	    }
 	}
-
+      
       // ------------------------------------------------------------------------------------------
       // ----------------- Histos with distribution of CMM Hit Multiplicities ---------------------
       // ------------------------------------------------------------------------------------------
@@ -291,7 +374,7 @@ StatusCode CMMMon::fillHistograms()
 	{
 	  Help->FillHitsHisto(m_h_CMMJetHits_MainJets, CMMHit, 0, 8, 0, 3, &mLog);
 	}
-
+      
       //fwd total jets 
       if ((*it_CMMJetHits)-> dataID() == 21)  
 	{
@@ -301,6 +384,7 @@ StatusCode CMMMon::fillHistograms()
 	  Help->FillHitsHisto(m_h_CMMJetHits_FwdJetsLeft, CMMHit, 0, 4, 0, 2, &mLog);
 	  Help->FillHitsHisto(m_h_CMMJetHits_FwdJetsRight, CMMHit, 0, 4, 4, 2, &mLog);
 	}
+      
       //JetEtSum Hitmap
       if ((*it_CMMJetHits)-> dataID() == 22)  
 	{
@@ -309,7 +393,7 @@ StatusCode CMMMon::fillHistograms()
 	  
 	  Help->FillHitsHisto(m_h_CMMJetHits_EtMap, CMMHit, 0, 4, 0, 1, &mLog);
 	}
-    }    
+    }  
   
   // ------------------------------------------------------------------------------------------
   // ----------------- Backplane transmission check: JEMs -> CMM ------------------------------
@@ -318,7 +402,7 @@ StatusCode CMMMon::fillHistograms()
   if (m_DataType=="BS")
     {
       mLog<<MSG::DEBUG<<"--------------  "<< m_DataType<<" CMM Jet Hits transmission ---------------"<<endreq;
-
+      
       //retrieve JEMHits from storegate for comparison with transmitted data stored in CMMJetHits
       const JEMHitsCollection* JEMHits;
       JEMHitsCollection::const_iterator it_JEMHits ;
@@ -340,6 +424,8 @@ StatusCode CMMMon::fillHistograms()
       int CrateCMMFwdHits=0;
       int SystemRemoteCMMMainHits=0;
       int SystemRemoteCMMFwdHits=0;
+      int noMatchfound;
+
       // put CMM input data (JEMHits) into CMMJEMHits vector
       for( it_CMMJetHits  = CMMJetHits ->begin(); it_CMMJetHits < CMMJetHits -> end(); ++it_CMMJetHits )
 	{
@@ -348,6 +434,7 @@ StatusCode CMMMon::fillHistograms()
 	    {
 	      vCMMJEMHits.push_back(**it_CMMJetHits );
 	    }
+	  
 	  // CMM information for transmission check crate CMM -> system CMM
 	  // local main hits of crate CMM
 	  if (((*it_CMMJetHits)->dataID()==17)and((*it_CMMJetHits)->crate()==0)) CrateCMMMainHits=(*it_CMMJetHits)->Hits();
@@ -357,7 +444,6 @@ StatusCode CMMMon::fillHistograms()
 	  if (((*it_CMMJetHits)->dataID()==16)and((*it_CMMJetHits)->crate()==1)) SystemRemoteCMMMainHits=(*it_CMMJetHits)->Hits();
 	  // remote fwd hits of crate CMM
 	  if (((*it_CMMJetHits)->dataID()==19)and((*it_CMMJetHits)->crate()==1)) SystemRemoteCMMFwdHits=(*it_CMMJetHits)->Hits();
-
 	}
       for( it_JEMHits  =  JEMHits->begin(); it_JEMHits <  JEMHits-> end(); ++it_JEMHits )
 	{
@@ -365,7 +451,6 @@ StatusCode CMMMon::fillHistograms()
 	}
       
       bool found;
-      int noMatch;
       std::vector <LVL1::CMMJetHits>::iterator it_vCMMJEMHits;
       std::vector <LVL1::JEMHits>::iterator it_vJEMHits;
       
@@ -378,7 +463,7 @@ StatusCode CMMMon::fillHistograms()
 	  mLog<<MSG::VERBOSE<<"CMM Hit "<<(*it_vCMMJEMHits).Hits()<<endreq;
 	  
 	  found = 0;
-	  noMatch=0;
+	  noMatchfound=0;
 	  it_vJEMHits=vJEMHits.begin();
 	  
 	  while ((found==0)and(it_vJEMHits<vJEMHits.end()))
@@ -396,21 +481,20 @@ StatusCode CMMMon::fillHistograms()
 		      mLog<<MSG::DEBUG<<"JEM Hit "<<Help->Binary((*it_vJEMHits).JetHits(),24)<<endreq;
 		      mLog<<MSG::DEBUG<<"CMM Hit "<<Help->Binary((*it_vCMMJEMHits).Hits(),24)<<endreq;
 		      
-		      noMatch=1;
+		      noMatchfound=1;
 		    }
 		  // if CMMJEMHits and JEMHits didn't match, a "1" is entered at the specific module;
 		  // if a match is found, a "0" is entered (just to see that the histogram is filled
 		  // since there hopefully are only zeros in there)
-		  if ((*it_vJEMHits).crate()==0) m_h_TransCheck_JEP->Fill(1,(*it_vJEMHits).module(),noMatch);
-		  else m_h_TransCheck_JEP->Fill(1,((*it_vJEMHits).module()+20),noMatch);
-
+		  m_h_TransCheck_JEP->Fill(1,(*it_vJEMHits).crate()*20+(*it_vJEMHits).module()+1,noMatchfound);
+		  
 		  vCMMJEMHits.erase(it_vCMMJEMHits);
 		  vJEMHits.erase(it_vJEMHits);
 		  found=1;
 		}
 	      else it_vJEMHits=it_vJEMHits+1;
 	    }// end while (not found and not JEMHits.end)
-
+	  
 	  // only step further in CMMJEMHits if no corresponding entry has been found in JEMHits
 	  if (found==0)it_vCMMJEMHits=it_vCMMJEMHits+1;
 	}  // end while (not CMMJEMHits.end)
@@ -424,9 +508,7 @@ StatusCode CMMMon::fillHistograms()
 	      mLog<<MSG::DEBUG<<"CMM Crate "<<(*it_vCMMJEMHits).crate()<<" Module "<<(*it_vCMMJEMHits).dataID()<<endreq;
 	      mLog<<MSG::DEBUG<<"CMM Hit "<<(*it_vCMMJEMHits).Hits()<<endreq;
 	      
-	      if ((*it_vCMMJEMHits).crate()==0) m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits).dataID(),1);
-	      else m_h_TransCheck_JEP->Fill(1,((*it_vCMMJEMHits).dataID()+20),1);
-	      
+	      m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits).crate()*20+(*it_vCMMJEMHits).dataID()+1,1);
 	    }
 	}
       
@@ -439,22 +521,21 @@ StatusCode CMMMon::fillHistograms()
 	      mLog<<MSG::DEBUG<<"JEM Crate "<<(*it_vJEMHits).crate()<<" Module "<<(*it_vJEMHits).module()<<endreq;
 	      mLog<<MSG::DEBUG<<"JEM Hit "<<(*it_vJEMHits).JetHits()<<endreq;
 	      
-	      if ((*it_vJEMHits).crate()==0) m_h_TransCheck_JEP->Fill(1,(*it_vJEMHits).module(),1);
-	      else m_h_TransCheck_JEP->Fill(1,((*it_vJEMHits).module()+20),1);
+	      m_h_TransCheck_JEP->Fill(1,(*it_vJEMHits).crate()*20+(*it_vJEMHits).module()+1,1);
 	    }
 	}
-  
+      
       //---------------------------------- backplane transmission crate CMM -> system CMM -----------------------------
-      noMatch=0;
-
+      noMatchfound=0;
+      
       if ((CrateCMMMainHits!=SystemRemoteCMMMainHits) or (CrateCMMFwdHits!=SystemRemoteCMMFwdHits))
 	{
-	  noMatch=1;
+	  noMatchfound=1;
 	  mLog<<MSG::INFO<<"Transmission error between crate and system CMM: Hits"<<endreq;
 	}
-      m_h_TransCheck_JEP->Fill(1,17,noMatch);
+      m_h_TransCheck_JEP->Fill(1,18,noMatchfound);
     }
-      
+  
   // =============================================================================================
   // ================= Container: CMM Et Sums ====================================================
   // =============================================================================================
@@ -471,24 +552,25 @@ StatusCode CMMMon::fillHistograms()
       mLog << MSG::INFO << "No CMMEtSums found in TES at " << m_CMMEtSumsLocation << endreq ;
       return StatusCode::SUCCESS;
     }
-
+  
   mLog<<MSG::DEBUG<<"--------------  "<< m_DataType<<" CMM Et Sums ---------------"<<endreq;
-
+  
   // Step over all cells 
   CMMEtSumsCollection::const_iterator it_CMMEtSums ;
   for( it_CMMEtSums  = CMMEtSums ->begin(); it_CMMEtSums < CMMEtSums -> end(); ++it_CMMEtSums )
     {	  
+     
       // ------------------------------------------------------------------------------------------
       // ----------------- Histos with distribution of JEM Energies -------------------------------
       // ------------------------------------------------------------------------------------------
       // JEM energy sums, dataID < 16
       if  ((*it_CMMEtSums)-> dataID()<16) 
 	{
-      // note: JEM energies are compressed -> use QuadLinear to expand!
+	  // note: JEM energies are compressed -> use QuadLinear to expand!
 	  ex=expand.Expand( (*it_CMMEtSums)-> Ex());
 	  ey=expand.Expand( (*it_CMMEtSums)-> Ey());
 	  et=expand.Expand( (*it_CMMEtSums)-> Et() );
-
+	  
 	  m_h_CMMEtSums_JEM_Ex -> Fill( ex, 1.);
 	  m_h_CMMEtSums_JEM_Ey -> Fill( ey, 1.);
 	  m_h_CMMEtSums_JEM_Et -> Fill( et, 1.);
@@ -500,8 +582,20 @@ StatusCode CMMMon::fillHistograms()
       // total energy sums
       if  ((*it_CMMEtSums)-> dataID()==18) 
 	{
-	  m_h_CMMEtSums_Ex -> Fill( (*it_CMMEtSums)-> Ex(), 1.);
-	  m_h_CMMEtSums_Ey -> Fill( (*it_CMMEtSums)-> Ey(), 1.);
+	  // the 0th bit of Ex and Ey is their sign
+	  // -> remove it, only the value is important
+	  int Ex,Ey;
+	  std::string temp;
+	  temp= Help->Binary((*it_CMMEtSums)-> Ex(),15);
+	  temp.assign(temp,temp.length()-14,14);
+	  Ex=Help->Multiplicity(temp,0,14);
+	  
+	  temp= Help->Binary((*it_CMMEtSums)-> Ey(),15);
+	  temp.assign(temp,temp.length()-14,14);
+	  Ey=Help->Multiplicity(temp,0,14);
+
+	  m_h_CMMEtSums_Ex -> Fill( Ex, 1.);
+	  m_h_CMMEtSums_Ey -> Fill( Ey, 1.);
 	  m_h_CMMEtSums_Et -> Fill( (*it_CMMEtSums)-> Et(), 1.);
 	}
       
@@ -510,28 +604,91 @@ StatusCode CMMMon::fillHistograms()
 	{
 	  std::string CMMHit= Help->Binary((*it_CMMEtSums)->Et(),8);
 	  mLog<<MSG::DEBUG<<"MissingEt Hits: " << CMMHit <<endreq;
-
+	  
 	  Help->FillHitsHisto(m_h_CMMEtSums_MissingEtMap, CMMHit, 0, 8, 0, 1, &mLog);
 	}
-
+      
       //SumEt Hitmap
       if ((*it_CMMEtSums)-> dataID() == 20)  
 	{
 	  std::string CMMHit= Help->Binary((*it_CMMEtSums)->Et(),4);
 	  mLog<<MSG::DEBUG<<"SumEt Hits: " << CMMHit <<endreq;
-
+	  
 	  Help->FillHitsHisto(m_h_CMMEtSums_SumEtMap, CMMHit, 0, 4, 0, 1, &mLog);
 	}
+      
+      //only for Bytestream data
+      if (m_DataType=="BS")
+	{
+	  // ------------------------------------------------------------------------------------------
+	  // ----------------- Histos with S-Link errors -----------------------------
+	  // ------------------------------------------------------------------------------------------
+	  LVL1::DataError exerr((*it_CMMEtSums)-> ExError());
+	  LVL1::DataError eyerr((*it_CMMEtSums)-> EyError());
+	  LVL1::DataError eterr((*it_CMMEtSums)-> EtError());
+	  int error=0;
+	  
+	  int crate = (*it_CMMEtSums)->crate();
+	  int module = (*it_CMMEtSums)-> dataID();
 
-      mLog<<MSG::VERBOSE<<"CMMEtSums crate: "<< (*it_CMMEtSums)-> crate()<<" dataID: "<< (*it_CMMEtSums)-> dataID()
-	  <<" Ex: "<<  (*it_CMMEtSums)-> Ex()
-	  <<" Ey: "<<  (*it_CMMEtSums)-> Ey()
-	  <<" Et: "<<  (*it_CMMEtSums)-> Et()<<endreq;
-    }     	
-
+	  //input data from JEMs have dataID 0..15   ---  fill only parity errors
+	  if (module<16)
+	    {
+	      // Parity
+	      error=0;
+	      if ((exerr.get(1)==1)or(eyerr.get(1)==1)or(eterr.get(1)==1)) error=1;
+	      m_h_CMMEnergy_error->Fill(1,(crate*19 + 1 + module),error);
+	    }
+	  
+	  // errors from crate CMM
+	  // fill parity and L1CaloSubStatus
+	  if (module==16)
+	    {
+	      // Parity
+	      error=0;
+	      if ((exerr.get(1)==1)or(eyerr.get(1)==1)or(eterr.get(1)==1)) error=1;
+	      m_h_CMMEnergy_error->Fill(1,(crate*19 + 1 + 16),error);
+	      
+	      // GLinkParity
+	      error=0;
+	      if ((exerr.get(16)==1)or(eyerr.get(16)==1)or(eterr.get(16)==1)) error=1;
+	      m_h_CMMEnergy_error->Fill(5,(crate*19 + 1 + 16),error);
+	      // GLinkProtocol
+	      error=0;
+	      if ((exerr.get(17)==1)or(eyerr.get(17)==1)or(eterr.get(17)==1)) error=1;
+	      m_h_CMMEnergy_error->Fill(6,(crate*19 + 1 + 16),error);
+	      // BCNMismatch
+	      error=0;
+	      if ((exerr.get(18)==1)or(eyerr.get(18)==1)or(eterr.get(18)==1)) error=1;
+	      m_h_CMMEnergy_error->Fill(7,(crate*19 + 1 + 16),error);
+	      // FIFOOverflow
+	      error=0;
+	      if ((exerr.get(19)==1)or(eyerr.get(19)==1)or(eterr.get(19)==1)) error=1;
+	      m_h_CMMEnergy_error->Fill(8,(crate*19 + 1 + 16),error);
+	      // ModuleError
+	      error=0;
+	      if ((exerr.get(20)==1)or(eyerr.get(20)==1)or(eterr.get(20)==1)) error=1;
+	      m_h_CMMEnergy_error->Fill(9,(crate*19 + 1 + 16),error);
+	      
+	      // GLinkDown
+	      error=0;
+	      if ((exerr.get(22)==1)or(eyerr.get(22)==1)or(eterr.get(22)==1)) error=1;
+	      m_h_CMMEnergy_error->Fill(10,(crate*19 + 1 + 16),error);
+	      // GLinkTimeout
+	      error=0;
+	      if ((exerr.get(23)==1)or(eyerr.get(23)==1)or(eterr.get(23)==1)) error=1;
+	      m_h_CMMEnergy_error->Fill(11,(crate*19 + 1 + 16),error);
+	      // FailingBCN
+	      error=0;
+	      if ((exerr.get(24)!=0)or(eyerr.get(24)!=0)or(eterr.get(24)!=0)) error=1;
+	      m_h_CMMEnergy_error->Fill(12,(crate*19 + 1 + 16),error);
+	    }
+	}
+    }
   // ------------------------------------------------------------------------------------------
   // ----------------- Backplane transmission check: JEMs -> CMM ------------------------------
   // ------------------------------------------------------------------------------------------
+  //only for Bytestream data
   if (m_DataType=="BS")
     {
       mLog<<MSG::DEBUG<<"--------------  "<< m_DataType<<" CMM EtSums transmission ---------------"<<endreq;
@@ -553,7 +710,7 @@ StatusCode CMMMon::fillHistograms()
       std::vector <LVL1::JEMEtSums>  vJEMEtSums;
       int CrateEx=0, CrateEy=0, CrateEt=0;
       int SystemEx=0, SystemEy=0, SystemEt=0;
-
+      int noMatchfound=0;
       for( it_CMMEtSums  = CMMEtSums ->begin(); it_CMMEtSums < CMMEtSums -> end(); ++it_CMMEtSums )
 	{	  
 	  if ((*it_CMMEtSums)->dataID()<16)
@@ -584,7 +741,7 @@ StatusCode CMMMon::fillHistograms()
       std::vector <LVL1::CMMEtSums>::iterator it_vCMMJEMEtSums;
       std::vector <LVL1::JEMEtSums>::iterator it_vJEMEtSums;
       
-  //---------------------------------- backplane transmission crate CMM -> system CMM -----------------------------
+      //---------------------------------- backplane transmission JEMs -> crate CMM -----------------------------
       it_vCMMJEMEtSums=vCMMJEMEtSums.begin();
       while (it_vCMMJEMEtSums<vCMMJEMEtSums.end())
 	{
@@ -594,7 +751,7 @@ StatusCode CMMMon::fillHistograms()
 	  mLog<<MSG::VERBOSE<<"CMM Et "<<(*it_vCMMJEMEtSums).Et()<<endreq;
 	  
 	  bool found = 0;
-	  int noMatch = 0;
+	  noMatchfound = 0;
 	  it_vJEMEtSums=vJEMEtSums.begin();
 	  
 	  while ((found==0)and(it_vJEMEtSums<vJEMEtSums.end()))
@@ -621,13 +778,14 @@ StatusCode CMMMon::fillHistograms()
 		      mLog<<MSG::DEBUG<<"CMM Ey "<<(*it_vCMMJEMEtSums).Ey()<<endreq;
 		      mLog<<MSG::DEBUG<<"CMM Et "<<(*it_vCMMJEMEtSums).Et()<<endreq;
 		      
-		      noMatch=1;
+		      noMatchfound=1;
 		    }
 		  // if CMMJEMEtSums and JEMEtSums didn't match, a "1" is entered at the specific module;
 		  // if a match is found, a "0" is entered (just to see that the histogram is filled
 		  // since there hopefully are only zeros in there)
-		  if ((*it_vJEMEtSums).crate()==0) m_h_TransCheck_JEP->Fill(2,(*it_vJEMEtSums).module(),noMatch);
-		  else  m_h_TransCheck_JEP->Fill(2,((*it_vJEMEtSums).module()+20),noMatch);
+		  
+		  m_h_TransCheck_JEP->Fill(2,((*it_vJEMEtSums).crate()*20+(*it_vJEMEtSums).module() + 1),noMatchfound);
+		  
 		  vCMMJEMEtSums.erase(it_vCMMJEMEtSums);
 		  vJEMEtSums.erase(it_vJEMEtSums);
 		  found=1;
@@ -648,8 +806,7 @@ StatusCode CMMMon::fillHistograms()
 	      mLog<<MSG::DEBUG<<"CMM Ey "<<(*it_vCMMJEMEtSums).Ey()<<endreq;
 	      mLog<<MSG::DEBUG<<"CMM Et "<<(*it_vCMMJEMEtSums).Et()<<endreq;
 	      
-	      if ((*it_vCMMJEMEtSums).crate()==0) m_h_TransCheck_JEP->Fill(2,(*it_vCMMJEMEtSums).dataID(),1);
-	      else  m_h_TransCheck_JEP->Fill(2,((*it_vCMMJEMEtSums).dataID()+20),1);
+	      m_h_TransCheck_JEP->Fill(2,(*it_vCMMJEMEtSums).crate()*20+(*it_vCMMJEMEtSums).dataID() + 1,noMatchfound);
 	    }
 	}
       
@@ -664,25 +821,23 @@ StatusCode CMMMon::fillHistograms()
 	      mLog<<MSG::DEBUG<<"JEM Ey "<<(*it_vJEMEtSums).Ey()<<endreq;
 	      mLog<<MSG::DEBUG<<"JEM Et "<<(*it_vJEMEtSums).Et()<<endreq;
 	      
-	      if ((*it_vJEMEtSums).crate()==0) m_h_TransCheck_JEP->Fill(2,(*it_vJEMEtSums).module(),1);
-	      else m_h_TransCheck_JEP->Fill(2,((*it_vJEMEtSums).module()+20),1);
+	      m_h_TransCheck_JEP->Fill(2,(*it_vJEMEtSums).crate()*20+(*it_vJEMEtSums).module() + 1,noMatchfound);
 	    }
 	}
       //---------------------------------- backplane transmission crate CMM -> system CMM -----------------------------
-      int noMatch=0;
-      
+      noMatchfound=0;
       if ((CrateEx!=SystemEx)or (CrateEy!=SystemEy)or (CrateEt!=SystemEt))
 	{
-	  noMatch=1;
+	  noMatchfound=1;
 	  mLog<<MSG::INFO<<"Transmission error between crate and system CMM: Energy"<<endreq;
 	}
-      m_h_TransCheck_JEP->Fill(2,16,noMatch);
+      m_h_TransCheck_JEP->Fill(2,17,noMatchfound);
     }
 
   // =============================================================================================
   // ================= Container: CMM RoI ========================================================
   // =============================================================================================
-
+  
   // retrieve RoI information from Storegate
   LVL1::CMMRoI* CR = new LVL1::CMMRoI ;
   sc = m_storeGate->retrieve (CR, m_CMMRoILocation);
@@ -698,8 +853,7 @@ StatusCode CMMMon::fillHistograms()
   // ----------------- Histos filled with CMM RoI information ---------------------------------
   // ------------------------------------------------------------------------------------------
 
-  mLog<<"JetEtHits: "<<Help->Binary((CR)->jetEtHits(),4)<<"; SumEtHits: "<<Help->Binary((CR)->sumEtHits(),4)<<"; MissingEtHits: "<<Help->Binary((CR)->missingEtHits(),8)<<endreq;
-  mLog<<"Ex: "<<(CR)->ex()<<"; Ey: "<<(CR)->ey()<<"; Et: "<<(CR)->et()<<endreq;
+  mLog<<MSG::DEBUG<<"JetEtHits: "<<Help->Binary((CR)->jetEtHits(),4)<<"; SumEtHits: "<<Help->Binary((CR)->sumEtHits(),4)<<"; MissingEtHits: "<<Help->Binary((CR)->missingEtHits(),8)<<endreq;
 
   // Jet Et Hits
   std::string CMMRoIHit = Help->Binary((CR)-> jetEtHits(),4);
@@ -714,10 +868,43 @@ StatusCode CMMMon::fillHistograms()
   Help->FillHitsHisto(m_h_CMMRoI_MissingEtHits , CMMRoIHit, 0, 8, 0, 1, &mLog);
  
   // total Ex, Ey, Et
-  m_h_CMMRoI_Ex -> Fill( (CR)->ex(),1);
-  m_h_CMMRoI_Ey -> Fill( (CR)->ey(),1);
+  // the 0th bit of Ex and Ey is their sign
+  // -> remove it, only the value is important
+  int Ex,Ey;
+  Ex=abs((CR)-> ex());
+  Ey=abs((CR)-> ey());
+  
+  mLog<<MSG::DEBUG<<" Ex: "<<Ex<<"; Ey: "<<Ey<<"; Et "<<(CR)->et()<<endreq;
+  
+  m_h_CMMRoI_Ex -> Fill( Ex,1);
+  m_h_CMMRoI_Ey -> Fill( Ey,1);
   m_h_CMMRoI_Et -> Fill( (CR)->et(),1);
- 
+  
+  // errors
+  if (m_DataType=="BS")
+    {
+      LVL1::DataError exerr((CR)-> exError());
+      LVL1::DataError eyerr((CR)-> eyError());
+      LVL1::DataError eterr((CR)-> etError());
+      LVL1::DataError jetEterr((CR)-> jetEtError());
+
+      // Parity (Ex)
+      m_h_CMMRoI_error->Fill(1,exerr.get(1));
+      // Parity (Ey,SumEtMap)
+      m_h_CMMRoI_error->Fill(2,eyerr.get(1));
+      // Parity (Et,MissingEtMap)
+      m_h_CMMRoI_error->Fill(3,eterr.get(1));
+      // Parity (JetEtMap)
+      m_h_CMMRoI_error->Fill(4,jetEterr.get(1));
+      
+      // Overflow (Ex)
+      m_h_CMMRoI_error->Fill(6,exerr.get(0));
+      // Overflow (Ey)
+       m_h_CMMRoI_error->Fill(7,eyerr.get(0));
+     // Overflow (Et)
+      m_h_CMMRoI_error->Fill(8,eterr.get(0)); 
+    }
+
   return StatusCode( StatusCode::SUCCESS );
 }
 
@@ -726,12 +913,11 @@ StatusCode CMMMon::procHistograms( bool isEndOfEventsBlock,
 				  bool isEndOfLumiBlock, bool isEndOfRun )
 /*---------------------------------------------------------*/
 {
-        if( isEndOfEventsBlock || isEndOfLumiBlock ) 
-	  {
-
-	}
+  if( isEndOfEventsBlock || isEndOfLumiBlock ) 
+    {  
+    }
 	
-	if( isEndOfRun ) { }
+  if( isEndOfRun ) { }
   
   return StatusCode( StatusCode::SUCCESS );
 }

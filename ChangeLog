@@ -1,3 +1,7 @@
+2007-08-08  Johanna Fleckner  <fleckner@lxplus205.cern.ch>
+	* add share/TrigT1CaloMonitoring_onlineOptions.py for running (later on) the monitoring online
+	* update PPr, CP and JEP - monioring - (hopefully!) last update for M4 ;)
+	
 2007-08-01  Johanna Fleckner  <fleckner@lxplus203.cern.ch>
 	* add comments in all tools
 	* add CaloTTMon for comparison of Calorimeter data with TriggerTower

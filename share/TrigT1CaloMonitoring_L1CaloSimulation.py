@@ -2,7 +2,7 @@
 ########################################## L1Calo Simulation #######################################################
 ####################################################################################################################
 # Import the configurable algorithms for TrigT1Calo
-from AthenaCommon.GlobalFlags  import globalflags
+#from AthenaCommon.GlobalFlags  import globalflags
 
 from TrigT1Calo.TrigT1CaloConf import LVL1__TriggerTowerMaker
 #from TrigT1Calo.TrigT1CaloConfig import TriggerTowerMaker_Cell
@@ -42,6 +42,7 @@ job += LVL1__CPCMMMaker( 'CPCMMMaker' )
 if ATLASCosmicFlags.doLAr and  ATLASCosmicFlags.doTile: 
     job += LVL1__TriggerTowerMaker( 'TriggerTowerMaker' )
     job.TriggerTowerMaker.CellType = 1
+    job.TriggerTowerMaker.TowerNoise = FALSE
     #input (from BS)
     job.TriggerTowerMaker.CaloCellLocation = "AllCalo"
     job.TriggerTowerMaker.atlfastCellLocation = "AllCalo"
@@ -137,7 +138,7 @@ job.JEPCMMMaker.JEPRoIBSCollectionLocation = "Sim_JEPRoIBS"
 #input (from BS)
 job.CPCMMMaker.CPMTowerLocation = "CPMTowers"
 job.CPCMMMaker.CPMHitsLocation = "CPMHits"
-job.CPCMMMaker.CPMRoILocation = "CPMRoIs"
+job.CPCMMMaker.CPMRoILocation = "Sim_CPMRoIs"
 #input (from Simulation - intermediate data)
 job.CPCMMMaker.EmTauROILocation = "Sim_EmTauRoIs"
 #output

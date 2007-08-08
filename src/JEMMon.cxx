@@ -34,6 +34,7 @@
 #include "TrigT1Calo/EnergyTrigger.h"
 #include "TrigT1Calo/JEMRoI.h"
 #include "TrigT1Calo/QuadLinear.h"
+#include "TrigT1Calo/DataError.h"
 
 #include "TrigT1Interfaces/JEPRoIDecoder.h"
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
@@ -55,6 +56,7 @@ JEMMon::JEMMon( const std::string & type, const std::string & name,
   declareProperty( "JEMRoILocation", m_JEMRoILocation =  LVL1::TrigT1CaloDefs::JEMRoILocation) ;
 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/JEM") ;
+  declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
   declareProperty( "DataType", m_DataType="") ;
 
 }
@@ -102,6 +104,9 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
   MonGroup JEM_RoI ( this, (m_PathInRootFile+"/RoI").c_str(), LevelOfDetail, eventsBlock );
   HistoBooker* RoI_Booker = new HistoBooker(&JEM_RoI, &mLog, m_DataType);
 
+  MonGroup JEM_RoIError ( this, (m_ErrorPathInRootFile).c_str(), LevelOfDetail, eventsBlock );
+  HistoBooker* RoIError_Booker = new HistoBooker(&JEM_RoIError, &mLog, "");
+
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
       Helper* Help = new Helper();
@@ -120,9 +125,62 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       m_h_JEMRoI_FwdHitsRight = RoI_Booker->book1F("FwdHitsRight_JEM_RoI", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "#");
       m_h_JEMRoI_FwdHitsLeft = RoI_Booker->book1F("FwdHitsLeft_JEM_RoI", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "#");
       
-      m_h_JEMRoI_Thresh1_etaphi = RoI_Booker->book2F("Thresh1_eta-phi_JEM_RoI", "#eta - #phi Map of Hits passing Threshold <ThreshNo>  --  JEM RoI", 50, -5, 5, 32,0,6.4, "#eta", "#phi");
-      m_h_JEMRoI_Thresh1_etaphi->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
-      
+      //---------------------------- HitThreshold per Eta-Phi -----------------------------
+      for (int i=0;i<8;i++)
+	{
+	  std::string name,title;
+	  std::stringstream buffer;
+
+	  buffer.str("");
+	  buffer<<i;
+	  name = "MainThresh" + buffer.str()+"_EtaPhi_JEM_RoI";
+	  title="#eta - #phi Map of Main Hits passing Threshold "+ buffer.str()+"  --  JEM RoI";
+
+	  m_h_JEMRoI_MainThreshPerEtaPhi[i] = RoI_Booker->book2F(name.c_str(), title.c_str(), 50, -5, 5, 32,0,6.4, "#eta", "#phi");
+	  m_h_JEMRoI_MainThreshPerEtaPhi[i]->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
+	}
+      for (int i=0;i<4;i++)
+	{
+	  std::string name,title;
+	  std::stringstream buffer;
+
+	  buffer.str("");
+	  buffer<<i;
+	  name = "FwdThresh" + buffer.str()+"_EtaPhi_JEM_RoI";
+	  title="#eta - #phi Map of Fwd Hits passing Threshold "+ buffer.str()+"  --  JEM RoI";
+
+	  m_h_JEMRoI_FwdThreshPerEtaPhi[i] = RoI_Booker->book2F(name.c_str(), title.c_str(), 50, -5, 5, 32,0,6.4, "#eta", "#phi");
+	  m_h_JEMRoI_FwdThreshPerEtaPhi[i]->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
+	}
+
+      //-------------------------------- Error Histos ------------------------------------------------------
+      if (m_DataType=="BS")
+	{
+	  std::string name,title;
+	  std::stringstream buffer;
+
+	  m_h_JEMRoI_error = RoIError_Booker->book2F("JEMROI_Error","JEMROI S-Link Parity and Saturation per Module and Crate",5,0.5,5.5,35,0.5,35.5,"","");
+	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(1, "Parity (Main Jets)");
+	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(2, "Parity (Fwd Jets)");
+	  
+	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(4, "Saturation (Main Jets)");
+	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(5, "Saturation (Fwd Jets)");
+	  	  
+	  for (int i = 0; i < 16; i++)
+	    {
+	      buffer.str("");
+	      buffer<<i;
+	      name = "JEM " + buffer.str();
+	      m_h_JEMRoI_error->GetYaxis()->SetBinLabel((i+1), name.c_str());
+	      
+	      buffer.str("");
+	      buffer<<i;
+	      name = "JEM " + buffer.str();
+	      m_h_JEMRoI_error->GetYaxis()->SetBinLabel((i+1+18), name.c_str());
+	    }
+	  m_h_JEMRoI_error->GetYaxis()->SetBinLabel(17, "Crate 0: ");
+	  m_h_JEMRoI_error->GetYaxis()->SetBinLabel(35, "Crate 1: ");
+	}
     }
   
   if( isNewRun ) { }
@@ -254,6 +312,20 @@ StatusCode JEMMon::fillHistograms()
 	{
 	  JEMRoIHits = Help->Binary((*it_JEMRoIs)-> hits(),8);
 	  Help->FillHitsHisto(m_h_JEMRoI_MainHits , JEMRoIHits, 0, 8, 0, 1, &mLog);
+
+	  // RoI HitMaps per threshold
+	  LVL1::JEPRoIDecoder decoder;
+	  LVL1::CoordinateRange coordRange = decoder.coordinate((*it_JEMRoIs)->roiWord());
+	  double eta = coordRange.eta();
+	  double phi = coordRange.phi();
+	  
+	  for (int i=0; i<8;i++)
+	    {
+	      if ((Help->Multiplicity(JEMRoIHits,i,1))!=0)
+		{
+		  m_h_JEMRoI_MainThreshPerEtaPhi[i]->Fill(eta,phi,1);
+		}
+	    }
 	}      
       else 
 	{
@@ -271,6 +343,20 @@ StatusCode JEMMon::fillHistograms()
 	    {
 	      Help->FillHitsHisto(m_h_JEMRoI_FwdHitsRight, JEMRoIHits, 0, 4, 0, 1, &mLog);
 	    }
+
+	  // RoI HitMaps per threshold
+	  LVL1::JEPRoIDecoder decoder;
+	  LVL1::CoordinateRange coordRange = decoder.coordinate((*it_JEMRoIs)->roiWord());
+	  double eta = coordRange.eta();
+	  double phi = coordRange.phi();
+	  
+	  for (int i=0; i<4;i++)
+	    {
+	      if ((Help->Multiplicity(JEMRoIHits,i,1))!=0)
+		{
+		  m_h_JEMRoI_FwdThreshPerEtaPhi[i]->Fill(eta,phi,1);
+		}
+	    }
 	}
       
       mLog<<MSG::DEBUG<<"JEMRoI Word: "<<Help->Binary((*it_JEMRoIs)->roiWord(),32)<<endreq;
@@ -278,18 +364,25 @@ StatusCode JEMMon::fillHistograms()
 	  <<"; forward: "<<(*it_JEMRoIs)->forward() <<"; Hits: "<<JEMRoIHits<<endreq;
       //mLog<<"Frame: "<<(*it_JEMRoIs)->frame()Location: "<<(*it_JEMRoIs)->location()<<"<<endreq;
       
-      //RoI-Hits per Threshold and eta-phi
-      LVL1::JEPRoIDecoder decoder;
-      LVL1::CoordinateRange coordRange = decoder.coordinate((*it_JEMRoIs)->roiWord());
-      double eta = coordRange.eta();
-      double phi = coordRange.phi();
-      
-      JEMRoIHits = Help->Binary((*it_JEMRoIs)-> hits(),8);
-      
-      if ((Help->Multiplicity(JEMRoIHits,1,1))!=0)
+      if (m_DataType=="BS")
 	{
-	  m_h_JEMRoI_Thresh1_etaphi->Fill(eta,phi,1);
-	}
+	  LVL1::DataError err((*it_JEMRoIs)->error());
+
+	  int crate=(*it_JEMRoIs)->crate();
+	  int module = (*it_JEMRoIs)->jem();
+
+	  // Parity (Main Jets)
+	  if ((*it_JEMRoIs)->forward()==0) m_h_JEMRoI_error->Fill(1,(crate*18 +module +1 ),err.get(1));
+	  // Parity (Fwd Jets)
+	  if ((*it_JEMRoIs)->forward()==1) m_h_JEMRoI_error->Fill(2,(crate*18 +module +1 ),err.get(1));
+	  
+	// Saturation (Main Jets)
+	  if ((*it_JEMRoIs)->forward()==0) m_h_JEMRoI_error->Fill(1,(crate*18 +module +1 ),err.get(0));
+	// Saturation (Fwd Jets)
+	  if ((*it_JEMRoIs)->forward()==1) m_h_JEMRoI_error->Fill(2,(crate*18 +module +1 ),err.get(0));	 
+	}     	
+ 
+
       
     }
 
@@ -303,12 +396,11 @@ StatusCode JEMMon::procHistograms( bool isEndOfEventsBlock,
 				   bool isEndOfLumiBlock, bool isEndOfRun )
 /*---------------------------------------------------------*/
 {
-        if( isEndOfEventsBlock || isEndOfLumiBlock ) 
-	  {
-
-	}
+  if( isEndOfEventsBlock || isEndOfLumiBlock ) 
+    {  
+    }
 	
-	if( isEndOfRun ) { }
+  if( isEndOfRun ) { }
   
   return StatusCode( StatusCode::SUCCESS );
 }

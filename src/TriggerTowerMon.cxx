@@ -10,31 +10,24 @@
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/ITHistSvc.h"
+#include "GaudiKernel/ISvcLocator.h"
+#include "GaudiKernel/IToolSvc.h"
 
 #include <TH1D.h>
 #include <TH2D.h>
-
 #include "TString.h"
 
 #include "StoreGate/StoreGateSvc.h"
-
-#include "CaloEvent/CaloTower.h"
-#include "CaloEvent/CaloTowerContainer.h"
-
-#include "CaloEvent/CaloCell.h"
-#include "CaloEvent/CaloCellContainer.h"
+#include "CLHEP/Units/SystemOfUnits.h"
 
 #include "TrigT1CaloMonitoring/TriggerTowerMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
 
-#include "CLHEP/Units/SystemOfUnits.h"
-
 #include "TrigT1Calo/TriggerTowerCollection.h"
 #include "TrigT1Calo/TrigT1CaloDict.h"
 #include "TrigT1Calo/TriggerTower_ClassDEF.h"
-
-#include "GaudiKernel/IService.h"
-#include "GaudiKernel/IToolSvc.h"
+#include "TrigT1Calo/DataError.h"
+#include "Identifier/HWIdentifier.h"
 
 
 /*---------------------------------------------------------*/
@@ -51,7 +44,8 @@ TriggerTowerMon::TriggerTowerMon(const std::string & type, const std::string & n
   declareProperty("DistPerChannel", m_TT_DistPerChannel=1);
   declareProperty("DistPerChannelAndTimeSlice", m_TT_DistPerChannelAndTimeSlice=0);
  
-  declareProperty( "PathInRootFile", m_PathInRootFile="Stats/CMM") ;
+  declareProperty( "PathInRootFile", m_PathInRootFile="Stats/L1Calo/PPr") ;
+  declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
   declareProperty( "DataType", m_DataType="") ;
 
   m_SliceNo=5;
@@ -124,7 +118,36 @@ StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLum
     {
       return StatusCode::FAILURE;
     }
-  
+
+  /*
+  ISvcLocator* svcLoc = Gaudi::svcLocator( );
+  toolSvc = 0; // Pointer to Tool Service
+  sc = svcLoc->service( "ToolSvc",toolSvc  );
+  if(sc.isSuccess()) 
+    {
+      sc = toolSvc->retrieveTool("CaloTriggerTowerService",m_ttSvc);
+      if(sc.isFailure())
+	{
+	  log << MSG::ERROR << "Could not retrieve CaloTriggerTowerService Tool" << endreq;
+	  return StatusCode::FAILURE;
+	}
+    } 
+  else 
+    {
+      log << MSG::ERROR << "Could not retrieve ToolSvc" << endreq;
+      return StatusCode::FAILURE;
+    }
+
+
+  // Use the CaloIdManager to get a pointer to an instance of the TTOnlineID helper
+  m_l1ttonlineHelper = m_caloMgr->getTTOnlineID();
+  if (!m_l1ttonlineHelper ) 
+    {
+      log << MSG::ERROR << "Could not access TTOnlineID helper" << endreq;
+      return StatusCode::FAILURE;
+    }
+  */
+
   if( m_environment == AthenaMonManager::online ) {
     // book histograms that are only made in the online environment...
   }
@@ -157,6 +180,9 @@ StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLum
 
   MonGroup TT_TriggeredSlice( this, (m_PathInRootFile).c_str(), shift, eventsBlock );
   HistoBooker* TriggeredSlice_Booker = new HistoBooker(&TT_TriggeredSlice, &log, m_DataType);
+
+  MonGroup TT_Error( this, (m_ErrorPathInRootFile).c_str(), shift, eventsBlock );
+  HistoBooker* Error_Booker = new HistoBooker(&TT_Error, &log, "");
 
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
@@ -256,20 +282,62 @@ StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLum
       m_h_TT_HitMap_hadLUT_Thresh2->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning());  
       
       //---------------------------- distribution of LUT peak per detector region -----------------------------
-      m_h_TT_emLUT=LUTPeakDistribution_Booker->book1F("TTEMLUT_Dist","TT EM LUT Distribution of Peak",256,-0.5,255.5,"em LUT Peak [GeV]");
-      m_h_TT_emLUT_eta=LUTPeakDistribution_Booker->book1F("TTEMLUT_eta","TT EM LUT Distribution of Peak per #eta",21,-0.5,255.5,"#eta");
+      m_h_TT_emLUT=LUTPeakDistribution_Booker->book1F("emLUT_peak","EM LUT: Distribution of Peak",256,-0.5,255.5,"em LUT Peak [GeV]");
+      m_h_TT_emLUT_eta=LUTPeakDistribution_Booker->book1F("emLUT_eta","EM LUT: Distribution of Peak per #eta",21,-0.5,255.5,"#eta");
       m_h_TT_emLUT_eta->SetBins(66,Help->TTEtaBinning());
       
-      m_h_TT_emLUT_phi=LUTPeakDistribution_Booker->book1F("TTEMLUT_phi","TT EM LUT Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
+      m_h_TT_emLUT_phi=LUTPeakDistribution_Booker->book1F("emLUT_phi","EM LUT: Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
       m_h_TT_emLUT_phi->SetBins(64,Help->TTPhiBinning());  
       
       
-      m_h_TT_hadLUT=LUTPeakDistribution_Booker->book1F("TTHADLUT_Dist","TT HAD LUT Distribution of Peak",256,-0.5,255.5,"had LUT Peak [GeV]"); 
-      m_h_TT_hadLUT_eta=LUTPeakDistribution_Booker->book1F("TTHADLUT_eta","TT HAD LUT Distribution of Peak per #eta",256,-0.5,255.5,"#eta");
+      m_h_TT_hadLUT=LUTPeakDistribution_Booker->book1F("hadLUT_Dist","HAD LUT: Distribution of Peak",256,-0.5,255.5,"had LUT Peak [GeV]"); 
+      m_h_TT_hadLUT_eta=LUTPeakDistribution_Booker->book1F("hadLUT_eta","HAD LUT: Distribution of Peak per #eta",256,-0.5,255.5,"#eta");
       m_h_TT_hadLUT_eta->SetBins(66,Help->TTEtaBinning());
-      m_h_TT_hadLUT_phi=LUTPeakDistribution_Booker->book1F("TTHADLUT_phi","TT HAD LUT Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
+      m_h_TT_hadLUT_phi=LUTPeakDistribution_Booker->book1F("hadLUT_phi","HAD LUT: Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
       m_h_TT_hadLUT_phi->SetBins(64,Help->TTPhiBinning());  
       
+      //---------------------------- S-Link errors -----------------------------
+      m_h_TT_emerror=Error_Booker->book1F("TT_emerror","EM TT S-Link errors",17,0.5,17.5,"");
+      
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(2, "MCMAbsent");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(3, "Timeout");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(4, "ASICFull");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(5, "EventMismatch");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(6, "BunchMismatch");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(7, "FIFOCorrupt");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(8, "PinParity");
+      
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(10, "GLinkParity");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(11, "GLinkProtocol");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(12, "BCNMismatch");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(13, "FIFOOverflow");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(14, "ModuleError");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(15, "GLinkDown");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
+      m_h_TT_emerror->GetXaxis()->SetBinLabel(17, "FailingBCN");
+
+      m_h_TT_haderror=Error_Booker->book1F("TT_haderror","HAD TT S-Link errors",17,0.5,17.5,"");
+      
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(2, "MCMAbsent");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(3, "Timeout");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(4, "ASICFull");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(5, "EventMismatch");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(6, "BunchMismatch");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(7, "FIFOCorrupt");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(8, "PinParity");
+      
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(10, "GLinkParity");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(11, "GLinkProtocol");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(12, "BCNMismatch");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(13, "FIFOOverflow");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(14, "ModuleError");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(15, "GLinkDown");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
+      m_h_TT_haderror->GetXaxis()->SetBinLabel(17, "FailingBCN");
+      
+
       //---------------------------- number of triggered slice -----------------------------
       m_h_TT_triggeredSlice_em=TriggeredSlice_Booker->book1F("TT_EMTriggeredSlice","Number of the EM Triggered Slice",7,-0.5,6.5,"#Slice");
       m_h_TT_triggeredSlice_had=TriggeredSlice_Booker->book1F("TT_HADTriggeredSlice","Number of the HAD Triggered Slice",7,-0.5,6.5,"#Slice");
@@ -345,7 +413,7 @@ StatusCode TriggerTowerMon::fillHistograms()
 	  m_h_TT_HitMap_emLUT_Thresh2->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
 	}
       
-       //---------------------------- EM Energy -----------------------------
+       //---------------------------- HAD Energy -----------------------------
       HadTowerId = m_lvl1Helper->tower_id(detside, 1, detregion,eta,phi );  
       // HAD ADC Peak per channel      
       int HadEnergy = (*TriggerTowerIterator)->hadADC()[(*TriggerTowerIterator)->hadPeak()];
@@ -395,6 +463,95 @@ StatusCode TriggerTowerMon::fillHistograms()
 	    }
 	}    
       
+      //---------------------------- offlineTTID -> OnlineTTID -----------------------------
+      /*try 
+	{
+	  HWIdentifier ttOnlId = m_ttSvc->createTTChannelID(HadTowerId);
+	  int crate     = m_l1ttonlineHelper->crate(ttOnlId);
+	  int module    = m_l1ttonlineHelper->module(ttOnlId);
+	  log << MSG::INFO << "PPM crate: " << crate<<"  module: "<<module << endreq ;
+	} 
+      catch(LArID_Exception& except) 
+	{
+	  log << MSG::ERROR << "LArID_Exception " << (std::string) except << endreq ;
+	}
+      */
+
+      //---------------------------- S-Link errors -----------------------------
+     LVL1::DataError emerr((*TriggerTowerIterator)-> emError());
+
+      // ChannelDisabled
+      m_h_TT_emerror->Fill(1,emerr.get(4));
+      // MCMAbsent
+      m_h_TT_emerror->Fill(2,emerr.get(5));
+      // Timeout
+      m_h_TT_emerror->Fill(3,emerr.get(6));
+      // ASICFull
+      m_h_TT_emerror->Fill(4,emerr.get(7));
+      // EventMismatch
+      m_h_TT_emerror->Fill(5,emerr.get(8));
+      // BunchMismatch
+      m_h_TT_emerror->Fill(6,emerr.get(9));
+      // FIFOCorrupt
+      m_h_TT_emerror->Fill(7,emerr.get(10));
+      // PinParity
+      m_h_TT_emerror->Fill(8,emerr.get(11));
+      		  
+      // GLinkParity
+      m_h_TT_emerror->Fill(10,emerr.get(16));
+      // GLinkProtocol
+      m_h_TT_emerror->Fill(11,emerr.get(17));
+      // BCNMismatch
+      m_h_TT_emerror->Fill(12,emerr.get(18));
+      // FIFOOverflow
+      m_h_TT_emerror->Fill(13,emerr.get(19));
+      // ModuleError
+      m_h_TT_emerror->Fill(14,emerr.get(20));
+      
+      // GLinkDown
+      m_h_TT_emerror->Fill(15,emerr.get(22));
+      // GLinkTimeout
+      m_h_TT_emerror->Fill(16,emerr.get(23));
+      // FailingBCN
+      m_h_TT_emerror->Fill(17,emerr.get(24));
+    
+     LVL1::DataError haderr((*TriggerTowerIterator)-> hadError());
+
+      // ChannelDisabled
+      m_h_TT_haderror->Fill(1,haderr.get(4));
+      // MCMAbsent
+      m_h_TT_haderror->Fill(2,haderr.get(5));
+      // Timeout
+      m_h_TT_haderror->Fill(3,haderr.get(6));
+      // ASICFull
+      m_h_TT_haderror->Fill(4,haderr.get(7));
+      // EventMismatch
+      m_h_TT_haderror->Fill(5,haderr.get(8));
+      // BunchMismatch
+      m_h_TT_haderror->Fill(6,haderr.get(9));
+      // FIFOCorrupt
+      m_h_TT_haderror->Fill(7,haderr.get(10));
+      // PinParity
+      m_h_TT_haderror->Fill(8,haderr.get(11));
+      		  
+      // GLinkParity
+      m_h_TT_haderror->Fill(10,haderr.get(16));
+      // GLinkProtocol
+      m_h_TT_haderror->Fill(11,haderr.get(17));
+      // BCNMismatch
+      m_h_TT_haderror->Fill(12,haderr.get(18));
+      // FIFOOverflow
+      m_h_TT_haderror->Fill(13,haderr.get(19));
+      // ModuleError
+      m_h_TT_haderror->Fill(14,haderr.get(20));
+      
+      // GLinkDown
+      m_h_TT_haderror->Fill(15,haderr.get(22));
+      // GLinkTimeout
+      m_h_TT_haderror->Fill(16,haderr.get(23));
+      // FailingBCN
+      if (haderr.get(24)!=0) m_h_TT_haderror->Fill(17,1);
+
       // number of triggered slice
       m_h_TT_triggeredSlice_em->Fill((*TriggerTowerIterator)->emPeak(),1);
       m_h_TT_triggeredSlice_had->Fill((*TriggerTowerIterator)->hadPeak(),1);

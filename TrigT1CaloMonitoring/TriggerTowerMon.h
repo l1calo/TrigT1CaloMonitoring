@@ -20,7 +20,7 @@
 #include "CaloIdentifier/CaloLVL1_ID.h"
 #include "Identifier/Identifier.h"
 #include "TrigT1CaloCalibTools/L1CaloTTIdTools.h"
-
+#include "CaloTriggerTool/CaloTriggerTowerService.h"
 
 #include "TH1.h"
 #include "TH2.h"
@@ -53,6 +53,7 @@ private:
 
   std::string m_DataType;
   std::string m_PathInRootFile;
+  std::string m_ErrorPathInRootFile;
       
 protected:
    /** a handle on Store Gate for access to the Event Store */
@@ -65,6 +66,11 @@ protected:
    // CaloLVL1_ID Id helper
    const CaloLVL1_ID* m_lvl1Helper;
    const L1CaloTTIdTools* m_l1CaloTTIdTools;
+   /*
+   CaloTriggerTowerService* m_ttSvc;
+   // TTOnlineID Id helper
+   const TTOnlineID* m_l1ttonlineHelper;
+   */
 
    // histos per channel
   std::map <Identifier, TH1F*>  m_h_TT_EmADCPeak;
@@ -101,6 +107,10 @@ protected:
    TH1F* m_h_TT_hadLUT_EC;
    TH1F* m_h_TT_hadLUT_Quadrant[NoQuadrant];
    TH1F* m_h_TT_hadLUT_DetSide[Side];*/
+
+   // error
+   TH1F* m_h_TT_emerror;
+   TH1F* m_h_TT_haderror;
 
    // number of triggered slice
    TH1F* m_h_TT_triggeredSlice_em;
