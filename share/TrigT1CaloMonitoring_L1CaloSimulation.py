@@ -5,7 +5,6 @@
 #from AthenaCommon.GlobalFlags  import globalflags
 
 from TrigT1Calo.TrigT1CaloConf import LVL1__TriggerTowerMaker
-#from TrigT1Calo.TrigT1CaloConfig import TriggerTowerMaker_Cell
 from TrigT1Calo.TrigT1CaloConf import LVL1__CPMTowerMaker
 from TrigT1Calo.TrigT1CaloConf import LVL1__JetElementMaker
 from TrigT1Calo.TrigT1CaloConf import LVL1__EmTauTrigger
@@ -22,8 +21,6 @@ from AthenaCommon.AlgSequence import AlgSequence
 job = AlgSequence()
 
 # Add the required algorithms to the sequence
-#triggerTowerMaker = TriggerTowerMaker_Cell()
-#job += [triggerTowerMaker]
 job += LVL1__CPMTowerMaker( 'CPMTowerMaker' )
 job += LVL1__JetElementMaker( 'JetElementMaker' )
 job += LVL1__EmTauTrigger( 'EmTauTrigger' )
@@ -39,7 +36,7 @@ job += LVL1__CPCMMMaker( 'CPCMMMaker' )
 #*************************************************************
 
 
-if ATLASCosmicFlags.doLAr and  ATLASCosmicFlags.doTile: 
+if ATLASCosmicFlags.doLAr and  ATLASCosmicFlags.doTile:
     job += LVL1__TriggerTowerMaker( 'TriggerTowerMaker' )
     job.TriggerTowerMaker.CellType = 1
     job.TriggerTowerMaker.TowerNoise = FALSE

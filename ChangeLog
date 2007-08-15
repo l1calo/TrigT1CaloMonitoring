@@ -1,17 +1,23 @@
-2007-08-10  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
+2007-08-15  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
+	* tag TrigT1CaloMonitoring-00-01-05
         * add src/SourceIDTool.cxx TrigT1CaloMonitoring/SourceIDTool.h for dumping SourceIDs that exist in the SW
+	* update requirements file (due to checkreq problems)
+	* adjust JobOptions to RecExCommission for M4
 
 2007-08-08  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
+	* tag TrigT1CaloMonitoring-00-01-04
 	* add share/TrigT1CaloMonitoring_onlineOptions.py for running (later on) the monitoring online
 	* update PPr, CP and JEP - monioring - (hopefully!) last update for M4 ;)
 	
 2007-08-01  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
+	* tag TrigT1CaloMonitoring-00-01-03
 	* add comments in all tools
 	* add CaloTTMon for comparison of Calorimeter data with TriggerTower
 	* expand monitoring with queries (some histograms like transmission check will only produced for BS data)
 	* HitMap thresholds for TT are now configurable from JO
 
 2007-07-25  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
+	* tag TrigT1CaloMonitoring-00-01-02
 	* update cmt/requirment
 	* further development of monitoring: TriggerTowerMon, JetElementMon, JEMMon, CMMMon, SimBSMon
 	* updating JobOptions
