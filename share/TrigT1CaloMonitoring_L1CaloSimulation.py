@@ -4,7 +4,6 @@
 # Import the configurable algorithms for TrigT1Calo
 #from AthenaCommon.GlobalFlags  import globalflags
 
-from TrigT1Calo.TrigT1CaloConf import LVL1__TriggerTowerMaker
 from TrigT1Calo.TrigT1CaloConf import LVL1__CPMTowerMaker
 from TrigT1Calo.TrigT1CaloConf import LVL1__JetElementMaker
 from TrigT1Calo.TrigT1CaloConf import LVL1__EmTauTrigger
@@ -35,17 +34,6 @@ job += LVL1__CPCMMMaker( 'CPCMMMaker' )
 # Set input and output locations  
 #*************************************************************
 
-
-if ATLASCosmicFlags.doLAr and  ATLASCosmicFlags.doTile:
-    job += LVL1__TriggerTowerMaker( 'TriggerTowerMaker' )
-    job.TriggerTowerMaker.CellType = 1
-    job.TriggerTowerMaker.TowerNoise = FALSE
-    #input (from BS)
-    job.TriggerTowerMaker.CaloCellLocation = "AllCalo"
-    job.TriggerTowerMaker.atlfastCellLocation = "AllCalo"
-    #output
-    job.TriggerTowerMaker.TriggerTowerLocation = "Calo_TriggerTowers"
-    #job.TriggerTowerMaker.OutputLevel = DEBUG
 
 # CPMTowerMaker
 #input (from BS)
