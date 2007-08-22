@@ -93,7 +93,7 @@ if ATLASCosmicFlags.doLVL1CaloCPJEPMonitoring:
     toolSvc.L1BSCPMMonTool.CPMHitsLocation = "CPMHits"
     toolSvc.L1BSCPMMonTool.CMMCPHitsLocation = "CMMCPHits"
     toolSvc.L1BSCPMMonTool.CPMRoILocation = "CPMRoIs"
-#toolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
+    #toolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
 
     L1CaloMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
     toolSvc.L1SimCPMMonTool.HistogramPrefix = "Sim"
