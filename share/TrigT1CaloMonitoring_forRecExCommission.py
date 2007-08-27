@@ -2,6 +2,8 @@
 ##################################### Monitoring ###################################################################
 ####################################################################################################################
 
+if ATLASCosmicFlags.doLVL1CaloCPJEPMonitoring:
+    include ("TrigT1CaloMonitoring/TrigT1CaloMonitoring_L1CaloSimulation.py")
 # ************************
 # Monitoring configuration
 # ************************
@@ -28,8 +30,6 @@ toolSvc.L1TriggerTowerMonTool.ErrorPathInRootFile = "L1Calo/Errors/PPr"
 
 
 if ATLASCosmicFlags.doLVL1CaloCPJEPMonitoring:
-    include ("TrigT1CaloMonitoring/TrigT1CaloMonitoring_L1CaloSimulation.py")
-
 ####################### JetElements ################################
     L1CaloMan.AthenaMonTools += [ "JetElementMon/BS_L1JetElementMonTool" ]
     toolSvc.BS_L1JetElementMonTool.DataType = "BS"  #BS or Sim data?
