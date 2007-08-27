@@ -73,7 +73,7 @@ if ATLASCosmicFlags.doLVL1CaloCPJEPMonitoring:
     toolSvc.BS_L1CMMMonTool.JEMEtSumsLocation = "JEMEtSums"
     toolSvc.BS_L1CMMMonTool.PathInRootFile = "L1Calo/JEP/CMM/BS"
     toolSvc.BS_L1CMMMonTool.ErrorPathInRootFile = "L1Calo/Errors/CMM"
-    #toolSvc.BS_L1CMMMonTool.OutputLevel = DEBUG
+    toolSvc.BS_L1CMMMonTool.OutputLevel = WARNING
 
     L1CaloMan.AthenaMonTools += [ "CMMMon/Sim_L1CMMMonTool" ]
     toolSvc.Sim_L1CMMMonTool.DataType = "Sim"  #BS or Sim data?
