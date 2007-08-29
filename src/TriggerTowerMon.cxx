@@ -338,6 +338,19 @@ StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLum
       m_h_TT_haderror->GetXaxis()->SetBinLabel(17, "FailingBCN");
       
 
+      m_h_TT_em_GLinkDown=Error_Booker->book2F("TT_em_GLinkDown","EM TT GLink Down per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_em_GLinkDown->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+      
+      m_h_TT_em_GLinkTimeout=Error_Booker->book2F("TT_em_GLinkTimeout","EM TT GLink Timeout per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_em_GLinkTimeout->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+
+
+      m_h_TT_had_GLinkDown=Error_Booker->book2F("TT_had_GLinkDown","HAD TT GLink Down per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_had_GLinkDown->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+
+      m_h_TT_had_GLinkTimeout=Error_Booker->book2F("TT_had_GLinkTimeout","HAD TT GLink Timeout per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_had_GLinkTimeout->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+
       //---------------------------- number of triggered slice -----------------------------
       m_h_TT_triggeredSlice_em=TriggeredSlice_Booker->book1F("TT_EMTriggeredSlice","Number of the EM Triggered Slice",7,-0.5,6.5,"#Slice");
       m_h_TT_triggeredSlice_had=TriggeredSlice_Booker->book1F("TT_HADTriggeredSlice","Number of the HAD Triggered Slice",7,-0.5,6.5,"#Slice");
@@ -551,6 +564,12 @@ StatusCode TriggerTowerMon::fillHistograms()
       m_h_TT_haderror->Fill(16,haderr.get(23));
       // FailingBCN
       if (haderr.get(24)!=0) m_h_TT_haderror->Fill(17,1);
+
+
+      m_h_TT_em_GLinkDown->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), emerr.get(22)); 
+      m_h_TT_em_GLinkTimeout->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), emerr.get(23)); 
+      m_h_TT_had_GLinkDown->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), haderr.get(22)); 
+      m_h_TT_had_GLinkTimeout->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), haderr.get(23)); 
 
       // number of triggered slice
       m_h_TT_triggeredSlice_em->Fill((*TriggerTowerIterator)->emPeak(),1);

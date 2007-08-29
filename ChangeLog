@@ -1,3 +1,7 @@
+2007-08-29  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
+	* tag TrigT1CaloMonitoring-00-01-09
+	* add new TriggerTower Error Histograms: GLink Down and GLink Timeout for em and had
+
 2007-08-21  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
 	* tag TrigT1CaloMonitoring-00-01-06
 	* share/TrigT1CaloMonitoring_topOptions.py: Add new flag doLVL1CaloCPJEPMonitoring for running within RecExCommission with no CP/JEP data in bytestream (switch off monitoring -> suppresses error messages concerning ROB fragments)
