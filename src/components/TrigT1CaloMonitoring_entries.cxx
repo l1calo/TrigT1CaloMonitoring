@@ -6,6 +6,8 @@
 #include "TrigT1CaloMonitoring/SimBSMon.h"
 #include "TrigT1CaloMonitoring/CaloTTMon.h"
 
+#include "TrigT1CaloMonitoring/TriggerTowerToolMon.h"
+
 #include "GaudiKernel/DeclareFactoryEntries.h"
 
 DECLARE_TOOL_FACTORY(TrigT1CaloCpmMonTool )
@@ -16,6 +18,8 @@ DECLARE_TOOL_FACTORY(CMMMon);
 DECLARE_TOOL_FACTORY(SimBSMon);
 DECLARE_TOOL_FACTORY(CaloTTMon);
 
+DECLARE_TOOL_FACTORY(TriggerTowerToolMon);
+
 DECLARE_FACTORY_ENTRIES(TrigT1CaloMonitoring) {
   DECLARE_ALGTOOL(TrigT1CaloCpmMonTool )
   DECLARE_ALGTOOL(TriggerTowerMon);
@@ -25,5 +29,6 @@ DECLARE_FACTORY_ENTRIES(TrigT1CaloMonitoring) {
   DECLARE_ALGTOOL(SimBSMon);
   DECLARE_ALGTOOL(CaloTTMon);
 
+  DECLARE_ALGTOOL(TriggerTowerToolMon);
 }
 

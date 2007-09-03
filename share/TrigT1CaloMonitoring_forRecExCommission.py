@@ -1,7 +1,3 @@
-####################################################################################################################
-##################################### Monitoring ###################################################################
-####################################################################################################################
-
 if ATLASCosmicFlags.doLVL1CaloCPJEPMonitoring:
     include ("TrigT1CaloMonitoring/TrigT1CaloMonitoring_L1CaloSimulation.py")
 # ************************
@@ -27,7 +23,6 @@ toolSvc.L1TriggerTowerMonTool.ADCHitMap_Thresh = 30
 toolSvc.L1TriggerTowerMonTool.PathInRootFile = "L1Calo/PPr"
 toolSvc.L1TriggerTowerMonTool.ErrorPathInRootFile = "L1Calo/Errors/PPr"
 #toolSvc.L1TriggerTowerMonTool.OutputLevel = DEBUG
-
 
 if ATLASCosmicFlags.doLVL1CaloCPJEPMonitoring:
 ####################### JetElements ################################
@@ -146,7 +141,3 @@ if ATLASCosmicFlags.doLAr and  ATLASCosmicFlags.doTile:
 
 # FileKey must match that given to THistSvc
 L1CaloMan.FileKey = "GLOBAL"
-
-####################################################################################################################
-###################################### Ende ########################################################################
-####################################################################################################################
