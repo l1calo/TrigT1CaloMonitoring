@@ -1,3 +1,8 @@
+2007-10-08 David Quarrie <David.Quarrie@cern.ch>
+	* tag TrigT1CaloMonitoring-00-01-10
+	* TrigT1CaloMonitoring/TriggerTowerMon.h: Remove redundant ";"
+	* src/components/TrigT1CaloMonitoring_entries.cxx: Remove redundant ";"
+
 2007-08-29  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
 	* tag TrigT1CaloMonitoring-00-01-09
 	* add new TriggerTower Error Histograms: GLink Down and GLink Timeout for em and had

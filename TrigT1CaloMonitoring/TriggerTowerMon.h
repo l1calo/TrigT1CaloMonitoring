@@ -60,7 +60,7 @@ protected:
    StoreGateSvc* m_storeGate;
 
    // StoreGate service
-   StoreGateSvc* m_detStore;;
+   StoreGateSvc* m_detStore;
    // Calorimeter Id manager
    const CaloIdManager* m_caloMgr;
    // CaloLVL1_ID Id helper
