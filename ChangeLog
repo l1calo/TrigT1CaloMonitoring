@@ -1,3 +1,6 @@
+2007-10-18 Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * updates to TrigT1CaloCpmMonTool.
+
 2007-10-08 David Quarrie <David.Quarrie@cern.ch>
 	* tag TrigT1CaloMonitoring-00-01-10
 	* TrigT1CaloMonitoring/TriggerTowerMon.h: Remove redundant ";"
