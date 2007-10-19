@@ -118,7 +118,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
-  std::string pprDir("5_CP_PPr");
+  std::string pprDir("4_CP_PPr");
   std::string cpmDir("5_CP_CPM");
   std::string cmmDir("6_CP_CMM");
   std::string cpErrDir("05_Errors_CP");

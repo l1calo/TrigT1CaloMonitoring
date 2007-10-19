@@ -185,21 +185,23 @@ toolSvc.JEPTransPerfMonTool.OutputLevel = VERBOSE
 #===================================== CP ========================================
 #=================================================================================
 L1CaloMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1BSCPMMonTool" ]
-toolSvc.L1BSCPMMonTool.HistogramPrefix = "BS"
 toolSvc.L1BSCPMMonTool.TriggerTowerLocation = "TriggerTowers"
 toolSvc.L1BSCPMMonTool.CPMTowerLocation = "CPMTowers"
 toolSvc.L1BSCPMMonTool.CPMHitsLocation = "CPMHits"
 toolSvc.L1BSCPMMonTool.CMMCPHitsLocation = "CMMCPHits"
 toolSvc.L1BSCPMMonTool.CPMRoILocation = "CPMRoIs"
+toolSvc.L1BSCPMMonTool.RootDirectory = "L1Calo"
+toolSvc.L1BSCPMMonTool.SingleDirectory = False
 #toolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
 
 L1CaloMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
-toolSvc.L1SimCPMMonTool.HistogramPrefix = "Sim"
 toolSvc.L1SimCPMMonTool.TriggerTowerLocation = "TriggerTowers"
 toolSvc.L1SimCPMMonTool.CPMTowerLocation = "Sim_CPMTowers"
 toolSvc.L1SimCPMMonTool.CPMHitsLocation = "Sim_CPMHits"
 toolSvc.L1SimCPMMonTool.CMMCPHitsLocation = "Sim_CMMCPHits"
 toolSvc.L1SimCPMMonTool.CPMRoILocation = "Sim_CPMRoIs"
+toolSvc.L1SimCPMMonTool.RootDirectory = "L1Calo/Sim"
+toolSvc.L1SimCPMMonTool.SingleDirectory = False
 #toolSvc.L1SimCPMMonTool.OutputLevel = DEBUG
 
 
