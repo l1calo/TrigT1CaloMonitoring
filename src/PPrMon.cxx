@@ -20,7 +20,7 @@
 #include "StoreGate/StoreGateSvc.h"
 #include "CLHEP/Units/SystemOfUnits.h"
 
-#include "TrigT1CaloMonitoring/TriggerTowerMon.h"
+#include "TrigT1CaloMonitoring/PPrMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
 
 #include "TrigT1Calo/TriggerTowerCollection.h"
@@ -31,7 +31,7 @@
 
 
 /*---------------------------------------------------------*/
-TriggerTowerMon::TriggerTowerMon(const std::string & type, const std::string & name,
+PPrMon::PPrMon(const std::string & type, const std::string & name,
 					 const IInterface* parent)
   : ManagedMonitorToolBase ( type, name, parent )
 /*---------------------------------------------------------*/
@@ -46,24 +46,26 @@ TriggerTowerMon::TriggerTowerMon(const std::string & type, const std::string & n
  
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/L1Calo/PPr") ;
   declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
+  declareProperty( "EventPathInRootFile", m_EventPathInRootFile="Stats/L1Calo") ;
   declareProperty( "DataType", m_DataType="") ;
+  declareProperty( "EventNoInHistoTitle", m_EventNoInHisto = 1) ;
 
   m_SliceNo=5;
 }
 
 /*---------------------------------------------------------*/
-TriggerTowerMon::~TriggerTowerMon()
+PPrMon::~PPrMon()
 /*---------------------------------------------------------*/
 {
 }
 
 
 /*---------------------------------------------------------*/
-StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun )
+StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun )
 /*---------------------------------------------------------*/
 {
   MsgStream log( msgSvc(), name() );
-  log << MSG::DEBUG << "in TriggerTowerMon::bookHistograms" << endreq;
+  log << MSG::DEBUG << "in PPrMon::bookHistograms" << endreq;
 
   /** get a handle of StoreGate for access to the Event Store */
   StatusCode sc = service("StoreGateSvc", m_storeGate);
@@ -119,7 +121,7 @@ StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLum
       return StatusCode::FAILURE;
     }
 
-  /*
+  
   ISvcLocator* svcLoc = Gaudi::svcLocator( );
   toolSvc = 0; // Pointer to Tool Service
   sc = svcLoc->service( "ToolSvc",toolSvc  );
@@ -146,7 +148,7 @@ StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLum
       log << MSG::ERROR << "Could not access TTOnlineID helper" << endreq;
       return StatusCode::FAILURE;
     }
-  */
+  
 
   if( m_environment == AthenaMonManager::online ) {
     // book histograms that are only made in the online environment...
@@ -156,37 +158,41 @@ StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLum
     // book histograms that are only relevant for cosmics data...
   }
 
-  MonGroup TT_EmADCPeak( this, (m_PathInRootFile+"/EmADCPeak").c_str(), expert, eventsBlock );
+  MonGroup TT_EmADCPeak( this, (m_PathInRootFile+"_EmADCPeak").c_str(), expert, eventsBlock );
   HistoBooker* EmADCPeak_Booker = new HistoBooker(&TT_EmADCPeak, &log, m_DataType);
 
-  MonGroup TT_HadADCPeak( this, (m_PathInRootFile+"/HadADCPeak").c_str(), expert, eventsBlock );
+  MonGroup TT_HadADCPeak( this, (m_PathInRootFile+"_HadADCPeak").c_str(), expert, eventsBlock );
   HistoBooker* HadADCPeak_Booker = new HistoBooker(&TT_HadADCPeak, &log, m_DataType);
 
-  MonGroup TT_EmLUTPeak( this, (m_PathInRootFile+"/EmLUTPeak").c_str(), expert, eventsBlock );
+  MonGroup TT_EmLUTPeak( this, (m_PathInRootFile+"_EmLUTPeak").c_str(), expert, eventsBlock );
   HistoBooker* EmLUTPeak_Booker = new HistoBooker(&TT_EmLUTPeak, &log, m_DataType);
 
-  MonGroup TT_HadLUTPeak( this, (m_PathInRootFile+"/HadLUTPeak").c_str(), expert, eventsBlock );
+  MonGroup TT_HadLUTPeak( this, (m_PathInRootFile+"_HadLUTPeak").c_str(), expert, eventsBlock );
   HistoBooker* HadLUTPeak_Booker = new HistoBooker(&TT_HadLUTPeak, &log, m_DataType);
 
 
-  MonGroup TT_HitMaps( this, (m_PathInRootFile+"/LUTHitMaps").c_str(), shift, eventsBlock );
+  MonGroup TT_HitMaps( this, (m_PathInRootFile+"_LUTHitMaps").c_str(), shift, eventsBlock );
   HistoBooker* HitMaps_Booker = new HistoBooker(&TT_HitMaps, &log, m_DataType);
 
-  MonGroup TT_ADC( this, (m_PathInRootFile+"/ADCTimeSlices").c_str(), shift, eventsBlock );
+  MonGroup TT_ADC( this, (m_PathInRootFile+"_ADCTimeSlices").c_str(), shift, eventsBlock );
   HistoBooker* ADCTimeSlice_Booker = new HistoBooker(&TT_ADC, &log, m_DataType);
 
-  MonGroup TT_LUTPeakDist( this, (m_PathInRootFile+"/LUTPeakDistribution").c_str(), shift, eventsBlock );
+  MonGroup TT_LUTPeakDist( this, (m_PathInRootFile+"_LUTPeakDistribution").c_str(), shift, eventsBlock );
   HistoBooker* LUTPeakDistribution_Booker = new HistoBooker(&TT_LUTPeakDist, &log, m_DataType);
-
-  MonGroup TT_TriggeredSlice( this, (m_PathInRootFile).c_str(), shift, eventsBlock );
-  HistoBooker* TriggeredSlice_Booker = new HistoBooker(&TT_TriggeredSlice, &log, m_DataType);
 
   MonGroup TT_Error( this, (m_ErrorPathInRootFile).c_str(), shift, eventsBlock );
   HistoBooker* Error_Booker = new HistoBooker(&TT_Error, &log, "");
 
-  if( isNewEventsBlock || isNewLumiBlock ) 
+  MonGroup NoEvents( this, (m_EventPathInRootFile).c_str(), expert, eventsBlock );
+  HistoBooker* NoEvent_Booker = new HistoBooker(&NoEvents, &log, "");
+
+  if( isNewRun )
+
+    //if( isNewEventsBlock || isNewLumiBlock ) 
     {	
       Helper* Help = new Helper();
+      m_NoEvents=0;
+  
 
       //---------------------------- Energy distributions (ADC and LUT) per Channel -----------------------------
       std::vector<Identifier>::const_iterator tower_it = m_lvl1Helper->tower_begin();
@@ -198,6 +204,7 @@ StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLum
 	  for(;tower_it!=m_lvl1Helper->tower_end();++tower_it) 
 	    {
 	      Identifier towerId = (*tower_it);
+
 	      buffer.str("");
 	      etabuffer.str("");
 	      phibuffer.str("");
@@ -337,6 +344,74 @@ StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLum
       m_h_TT_haderror->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
       m_h_TT_haderror->GetXaxis()->SetBinLabel(17, "FailingBCN");
       
+      m_h_TT_error_Crate_03=Error_Booker->book2F("TT_error_Crate_0-3","TT S-Link errors in crates 0-3",17,0.5,17.5,71,0.5,71.5,"","");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(2, "MCMAbsent");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(3, "Timeout");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(4, "ASICFull");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(5, "EventMismatch");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(6, "BunchMismatch");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(7, "FIFOCorrupt");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(8, "PinParity");
+      
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(10, "GLinkParity");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(11, "GLinkProtocol");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(12, "BCNMismatch");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(13, "FIFOOverflow");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(14, "ModuleError");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(15, "GLinkDown");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(17, "FailingBCN");
+
+      m_h_TT_error_Crate_47=Error_Booker->book2F("TT_error_Crate_4-7","TT S-Link errors in crates 4-7",17,0.5,17.5,71,0.5,71.5,"","");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(2, "MCMAbsent");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(3, "Timeout");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(4, "ASICFull");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(5, "EventMismatch");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(6, "BunchMismatch");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(7, "FIFOCorrupt");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(8, "PinParity");
+      
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(10, "GLinkParity");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(11, "GLinkProtocol");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(12, "BCNMismatch");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(13, "FIFOOverflow");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(14, "ModuleError");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(15, "GLinkDown");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(17, "FailingBCN");
+
+    
+      for (int i=5; i<21; i++)
+	{
+	  buffer.str("");
+	  buffer<<i;
+	  
+	  name = "PPM " + buffer.str();
+	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel((i-4)+0*18, name.c_str());
+	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel((i-4)+1*18, name.c_str());
+	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel((i-4)+2*18, name.c_str());
+	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel((i-4)+3*18, name.c_str());
+
+
+	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel((i-4)+(4-4)*18, name.c_str());
+	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel((i-4)+(5-4)*18, name.c_str());
+	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel((i-4)+(6-4)*18, name.c_str());
+	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel((i-4)+(7-4)*18, name.c_str());
+	  i++;
+	}
+	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel(17+0*18, "Crate 0");
+	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel(17+1*18, "Crate 1");
+	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel(17+2*18, "Crate 2");
+	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel(17+3*18, "Crate 3");
+
+	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel(17+(4-4)*18, "Crate 4");
+	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel(17+(5-4)*18, "Crate 5");
+	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel(17+(6-4)*18, "Crate 6");
+	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel(17+(7-4)*18, "Crate 7");
+
+
 
       m_h_TT_em_GLinkDown=Error_Booker->book2F("TT_em_GLinkDown","EM TT GLink Down per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
       m_h_TT_em_GLinkDown->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
@@ -352,10 +427,33 @@ StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLum
       m_h_TT_had_GLinkTimeout->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
 
       //---------------------------- number of triggered slice -----------------------------
-      m_h_TT_triggeredSlice_em=TriggeredSlice_Booker->book1F("TT_EMTriggeredSlice","Number of the EM Triggered Slice",7,-0.5,6.5,"#Slice");
-      m_h_TT_triggeredSlice_had=TriggeredSlice_Booker->book1F("TT_HADTriggeredSlice","Number of the HAD Triggered Slice",7,-0.5,6.5,"#Slice");
+      m_h_TT_triggeredSlice_em=ADCTimeSlice_Booker->book1F("TT_EMTriggeredSlice","Number of the EM Triggered Slice",7,-0.5,6.5,"#Slice");
+      m_h_TT_triggeredSlice_had=ADCTimeSlice_Booker->book1F("TT_HADTriggeredSlice","Number of the HAD Triggered Slice",7,-0.5,6.5,"#Slice");
       
+      for (int i=0; i<5; i++)
+	{
+	  buffer.str("");
+	  buffer<<i;
+	  
+	  name = "emHitMap_ADC-Peak_TimeSlice_" + buffer.str();
+	  title = "#eta - #phi Map of em ADC Peak for TimeSlice "+ buffer.str();
 
+	  m_h_TT_HitMap_em_ADCPeak_TimeSlice[i]=ADCTimeSlice_Booker->book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  m_h_TT_HitMap_em_ADCPeak_TimeSlice[i]->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+
+	  buffer.str("");
+	  buffer<<i;
+	  
+	  name = "hadHitMap_ADC-Peak_TimeSlice_" + buffer.str();
+	  title = "#eta - #phi Map of had ADC Peak for TimeSlice "+ buffer.str();
+
+	  m_h_TT_HitMap_had_ADCPeak_TimeSlice[i]=ADCTimeSlice_Booker->book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  m_h_TT_HitMap_had_ADCPeak_TimeSlice[i]->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+
+	}
+      //----------------------------- number of events ----------------------------------
+      m_h_NumberEvents= NoEvent_Booker->book1F("NumberEvents","Number of processed events",1,0.5,1.5,"");
+      m_h_NumberEvents->GetXaxis()->SetBinLabel(1,"Number of Events");
 
     }
 
@@ -365,11 +463,12 @@ StatusCode TriggerTowerMon::bookHistograms( bool isNewEventsBlock, bool isNewLum
 }
 
 /*---------------------------------------------------------*/
-StatusCode TriggerTowerMon::fillHistograms()
+StatusCode PPrMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
   MsgStream log(msgSvc(), name());
-  
+  m_NoEvents++;
+
   log << MSG::DEBUG << "in fillHistograms()" << endreq;
   
   //Retrieve TriggerTowers from SG
@@ -380,6 +479,8 @@ StatusCode TriggerTowerMon::fillHistograms()
       log << MSG::INFO << "No TriggerTower found in TES at "<< m_TriggerTowerContainerName<< endreq ;
       return StatusCode::SUCCESS;
     }
+
+  m_h_NumberEvents->Fill(1,1);
   // =============================================================================================
   // ================= Container: TriggerTower ===================================================
   // =============================================================================================
@@ -388,8 +489,9 @@ StatusCode TriggerTowerMon::fillHistograms()
   
   for (; TriggerTowerIterator != TriggerTowerIteratorEnd; ++TriggerTowerIterator) 
     {
+
       Identifier EmTowerId,HadTowerId;
-      
+
       int detside= m_l1CaloTTIdTools->pos_neg_z((*TriggerTowerIterator)->eta());
       int detregion = m_l1CaloTTIdTools->regionIndex((*TriggerTowerIterator)->eta());
       int eta=m_l1CaloTTIdTools->etaIndex((*TriggerTowerIterator)->eta());
@@ -398,7 +500,7 @@ StatusCode TriggerTowerMon::fillHistograms()
       //---------------------------- EM Energy -----------------------------
       EmTowerId = m_lvl1Helper->tower_id(detside, 0, detregion,eta,phi );  
       // em ADC Peak per channel
-      int EmEnergy = (*TriggerTowerIterator)->emADC()[(*TriggerTowerIterator)->emPeak()];
+      int EmEnergy = (*TriggerTowerIterator)->emADC()[(*TriggerTowerIterator)->emADCPeak()];
       if (m_TT_DistPerChannel==1) m_h_TT_EmADCPeak[EmTowerId]->Fill(EmEnergy,1);
       // em LUT Peak per channel
       EmEnergy = (*TriggerTowerIterator)->emLUT()[(*TriggerTowerIterator)->emPeak()];
@@ -429,7 +531,7 @@ StatusCode TriggerTowerMon::fillHistograms()
        //---------------------------- HAD Energy -----------------------------
       HadTowerId = m_lvl1Helper->tower_id(detside, 1, detregion,eta,phi );  
       // HAD ADC Peak per channel      
-      int HadEnergy = (*TriggerTowerIterator)->hadADC()[(*TriggerTowerIterator)->hadPeak()];
+      int HadEnergy = (*TriggerTowerIterator)->hadADC()[(*TriggerTowerIterator)->hadADCPeak()];
       if (m_TT_DistPerChannel==1) m_h_TT_HadADCPeak[HadTowerId]->Fill(HadEnergy,1);
       // had LUT peak per channel
       HadEnergy = (*TriggerTowerIterator)->hadLUT()[(*TriggerTowerIterator)->hadPeak()];
@@ -477,21 +579,29 @@ StatusCode TriggerTowerMon::fillHistograms()
 	}    
       
       //---------------------------- offlineTTID -> OnlineTTID -----------------------------
-      /*try 
+
+      
+      
+
+      //---------------------------- S-Link errors -----------------------------
+      //----------------------------- em ---------------------------------------
+
+      LVL1::DataError emerr((*TriggerTowerIterator)-> emError());
+
+      int crate, module;
+      try 
 	{
-	  HWIdentifier ttOnlId = m_ttSvc->createTTChannelID(HadTowerId);
-	  int crate     = m_l1ttonlineHelper->crate(ttOnlId);
-	  int module    = m_l1ttonlineHelper->module(ttOnlId);
-	  log << MSG::INFO << "PPM crate: " << crate<<"  module: "<<module << endreq ;
+	  HWIdentifier ttOnlId = m_ttSvc->createTTChannelID(EmTowerId);
+	  crate     = m_l1ttonlineHelper->crate(ttOnlId);
+	  module    = m_l1ttonlineHelper->module(ttOnlId);
+	  //log << MSG::DEBUG << "em PPM crate: " << crate<<"  module: "<<module << endreq ;
 	} 
       catch(LArID_Exception& except) 
 	{
 	  log << MSG::ERROR << "LArID_Exception " << (std::string) except << endreq ;
 	}
-      */
+      if (crate>3) log << MSG::ERROR << "Wrong em Crate " << crate << endreq ;
 
-      //---------------------------- S-Link errors -----------------------------
-     LVL1::DataError emerr((*TriggerTowerIterator)-> emError());
 
       // ChannelDisabled
       m_h_TT_emerror->Fill(1,emerr.get(4));
@@ -527,6 +637,44 @@ StatusCode TriggerTowerMon::fillHistograms()
       m_h_TT_emerror->Fill(16,emerr.get(23));
       // FailingBCN
       m_h_TT_emerror->Fill(17,emerr.get(24));
+
+      //---------------- per crate and module -------------------------  m_h_TT_error_Crate_03
+      // ChannelDisabled
+      m_h_TT_error_Crate_03->Fill(1,(module-4)+(crate*18),emerr.get(4));
+      // MCMAbsent
+      m_h_TT_error_Crate_03->Fill(2,(module-4)+(crate*18),emerr.get(5));
+      // Timeout
+      m_h_TT_error_Crate_03->Fill(3,(module-4)+(crate*18),emerr.get(6));
+      // ASICFull
+      m_h_TT_error_Crate_03->Fill(4,(module-4)+(crate*18),emerr.get(7));
+      // EventMismatch
+      m_h_TT_error_Crate_03->Fill(5,(module-4)+(crate*18),emerr.get(8));
+      // BunchMismatch
+      m_h_TT_error_Crate_03->Fill(6,(module-4)+(crate*18),emerr.get(9));
+      // FIFOCorrupt
+      m_h_TT_error_Crate_03->Fill(7,(module-4)+(crate*18),emerr.get(10));
+      // PinParity
+      m_h_TT_error_Crate_03->Fill(8,(module-4)+(crate*18),emerr.get(11));
+      		  
+      // GLinkParity
+      m_h_TT_error_Crate_03->Fill(10,(module-4)+(crate*18),emerr.get(16));
+      // GLinkProtocol
+      m_h_TT_error_Crate_03->Fill(11,(module-4)+(crate*18),emerr.get(17));
+      // BCNMismatch
+      m_h_TT_error_Crate_03->Fill(12,(module-4)+(crate*18),emerr.get(18));
+      // FIFOOverflow
+      m_h_TT_error_Crate_03->Fill(13,(module-4)+(crate*18),emerr.get(19));
+      // ModuleError
+      m_h_TT_error_Crate_03->Fill(14,(module-4)+(crate*18),emerr.get(20));
+      
+      // GLinkDown
+      m_h_TT_error_Crate_03->Fill(15,(module-4)+(crate*18),emerr.get(22));
+      // GLinkTimeout
+      m_h_TT_error_Crate_03->Fill(16,(module-4)+(crate*18),emerr.get(23));
+      // FailingBCN
+      m_h_TT_error_Crate_03->Fill(17,(module-4)+(crate*18),emerr.get(24));
+
+
     
      LVL1::DataError haderr((*TriggerTowerIterator)-> hadError());
 
@@ -565,6 +713,57 @@ StatusCode TriggerTowerMon::fillHistograms()
       // FailingBCN
       if (haderr.get(24)!=0) m_h_TT_haderror->Fill(17,1);
 
+      try 
+	{
+	  HWIdentifier ttOnlId = m_ttSvc->createTTChannelID(HadTowerId);
+	  crate     = m_l1ttonlineHelper->crate(ttOnlId);
+	  module    = m_l1ttonlineHelper->module(ttOnlId);
+	  //log << MSG::DEBUG << "em PPM crate: " << crate<<"  module: "<<module << endreq ;
+	} 
+      catch(LArID_Exception& except) 
+	{
+	  log << MSG::ERROR << "LArID_Exception " << (std::string) except << endreq ;
+	}
+      if (crate<4) log << MSG::ERROR << "Wrong had Crate " << crate << endreq ;
+
+      //---------------- per crate and module -------------------------  m_h_TT_error_Crate_03
+      // ChannelDisabled
+      m_h_TT_error_Crate_47->Fill(1,(module-4)+((crate-4)*18),haderr.get(4));
+      // MCMAbsent
+      m_h_TT_error_Crate_47->Fill(2,(module-4)+((crate-4)*18),haderr.get(5));
+      // Timeout
+      m_h_TT_error_Crate_47->Fill(3,(module-4)+((crate-4)*18),haderr.get(6));
+      // ASICFull
+      m_h_TT_error_Crate_47->Fill(4,(module-4)+((crate-4)*18),haderr.get(7));
+      // EventMismatch
+      m_h_TT_error_Crate_47->Fill(5,(module-4)+((crate-4)*18),haderr.get(8));
+      // BunchMismatch
+      m_h_TT_error_Crate_47->Fill(6,(module-4)+((crate-4)*18),haderr.get(9));
+      // FIFOCorrupt
+      m_h_TT_error_Crate_47->Fill(7,(module-4)+((crate-4)*18),haderr.get(10));
+      // PinParity
+      m_h_TT_error_Crate_47->Fill(8,(module-4)+((crate-4)*18),haderr.get(11));
+      		  
+      // GLinkParity
+      m_h_TT_error_Crate_47->Fill(10,(module-4)+((crate-4)*18),haderr.get(16));
+      // GLinkProtocol
+      m_h_TT_error_Crate_47->Fill(11,(module-4)+((crate-4)*18),haderr.get(17));
+      // BCNMismatch
+      m_h_TT_error_Crate_47->Fill(12,(module-4)+((crate-4)*18),haderr.get(18));
+      // FIFOOverflow
+      m_h_TT_error_Crate_47->Fill(13,(module-4)+((crate-4)*18),haderr.get(19));
+      // ModuleError
+      m_h_TT_error_Crate_47->Fill(14,(module-4)+((crate-4)*18),haderr.get(20));
+      
+      // GLinkDown
+      m_h_TT_error_Crate_47->Fill(15,(module-4)+((crate-4)*18),haderr.get(22));
+      // GLinkTimeout
+      m_h_TT_error_Crate_47->Fill(16,(module-4)+((crate-4)*18),haderr.get(23));
+      // FailingBCN
+      m_h_TT_error_Crate_47->Fill(17,(module-4)+((crate-4)*18),haderr.get(24));
+
+
+
 
       m_h_TT_em_GLinkDown->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), emerr.get(22)); 
       m_h_TT_em_GLinkTimeout->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), emerr.get(23)); 
@@ -572,25 +771,96 @@ StatusCode TriggerTowerMon::fillHistograms()
       m_h_TT_had_GLinkTimeout->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), haderr.get(23)); 
 
       // number of triggered slice
-      m_h_TT_triggeredSlice_em->Fill((*TriggerTowerIterator)->emPeak(),1);
-      m_h_TT_triggeredSlice_had->Fill((*TriggerTowerIterator)->hadPeak(),1);
+      m_h_TT_triggeredSlice_em->Fill((*TriggerTowerIterator)->emADCPeak(),1);
+      m_h_TT_triggeredSlice_had->Fill((*TriggerTowerIterator)->hadADCPeak(),1);
+
+      int Peak=PeakPosition(((*TriggerTowerIterator)->emADC()));
+      if ((*TriggerTowerIterator)->emADC()[Peak]>4)
+	{
+	  m_h_TT_HitMap_em_ADCPeak_TimeSlice[Peak]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+	}
+
+      Peak=PeakPosition(((*TriggerTowerIterator)->hadADC()));
+      if ((*TriggerTowerIterator)->hadADC()[Peak]>4)
+	{
+	  m_h_TT_HitMap_had_ADCPeak_TimeSlice[Peak]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+	}
+
     }
 
   return StatusCode( StatusCode::SUCCESS );
 
 }
 /*---------------------------------------------------------*/
-StatusCode TriggerTowerMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun )
+StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun )
 /*---------------------------------------------------------*/
 {
+  MsgStream mLog( msgSvc(), name() );
+  mLog << MSG::DEBUG << "in procHistograms" << endreq ;
+
   if( isEndOfEventsBlock || isEndOfLumiBlock ) 
     {  
     }
 	
-  if( isEndOfRun ) 
-    {   
+  if(m_EventNoInHisto==1)
+    {
+      if( isEndOfRun ) 
+	{   
+	  
+	  std::stringstream buffer;
+	  buffer.str("");
+	  buffer<<m_NoEvents;
+	  std::string title;
+	  
+	  title = m_h_TT_emerror-> GetTitle();
+	  title=title + " | #events: " + buffer.str();
+	  m_h_TT_emerror->SetTitle(title.c_str());
+	  
+	  title = m_h_TT_error_Crate_03-> GetTitle();
+	  title=title + " | #events: " + buffer.str();
+	  m_h_TT_error_Crate_03->SetTitle(title.c_str());
+	  
+	  title = m_h_TT_error_Crate_47-> GetTitle();
+	  title=title + " | #events: " + buffer.str();
+	  m_h_TT_error_Crate_47->SetTitle(title.c_str());
+	  
+	  title = m_h_TT_haderror-> GetTitle();
+	  title=title + " | #events: " + buffer.str();
+	  m_h_TT_haderror->SetTitle(title.c_str());
+	  
+	  title = m_h_TT_em_GLinkDown-> GetTitle();
+	  title=title + " | #events: " + buffer.str();
+	  m_h_TT_em_GLinkDown->SetTitle(title.c_str());
+	  
+	  title = m_h_TT_em_GLinkTimeout-> GetTitle();
+	  title=title + " | #events: " + buffer.str();
+	  m_h_TT_em_GLinkTimeout->SetTitle(title.c_str());
+	  
+	  title = m_h_TT_had_GLinkDown-> GetTitle();
+	  title=title + " | #events: " + buffer.str();
+	  m_h_TT_had_GLinkDown->SetTitle(title.c_str());
+	  
+	  title = m_h_TT_had_GLinkTimeout-> GetTitle();
+	  title=title + " | #events: " + buffer.str();
+	  m_h_TT_had_GLinkTimeout->SetTitle(title.c_str());
+	}
     }
-  
   return StatusCode( StatusCode::SUCCESS );
 }
 
+/*---------------------------------------------------------*/
+int PPrMon::PeakPosition(const std::vector<int> & Vec)
+/*---------------------------------------------------------*/
+{
+  return max(max(max(0,1,Vec),max(2,3,Vec),Vec),4,Vec);
+}
+
+
+
+/*---------------------------------------------------------*/
+int PPrMon::max(int ValuePosition1,int ValuePosition2, const std::vector<int> & Vec)
+/*---------------------------------------------------------*/
+{
+  if (Vec[ValuePosition1]>=Vec[ValuePosition2]) return ValuePosition1;
+  else return ValuePosition2;
+}

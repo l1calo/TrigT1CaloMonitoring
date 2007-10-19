@@ -21,8 +21,6 @@
 #include "DataModel/DataVector.h"
 #include "TrigT1Calo/CMMJetHits.h"
 #include "TrigT1Calo/CMMEtSums.h"
-#include "TrigT1Calo/JEMHits.h"
-#include "TrigT1Calo/JEMEtSums.h"
 
 
 #include "AthenaMonitoring/AthenaMonManager.h"
@@ -36,9 +34,7 @@ public:
         typedef DataVector<LVL1::CMMJetHits> CMMJetHitsCollection;
         typedef DataVector<const LVL1::CMMJetHits> cCMMJetHitsCollection;
         typedef DataVector<LVL1::CMMEtSums> CMMEtSumsCollection;
-        typedef DataVector<LVL1::JEMHits> JEMHitsCollection;
-	typedef DataVector<LVL1::JEMEtSums> JEMEtSumsCollection;
-
+  
 
 	CMMMon( const std::string & type, const std::string & name,
 	                 const IInterface* parent ); 
@@ -59,12 +55,11 @@ protected:
    std::string m_CMMEtSumsLocation;
    std::string m_CMMRoILocation;
 
-   std::string m_JEMHitsLocation;
-   std::string m_JEMEtSumsLocation;   
-
    std::string m_DataType;   
    std::string m_PathInRootFile;   
    std::string m_ErrorPathInRootFile;
+   int m_NoEvents;
+   bool  m_EventNoInHisto;
 
   /** Histos */   
    // CMM Jet Hits
@@ -99,11 +94,10 @@ protected:
    TH1F* m_h_CMMRoI_Ey;
    TH1F* m_h_CMMRoI_Et;
 
-   //data transmission checks
+   //errors
    TH2F* m_h_CMMJet_error;
    TH2F* m_h_CMMEnergy_error;
    TH1F* m_h_CMMRoI_error;
-   TH2F* m_h_TransCheck_JEP;
 
 };
 

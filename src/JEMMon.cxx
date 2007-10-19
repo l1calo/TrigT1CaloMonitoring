@@ -35,6 +35,9 @@
 #include "TrigT1Calo/JEMRoI.h"
 #include "TrigT1Calo/QuadLinear.h"
 #include "TrigT1Calo/DataError.h"
+#include "TrigT1Calo/CoordToHardware.h"
+#include "TrigT1Interfaces/Coordinate.h"
+#include "TrigT1Calo/JetElementMaker.h"
 
 #include "TrigT1Interfaces/JEPRoIDecoder.h"
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
@@ -51,9 +54,12 @@ JEMMon::JEMMon( const std::string & type, const std::string & name,
   // This is how you declare the parameters to Gaudi so that
   // they can be over-written via the job options file
 
+  declareProperty( "JetElementLocation", m_JetElementLocation = LVL1::TrigT1CaloDefs::JetElementLocation); 
   declareProperty( "JEMHitsLocation", m_JEMHitsLocation =  LVL1::TrigT1CaloDefs::JEMHitsLocation) ;
   declareProperty( "JEMEtSumsLocation", m_JEMEtSumsLocation=   LVL1::TrigT1CaloDefs::JEMEtSumsLocation) ;
   declareProperty( "JEMRoILocation", m_JEMRoILocation =  LVL1::TrigT1CaloDefs::JEMRoILocation) ;
+  declareProperty( "NumberOfSlices", m_SliceNo = 5);
+  declareProperty( "EventNoInHistoTitle", m_EventNoInHisto = 1) ;
 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/JEM") ;
   declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
@@ -98,27 +104,114 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
   ManagedMonitorToolBase::LevelOfDetail_t LevelOfDetail=shift;
   if (m_DataType=="Sim") LevelOfDetail = expert;
 
-  MonGroup JEM_DAQ ( this, (m_PathInRootFile+"/DAQ").c_str(), expert, eventsBlock );
+  MonGroup JetElements_expert (this,(m_PathInRootFile+"_input").c_str() ,expert, eventsBlock);
+  HistoBooker* expert_Booker = new HistoBooker(&JetElements_expert, &mLog, m_DataType);
+
+  MonGroup JetElements_shift (this,(m_PathInRootFile+"_input").c_str() ,LevelOfDetail, eventsBlock);
+  HistoBooker* shift_Booker = new HistoBooker(&JetElements_shift, &mLog, m_DataType);
+  
+  MonGroup JEM_DAQ ( this, (m_PathInRootFile+"_DAQ").c_str(), expert, eventsBlock );
   HistoBooker* DAQ_Booker = new HistoBooker(&JEM_DAQ, &mLog, m_DataType);
 
-  MonGroup JEM_RoI ( this, (m_PathInRootFile+"/RoI").c_str(), LevelOfDetail, eventsBlock );
+  MonGroup JEM_RoI ( this, (m_PathInRootFile+"_RoI").c_str(), LevelOfDetail, eventsBlock );
   HistoBooker* RoI_Booker = new HistoBooker(&JEM_RoI, &mLog, m_DataType);
 
-  MonGroup JEM_RoIError ( this, (m_ErrorPathInRootFile).c_str(), LevelOfDetail, eventsBlock );
-  HistoBooker* RoIError_Booker = new HistoBooker(&JEM_RoIError, &mLog, "");
+  MonGroup JEM_Error( this, (m_ErrorPathInRootFile).c_str(), shift, eventsBlock );
+  HistoBooker* Error_Booker = new HistoBooker(&JEM_Error, &mLog, "");
 
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
       Helper* Help = new Helper();
+      m_NoEvents=0;
+      //---------------------------- JetElements histos -----------------------------
+      m_h_je_emeta = expert_Booker->book1F("emeta_JEM_input", "em JE distribution per #eta  --  JEM input" , 50, -5, 5, "#eta" , "#");
+      m_h_je_emeta ->SetBins(32,Help->JEEtaBinning());
+      m_h_je_hadeta = expert_Booker->book1F("hadeta_JEM_input", "had JE distribution per #eta  --  JEM input" , 50, -5, 5, "#eta" , "#");
+      m_h_je_hadeta ->SetBins(32,Help->JEEtaBinning());
+
+      m_h_je_emphi = expert_Booker->book1F("emphi_JEM_input", "em JE distribution per #phi  --  JEM input", 32, 0, 6.4, "#phi" , "#");
+      m_h_je_emphi->SetBins(32,Help->JEPhiBinning());
+      m_h_je_hadphi = expert_Booker->book1F("hadphi_JEM_input", "hadJE distribution per #phi  --  JEM input", 32, 0, 6.4, "#phi" , "#");
+      m_h_je_hadphi->SetBins(32,Help->JEPhiBinning());
+
+
+      m_h_je_emenergy = expert_Booker->book1F("EmEnergy_JEM_input", "JE EM energy distribution  --  JEM input", 100, 0, 100, "em energy [GeV]" , "#");
+      m_h_je_hadenergy  = expert_Booker->book1F("HadEnergy_JEM_input", "JE HAD energy distribution  --  JEM input", 100, 0, 100, "had energy [GeV]" , "#");
+
+
+      m_h_je_energy_emHitMap = shift_Booker->book2F("JE_EM_HitMap_energy_JEM_input", "#eta - #phi map of EM JE weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4 , "#eta", "#phi");
+      m_h_je_energy_emHitMap->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
+
+      m_h_je_energy_hadHitMap = shift_Booker->book2F("JE_HAD_HitMap_energy_JEM_input", "#eta - #phi map of HAD JE weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
+      m_h_je_energy_hadHitMap->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
+
+      if (m_DataType=="BS")
+	{
+	  std::string name,title;
+	  std::stringstream buffer;
 	  
+	  for (int i = 0; i < m_SliceNo; i++)
+	    {
+	      buffer.str("");
+	      buffer<<i;
+	      
+	      name = "JE_EM_HitMap_" + buffer.str() + "_JEM_input";
+	      title = "#eta - #phi map of EM JE for Timeslice " + buffer.str() +  "  --  JEM input";
+	      m_h_je_emHitMap[i]=shift_Booker->book2F(name,title,50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
+	      m_h_je_emHitMap[i]->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
+	      
+	      buffer.str("");
+	      buffer<<i;
+	      
+	      name = "JE_HAD_HitMap_" + buffer.str() + "_JEM_input";
+	      title = "#eta - #phi map of HAD JE for Timeslice " + buffer.str() +  "  --  JEM input";
+	      m_h_je_hadHitMap[i]=shift_Booker->book2F(name,title,50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
+	      m_h_je_hadHitMap[i]->SetBins(32,Help->JEEtaBinning(),32,Help->JEPhiBinning());
+	    }
+
+	  // ----------------------------------- Error Histos ------------------------------------------------------
+	  m_h_je_error = Error_Booker->book2F("JEM_Error","JEM S-Link Error per Module and Crate",12,0.5,12.5,35,0.5,35.5,"","");
+	  //m_h_je_error -> SetOption ("text");
+	  m_h_je_error->GetXaxis()->SetBinLabel(1, "EM Parity");
+	  m_h_je_error->GetXaxis()->SetBinLabel(2, "HAD Parity");
+	  m_h_je_error->GetXaxis()->SetBinLabel(3, "PPM Link down");
+
+	  m_h_je_error->GetXaxis()->SetBinLabel(5, "GLinkParity");
+	  m_h_je_error->GetXaxis()->SetBinLabel(6, "GLinkProtocol");
+	  m_h_je_error->GetXaxis()->SetBinLabel(7, "BCNMismatch");
+	  m_h_je_error->GetXaxis()->SetBinLabel(8, "FIFOOverflow");
+	  m_h_je_error->GetXaxis()->SetBinLabel(9, "ModuleError");
+	  m_h_je_error->GetXaxis()->SetBinLabel(10, "GLinkDown");
+	  m_h_je_error->GetXaxis()->SetBinLabel(11, "GLinkTimeout");
+	  m_h_je_error->GetXaxis()->SetBinLabel(12, "FailingBCN");
+      
+	  for (int i = 0; i < 16; i++)
+	    {
+	      buffer.str("");
+	      buffer<<i;
+	      name = "JEM " + buffer.str();
+	      m_h_je_error->GetYaxis()->SetBinLabel((i+1), name.c_str());
+	      
+	      buffer.str("");
+	      buffer<<i;
+	      name = "JEM " + buffer.str();
+	      m_h_je_error->GetYaxis()->SetBinLabel((i+19), name.c_str());
+	    }
+	  m_h_je_error->GetYaxis()->SetBinLabel(17, "Crate 0: ");
+	  m_h_je_error->GetYaxis()->SetBinLabel(35, "Crate 1: ");
+	}
+
+      // number of triggered slice
+      m_h_je_triggeredSlice=expert_Booker->book1F("JE_TriggeredSlice","Number of the Triggered Slice for JE",7,-0.5,6.5,"#Slice");
+      
       //---------------------------- DAQ histos -----------------------------
       m_h_JEMHits_MainHits = DAQ_Booker->book1F("MainHits_JEM_DAQ", "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ", 8, -0.5, 7.5,  "Threshold No.", "#");
       m_h_JEMHits_FwdHitsRight = DAQ_Booker->book1F("FwdHitsRight_JEM_DAQ", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "#");
       m_h_JEMHits_FwdHitsLeft = DAQ_Booker->book1F("FwdHitsLeft_JEM_DAQ", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "#");
       
-      m_h_JEMEtSums_Ex = DAQ_Booker->book1F("Ex_JEM_DAQ", "JEM E_{x}  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
-      m_h_JEMEtSums_Ey = DAQ_Booker->book1F("Ey_JEM_DAQ", "JEM E_{y}  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
-      m_h_JEMEtSums_Et = DAQ_Booker->book1F("Et_JEM_DAQ", "JEM E_{t}  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
+      m_h_JEMEtSums_Ex = DAQ_Booker->book1F("Ex_JEM_DAQ", "JEM E_{x}^{JEM}  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
+      m_h_JEMEtSums_Ey = DAQ_Booker->book1F("Ey_JEM_DAQ", "JEM E_{y}^{JEM}  --  JEM DAQ", 250, 0,250, "Ey [GeV]", "#");
+      m_h_JEMEtSums_Et = DAQ_Booker->book1F("Et_JEM_DAQ", "JEM E_{t}^{JEM}  --  JEM DAQ", 250, 0,250, "Et [GeV]", "#");
       
       //---------------------------- RoI histos -----------------------------
       m_h_JEMRoI_MainHits = RoI_Booker->book1F("MainHits_JEM_RoI", "Main Jet Hit Multiplicity per Threshold  --  JEM RoI", 8, -0.5, 7.5,  "Threshold No.", "#");      
@@ -159,7 +252,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	  std::string name,title;
 	  std::stringstream buffer;
 
-	  m_h_JEMRoI_error = RoIError_Booker->book2F("JEMROI_Error","JEMROI S-Link Parity and Saturation per Module and Crate",5,0.5,5.5,35,0.5,35.5,"","");
+	  m_h_JEMRoI_error = Error_Booker->book2F("JEMROI_Error","JEMROI S-Link Parity and Saturation per Module and Crate",5,0.5,5.5,35,0.5,35.5,"","");
 	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(1, "Parity (Main Jets)");
 	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(2, "Parity (Fwd Jets)");
 	  
@@ -196,13 +289,105 @@ StatusCode JEMMon::fillHistograms()
 {
   MsgStream mLog( msgSvc(), name() );
   Helper* Help = new Helper();
+  m_NoEvents++;
+
+  // =============================================================================================
+  // ================= Container: JetElements ====================================================
+  // =============================================================================================
+  // retrieve JetElements
+  const JECollection* jetElements;
+  StatusCode sc = m_storeGate->retrieve(jetElements, m_JetElementLocation);
+
+  if( (sc==StatusCode::FAILURE) ) 
+    {
+      mLog << MSG::INFO << "No JetElements found in TES at " << m_JetElementLocation << endreq ;
+      return StatusCode::SUCCESS;
+    }
+
+  // Step over all cells 
+  JECollection::const_iterator it_je ;
+  for( it_je = jetElements ->begin(); it_je < jetElements->end(); ++it_je )
+    {	  
+      mLog << MSG::VERBOSE<<m_DataType <<" JE has coords ("<<(*it_je)->phi()<<", "<<(*it_je)->eta()
+	   << " and energies : "<<(*it_je)->emEnergy()<<", "<<(*it_je)->hadEnergy()<<" (Em,Had)"<<endreq;
+
+      if ((*it_je)->emEnergy()!=0) 
+	{
+	  m_h_je_emeta -> Fill( (*it_je)-> eta(), 1.);
+	  m_h_je_emphi->Fill( (*it_je)->phi() , 1.);
+	}
+      if ((*it_je)->hadEnergy()!=0) 
+	{
+	  m_h_je_hadeta -> Fill( (*it_je)-> eta(), 1.);
+	  m_h_je_hadphi->Fill( (*it_je)->phi() , 1.);
+	}
+
+      m_h_je_emenergy->Fill( (*it_je)->emEnergy() , 1.);
+      m_h_je_hadenergy->Fill( (*it_je)->hadEnergy() , 1.);
+      
+      m_h_je_energy_emHitMap->Fill( (*it_je)->eta(),(*it_je)->phi() , (*it_je)->emEnergy());
+      m_h_je_energy_hadHitMap->Fill( (*it_je)->eta(),(*it_je)->phi() ,(*it_je)->hadEnergy() ); 
+
+      // number of triggered slice
+      m_h_je_triggeredSlice->Fill((*it_je)->peak(),1);
+
+      // ------------------------------------------------------------------------------------------
+      // ----------------- Histos filled only for BS data -----------------------------------------
+      // ------------------------------------------------------------------------------------------
+      if (m_DataType=="BS")
+	{
+	  // ----------------- HitMaps per time slice -----------------------------------------
+	  for (int i = 0; i < m_SliceNo; i++)
+	    {
+	      if (i < ((*it_je)->emEnergyVec()).size())
+		{
+		  if ((*it_je)->emEnergyVec()[i] != 0) m_h_je_emHitMap[i]-> Fill( (*it_je)->eta(),(*it_je)->phi() ,1);
+		  if ((*it_je)->hadEnergyVec()[i] != 0) m_h_je_hadHitMap[i]-> Fill( (*it_je)->eta(),(*it_je)->phi() ,1);
+		} 
+	    }
+
+	  // ----------------- Error Histos -----------------------------------------
+	  LVL1::DataError err((*it_je)->emError());
+	  LVL1::DataError haderr((*it_je)->hadError());
+	  LVL1::CoordToHardware ToHW;
+	  LVL1::Coordinate coord((*it_je)->phi(),(*it_je)->eta());
+
+	  int crate = ToHW.jepCrate(coord);
+	  int module=ToHW.jepModule(coord);
+	  // EM Parity
+	  m_h_je_error->Fill(1,(crate*18 + module+1),err.get(1));
+	  // HAD Parity
+	  m_h_je_error->Fill(1,(crate*18 + module+1),haderr.get(1));
+	  // PPM Link down
+	  m_h_je_error->Fill(3,(crate*18 + module+1),err.get(2));
+
+	  // GLinkParity
+	  m_h_je_error->Fill(5,(crate*18 + module+1),err.get(16));
+          // GLinkProtocol
+	  m_h_je_error->Fill(6,(crate*18 + module+1),err.get(17));
+	  // BCNMismatch
+	  m_h_je_error->Fill(7,(crate*18 + module+1),err.get(18));
+	  // FIFOOverflow
+	  m_h_je_error->Fill(8,(crate*18 + module+1),err.get(19));
+	  // Module Error
+	  m_h_je_error->Fill(9,(crate*18 + module+1),err.get(20));
+
+	  // GLinkDown
+	  m_h_je_error->Fill(10,(crate*18 + module+1),err.get(22));
+	  // GLinkTimeout
+	  m_h_je_error->Fill(11,(crate*18 + module+1),err.get(23));
+	  // FailingBCN
+	  if (err.get(24)!=0) m_h_je_error->Fill(12,(crate*18 + module+1),1);
+	}   
+    }
+  
 
   // =============================================================================================
   // ================= Container: JEM Hits =======================================================
   // =============================================================================================
   // retrieve JEMHits collection from storegate
   const JEMHitsCollection* JEMHits;
-  StatusCode sc = m_storeGate->retrieve(JEMHits, m_JEMHitsLocation);
+  sc = m_storeGate->retrieve(JEMHits, m_JEMHitsLocation);
   if( (sc==StatusCode::FAILURE) ) 
     {
       mLog << MSG::INFO << "No JEMHits found in TES at " << m_JEMHitsLocation << endreq ;
@@ -396,11 +581,28 @@ StatusCode JEMMon::procHistograms( bool isEndOfEventsBlock,
 				   bool isEndOfLumiBlock, bool isEndOfRun )
 /*---------------------------------------------------------*/
 {
+  MsgStream mLog( msgSvc(), name() );
+  mLog << MSG::DEBUG << "in procHistograms" << endreq ;
+
   if( isEndOfEventsBlock || isEndOfLumiBlock ) 
     {  
     }
 	
-  if( isEndOfRun ) { }
-  
+  if(m_EventNoInHisto==1)
+    {
+      if (m_DataType=="BS")
+	{
+	  if( isEndOfRun ) { 
+	    std::stringstream buffer;
+	    buffer.str("");
+	    buffer<<m_NoEvents;
+	    std::string title;
+	    
+	    title = m_h_JEMRoI_error-> GetTitle();
+	    title=title + " | #events: " + buffer.str();
+	    m_h_JEMRoI_error->SetTitle(title.c_str());
+	  }
+	}
+    }
   return StatusCode( StatusCode::SUCCESS );
 }

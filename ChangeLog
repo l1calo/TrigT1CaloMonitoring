@@ -1,3 +1,15 @@
+2007-10-19  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
+	* changes for working with TrigT1Calo-02-00-00: removing some (not needed) references to obsolete files
+
+	restructuring:
+	* merge JetElementMon and JEMMon to JEMMon
+	* new tool for JEP Transmission and Performance Checks: JEPTransPerfMon.h
+	* delete SimBS.h, move existing code to JEPTransPerfMon
+	* move transmission checks from CMMMon to JEPTransPerfMon
+	* new checks in JEPTransPerfMon
+	* new Tool für PPr Performance Checks: PPrPerfMon
+	* move comparison with calorimeters from CaloTT to PPrPerfMon
+	
 2007-10-18 Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * updates to TrigT1CaloCpmMonTool.
 
@@ -5,7 +17,7 @@
 	* tag TrigT1CaloMonitoring-00-01-10
 	* TrigT1CaloMonitoring/TriggerTowerMon.h: Remove redundant ";"
 	* src/components/TrigT1CaloMonitoring_entries.cxx: Remove redundant ";"
-
+	
 2007-08-29  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
 	* tag TrigT1CaloMonitoring-00-01-09
 	* add new TriggerTower Error Histograms: GLink Down and GLink Timeout for em and had

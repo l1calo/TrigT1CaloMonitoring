@@ -29,13 +29,12 @@
 #include <cstdlib>
 
 #include "TrigT1CaloMonitoring/CMMMon.h"
-#include "TrigT1CaloMonitoring/JEMMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
 
 //#include "TrigT1Calo/EnergyTrigger.h"
 #include "TrigT1Calo/LVL1TriggerMenuDefs.h"
-#include "TrigT1Calo/LVL1TriggerMenu.h"
-#include "TrigT1Calo/InternalJetROI.h"
+//#include "TrigT1Calo/LVL1TriggerMenu.h"
+//#include "TrigT1Calo/InternalJetROI.h"
 #include "TrigT1Calo/CMMRoI.h"
 #include "TrigT1Calo/QuadLinear.h"
 #include "TrigT1Calo/DataError.h"
@@ -66,9 +65,7 @@ CMMMon::CMMMon( const std::string & type, const std::string & name,
   declareProperty( "CMMJetHitsLocation", m_CMMJetHitsLocation =  LVL1::TrigT1CaloDefs::CMMJetHitsLocation) ;
   declareProperty( "CMMEtSumsLocation", m_CMMEtSumsLocation =  LVL1::TrigT1CaloDefs::CMMEtSumsLocation) ;  
   declareProperty( "CMMRoILocation", m_CMMRoILocation =  LVL1::TrigT1CaloDefs::CMMRoILocation) ;
-
-  declareProperty( "JEMHitsLocation", m_JEMHitsLocation =  LVL1::TrigT1CaloDefs::JEMHitsLocation) ;
-  declareProperty( "JEMEtSumsLocation", m_JEMEtSumsLocation=   LVL1::TrigT1CaloDefs::JEMEtSumsLocation) ;
+  declareProperty( "EventNoInHistoTitle", m_EventNoInHisto = 1) ;
 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/CMM") ;
   declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
@@ -104,13 +101,13 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
   ManagedMonitorToolBase::LevelOfDetail_t LevelOfDetail=shift;
   if (m_DataType=="Sim") LevelOfDetail = expert;
 
-  MonGroup CMM_DAQ ( this, (m_PathInRootFile+"/DAQ").c_str(), expert, eventsBlock );
+  MonGroup CMM_DAQ ( this, (m_PathInRootFile+"_DAQ").c_str(), expert, eventsBlock );
   HistoBooker* DAQ_Booker = new HistoBooker(&CMM_DAQ, &mLog, m_DataType);
 
-  MonGroup CMM_input ( this, (m_PathInRootFile + "/input").c_str(), expert, eventsBlock );
+  MonGroup CMM_input ( this, (m_PathInRootFile + "_input").c_str(), expert, eventsBlock );
   HistoBooker* input_Booker = new HistoBooker(&CMM_input, &mLog, m_DataType);
   
-  MonGroup CMM_RoI ( this, (m_PathInRootFile + "/RoI").c_str(), LevelOfDetail, eventsBlock );
+  MonGroup CMM_RoI ( this, (m_PathInRootFile + "_RoI").c_str(), LevelOfDetail, eventsBlock );
   HistoBooker* RoI_Booker = new HistoBooker(&CMM_RoI, &mLog, m_DataType);
   
   MonGroup CMM_transmission ( this, (m_ErrorPathInRootFile ).c_str(), shift, eventsBlock );
@@ -126,15 +123,15 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
   
   if( isNewEventsBlock || isNewLumiBlock ) 
     {	
-
+      m_NoEvents=0;
       //----------------------------------  CMM Input data from JEMs -----------------------------
       m_h_CMMJetHits_JEM_MainHits=input_Booker->book1F("MainHits_CMM_input", "Main Jet Hit Multiplicity per Threshold  --  CMM input", 8, -0.5, 7.5, "Threshold No.", "#");
       m_h_CMMJetHits_JEM_FwdHitsRight=input_Booker->book1F("FwdHitsRight_CMM_input", "Forward Right Jet Hit Multiplicity per Threshold  --  CMM input",4 , -0.5, 3.5, "Threshold No.", "#");
       m_h_CMMJetHits_JEM_FwdHitsLeft=input_Booker->book1F("FwdHitsLeft_CMM_input", "Forward Left Jet Hit Multiplicity per Threshold  --  CMM input", 4 , -0.5, 3.5,  "Threshold No.", "#");
 
-      m_h_CMMEtSums_JEM_Ex=input_Booker->book1F("Ex_CMM_input", "CMM E_{x}  --  CMM input", 250, 0,250, "Ex [GeV]", "#");
-      m_h_CMMEtSums_JEM_Ey=input_Booker->book1F("Ey_CMM_input", "CMM E_{y}  --  CMM input", 250, 0,250, "Ex [GeV]", "#");
-      m_h_CMMEtSums_JEM_Et=input_Booker->book1F("Et_CMM_input", "CMM E_{t}  --  CMM input", 250, 0,250, "Ex [GeV]", "#");
+      m_h_CMMEtSums_JEM_Ex=input_Booker->book1F("Ex_CMM_input", "CMM E_{x}^{JEM}  --  CMM input", 250, 0,250, "Ex [GeV]", "#");
+      m_h_CMMEtSums_JEM_Ey=input_Booker->book1F("Ey_CMM_input", "CMM E_{y}^{JEM}  --  CMM input", 250, 0,250, "Ey [GeV]", "#");
+      m_h_CMMEtSums_JEM_Et=input_Booker->book1F("Et_CMM_input", "CMM E_{t}^{JEM}  --  CMM input", 250, 0,250, "Et [GeV]", "#");
       
 
       //---------------------------------- CMM output to DAQ -----------------------------
@@ -145,9 +142,9 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       m_h_CMMEtSums_MissingEtMap = DAQ_Booker->book1F("MissingEtHits_CMM_DAQ", "MissingEt Hit Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "#");
       m_h_CMMEtSums_SumEtMap = DAQ_Booker->book1F("SumEtHits_CMM_DAQ", "SumEt Hit Multiplicity per Threshold  --  CMM DAQ", 4, -0.5, 3.5, "Threshold No.", "#");
 
-      m_h_CMMEtSums_Ex = DAQ_Booker->book1F("Ex_CMM_DAQ", "CMM E_{x}  --  CMM DAQ", 250, 0,250, "Ex [GeV]", "#");
-      m_h_CMMEtSums_Ey = DAQ_Booker->book1F("Ey_CMM_DAQ", "CMM E_{y}  --  CMM DAQ", 250, 0,250, "Ex [GeV]", "#");
-      m_h_CMMEtSums_Et = DAQ_Booker->book1F("Et_CMM_DAQ", "CMM E_{t}  --  CMM DAQ", 250, 0,250, "Ex [GeV]", "#");
+      m_h_CMMEtSums_Ex = DAQ_Booker->book1F("Ex_CMM_DAQ", "CMM E_{x}^{CMM}  --  CMM DAQ", 250, 0,250, "Ex [GeV]", "#");
+      m_h_CMMEtSums_Ey = DAQ_Booker->book1F("Ey_CMM_DAQ", "CMM E_{y}^{CMM}  --  CMM DAQ", 250, 0,250, "Ey [GeV]", "#");
+      m_h_CMMEtSums_Et = DAQ_Booker->book1F("Et_CMM_DAQ", "CMM E_{t}^{CMM}  --  CMM DAQ", 250, 0,250, "Et [GeV]", "#");
 
 
       //---------------------------------- CMM output to RoI -----------------------------
@@ -155,9 +152,9 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       m_h_CMMRoI_MissingEtHits =RoI_Booker->book1F("MissingEtHits_CMM_RoI","MissingEt Hit Multiplicity per Threshold  --  CMM RoI", 8, -0.5,7.5,"Threshold No.","#");
       m_h_CMMRoI_SumEtHits =RoI_Booker->book1F("SumEtHits_CMM_RoI","SumEt Hit Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","#");
 
-      m_h_CMMRoI_Ex = RoI_Booker->book1F("Ex_CMM_RoI", "CMM E_{x}  --  CMM RoI", 250, 0,250, "Ex [GeV]", "#");
-      m_h_CMMRoI_Ey = RoI_Booker->book1F("Ey_CMM_RoI", "CMM E_{y}  --  CMM RoI", 250, 0,250, "Ex [GeV]", "#");
-      m_h_CMMRoI_Et = RoI_Booker->book1F("Et_CMM_RoI", "CMM E_{t}  --  CMM RoI", 250, 0,250, "Ex [GeV]", "#");
+      m_h_CMMRoI_Ex = RoI_Booker->book1F("Ex_CMM_RoI", "CMM E_{x}^{CMM}  --  CMM RoI", 250, 0,250, "Ex [GeV]", "#");
+      m_h_CMMRoI_Ey = RoI_Booker->book1F("Ey_CMM_RoI", "CMM E_{y}^{CMM}  --  CMM RoI", 250, 0,250, "Ey [GeV]", "#");
+      m_h_CMMRoI_Et = RoI_Booker->book1F("Et_CMM_RoI", "CMM E_{t}^{CMM}  --  CMM RoI", 250, 0,250, "Et [GeV]", "#");
 
 
       if (m_DataType=="BS")
@@ -224,31 +221,6 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(6, "Overflow (Ex)");
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(7, "Overflow (Ey)");
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(8, "Overflow (Et)");
-
-	  //---------------------------------- Backplane transmission checks -----------------------------
-	  m_h_TransCheck_JEP=transmission_Booker->book2F("JEP_TransCheck", "JEP Backplane Transmission Check JEM -> CMM per Module and Crate", 2,0.5,2.5,37,0.5,3.5, "", "");
-	  //m_h_TransCheck_JEP-> SetOption ("text");
-	  m_h_TransCheck_JEP->GetXaxis()->SetBinLabel(1, "Hits");
-	  m_h_TransCheck_JEP->GetXaxis()->SetBinLabel(2, "Energy");
-      
-	  for (int i = 0; i < 16; i++)
-	    {
-	      buffer.str("");
-	      buffer<<i;
-	      
-	      name = "JEM " + buffer.str();
-	      m_h_TransCheck_JEP->GetYaxis()->SetBinLabel((i+1), name.c_str());
-	      
-	      buffer.str("");
-	      buffer<<i;
-	      
-	      name = "JEM " + buffer.str();
-	      m_h_TransCheck_JEP->GetYaxis()->SetBinLabel((i+1+20), name.c_str());
-	    }
-	  m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(17, "C E CMM");
-	  m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(18, "C J CMM");
-	  m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(19, "Crate 0: ");
-	  m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(37, "Crate 1: ");
 	}
     }
   if( isNewRun ) { }
@@ -263,7 +235,8 @@ StatusCode CMMMon::fillHistograms()
 {
   MsgStream mLog( msgSvc(), name() );
   Helper* Help = new Helper();
-  
+  m_NoEvents++;
+
   // =============================================================================================
   // ================= Container: CMM Jet Hits ===================================================
   // =============================================================================================
@@ -395,147 +368,6 @@ StatusCode CMMMon::fillHistograms()
 	}
     }  
   
-  // ------------------------------------------------------------------------------------------
-  // ----------------- Backplane transmission check: JEMs -> CMM ------------------------------
-  // ------------------------------------------------------------------------------------------
-  // only for BS data
-  if (m_DataType=="BS")
-    {
-      mLog<<MSG::DEBUG<<"--------------  "<< m_DataType<<" CMM Jet Hits transmission ---------------"<<endreq;
-      
-      //retrieve JEMHits from storegate for comparison with transmitted data stored in CMMJetHits
-      const JEMHitsCollection* JEMHits;
-      JEMHitsCollection::const_iterator it_JEMHits ;
-      sc = m_storeGate->retrieve(JEMHits, m_JEMHitsLocation); 
-      if( (sc==StatusCode::FAILURE) ) 
-	{
-	  mLog << MSG:: INFO<< "No JEMHits found in TES at "<< m_JEMHitsLocation << endreq ;
-	  return StatusCode::SUCCESS;
-	}
-      
-      // compare JEMHits-vector with CMMJEMHits-vector, erase corresponding entries
-      // -> the remaining vectors contain faulty transmissions! 
-      // use standard vector instead of datavector for transmissioncheck:
-      // datavector erases not only the pointer  in the vector, but also the referenced object
-      // -> segmentation fault!
-      std::vector <LVL1::CMMJetHits>  vCMMJEMHits;
-      std::vector <LVL1::JEMHits>  vJEMHits;
-      int CrateCMMMainHits=0;
-      int CrateCMMFwdHits=0;
-      int SystemRemoteCMMMainHits=0;
-      int SystemRemoteCMMFwdHits=0;
-      int noMatchfound;
-
-      // put CMM input data (JEMHits) into CMMJEMHits vector
-      for( it_CMMJetHits  = CMMJetHits ->begin(); it_CMMJetHits < CMMJetHits -> end(); ++it_CMMJetHits )
-	{
-	  // JEM information for transmission check JEMs -> CMMs 
-	  if ((*it_CMMJetHits)->dataID()<16)
-	    {
-	      vCMMJEMHits.push_back(**it_CMMJetHits );
-	    }
-	  
-	  // CMM information for transmission check crate CMM -> system CMM
-	  // local main hits of crate CMM
-	  if (((*it_CMMJetHits)->dataID()==17)and((*it_CMMJetHits)->crate()==0)) CrateCMMMainHits=(*it_CMMJetHits)->Hits();
-	  // local fwd hits of crate CMM
-	  if (((*it_CMMJetHits)->dataID()==20)and((*it_CMMJetHits)->crate()==0)) CrateCMMFwdHits=(*it_CMMJetHits)->Hits();
-	  // remote main hits of system CMM
-	  if (((*it_CMMJetHits)->dataID()==16)and((*it_CMMJetHits)->crate()==1)) SystemRemoteCMMMainHits=(*it_CMMJetHits)->Hits();
-	  // remote fwd hits of crate CMM
-	  if (((*it_CMMJetHits)->dataID()==19)and((*it_CMMJetHits)->crate()==1)) SystemRemoteCMMFwdHits=(*it_CMMJetHits)->Hits();
-	}
-      for( it_JEMHits  =  JEMHits->begin(); it_JEMHits <  JEMHits-> end(); ++it_JEMHits )
-	{
-	  vJEMHits.push_back(**it_JEMHits);
-	}
-      
-      bool found;
-      std::vector <LVL1::CMMJetHits>::iterator it_vCMMJEMHits;
-      std::vector <LVL1::JEMHits>::iterator it_vJEMHits;
-      
-      //---------------------------------- backplane transmission JEMs -> CMM -----------------------------
-      it_vCMMJEMHits=vCMMJEMHits.begin();
-      // step through both vectors and compare...
-      while (it_vCMMJEMHits<vCMMJEMHits.end())
-	{
-	  mLog<<MSG::VERBOSE<<"CMM Crate "<<(*it_vCMMJEMHits).crate()<<" Module "<<(*it_vCMMJEMHits).dataID()<<endreq;
-	  mLog<<MSG::VERBOSE<<"CMM Hit "<<(*it_vCMMJEMHits).Hits()<<endreq;
-	  
-	  found = 0;
-	  noMatchfound=0;
-	  it_vJEMHits=vJEMHits.begin();
-	  
-	  while ((found==0)and(it_vJEMHits<vJEMHits.end()))
-	    {
-	      mLog<<MSG::VERBOSE<<"JEM Crate "<<(*it_vJEMHits).crate()<<" Module "<<(*it_vJEMHits).module()<<endreq;
-	      mLog<<MSG::VERBOSE<<"JEM Hit "<<(*it_vJEMHits).JetHits()<<endreq;
-	      
-	      if (((*it_vCMMJEMHits).crate()==(*it_vJEMHits).crate())
-		  and((*it_vCMMJEMHits).dataID()==(*it_vJEMHits).module()))
-		{
-		  if ((*it_vCMMJEMHits).Hits()!=(*it_vJEMHits).JetHits())
-		    {
-		      mLog<<MSG::INFO<<"Transmission errors between JEM and CMM Hits: change of value"<<endreq;
-		      mLog<<MSG::DEBUG<<"JEM Crate "<<(*it_vJEMHits).crate()<<" Module "<<(*it_vJEMHits).module()<<endreq;
-		      mLog<<MSG::DEBUG<<"JEM Hit "<<Help->Binary((*it_vJEMHits).JetHits(),24)<<endreq;
-		      mLog<<MSG::DEBUG<<"CMM Hit "<<Help->Binary((*it_vCMMJEMHits).Hits(),24)<<endreq;
-		      
-		      noMatchfound=1;
-		    }
-		  // if CMMJEMHits and JEMHits didn't match, a "1" is entered at the specific module;
-		  // if a match is found, a "0" is entered (just to see that the histogram is filled
-		  // since there hopefully are only zeros in there)
-		  m_h_TransCheck_JEP->Fill(1,(*it_vJEMHits).crate()*20+(*it_vJEMHits).module()+1,noMatchfound);
-		  
-		  vCMMJEMHits.erase(it_vCMMJEMHits);
-		  vJEMHits.erase(it_vJEMHits);
-		  found=1;
-		}
-	      else it_vJEMHits=it_vJEMHits+1;
-	    }// end while (not found and not JEMHits.end)
-	  
-	  // only step further in CMMJEMHits if no corresponding entry has been found in JEMHits
-	  if (found==0)it_vCMMJEMHits=it_vCMMJEMHits+1;
-	}  // end while (not CMMJEMHits.end)
-      
-      // if the CMMJEMHits vector isn't empty, fill the error counter!
-      if (vCMMJEMHits.size()!=0)
-	{
-	  mLog<<MSG::INFO<<vCMMJEMHits.size()<<" Transmission errors between JEM and CMM Hits: additional CMM information"<<endreq;
-	  for( it_vCMMJEMHits  = vCMMJEMHits.begin(); it_vCMMJEMHits <  vCMMJEMHits. end(); ++it_vCMMJEMHits )
-	    {
-	      mLog<<MSG::DEBUG<<"CMM Crate "<<(*it_vCMMJEMHits).crate()<<" Module "<<(*it_vCMMJEMHits).dataID()<<endreq;
-	      mLog<<MSG::DEBUG<<"CMM Hit "<<(*it_vCMMJEMHits).Hits()<<endreq;
-	      
-	      m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits).crate()*20+(*it_vCMMJEMHits).dataID()+1,1);
-	    }
-	}
-      
-      // if the JEMHits vector isn't empty, fill the error counter!
-      if (vJEMHits.size()!=0)
-	{
-	  mLog<<MSG::INFO<<vJEMHits.size()<<" Transmission errors between JEM and CMM Hits: addtional JEM information"<<endreq;
-	  for( it_vJEMHits  =  vJEMHits.begin(); it_vJEMHits <  vJEMHits. end(); ++it_vJEMHits )
-	    {
-	      mLog<<MSG::DEBUG<<"JEM Crate "<<(*it_vJEMHits).crate()<<" Module "<<(*it_vJEMHits).module()<<endreq;
-	      mLog<<MSG::DEBUG<<"JEM Hit "<<(*it_vJEMHits).JetHits()<<endreq;
-	      
-	      m_h_TransCheck_JEP->Fill(1,(*it_vJEMHits).crate()*20+(*it_vJEMHits).module()+1,1);
-	    }
-	}
-      
-      //---------------------------------- backplane transmission crate CMM -> system CMM -----------------------------
-      noMatchfound=0;
-      
-      if ((CrateCMMMainHits!=SystemRemoteCMMMainHits) or (CrateCMMFwdHits!=SystemRemoteCMMFwdHits))
-	{
-	  noMatchfound=1;
-	  mLog<<MSG::INFO<<"Transmission error between crate and system CMM: Hits"<<endreq;
-	}
-      m_h_TransCheck_JEP->Fill(1,18,noMatchfound);
-    }
-  
   // =============================================================================================
   // ================= Container: CMM Et Sums ====================================================
   // =============================================================================================
@@ -597,6 +429,9 @@ StatusCode CMMMon::fillHistograms()
 	  m_h_CMMEtSums_Ex -> Fill( Ex, 1.);
 	  m_h_CMMEtSums_Ey -> Fill( Ey, 1.);
 	  m_h_CMMEtSums_Et -> Fill( (*it_CMMEtSums)-> Et(), 1.);
+	  mLog<<MSG::DEBUG<<"    Ex: "<<Ex<<"; Ey: "<<Ey<<"; Et "<<(*it_CMMEtSums)->Et()<<endreq;
+	  mLog<<MSG::DEBUG<<"Roh Ex: "<<(*it_CMMEtSums)->Ex()<<"; Ey: "<<(*it_CMMEtSums)->Ey()<<"; Et "<<(*it_CMMEtSums)->Et()<<endreq;
+
 	}
       
       //MissingEt Hitmap
@@ -685,154 +520,6 @@ StatusCode CMMMon::fillHistograms()
 	    }
 	}
     }
-  // ------------------------------------------------------------------------------------------
-  // ----------------- Backplane transmission check: JEMs -> CMM ------------------------------
-  // ------------------------------------------------------------------------------------------
-  //only for Bytestream data
-  if (m_DataType=="BS")
-    {
-      mLog<<MSG::DEBUG<<"--------------  "<< m_DataType<<" CMM EtSums transmission ---------------"<<endreq;
-      const JEMEtSumsCollection* JEMEtSums;
-      JEMEtSumsCollection::const_iterator it_JEMEtSums ;
-      sc = m_storeGate->retrieve(JEMEtSums, m_JEMEtSumsLocation);
-      if( (sc==StatusCode::FAILURE) ) 
-	{
-	  mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_JEMEtSumsLocation << endreq ;
-	  return StatusCode::SUCCESS;
-	}
-      
-      // compare JEMHits-vector with CMMJEMHits-vector, erase corresponding entries
-      // -> the remaining vectors contain faulty transmissions! 
-      // use standard vector instead of datavector for transmissioncheck:
-      // datavector erases not only the pointer  in the vector, but also the referenced object
-      // -> segmentation fault!
-      std::vector <LVL1::CMMEtSums>  vCMMJEMEtSums;
-      std::vector <LVL1::JEMEtSums>  vJEMEtSums;
-      int CrateEx=0, CrateEy=0, CrateEt=0;
-      int SystemEx=0, SystemEy=0, SystemEt=0;
-      int noMatchfound=0;
-      for( it_CMMEtSums  = CMMEtSums ->begin(); it_CMMEtSums < CMMEtSums -> end(); ++it_CMMEtSums )
-	{	  
-	  if ((*it_CMMEtSums)->dataID()<16)
-	    {
-	      vCMMJEMEtSums.push_back(**it_CMMEtSums );
-	    }
-	  // CMM information for transmission check crate CMM -> system CMM
-	  // local energies of crate CMM
-	  if (((*it_CMMEtSums)->dataID()==17)and((*it_CMMEtSums)->crate()==0)) 
-	    {
-	      CrateEx=(*it_CMMEtSums)->Ex();
-	      CrateEy=(*it_CMMEtSums)->Ey();
-	      CrateEt=(*it_CMMEtSums)->Et();
-	    }
-	  // remote energies of system CMM
-	  if (((*it_CMMEtSums)->dataID()==16)and((*it_CMMEtSums)->crate()==1)) 
-	    {
-	      SystemEx=(*it_CMMEtSums)->Ex();
-	      SystemEy=(*it_CMMEtSums)->Ey();
-	      SystemEt=(*it_CMMEtSums)->Et();
-	    }
-	}
-      for( it_JEMEtSums  =  JEMEtSums->begin(); it_JEMEtSums <  JEMEtSums-> end(); ++it_JEMEtSums )
-	{
-	  vJEMEtSums.push_back(**it_JEMEtSums);
-	}
-      
-      std::vector <LVL1::CMMEtSums>::iterator it_vCMMJEMEtSums;
-      std::vector <LVL1::JEMEtSums>::iterator it_vJEMEtSums;
-      
-      //---------------------------------- backplane transmission JEMs -> crate CMM -----------------------------
-      it_vCMMJEMEtSums=vCMMJEMEtSums.begin();
-      while (it_vCMMJEMEtSums<vCMMJEMEtSums.end())
-	{
-	  mLog<<MSG::VERBOSE<<"CMM Crate "<<(*it_vCMMJEMEtSums).crate()<<" Module "<<(*it_vCMMJEMEtSums).dataID()<<endreq;
-	  mLog<<MSG::VERBOSE<<"CMM Ex "<<(*it_vCMMJEMEtSums).Ex()<<endreq;
-	  mLog<<MSG::VERBOSE<<"CMM Ey "<<(*it_vCMMJEMEtSums).Ey()<<endreq;
-	  mLog<<MSG::VERBOSE<<"CMM Et "<<(*it_vCMMJEMEtSums).Et()<<endreq;
-	  
-	  bool found = 0;
-	  noMatchfound = 0;
-	  it_vJEMEtSums=vJEMEtSums.begin();
-	  
-	  while ((found==0)and(it_vJEMEtSums<vJEMEtSums.end()))
-	    {
-	      mLog<<MSG::VERBOSE<<"JEM Crate "<<(*it_vJEMEtSums).crate()<<" Module "<<(*it_vJEMEtSums).module()<<endreq;
-	      mLog<<MSG::VERBOSE<<"JEM Ex "<<(*it_vJEMEtSums).Ex()<<endreq;
-	      mLog<<MSG::VERBOSE<<"JEM Ey "<<(*it_vJEMEtSums).Ey()<<endreq;
-	      mLog<<MSG::VERBOSE<<"JEM Et "<<(*it_vJEMEtSums).Et()<<endreq;
-	      
-	      if (((*it_vCMMJEMEtSums).crate()==(*it_vJEMEtSums).crate())
-		  and((*it_vCMMJEMEtSums).dataID()==(*it_vJEMEtSums).module()))
-		{
-		  if (((*it_vCMMJEMEtSums).Ex()!=(*it_vJEMEtSums).Ex())
-		      or ((*it_vCMMJEMEtSums).Ey()!=(*it_vJEMEtSums).Ey())
-		      or ((*it_vCMMJEMEtSums).Et()!=(*it_vJEMEtSums).Et()))
-		    {
-		      mLog<<MSG::INFO<<"Transmission errors between JEM and CMM EtSums: change of value"<<endreq;
-		      mLog<<MSG::DEBUG<<"JEM Crate "<<(*it_vJEMEtSums).crate()<<" Module "<<(*it_vJEMEtSums).module()<<endreq;
-		      mLog<<MSG::DEBUG<<"JEM Ex "<<(*it_vJEMEtSums).Ex()<<endreq;
-		      mLog<<MSG::DEBUG<<"JEM Ey "<<(*it_vJEMEtSums).Ey()<<endreq;
-		      mLog<<MSG::DEBUG<<"JEM Et "<<(*it_vJEMEtSums).Et()<<endreq;
-		      
-		      mLog<<MSG::DEBUG<<"CMM Ex "<<(*it_vCMMJEMEtSums).Ex()<<endreq;
-		      mLog<<MSG::DEBUG<<"CMM Ey "<<(*it_vCMMJEMEtSums).Ey()<<endreq;
-		      mLog<<MSG::DEBUG<<"CMM Et "<<(*it_vCMMJEMEtSums).Et()<<endreq;
-		      
-		      noMatchfound=1;
-		    }
-		  // if CMMJEMEtSums and JEMEtSums didn't match, a "1" is entered at the specific module;
-		  // if a match is found, a "0" is entered (just to see that the histogram is filled
-		  // since there hopefully are only zeros in there)
-		  
-		  m_h_TransCheck_JEP->Fill(2,((*it_vJEMEtSums).crate()*20+(*it_vJEMEtSums).module() + 1),noMatchfound);
-		  
-		  vCMMJEMEtSums.erase(it_vCMMJEMEtSums);
-		  vJEMEtSums.erase(it_vJEMEtSums);
-		  found=1;
-		}
-	      else it_vJEMEtSums=it_vJEMEtSums+1;
-	    }
-	  if (found==0)it_vCMMJEMEtSums=it_vCMMJEMEtSums+1;
-	}
-      
-      // if the CMMJEMEtSums vector isn't empty, fill the error counter!
-      if (vCMMJEMEtSums.size()!=0)
-	{
-	  mLog<<MSG::INFO<<vCMMJEMEtSums.size()<<" Transmission errors between JEM and CMM EtSums: additional CMM information"<<endreq;
-	  for( it_vCMMJEMEtSums  = vCMMJEMEtSums.begin(); it_vCMMJEMEtSums <  vCMMJEMEtSums. end(); ++it_vCMMJEMEtSums )
-	    {
-	      mLog<<MSG::DEBUG<<"CMM Crate "<<(*it_vCMMJEMEtSums).crate()<<" Module "<<(*it_vCMMJEMEtSums).dataID()<<endreq;
-	      mLog<<MSG::DEBUG<<"CMM Ex "<<(*it_vCMMJEMEtSums).Ex()<<endreq;
-	      mLog<<MSG::DEBUG<<"CMM Ey "<<(*it_vCMMJEMEtSums).Ey()<<endreq;
-	      mLog<<MSG::DEBUG<<"CMM Et "<<(*it_vCMMJEMEtSums).Et()<<endreq;
-	      
-	      m_h_TransCheck_JEP->Fill(2,(*it_vCMMJEMEtSums).crate()*20+(*it_vCMMJEMEtSums).dataID() + 1,noMatchfound);
-	    }
-	}
-      
-      // if the JEMEtSums vector isn't empty, fill the error counter!
-      if (vJEMEtSums.size()!=0)
-	{
-	  mLog<<MSG::INFO<<vJEMEtSums.size()<<" Transmission errors between JEM and CMM EtSums: addtional JEM information"<<endreq;
-	  for( it_vJEMEtSums  =  vJEMEtSums.begin(); it_vJEMEtSums <  vJEMEtSums. end(); ++it_vJEMEtSums )
-	    {
-	      mLog<<MSG::DEBUG<<"JEM Crate "<<(*it_vJEMEtSums).crate()<<" Module "<<(*it_vJEMEtSums).module()<<endreq;
-	      mLog<<MSG::DEBUG<<"JEM Ex "<<(*it_vJEMEtSums).Ex()<<endreq;
-	      mLog<<MSG::DEBUG<<"JEM Ey "<<(*it_vJEMEtSums).Ey()<<endreq;
-	      mLog<<MSG::DEBUG<<"JEM Et "<<(*it_vJEMEtSums).Et()<<endreq;
-	      
-	      m_h_TransCheck_JEP->Fill(2,(*it_vJEMEtSums).crate()*20+(*it_vJEMEtSums).module() + 1,noMatchfound);
-	    }
-	}
-      //---------------------------------- backplane transmission crate CMM -> system CMM -----------------------------
-      noMatchfound=0;
-      if ((CrateEx!=SystemEx)or (CrateEy!=SystemEy)or (CrateEt!=SystemEt))
-	{
-	  noMatchfound=1;
-	  mLog<<MSG::INFO<<"Transmission error between crate and system CMM: Energy"<<endreq;
-	}
-      m_h_TransCheck_JEP->Fill(2,17,noMatchfound);
-    }
 
   // =============================================================================================
   // ================= Container: CMM RoI ========================================================
@@ -867,15 +554,22 @@ StatusCode CMMMon::fillHistograms()
   CMMRoIHit = Help->Binary((CR)-> missingEtHits(),8);
   Help->FillHitsHisto(m_h_CMMRoI_MissingEtHits , CMMRoIHit, 0, 8, 0, 1, &mLog);
  
-  // total Ex, Ey, Et
+
   // the 0th bit of Ex and Ey is their sign
   // -> remove it, only the value is important
   int Ex,Ey;
-  Ex=abs((CR)-> ex());
-  Ey=abs((CR)-> ey());
+  std::string temp;
+  temp= Help->Binary((CR)-> ex(),15);
+  temp.assign(temp,temp.length()-14,14);
+  Ex=Help->Multiplicity(temp,0,14);
   
-  mLog<<MSG::DEBUG<<" Ex: "<<Ex<<"; Ey: "<<Ey<<"; Et "<<(CR)->et()<<endreq;
+  temp= Help->Binary((CR)-> ey(),15);
+  temp.assign(temp,temp.length()-14,14);
+  Ey=Help->Multiplicity(temp,0,14);
   
+  mLog<<MSG::DEBUG<<"    Ex: "<<Ex<<"; Ey: "<<Ey<<"; Et "<<(CR)->et()<<endreq;
+  mLog<<MSG::DEBUG<<"Roh Ex: "<<(CR)-> ex()<<"; Ey: "<<(CR)-> ey()<<"; Et "<<(CR)-> et()<<endreq;
+
   m_h_CMMRoI_Ex -> Fill( Ex,1);
   m_h_CMMRoI_Ey -> Fill( Ey,1);
   m_h_CMMRoI_Et -> Fill( (CR)->et(),1);
@@ -913,11 +607,36 @@ StatusCode CMMMon::procHistograms( bool isEndOfEventsBlock,
 				  bool isEndOfLumiBlock, bool isEndOfRun )
 /*---------------------------------------------------------*/
 {
+  MsgStream mLog( msgSvc(), name() );
+  mLog << MSG::DEBUG << "in procHistograms" << endreq ;
+
   if( isEndOfEventsBlock || isEndOfLumiBlock ) 
     {  
     }
 	
-  if( isEndOfRun ) { }
-  
+  if(m_EventNoInHisto==1)
+    {
+      if (m_DataType=="BS")
+	{
+	  if( isEndOfRun ) { 
+	    std::stringstream buffer;
+	    buffer.str("");
+	    buffer<<m_NoEvents;
+	    std::string title;
+	    
+	    title = m_h_CMMJet_error-> GetTitle();
+	    title=title + " | #events: " + buffer.str();
+	    m_h_CMMJet_error->SetTitle(title.c_str());
+	    
+	    title = m_h_CMMEnergy_error-> GetTitle();
+	    title=title + " | #events: " + buffer.str();
+	    m_h_CMMEnergy_error->SetTitle(title.c_str());
+	    
+	    title = m_h_CMMRoI_error-> GetTitle();
+	    title=title + " | #events: " + buffer.str();
+	    m_h_CMMRoI_error->SetTitle(title.c_str());
+	  }
+	}
+    }
   return StatusCode( StatusCode::SUCCESS );
 }

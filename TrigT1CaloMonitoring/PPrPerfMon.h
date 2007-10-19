@@ -1,14 +1,14 @@
 // ********************************************************************
 //
-// NAME:     CaloTTMon.h
+// NAME:     PPrPerfMon.h
 // PACKAGE:  TrigT1CaloMonitoring
 //
 // AUTHOR:   Johanna Fleckner (Johanna.Fleckner@uni-mainz.de)
 //	     
 //
 // ********************************************************************
-#ifndef CALOTTMON_H
-#define CALOTTMON_H
+#ifndef PPRPERFMON_H
+#define PPRPERFMON_H
 
 #include <map>
 #include "AthenaMonitoring/AthenaMonManager.h"
@@ -20,16 +20,16 @@
 #include "TH1.h"
 #include "TH2.h"
 
-class CaloTTMon: public ManagedMonitorToolBase
+class PPrPerfMon: public ManagedMonitorToolBase
 {
 
  public:
   
-  CaloTTMon(const std::string & type, const std::string & name,
+  PPrPerfMon(const std::string & type, const std::string & name,
 		  const IInterface* parent);
     
 
-  virtual ~CaloTTMon();
+  virtual ~PPrPerfMon();
 
   virtual StatusCode bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun );
   virtual StatusCode fillHistograms();
@@ -40,6 +40,7 @@ private:
   int m_CaloTT_HitMap_Thresh0;
   int m_CaloTT_HitMap_Thresh1;
   int m_CaloTT_HitMap_Thresh2;
+  bool m_CompWithCalo;
 
   std::string m_DataType;
   std::string m_PathInRootFile;

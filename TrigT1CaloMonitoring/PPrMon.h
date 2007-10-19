@@ -1,6 +1,6 @@
 // ********************************************************************
 //
-// NAME:     TriggerTowerMon.h
+// NAME:     PPrMon.h
 // PACKAGE:  TrigT1CaloMonitoring
 //
 // AUTHOR:   Ethan-Etienne Woehrling (eew@hep.ph.bham.ac.uk)
@@ -8,8 +8,8 @@
 //	     
 //
 // ********************************************************************
-#ifndef TRIGGERTOWERMON_H
-#define TRIGGERTOWERMON_H
+#ifndef PPRMON_H
+#define PPRMON_H
 
 #include <map>
 #include "AthenaMonitoring/AthenaMonManager.h"
@@ -22,26 +22,30 @@
 #include "TrigT1CaloCalibTools/L1CaloTTIdTools.h"
 #include "CaloTriggerTool/CaloTriggerTowerService.h"
 
+#include <vector>
 #include "TH1.h"
 #include "TH2.h"
 //class StoreGateSvc;
 
-class TriggerTowerMon: public ManagedMonitorToolBase
+class PPrMon: public ManagedMonitorToolBase
 {
 
  public:
   
-  TriggerTowerMon(const std::string & type, const std::string & name,
+  PPrMon(const std::string & type, const std::string & name,
 		  const IInterface* parent);
     
 
-  virtual ~TriggerTowerMon();
+  virtual ~PPrMon();
 
   virtual StatusCode bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun );
   virtual StatusCode fillHistograms();
   virtual StatusCode procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun );
 
 private:
+  int PeakPosition(const std::vector<int> & Vec);
+  int max(int ValuePosition1,int ValuePosition2, const std::vector<int> & Vec);
+
   std::string m_TriggerTowerContainerName;
   int m_TT_HitMap_Thresh0;
   int m_TT_HitMap_Thresh1;
@@ -54,7 +58,9 @@ private:
   std::string m_DataType;
   std::string m_PathInRootFile;
   std::string m_ErrorPathInRootFile;
-      
+  std::string m_EventPathInRootFile;
+  bool  m_EventNoInHisto;
+     
 protected:
    /** a handle on Store Gate for access to the Event Store */
    StoreGateSvc* m_storeGate;
@@ -66,11 +72,11 @@ protected:
    // CaloLVL1_ID Id helper
    const CaloLVL1_ID* m_lvl1Helper;
    const L1CaloTTIdTools* m_l1CaloTTIdTools;
-   /*
+   
    CaloTriggerTowerService* m_ttSvc;
    // TTOnlineID Id helper
    const TTOnlineID* m_l1ttonlineHelper;
-   */
+   
 
    // histos per channel
   std::map <Identifier, TH1F*>  m_h_TT_EmADCPeak;
@@ -81,6 +87,8 @@ protected:
   //ADC Hitmaps per TimeSlice
   std::map <int,TH2F*> m_h_TT_HitMap_emADC;
   std::map <int,TH2F*> m_h_TT_HitMap_hadADC;
+  std::map <int,TH2F*> m_h_TT_HitMap_had_ADCPeak_TimeSlice;
+  std::map <int,TH2F*> m_h_TT_HitMap_em_ADCPeak_TimeSlice;
 
   //LUT Hitmaps per threshold
    TH2F* m_h_TT_HitMap_emLUT_Thresh0;
@@ -109,7 +117,10 @@ protected:
    TH1F* m_h_TT_hadLUT_DetSide[Side];*/
 
    // error
+   int m_NoEvents;
    TH1F* m_h_TT_emerror;
+   TH2F* m_h_TT_error_Crate_03;
+   TH2F* m_h_TT_error_Crate_47;
    TH1F* m_h_TT_haderror;
    TH2F* m_h_TT_em_GLinkDown;
    TH2F* m_h_TT_em_GLinkTimeout;
@@ -119,7 +130,8 @@ protected:
    // number of triggered slice
    TH1F* m_h_TT_triggeredSlice_em;
    TH1F* m_h_TT_triggeredSlice_had;
-     
+   
+   TH1F* m_h_NumberEvents;  
 };
 
 #endif
