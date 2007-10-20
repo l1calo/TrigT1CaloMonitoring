@@ -1,6 +1,9 @@
+2007-10-20  Johanna Fleckner  <fleckner@lxplus235.cern.ch>
+	* tag TrigT1CaloMonitoring-00-01-11
+	* src/JEPTransPerfMon.cxx remove use of L1JetElementTool for M5
+
 2007-10-19  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
 	* changes for working with TrigT1Calo-02-00-00: removing some (not needed) references to obsolete files
-
 	restructuring:
 	* merge JetElementMon and JEMMon to JEMMon
 	* new tool for JEP Transmission and Performance Checks: JEPTransPerfMon.h

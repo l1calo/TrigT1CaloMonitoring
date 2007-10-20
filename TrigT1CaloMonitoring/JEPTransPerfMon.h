@@ -24,7 +24,7 @@
 #include "TrigT1Calo/JEMHits.h"
 #include "TrigT1Calo/JEMEtSums.h"
 #include "TrigT1Calo/JetElementMaker.h"
-#include "TrigT1CaloTools/L1JetElementTools.h"
+//#include "TrigT1CaloTools/L1JetElementTools.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
@@ -94,7 +94,7 @@ protected:
 
 
    
-   ToolHandle<LVL1::IL1JetElementTools> m_JetElementTool;
+   //ToolHandle<LVL1::IL1JetElementTools> m_JetElementTool;
 
 
    /** location of data */

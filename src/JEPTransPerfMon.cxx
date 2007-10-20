@@ -126,8 +126,8 @@ namespace LVL1 {
 /*---------------------------------------------------------*/
 JEPTransPerfMon::JEPTransPerfMon( const std::string & type, const std::string & name,
 		const IInterface* parent )
-  : ManagedMonitorToolBase( type, name, parent ),
-  m_JetElementTool("LVL1::L1JetElementTools/L1JetElementTools")
+  : ManagedMonitorToolBase( type, name, parent )//,
+    //m_JetElementTool("LVL1::L1JetElementTools/L1JetElementTools")
 /*---------------------------------------------------------*/
 {
   // This is how you declare the parameters to Gaudi so that
@@ -454,7 +454,11 @@ StatusCode JEPTransPerfMon::fillHistograms()
     }
 
 
+
+
+  //--------------------- mask out for M5 ------------------------------------------------------------
   // retrieve TriggerTower
+  /*
   const TriggerTowerCollection* TriggerTowers;
   sc = m_storeGate->retrieve(TriggerTowers, m_BS_TriggerTowerLocation);
   
@@ -470,7 +474,22 @@ StatusCode JEPTransPerfMon::fillHistograms()
   
   DataVector<JetElement>* TT_jetElements = new DataVector<JetElement>;
   m_JetElementTool->makeJetElements(TriggerTowers, TT_jetElements);
+  */
+  //--------------------------------------------------------------------------------------------------
+
+
+  //----------------------- insert for M5 ------------------------------------------------------------
+  // retrieve JetElements
+  const JECollection* TT_jetElements;
+  sc = m_storeGate->retrieve(TT_jetElements, m_BS_TriggerTowerLocation);
   
+  if( (sc==StatusCode::FAILURE) ) 
+    {
+      mLog << MSG::INFO << "No JetElements found in TES at " << m_BS_TriggerTowerLocation << endreq ;
+      return StatusCode::SUCCESS;
+    }
+  //--------------------------------------------------------------------------------------------------
+
  
   JECollection::const_iterator it_je, it_TT_je ;
   

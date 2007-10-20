@@ -159,7 +159,8 @@ toolSvc.Sim_L1CMMMonTool.OutputLevel = DEBUG
 #--------------------- Transmission and Performance ------------------------------
 L1CaloMan.AthenaMonTools += [ "JEPTransPerfMon/JEPTransPerfMonTool" ]
 toolSvc.JEPTransPerfMonTool.BS_JetElementLocation = "JetElements"
-toolSvc.JEPTransPerfMonTool.BS_TriggerTowerLocation = "TriggerTowers"
+#toolSvc.JEPTransPerfMonTool.BS_TriggerTowerLocation = "TriggerTowers"
+toolSvc.JEPTransPerfMonTool.BS_TriggerTowerLocation = "Sim_JetElements"
 toolSvc.JEPTransPerfMonTool.NoLUTSlices=1
 
 toolSvc.JEPTransPerfMonTool.BS_JEMHitsLocation = "JEMHits"
