@@ -5,7 +5,6 @@
 #from AthenaCommon.GlobalFlags  import globalflags
 
 from TrigT1Calo.TrigT1CaloConf import LVL1__CPMTowerMaker
-from TrigT1Calo.TrigT1CaloConf import LVL1__JetElementMaker
 from TrigT1Calo.TrigT1CaloConf import LVL1__EmTauTrigger
 from TrigT1Calo.TrigT1CaloConf import LVL1__JetTrigger
 from TrigT1Calo.TrigT1CaloConf import LVL1__EnergyTrigger
@@ -22,7 +21,6 @@ job = AlgSequence()
 
 # Add the required algorithms to the sequence
 job += LVL1__CPMTowerMaker( 'CPMTowerMaker' )
-job += LVL1__JetElementMaker( 'JetElementMaker' )
 job += LVL1__EmTauTrigger( 'EmTauTrigger' )
 job += LVL1__EnergyTrigger( 'EnergyTrigger' )
 job += LVL1__JetTrigger( 'JetTrigger' )
@@ -42,13 +40,6 @@ job.CPMTowerMaker.TriggerTowerLocation = "TriggerTowers"
 ##output
 job.CPMTowerMaker.CPMTowerLocation = "Sim_CPMTowers"
 ##job.CPMTowerMaker.OutputLevel = DEBUG
-
-# JetElementMaker
-#input (from BS)
-job.JetElementMaker.TriggerTowerLocation ="TriggerTowers"  
-#output
-job.JetElementMaker.JetElementLocation ="Sim_JetElements"
-#job.JetElementMaker.OutputLevel = VERBOSE
 
 # EmTauTrigger
 #input (from BS)

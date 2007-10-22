@@ -126,6 +126,7 @@ protected:
    std::string m_PathInRootFile;   
    std::string m_ErrorPathInRootFile;
 
+   bool m_CompareWithSimulation ;
 
    /** location of data */
 

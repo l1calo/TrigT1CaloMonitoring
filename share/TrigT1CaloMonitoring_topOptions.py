@@ -85,7 +85,7 @@ toolSvc.L1TriggerTowerMonTool.PathInRootFile = "L1Calo/1_PPr"
 toolSvc.L1TriggerTowerMonTool.ErrorPathInRootFile = "L1Calo/01_Errors_PPr"
 toolSvc.L1TriggerTowerMonTool.EventPathInRootFile = "L1Calo"
 toolSvc.L1TriggerTowerMonTool.EventNoInHistoTitle = EventNoInHistoTitle
-toolSvc.L1TriggerTowerMonTool.OutputLevel = DEBUG
+#toolSvc.L1TriggerTowerMonTool.OutputLevel = DEBUG
 
 #---------------------------- Performance Checks -----------------------------------
 L1CaloMan.AthenaMonTools += [ "PPrPerfMon/L1PPrPerfMonTool" ]
@@ -146,7 +146,7 @@ toolSvc.BS_L1CMMMonTool.CMMRoILocation = "CMMRoIs"
 toolSvc.BS_L1CMMMonTool.PathInRootFile = "L1Calo/3_JEP_CMM"
 toolSvc.BS_L1CMMMonTool.ErrorPathInRootFile = "L1Calo/03_Errors_CMM"
 toolSvc.BS_L1CMMMonTool.EventNoInHistoTitle = EventNoInHistoTitle
-toolSvc.BS_L1CMMMonTool.OutputLevel = DEBUG
+#toolSvc.BS_L1CMMMonTool.OutputLevel = DEBUG
 
 L1CaloMan.AthenaMonTools += [ "CMMMon/Sim_L1CMMMonTool" ]
 toolSvc.Sim_L1CMMMonTool.DataType = "Sim"  #BS or Sim data?
@@ -154,7 +154,7 @@ toolSvc.Sim_L1CMMMonTool.CMMJetHitsLocation = "Sim_CMMJetHits"
 toolSvc.Sim_L1CMMMonTool.CMMEtSumsLocation = "Sim_CMMEtSums"
 toolSvc.Sim_L1CMMMonTool.CMMRoILocation = "Sim_CMMRoIs"
 toolSvc.Sim_L1CMMMonTool.PathInRootFile = "L1Calo/Sim/3_JEP_CMM"
-toolSvc.Sim_L1CMMMonTool.OutputLevel = DEBUG
+#toolSvc.Sim_L1CMMMonTool.OutputLevel = DEBUG
 
 #--------------------- Transmission and Performance ------------------------------
 L1CaloMan.AthenaMonTools += [ "JEPTransPerfMon/JEPTransPerfMonTool" ]
@@ -179,7 +179,7 @@ toolSvc.JEPTransPerfMonTool.Sim_CMMRoILocation = "Sim_CMMRoIs"
 
 toolSvc.JEPTransPerfMonTool.PathInRootFile = "L1Calo/3_JEP_TransmissionAndPerformance"
 toolSvc.JEPTransPerfMonTool.EventNoInHistoTitle = EventNoInHistoTitle
-toolSvc.JEPTransPerfMonTool.OutputLevel = VERBOSE
+#toolSvc.JEPTransPerfMonTool.OutputLevel = VERBOSE
 #toolSvc.JEPTransPerfMonTool.OutputLevel = WARNING
 
 #=================================================================================

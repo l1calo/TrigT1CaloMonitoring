@@ -155,6 +155,8 @@ JEPTransPerfMon::JEPTransPerfMon( const std::string & type, const std::string & 
   declareProperty( "Sim_CMMRoILocation", m_Sim_CMMRoILocation =  LVL1::TrigT1CaloDefs::CMMRoILocation) ;
   declareProperty( "EventNoInHistoTitle", m_EventNoInHisto = 1) ;
 
+  declareProperty( "CompareWithSimulation", m_CompareWithSimulation = 1) ;
+
 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/TransAndPerf") ;
   /*
@@ -370,32 +372,34 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
       m_h_usedModules->GetXaxis()->SetBinLabel(3, "SW em");
       m_h_usedModules->GetXaxis()->SetBinLabel(4, "SW had");
 
-  m_h_SimBSMon_JEP=JEM_Booker->book2F("JEP_Calc_Error", "JEP Hardware Output compared to Simulation: Differences", 3,0.5,3.5,37,0.5,37.5, "", "");
-  //m_h_SimBSMon_JEP-> SetOption ("text");
-
-  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(1, "Energy");
-  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(2, "Hits");
-  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(3, "RoI");
-
-  for (int i = 0; i < 16; i++)
-    {
-      buffer.str("");
-      buffer<<i;
-      
-      name = "JEM " + buffer.str();
-      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel((i+1), name.c_str());
-      
-      buffer.str("");
-      buffer<<i;
-      
-      name = "JEM " + buffer.str();
-      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel((i+1+19), name.c_str());
-    }
-      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(17, "CMM");
-      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(18, "Crate 0: ");
-      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(36, "CMM");
-      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(37, "Crate 1: ");
-
+      if (m_CompareWithSimulation ==1)
+	{
+	  m_h_SimBSMon_JEP=JEM_Booker->book2F("JEP_Calc_Error", "JEP Hardware Output compared to Simulation: Differences", 3,0.5,3.5,37,0.5,37.5, "", "");
+	  //m_h_SimBSMon_JEP-> SetOption ("text");
+	  
+	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(1, "Energy");
+	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(2, "Hits");
+	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(3, "RoI");
+	  
+	  for (int i = 0; i < 16; i++)
+	    {
+	      buffer.str("");
+	      buffer<<i;
+	      
+	      name = "JEM " + buffer.str();
+	      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel((i+1), name.c_str());
+	      
+	      buffer.str("");
+	      buffer<<i;
+	      
+	      name = "JEM " + buffer.str();
+	      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel((i+1+19), name.c_str());
+	    }
+	  m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(17, "CMM");
+	  m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(18, "Crate 0: ");
+	  m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(36, "CMM");
+	  m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(37, "Crate 1: ");
+	}
  
       //---------------------------------- Backplane transmission checks -----------------------------
       m_h_TransCheck_JEP=transmission_Booker->book2F("JEP_TransCheck", "JEP Backplane Transmission Check JEM -> CMM per Module and Crate", 2,0.5,2.5,37,0.5,37.5, "", "");
@@ -544,113 +548,115 @@ StatusCode JEPTransPerfMon::fillHistograms()
   // Check	Functionality
   //            JEMJetHits(JEMDAQ.JetElements) = JEMDAQ.JEMJetHits
   // ---------------------------------------------------------------------------------------------
+  if (m_CompareWithSimulation ==1)
+    {
 
-  mLog << MSG::DEBUG << "==== JetElements -> JEM Jet Hits: Functionality ===="<< endreq ;
-
-
-  const JEMHitsCollection* BS_JEMHits;
-  sc = m_storeGate->retrieve(BS_JEMHits, m_BS_JEMHitsLocation);
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      mLog << MSG::INFO << "No JEMHits found in TES at "<< m_BS_JEMHitsLocation << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  
-  const JEMHitsCollection* Sim_JEMHits;
-  sc = m_storeGate->retrieve(Sim_JEMHits, m_Sim_JEMHitsLocation);
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      mLog << MSG::INFO << "No JEMHits found in TES at "<< m_Sim_JEMHitsLocation << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  
-  std::vector <LVL1::JEMHits>  vBS_JEMHits;
-  std::vector <LVL1::JEMHits>  vSim_JEMHits;
-  //use standard vector instead of datavector for transmissioncheck:
-  //datavector erases not only the pointer  in the vector, but also the referenced object
-  //-> segmentation fault!
-  
-  //fill vectors
-  JEMHitsCollection::const_iterator it_JEMHits ;
-  int  foundModule;
-  int noMatchfound;
-
-  for( it_JEMHits  = BS_JEMHits->begin(); it_JEMHits < BS_JEMHits->end(); ++it_JEMHits )
-    {
-      vBS_JEMHits.push_back(**it_JEMHits);	       
-    }   
-  for( it_JEMHits  = Sim_JEMHits->begin(); it_JEMHits < Sim_JEMHits->end(); ++it_JEMHits )
-    {
-      vSim_JEMHits.push_back(**it_JEMHits);	       
-    }   
-  
-  // Step over all cells and compare
-  std::vector <LVL1::JEMHits>::iterator it_BS_JEMHits;
-  std::vector <LVL1::JEMHits>::iterator it_Sim_JEMHits;
-  
-  
-  it_BS_JEMHits=vBS_JEMHits.begin();
-  
-  mLog<<MSG::DEBUG<<"JEMHits Calculation difference for"<<endreq;
-  while (it_BS_JEMHits<vBS_JEMHits.end())
-    {
-      foundModule = 0;
-      noMatchfound=0;
-      it_Sim_JEMHits=vSim_JEMHits.begin();
+      mLog << MSG::DEBUG << "==== JetElements -> JEM Jet Hits: Functionality ===="<< endreq ;
       
-      while ((foundModule==0)and(it_Sim_JEMHits<vSim_JEMHits.end()))
+      
+      const JEMHitsCollection* BS_JEMHits;
+      sc = m_storeGate->retrieve(BS_JEMHits, m_BS_JEMHitsLocation);
+      if( (sc==StatusCode::FAILURE) ) 
 	{
-  
-	  if (((*it_BS_JEMHits).crate()==(*it_Sim_JEMHits).crate())
-	      and((*it_BS_JEMHits).module()==(*it_Sim_JEMHits).module()))
+	  mLog << MSG::INFO << "No JEMHits found in TES at "<< m_BS_JEMHitsLocation << endreq ;
+	  return StatusCode::SUCCESS;
+	}
+      
+      const JEMHitsCollection* Sim_JEMHits;
+      sc = m_storeGate->retrieve(Sim_JEMHits, m_Sim_JEMHitsLocation);
+      if( (sc==StatusCode::FAILURE) ) 
+	{
+	  mLog << MSG::INFO << "No JEMHits found in TES at "<< m_Sim_JEMHitsLocation << endreq ;
+	  return StatusCode::SUCCESS;
+	}
+      
+      std::vector <LVL1::JEMHits>  vBS_JEMHits;
+      std::vector <LVL1::JEMHits>  vSim_JEMHits;
+      //use standard vector instead of datavector for transmissioncheck:
+      //datavector erases not only the pointer  in the vector, but also the referenced object
+      //-> segmentation fault!
+      
+      //fill vectors
+      JEMHitsCollection::const_iterator it_JEMHits ;
+      int  foundModule;
+      int noMatchfound;
+      
+      for( it_JEMHits  = BS_JEMHits->begin(); it_JEMHits < BS_JEMHits->end(); ++it_JEMHits )
+	{
+	  vBS_JEMHits.push_back(**it_JEMHits);	       
+	}   
+      for( it_JEMHits  = Sim_JEMHits->begin(); it_JEMHits < Sim_JEMHits->end(); ++it_JEMHits )
+	{
+	  vSim_JEMHits.push_back(**it_JEMHits);	       
+	}   
+      
+      // Step over all cells and compare
+      std::vector <LVL1::JEMHits>::iterator it_BS_JEMHits;
+      std::vector <LVL1::JEMHits>::iterator it_Sim_JEMHits;
+      
+      
+      it_BS_JEMHits=vBS_JEMHits.begin();
+      
+      mLog<<MSG::DEBUG<<"JEMHits Calculation difference for"<<endreq;
+      while (it_BS_JEMHits<vBS_JEMHits.end())
+	{
+	  foundModule = 0;
+	  noMatchfound=0;
+	  it_Sim_JEMHits=vSim_JEMHits.begin();
+	  
+	  while ((foundModule==0)and(it_Sim_JEMHits<vSim_JEMHits.end()))
 	    {
-	      foundModule=1;
 	      
-		if ((*it_BS_JEMHits).JetHits()!=(*it_Sim_JEMHits).JetHits())
-		  {
-		    mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMHits).crate()<<" Module "<<(*it_BS_JEMHits).module()<<endreq;
-		    mLog<<MSG::VERBOSE<<"BS:  Hits "<<Help->Binary((*it_BS_JEMHits).JetHits(),24)<<endreq;
-		    mLog<<MSG::VERBOSE<<"Sim: Hits "<<Help->Binary((*it_Sim_JEMHits).JetHits(),24)<<endreq;
-		    noMatchfound=1;
-		  }
-		m_h_SimBSMon_JEP->Fill(2,((*it_BS_JEMHits).crate()*19+(*it_BS_JEMHits).module()+1),noMatchfound);
-		
-		vBS_JEMHits.erase(it_BS_JEMHits);
-		vSim_JEMHits.erase(it_Sim_JEMHits);
+	      if (((*it_BS_JEMHits).crate()==(*it_Sim_JEMHits).crate())
+		  and((*it_BS_JEMHits).module()==(*it_Sim_JEMHits).module()))
+		{
+		  foundModule=1;
+		  
+		  if ((*it_BS_JEMHits).JetHits()!=(*it_Sim_JEMHits).JetHits())
+		    {
+		      mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMHits).crate()<<" Module "<<(*it_BS_JEMHits).module()<<endreq;
+		      mLog<<MSG::VERBOSE<<"BS:  Hits "<<Help->Binary((*it_BS_JEMHits).JetHits(),24)<<endreq;
+		      mLog<<MSG::VERBOSE<<"Sim: Hits "<<Help->Binary((*it_Sim_JEMHits).JetHits(),24)<<endreq;
+		      noMatchfound=1;
+		    }
+		  m_h_SimBSMon_JEP->Fill(2,((*it_BS_JEMHits).crate()*19+(*it_BS_JEMHits).module()+1),noMatchfound);
+		  
+		  vBS_JEMHits.erase(it_BS_JEMHits);
+		  vSim_JEMHits.erase(it_Sim_JEMHits);
+		}
+	      else it_Sim_JEMHits=it_Sim_JEMHits+1;
 	    }
-	  else it_Sim_JEMHits=it_Sim_JEMHits+1;
+	  if (foundModule==0)it_BS_JEMHits=it_BS_JEMHits+1;
 	}
-      if (foundModule==0)it_BS_JEMHits=it_BS_JEMHits+1;
-    }
-  
-  if (vBS_JEMHits.size()!=0)
-    {
-      mLog<<MSG::DEBUG<<"JEMHits: additional BS data for"<<endreq;
       
-      //fill errorcounter
-      for( it_BS_JEMHits  = vBS_JEMHits.begin(); it_BS_JEMHits <  vBS_JEMHits. end(); ++it_BS_JEMHits )
+      if (vBS_JEMHits.size()!=0)
 	{
-	  mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_JEMHits).crate()<<" Module "<<(*it_BS_JEMHits).module()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: Hits "<<Help->Binary((*it_BS_JEMHits).JetHits(),24)<<endreq;
+	  mLog<<MSG::DEBUG<<"JEMHits: additional BS data for"<<endreq;
 	  
-	  if ((*it_BS_JEMHits).JetHits()>0) m_h_SimBSMon_JEP->Fill(2,((*it_BS_JEMHits).crate()*19+(*it_BS_JEMHits).module()+1),1);	    
+	  //fill errorcounter
+	  for( it_BS_JEMHits  = vBS_JEMHits.begin(); it_BS_JEMHits <  vBS_JEMHits. end(); ++it_BS_JEMHits )
+	    {
+	      mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_JEMHits).crate()<<" Module "<<(*it_BS_JEMHits).module()<<endreq;
+	      mLog<<MSG::VERBOSE<<"BS: Hits "<<Help->Binary((*it_BS_JEMHits).JetHits(),24)<<endreq;
+	      
+	      if ((*it_BS_JEMHits).JetHits()>0) m_h_SimBSMon_JEP->Fill(2,((*it_BS_JEMHits).crate()*19+(*it_BS_JEMHits).module()+1),1);	    
+	    }
 	}
-    }
-  
-  if (vSim_JEMHits.size()!=0)
-    {
-      mLog<<MSG::DEBUG<<"JEMHits: additional Sim data for"<<endreq;
       
-      //fill errorcounter
-      for( it_Sim_JEMHits  = vSim_JEMHits.begin(); it_Sim_JEMHits <  vSim_JEMHits. end(); ++it_Sim_JEMHits )
+      if (vSim_JEMHits.size()!=0)
 	{
-	  mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_JEMHits).crate()<<" Module "<<(*it_Sim_JEMHits).module()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: Hits "<<Help->Binary((*it_Sim_JEMHits).JetHits(),24)<<endreq;
+	  mLog<<MSG::DEBUG<<"JEMHits: additional Sim data for"<<endreq;
 	  
-	  //m_h_SimBSMon_JEP->Fill(2,((*it_Sim_JEMHits).crate()*19+(*it_Sim_JEMHits).module()+1),1);	    
+	  //fill errorcounter
+	  for( it_Sim_JEMHits  = vSim_JEMHits.begin(); it_Sim_JEMHits <  vSim_JEMHits. end(); ++it_Sim_JEMHits )
+	    {
+	      mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_JEMHits).crate()<<" Module "<<(*it_Sim_JEMHits).module()<<endreq;
+	      mLog<<MSG::VERBOSE<<"Sim: Hits "<<Help->Binary((*it_Sim_JEMHits).JetHits(),24)<<endreq;
+	      
+	      //m_h_SimBSMon_JEP->Fill(2,((*it_Sim_JEMHits).crate()*19+(*it_Sim_JEMHits).module()+1),1);	    
+	    }
 	}
     }
-  
 
   // =============================================================================================
   // ================= JetElements -> JEM Energy Sums ============================================
@@ -660,146 +666,149 @@ StatusCode JEPTransPerfMon::fillHistograms()
   // Check	Functionality
   //            JEMEnergySums(JEMDAQ.JetElements) = JEMDAQ.JEMEnergySums
   // ---------------------------------------------------------------------------------------------
-
-  mLog << MSG::DEBUG << "==== JetElements -> JEM Energy Sums: Functionality ===="<< endreq ;
-
-  // retrieve JEMEtSums information from simulation and bytestream... 
-  const JEMEtSumsCollection* BS_JEMEtSums;
-  sc = m_storeGate->retrieve(BS_JEMEtSums, m_BS_JEMEtSumsLocation);
-  if( (sc==StatusCode::FAILURE) ) 
+  if (m_CompareWithSimulation ==1)
     {
-      mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_BS_JEMEtSumsLocation << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  const JEMEtSumsCollection* Sim_JEMEtSums;
-  sc = m_storeGate->retrieve(Sim_JEMEtSums, m_Sim_JEMEtSumsLocation);
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_Sim_JEMEtSumsLocation << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  
-  // compare simulation-vector with bytestream-vector, erase corresponding entries
-  // -> the remaining vectors contain faulty transmissions! 
-  // use standard vector instead of datavector for transmissioncheck:
-  // datavector erases not only the pointer  in the vector, but also the referenced object
-  // -> segmentation fault!
-  std::vector <LVL1::JEMEtSums>  vBS_JEMEtSums;
-  std::vector <LVL1::JEMEtSums>  vSim_JEMEtSums;
-  
-  //fill vectors with simulation and bytestream data
-  JEMEtSumsCollection::const_iterator it_JEMEtSums ;
-  for( it_JEMEtSums  = BS_JEMEtSums->begin(); it_JEMEtSums < BS_JEMEtSums->end(); ++it_JEMEtSums )
-    {
-      vBS_JEMEtSums.push_back(**it_JEMEtSums);	       
-    }   
-  for( it_JEMEtSums  = Sim_JEMEtSums->begin(); it_JEMEtSums < Sim_JEMEtSums->end(); ++it_JEMEtSums )
-    {
-      vSim_JEMEtSums.push_back(**it_JEMEtSums);	       
-    }   
-  
-  // Step over all cells and compare
-  //bool foundModule;
-  //int noMatchfound = 0; // used to fill: "0" if a match is found; "1" if no match is found
-  std::vector <LVL1::JEMEtSums>::iterator it_BS_JEMEtSums;
-  std::vector <LVL1::JEMEtSums>::iterator it_Sim_JEMEtSums;
-  
-  it_BS_JEMEtSums=vBS_JEMEtSums.begin();
-  
-  mLog<<MSG::DEBUG<<"JEMEtSums Calculation difference for"<<endreq;  
-  while (it_BS_JEMEtSums<vBS_JEMEtSums.end())
-    {
-      foundModule = 0;
-      it_Sim_JEMEtSums=vSim_JEMEtSums.begin();
       
-      while ((foundModule==0)and(it_Sim_JEMEtSums<vSim_JEMEtSums.end()))
-	{	  	  
-	  if (((*it_BS_JEMEtSums).crate()==(*it_Sim_JEMEtSums).crate())
-	      and((*it_BS_JEMEtSums).module()==(*it_Sim_JEMEtSums).module()))
-	    {
-	      foundModule=1;
-	      noMatchfound = 0;
-	      
-	      if ((*it_BS_JEMEtSums).crate()==0)
+      mLog << MSG::DEBUG << "==== JetElements -> JEM Energy Sums: Functionality ===="<< endreq ;
+      
+      // retrieve JEMEtSums information from simulation and bytestream... 
+      const JEMEtSumsCollection* BS_JEMEtSums;
+      sc = m_storeGate->retrieve(BS_JEMEtSums, m_BS_JEMEtSumsLocation);
+      if( (sc==StatusCode::FAILURE) ) 
+	{
+	  mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_BS_JEMEtSumsLocation << endreq ;
+	  return StatusCode::SUCCESS;
+	}
+      const JEMEtSumsCollection* Sim_JEMEtSums;
+      sc = m_storeGate->retrieve(Sim_JEMEtSums, m_Sim_JEMEtSumsLocation);
+      if( (sc==StatusCode::FAILURE) ) 
+	{
+	  mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_Sim_JEMEtSumsLocation << endreq ;
+	  return StatusCode::SUCCESS;
+	}
+      
+      // compare simulation-vector with bytestream-vector, erase corresponding entries
+      // -> the remaining vectors contain faulty transmissions! 
+      // use standard vector instead of datavector for transmissioncheck:
+      // datavector erases not only the pointer  in the vector, but also the referenced object
+      // -> segmentation fault!
+      std::vector <LVL1::JEMEtSums>  vBS_JEMEtSums;
+      std::vector <LVL1::JEMEtSums>  vSim_JEMEtSums;
+      
+      //fill vectors with simulation and bytestream data
+      JEMEtSumsCollection::const_iterator it_JEMEtSums ;
+      for( it_JEMEtSums  = BS_JEMEtSums->begin(); it_JEMEtSums < BS_JEMEtSums->end(); ++it_JEMEtSums )
+	{
+	  vBS_JEMEtSums.push_back(**it_JEMEtSums);	       
+	}   
+      for( it_JEMEtSums  = Sim_JEMEtSums->begin(); it_JEMEtSums < Sim_JEMEtSums->end(); ++it_JEMEtSums )
+	{
+	  vSim_JEMEtSums.push_back(**it_JEMEtSums);	       
+	}   
+      
+      // Step over all cells and compare
+      //bool foundModule;
+      //int noMatchfound = 0; // used to fill: "0" if a match is found; "1" if no match is found
+      std::vector <LVL1::JEMEtSums>::iterator it_BS_JEMEtSums;
+      std::vector <LVL1::JEMEtSums>::iterator it_Sim_JEMEtSums;
+      int  foundModule;
+      int noMatchfound;
+
+      it_BS_JEMEtSums=vBS_JEMEtSums.begin();
+      
+      mLog<<MSG::DEBUG<<"JEMEtSums Calculation difference for"<<endreq;  
+      while (it_BS_JEMEtSums<vBS_JEMEtSums.end())
+	{
+	  foundModule = 0;
+	  it_Sim_JEMEtSums=vSim_JEMEtSums.begin();
+	  
+	  while ((foundModule==0)and(it_Sim_JEMEtSums<vSim_JEMEtSums.end()))
+	    {	  	  
+	      if (((*it_BS_JEMEtSums).crate()==(*it_Sim_JEMEtSums).crate())
+		  and((*it_BS_JEMEtSums).module()==(*it_Sim_JEMEtSums).module()))
 		{
-		  if (((*it_BS_JEMEtSums).Ex()!=(*it_Sim_JEMEtSums).Ex())
-		      or ((*it_BS_JEMEtSums).Ey()!=(*it_Sim_JEMEtSums).Ey())
-		      or ((*it_BS_JEMEtSums).Et()!=(*it_Sim_JEMEtSums).Et()))
+		  foundModule=1;
+		  noMatchfound = 0;
+		  
+		  if ((*it_BS_JEMEtSums).crate()==0)
 		    {
-		      ;
-		      mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMEtSums).crate()<<" Module "<<(*it_BS_JEMEtSums).module()<<endreq;
-		      mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_JEMEtSums).Ex()<<endreq;
-		      mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_JEMEtSums).Ey()<<endreq;
-		      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums).Et()<<endreq;
-		      
-		      mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_JEMEtSums).Ex()<<endreq;
-		      mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums).Ey()<<endreq;
-		      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums).Et()<<endreq;
-		      
-		      noMatchfound = 1;
+		      if (((*it_BS_JEMEtSums).Ex()!=(*it_Sim_JEMEtSums).Ex())
+			  or ((*it_BS_JEMEtSums).Ey()!=(*it_Sim_JEMEtSums).Ey())
+			  or ((*it_BS_JEMEtSums).Et()!=(*it_Sim_JEMEtSums).Et()))
+			{
+			  mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMEtSums).crate()<<" Module "<<(*it_BS_JEMEtSums).module()<<endreq;
+			  mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_JEMEtSums).Ex()<<endreq;
+			  mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_JEMEtSums).Ey()<<endreq;
+			  mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums).Et()<<endreq;
+			  
+			  mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_JEMEtSums).Ex()<<endreq;
+			  mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums).Ey()<<endreq;
+			  mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums).Et()<<endreq;
+			  
+			  noMatchfound = 1;
+			}
 		    }
-		}
-	      else
-		{
-		  if (((*it_BS_JEMEtSums).Ex()!=(*it_Sim_JEMEtSums).Ey())
-		      or ((*it_BS_JEMEtSums).Ey()!=(*it_Sim_JEMEtSums).Ex())
-		      or ((*it_BS_JEMEtSums).Et()!=(*it_Sim_JEMEtSums).Et()))
+		  else
 		    {
-		      ;
-		      mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMEtSums).crate()<<" Module "<<(*it_BS_JEMEtSums).module()<<endreq;
-		      mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_JEMEtSums).Ex()<<endreq;
-		      mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_JEMEtSums).Ey()<<endreq;
-		      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums).Et()<<endreq;
-		      
-		      mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_JEMEtSums).Ex()<<endreq;
-		      mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums).Ey()<<endreq;
-		      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums).Et()<<endreq;
-		      
-		      noMatchfound = 1;
+		      if (((*it_BS_JEMEtSums).Ex()!=(*it_Sim_JEMEtSums).Ey())
+			  or ((*it_BS_JEMEtSums).Ey()!=(*it_Sim_JEMEtSums).Ex())
+			  or ((*it_BS_JEMEtSums).Et()!=(*it_Sim_JEMEtSums).Et()))
+			{
+			  ;
+			  mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMEtSums).crate()<<" Module "<<(*it_BS_JEMEtSums).module()<<endreq;
+			  mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_JEMEtSums).Ex()<<endreq;
+			  mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_JEMEtSums).Ey()<<endreq;
+			  mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums).Et()<<endreq;
+			  
+			  mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_JEMEtSums).Ex()<<endreq;
+			  mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums).Ey()<<endreq;
+			  mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums).Et()<<endreq;
+			  
+			  noMatchfound = 1;
+			}
 		    }
+		  m_h_SimBSMon_JEP->Fill(1,(*it_BS_JEMEtSums).crate()*19 + ((*it_BS_JEMEtSums).module()+1),noMatchfound);
+		  
+		  vBS_JEMEtSums.erase(it_BS_JEMEtSums);
+		  vSim_JEMEtSums.erase(it_Sim_JEMEtSums);
 		}
-	      m_h_SimBSMon_JEP->Fill(1,(*it_BS_JEMEtSums).crate()*19 + ((*it_BS_JEMEtSums).module()+1),noMatchfound);
-	      
-	      vBS_JEMEtSums.erase(it_BS_JEMEtSums);
-	      vSim_JEMEtSums.erase(it_Sim_JEMEtSums);
+	      else it_Sim_JEMEtSums=it_Sim_JEMEtSums+1;
 	    }
-	  else it_Sim_JEMEtSums=it_Sim_JEMEtSums+1;
+	  if (foundModule==0)it_BS_JEMEtSums=it_BS_JEMEtSums+1;
 	}
-      if (foundModule==0)it_BS_JEMEtSums=it_BS_JEMEtSums+1;
-    }
-  
-  if (vBS_JEMEtSums.size()!=0)
-    {
-      mLog<<MSG::DEBUG<<"JEMEtSums: additional BS data for"<<endreq;
       
-      //fill errorcounter
-      for( it_BS_JEMEtSums  = vBS_JEMEtSums.begin(); it_BS_JEMEtSums <  vBS_JEMEtSums. end(); ++it_BS_JEMEtSums )
+      if (vBS_JEMEtSums.size()!=0)
 	{
-	  mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_JEMEtSums).crate()<<" Module "<<(*it_BS_JEMEtSums).module()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_JEMEtSums).Ex()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_JEMEtSums).Ey()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums).Et()<<endreq;
+	  mLog<<MSG::DEBUG<<"JEMEtSums: additional BS data for"<<endreq;
 	  
-	  m_h_SimBSMon_JEP->Fill(1,(*it_BS_JEMEtSums).crate()*19 + ((*it_BS_JEMEtSums).module()+1),1);	  
+	  //fill errorcounter
+	  for( it_BS_JEMEtSums  = vBS_JEMEtSums.begin(); it_BS_JEMEtSums <  vBS_JEMEtSums. end(); ++it_BS_JEMEtSums )
+	    {
+	      mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_JEMEtSums).crate()<<" Module "<<(*it_BS_JEMEtSums).module()<<endreq;
+	      mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_JEMEtSums).Ex()<<endreq;
+	      mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_JEMEtSums).Ey()<<endreq;
+	      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums).Et()<<endreq;
+	      
+	      m_h_SimBSMon_JEP->Fill(1,(*it_BS_JEMEtSums).crate()*19 + ((*it_BS_JEMEtSums).module()+1),1);	  
+	    }
+	}
+      
+      if (vSim_JEMEtSums.size()!=0)
+	{
+	  mLog<<MSG::DEBUG<<"JEMEtSums: additional Sim data for"<<endreq;
+	  
+	  //fill errorcounter
+	  for( it_Sim_JEMEtSums  = vSim_JEMEtSums.begin(); it_Sim_JEMEtSums <  vSim_JEMEtSums. end(); ++it_Sim_JEMEtSums )
+	    {
+	      mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_JEMEtSums).crate()<<" Module "<<(*it_Sim_JEMEtSums).module()<<endreq;
+	      mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_JEMEtSums).Ex()<<endreq;
+	      mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums).Ey()<<endreq;
+	      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums).Et()<<endreq;
+	      
+	      //m_h_SimBSMon_JEP->Fill(1,(*it_Sim_JEMEtSums).crate()*19 + ((*it_Sim_JEMEtSums).module()+1),1);
+	    }
 	}
     }
-  
-  if (vSim_JEMEtSums.size()!=0)
-    {
-      mLog<<MSG::DEBUG<<"JEMEtSums: additional Sim data for"<<endreq;
-
-      //fill errorcounter
-      for( it_Sim_JEMEtSums  = vSim_JEMEtSums.begin(); it_Sim_JEMEtSums <  vSim_JEMEtSums. end(); ++it_Sim_JEMEtSums )
-	{
-	  mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_JEMEtSums).crate()<<" Module "<<(*it_Sim_JEMEtSums).module()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_JEMEtSums).Ex()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums).Ey()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums).Et()<<endreq;
-	  
-	  //m_h_SimBSMon_JEP->Fill(1,(*it_Sim_JEMEtSums).crate()*19 + ((*it_Sim_JEMEtSums).module()+1),1);
-	}
-    }
-  
   
 
   // =============================================================================================
@@ -825,7 +834,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
           
   //retrieve JEMHits from storegate for comparison with transmitted data stored in CMMJetHits
   const JEMHitsCollection* JEMHits;
-  //JEMHitsCollection::const_iterator it_JEMHits ;
+  JEMHitsCollection::const_iterator it_JEMHits ;
   sc = m_storeGate->retrieve(JEMHits, m_BS_JEMHitsLocation); 
   if( (sc==StatusCode::FAILURE) ) 
     {
@@ -874,6 +883,8 @@ StatusCode JEPTransPerfMon::fillHistograms()
   std::vector <LVL1::CMMJetHits>::iterator it_vCMMJEMHits;
   std::vector <LVL1::JEMHits>::iterator it_vJEMHits;
   //int noMatchfound;
+  //int  foundModule;
+  int noMatchfound;
 
   //---------------------------------- backplane transmission JEMs -> CMM -----------------------------
   it_vCMMJEMHits=vCMMJEMHits.begin();
@@ -945,115 +956,119 @@ StatusCode JEPTransPerfMon::fillHistograms()
   // Check	Functionality
   //            CMMJetHits(JEMDAQ.JEMJetHits) = (Crate/System)CMMJetDAQ.CrateCMMJetHits
   // ---------------------------------------------------------------------------------------------
-
-  mLog << MSG::DEBUG << "==== JEM Jet Hits -> (Crate/System) CMM Jet Hits: Functionality ===="<< endreq ;
-
-  const CMMJetHitsCollection* BS_CMMJetHits;
-  sc = m_storeGate->retrieve(BS_CMMJetHits, m_BS_CMMJetHitsLocation);
-  if( (sc==StatusCode::FAILURE) ) 
+  if (m_CompareWithSimulation ==1)
     {
-      mLog << MSG::INFO << "No CMMJetHits found in TES at "<< m_BS_CMMJetHitsLocation << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  
-  const CMMJetHitsCollection* Sim_CMMJetHits;
-  sc = m_storeGate->retrieve(Sim_CMMJetHits, m_Sim_CMMJetHitsLocation);
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      mLog << MSG::INFO << "No CMMJetHits found in TES at "<< m_Sim_CMMJetHitsLocation << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  
-  std::vector <LVL1::CMMJetHits>  vBS_CMMJetHits;
-  std::vector <LVL1::CMMJetHits>  vSim_CMMJetHits;
-  //use standard vector instead of datavector for transmissioncheck:
-  //datavector erases not only the pointer  in the vector, but also the referenced object
-  //-> segmentation fault!
-  
-  //fill vectors
-  //CMMJetHitsCollection::const_iterator it_CMMJetHits ;
-  
-  for( it_CMMJetHits  = BS_CMMJetHits->begin(); it_CMMJetHits < BS_CMMJetHits->end(); ++it_CMMJetHits )
-    {
-      if ((*it_CMMJetHits)->dataID()>15)
-	{
-	  vBS_CMMJetHits.push_back(**it_CMMJetHits);	       
-	}
-    }   
-  for( it_CMMJetHits  = Sim_CMMJetHits->begin(); it_CMMJetHits < Sim_CMMJetHits->end(); ++it_CMMJetHits )
-    {
-      if ((*it_CMMJetHits)->dataID()>15)
-	{
-	  vSim_CMMJetHits.push_back(**it_CMMJetHits);	
-	}       
-    }   
-  
-  // Step over all cells and compare
-  std::vector <LVL1::CMMJetHits>::iterator it_BS_CMMJetHits;
-  std::vector <LVL1::CMMJetHits>::iterator it_Sim_CMMJetHits;
-  
-  it_BS_CMMJetHits=vBS_CMMJetHits.begin();
-  
-  mLog<<MSG::DEBUG<<"CMMJetHits Calculation difference for"<<endreq;
-  while (it_BS_CMMJetHits<vBS_CMMJetHits.end())
-    {
-      foundModule = 0;
-      noMatchfound=0;
-      it_Sim_CMMJetHits=vSim_CMMJetHits.begin();
       
-      while ((foundModule==0)and(it_Sim_CMMJetHits<vSim_CMMJetHits.end()))
+      mLog << MSG::DEBUG << "==== JEM Jet Hits -> (Crate/System) CMM Jet Hits: Functionality ===="<< endreq ;
+      
+      const CMMJetHitsCollection* BS_CMMJetHits;
+      sc = m_storeGate->retrieve(BS_CMMJetHits, m_BS_CMMJetHitsLocation);
+      if( (sc==StatusCode::FAILURE) ) 
 	{
-	  if (((*it_BS_CMMJetHits).crate()==(*it_Sim_CMMJetHits).crate())
-	      and((*it_BS_CMMJetHits).dataID()==(*it_Sim_CMMJetHits).dataID()))
+	  mLog << MSG::INFO << "No CMMJetHits found in TES at "<< m_BS_CMMJetHitsLocation << endreq ;
+	  return StatusCode::SUCCESS;
+	}
+      
+      const CMMJetHitsCollection* Sim_CMMJetHits;
+      sc = m_storeGate->retrieve(Sim_CMMJetHits, m_Sim_CMMJetHitsLocation);
+      if( (sc==StatusCode::FAILURE) ) 
+	{
+	  mLog << MSG::INFO << "No CMMJetHits found in TES at "<< m_Sim_CMMJetHitsLocation << endreq ;
+	  return StatusCode::SUCCESS;
+	}
+      
+      std::vector <LVL1::CMMJetHits>  vBS_CMMJetHits;
+      std::vector <LVL1::CMMJetHits>  vSim_CMMJetHits;
+      //use standard vector instead of datavector for transmissioncheck:
+      //datavector erases not only the pointer  in the vector, but also the referenced object
+      //-> segmentation fault!
+      
+      //fill vectors
+      //CMMJetHitsCollection::const_iterator it_CMMJetHits ;
+      
+      for( it_CMMJetHits  = BS_CMMJetHits->begin(); it_CMMJetHits < BS_CMMJetHits->end(); ++it_CMMJetHits )
+	{
+	  if ((*it_CMMJetHits)->dataID()>15)
 	    {
-	      foundModule=1;
-	      
-	      if ((*it_BS_CMMJetHits).Hits()!=(*it_Sim_CMMJetHits).Hits())
-		{
-		  mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_CMMJetHits).crate()<<" DataId "<<(*it_BS_CMMJetHits).dataID()<<endreq;
-		  mLog<<MSG::VERBOSE<<"BS: Hits"<<Help->Binary((*it_BS_CMMJetHits).Hits(),24)<<endreq;
-		  mLog<<MSG::VERBOSE<<"Sim: Hits"<<Help->Binary((*it_Sim_CMMJetHits).Hits(),24)<<endreq;
-		  
-		  noMatchfound=1;
-		}
-	      m_h_SimBSMon_JEP->Fill(2,((*it_BS_CMMJetHits).crate()*19+16+1),noMatchfound);
-	      
-	      vBS_CMMJetHits.erase(it_BS_CMMJetHits);
-	      vSim_CMMJetHits.erase(it_Sim_CMMJetHits);
+	      vBS_CMMJetHits.push_back(**it_CMMJetHits);	       
 	    }
-	  else it_Sim_CMMJetHits=it_Sim_CMMJetHits+1;
-	}
-      if (foundModule==0)it_BS_CMMJetHits=it_BS_CMMJetHits+1;
-    }
-  
-  if (vBS_CMMJetHits.size()!=0)
-    {
-      mLog<<MSG::DEBUG<<"CMMJetHits: additional BS data for"<<endreq;
-      
-      //fill errorcounter
-      for( it_BS_CMMJetHits  = vBS_CMMJetHits.begin(); it_BS_CMMJetHits <  vBS_CMMJetHits. end(); ++it_BS_CMMJetHits )
+	}   
+      for( it_CMMJetHits  = Sim_CMMJetHits->begin(); it_CMMJetHits < Sim_CMMJetHits->end(); ++it_CMMJetHits )
 	{
-	  mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_CMMJetHits).crate()<<" DataId "<<(*it_BS_CMMJetHits).dataID()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: Hits"<<Help->Binary((*it_BS_CMMJetHits).Hits(),24)<<endreq;
-	  
-	  m_h_SimBSMon_JEP->Fill(2,((*it_BS_CMMJetHits).crate()*19+16+1),1);
-	}
-    }
-  
-  if (vSim_CMMJetHits.size()!=0)
-    {
-      mLog<<MSG::DEBUG<<"CMMJetHits: additional Sim data "<<endreq;
+	  if ((*it_CMMJetHits)->dataID()>15)
+	    {
+	      vSim_CMMJetHits.push_back(**it_CMMJetHits);	
+	    }       
+	}   
       
-      //fill errorcounter
-      for( it_Sim_CMMJetHits  = vSim_CMMJetHits.begin(); it_Sim_CMMJetHits <  vSim_CMMJetHits. end(); ++it_Sim_CMMJetHits )
+      // Step over all cells and compare
+      std::vector <LVL1::CMMJetHits>::iterator it_BS_CMMJetHits;
+      std::vector <LVL1::CMMJetHits>::iterator it_Sim_CMMJetHits;
+      int  foundModule;
+      int noMatchfound;
+      
+      it_BS_CMMJetHits=vBS_CMMJetHits.begin();
+      
+      mLog<<MSG::DEBUG<<"CMMJetHits Calculation difference for"<<endreq;
+      while (it_BS_CMMJetHits<vBS_CMMJetHits.end())
 	{
-	  mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_CMMJetHits).crate()<<" DataId "<<(*it_Sim_CMMJetHits).dataID()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: Hits"<<Help->Binary((*it_Sim_CMMJetHits).Hits(),24)<<endreq;
+	  foundModule = 0;
+	  noMatchfound=0;
+	  it_Sim_CMMJetHits=vSim_CMMJetHits.begin();
 	  
-	  m_h_SimBSMon_JEP->Fill(2,((*it_Sim_CMMJetHits).crate()*19+16+1),1);
+	  while ((foundModule==0)and(it_Sim_CMMJetHits<vSim_CMMJetHits.end()))
+	    {
+	      if (((*it_BS_CMMJetHits).crate()==(*it_Sim_CMMJetHits).crate())
+		  and((*it_BS_CMMJetHits).dataID()==(*it_Sim_CMMJetHits).dataID()))
+		{
+		  foundModule=1;
+		  
+		  if ((*it_BS_CMMJetHits).Hits()!=(*it_Sim_CMMJetHits).Hits())
+		    {
+		      mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_CMMJetHits).crate()<<" DataId "<<(*it_BS_CMMJetHits).dataID()<<endreq;
+		      mLog<<MSG::VERBOSE<<"BS: Hits"<<Help->Binary((*it_BS_CMMJetHits).Hits(),24)<<endreq;
+		      mLog<<MSG::VERBOSE<<"Sim: Hits"<<Help->Binary((*it_Sim_CMMJetHits).Hits(),24)<<endreq;
+		      
+		      noMatchfound=1;
+		    }
+		  m_h_SimBSMon_JEP->Fill(2,((*it_BS_CMMJetHits).crate()*19+16+1),noMatchfound);
+		  
+		  vBS_CMMJetHits.erase(it_BS_CMMJetHits);
+		  vSim_CMMJetHits.erase(it_Sim_CMMJetHits);
+		}
+	      else it_Sim_CMMJetHits=it_Sim_CMMJetHits+1;
+	    }
+	  if (foundModule==0)it_BS_CMMJetHits=it_BS_CMMJetHits+1;
+	}
+      
+      if (vBS_CMMJetHits.size()!=0)
+	{
+	  mLog<<MSG::DEBUG<<"CMMJetHits: additional BS data for"<<endreq;
+	  
+	  //fill errorcounter
+	  for( it_BS_CMMJetHits  = vBS_CMMJetHits.begin(); it_BS_CMMJetHits <  vBS_CMMJetHits. end(); ++it_BS_CMMJetHits )
+	    {
+	      mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_CMMJetHits).crate()<<" DataId "<<(*it_BS_CMMJetHits).dataID()<<endreq;
+	      mLog<<MSG::VERBOSE<<"BS: Hits"<<Help->Binary((*it_BS_CMMJetHits).Hits(),24)<<endreq;
+	      
+	      m_h_SimBSMon_JEP->Fill(2,((*it_BS_CMMJetHits).crate()*19+16+1),1);
+	    }
+	}
+      
+      if (vSim_CMMJetHits.size()!=0)
+	{
+	  mLog<<MSG::DEBUG<<"CMMJetHits: additional Sim data "<<endreq;
+	  
+	  //fill errorcounter
+	  for( it_Sim_CMMJetHits  = vSim_CMMJetHits.begin(); it_Sim_CMMJetHits <  vSim_CMMJetHits. end(); ++it_Sim_CMMJetHits )
+	    {
+	      mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_CMMJetHits).crate()<<" DataId "<<(*it_Sim_CMMJetHits).dataID()<<endreq;
+	      mLog<<MSG::VERBOSE<<"Sim: Hits"<<Help->Binary((*it_Sim_CMMJetHits).Hits(),24)<<endreq;
+	      
+	      m_h_SimBSMon_JEP->Fill(2,((*it_Sim_CMMJetHits).crate()*19+16+1),1);
+	    }
 	}
     }
-  
   
   // =============================================================================================
   // ================= JEMEnergySums -> (Crate/System) CMM Energy Sums ===========================
@@ -1078,13 +1093,15 @@ StatusCode JEPTransPerfMon::fillHistograms()
   CMMEtSumsCollection::const_iterator it_CMMEtSums ;
   
   const JEMEtSumsCollection* JEMEtSums;
-  //JEMEtSumsCollection::const_iterator it_JEMEtSums ;
+  JEMEtSumsCollection::const_iterator it_JEMEtSums ;
   sc = m_storeGate->retrieve(JEMEtSums, m_BS_JEMEtSumsLocation);
   if( (sc==StatusCode::FAILURE) ) 
     {
       mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_BS_JEMEtSumsLocation << endreq ;
       return StatusCode::SUCCESS;
     }
+  //int  foundModule;
+  //int noMatchfound;
   
   // compare JEMHits-vector with CMMJEMHits-vector, erase corresponding entries
   // -> the remaining vectors contain faulty transmissions! 
@@ -1205,128 +1222,131 @@ StatusCode JEPTransPerfMon::fillHistograms()
   // Check	Functionality
   //            CMMEnergySums(JEMDAQ.JEMEnergySums) = (Crate/System)CMMEnergyDAQ.CrateCMMEnergySums
   // ---------------------------------------------------------------------------------------------
-  
-  mLog << MSG::DEBUG << "==== JEMEnergySums -> (Crate/System) CMM Energy Sums: Functionality ===="<< endreq ;
+    if (m_CompareWithSimulation ==1)
+    {
 
-  const CMMEtSumsCollection* BS_CMMEtSums;
-  sc = m_storeGate->retrieve(BS_CMMEtSums, m_BS_CMMEtSumsLocation);
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      mLog << MSG::INFO << "No CMMEtSums found in TES at "<< m_BS_CMMEtSumsLocation << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  
-  const CMMEtSumsCollection* Sim_CMMEtSums;
-  sc = m_storeGate->retrieve(Sim_CMMEtSums, m_Sim_CMMEtSumsLocation);
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      mLog << MSG::INFO << "No CMMEtSums found in TES at "<< m_Sim_CMMEtSumsLocation << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  
-  std::vector <LVL1::CMMEtSums>  vBS_CMMEtSums;
-  std::vector <LVL1::CMMEtSums>  vSim_CMMEtSums;
-  //use standard vector instead of datavector for transmissioncheck:
-  //datavector erases not only the pointer  in the vector, but also the referenced object
-  //-> segmentation fault!
-  
-  //fill vectors
-  //CMMEtSumsCollection::const_iterator it_CMMEtSums ;
-  
-  for( it_CMMEtSums  = BS_CMMEtSums->begin(); it_CMMEtSums < BS_CMMEtSums->end(); ++it_CMMEtSums )
-    {
-      if ((*it_CMMEtSums)->dataID()>15)
-	{
-	  vBS_CMMEtSums.push_back(**it_CMMEtSums);	       
-	}
-    }   
-  for( it_CMMEtSums  = Sim_CMMEtSums->begin(); it_CMMEtSums < Sim_CMMEtSums->end(); ++it_CMMEtSums )
-    {
-      if ((*it_CMMEtSums)->dataID()>15)
-	{
-	  vSim_CMMEtSums.push_back(**it_CMMEtSums);	
-	}       
-    }   
-  
-  // Step over all cells and compare
-  std::vector <LVL1::CMMEtSums>::iterator it_BS_CMMEtSums;
-  std::vector <LVL1::CMMEtSums>::iterator it_Sim_CMMEtSums;
-  
-  it_BS_CMMEtSums=vBS_CMMEtSums.begin();
-  
-  mLog<<MSG::DEBUG<<"CMMEtSums Calculation difference for"<<endreq;
-  while (it_BS_CMMEtSums<vBS_CMMEtSums.end())
-      {
-	foundModule = 0;
-	noMatchfound=0;
-	it_Sim_CMMEtSums=vSim_CMMEtSums.begin();
-	
-	while ((foundModule==0)and(it_Sim_CMMEtSums<vSim_CMMEtSums.end()))
-	  {
-	    if (((*it_BS_CMMEtSums).crate()==(*it_Sim_CMMEtSums).crate())
-		and((*it_BS_CMMEtSums).dataID()==(*it_Sim_CMMEtSums).dataID()))
-	      {
-		foundModule=1;
-		
-		if (((*it_BS_CMMEtSums).Ex()!=(*it_Sim_CMMEtSums).Ex())
-		    or ((*it_BS_CMMEtSums).Ey()!=(*it_Sim_CMMEtSums).Ey())
-		    or ((*it_BS_CMMEtSums).Et()!=(*it_Sim_CMMEtSums).Et()))
-		  {
-		    mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_CMMEtSums).crate()<<" DataId "<<(*it_BS_CMMEtSums).dataID()<<endreq;
-		    mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_CMMEtSums).Ex()<<endreq;
-		    mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_CMMEtSums).Ey()<<endreq;
-		    mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_CMMEtSums).Et()<<endreq;
-		    
-		    mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_CMMEtSums).Ex()<<endreq;
-		    mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_CMMEtSums).Ey()<<endreq;
-		    mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_CMMEtSums).Et()<<endreq;
-		    
-		    noMatchfound=1;    
-		  }
-		m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums).crate()*19 + 16 + 1,noMatchfound);
-		
-		vBS_CMMEtSums.erase(it_BS_CMMEtSums);
-		vSim_CMMEtSums.erase(it_Sim_CMMEtSums);
-	      }
-	    else it_Sim_CMMEtSums=it_Sim_CMMEtSums+1;
-	  }
-	if (foundModule==0)it_BS_CMMEtSums=it_BS_CMMEtSums+1;
-      }
-  
-  if (vBS_CMMEtSums.size()!=0)
-    {
-      mLog<<MSG::DEBUG<<"CMMEtSums: additional BS data for"<<endreq;
+      mLog << MSG::DEBUG << "==== JEMEnergySums -> (Crate/System) CMM Energy Sums: Functionality ===="<< endreq ;
       
-      //fill errorcounter
-      for( it_BS_CMMEtSums  = vBS_CMMEtSums.begin(); it_BS_CMMEtSums <  vBS_CMMEtSums. end(); ++it_BS_CMMEtSums )
+      const CMMEtSumsCollection* BS_CMMEtSums;
+      sc = m_storeGate->retrieve(BS_CMMEtSums, m_BS_CMMEtSumsLocation);
+      if( (sc==StatusCode::FAILURE) ) 
 	{
-	  mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_CMMEtSums).crate()<<" DataId "<<(*it_BS_CMMEtSums).dataID()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_CMMEtSums).Ex()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_CMMEtSums).Ey()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_CMMEtSums).Et()<<endreq;
-	  
-	  m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums).crate()*19 + 16 + 1,1);
-	  
+	  mLog << MSG::INFO << "No CMMEtSums found in TES at "<< m_BS_CMMEtSumsLocation << endreq ;
+	  return StatusCode::SUCCESS;
 	}
-    }
-  
-  if (vSim_CMMEtSums.size()!=0)
-    {
-      mLog<<MSG::DEBUG<<"CMMEtSums: additional Sim data for"<<endreq;
       
-      //fill errorcounter
-      for( it_Sim_CMMEtSums  = vSim_CMMEtSums.begin(); it_Sim_CMMEtSums <  vSim_CMMEtSums. end(); ++it_Sim_CMMEtSums )
+      const CMMEtSumsCollection* Sim_CMMEtSums;
+      sc = m_storeGate->retrieve(Sim_CMMEtSums, m_Sim_CMMEtSumsLocation);
+      if( (sc==StatusCode::FAILURE) ) 
 	{
-	  mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_CMMEtSums).crate()<<" DataId "<<(*it_Sim_CMMEtSums).dataID()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_CMMEtSums).Ex()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_CMMEtSums).Ey()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_CMMEtSums).Et()<<endreq;
+	  mLog << MSG::INFO << "No CMMEtSums found in TES at "<< m_Sim_CMMEtSumsLocation << endreq ;
+	  return StatusCode::SUCCESS;
+	}
+      
+      std::vector <LVL1::CMMEtSums>  vBS_CMMEtSums;
+      std::vector <LVL1::CMMEtSums>  vSim_CMMEtSums;
+      //use standard vector instead of datavector for transmissioncheck:
+      //datavector erases not only the pointer  in the vector, but also the referenced object
+      //-> segmentation fault!
+      
+      //fill vectors
+      //CMMEtSumsCollection::const_iterator it_CMMEtSums ;
+      
+      for( it_CMMEtSums  = BS_CMMEtSums->begin(); it_CMMEtSums < BS_CMMEtSums->end(); ++it_CMMEtSums )
+	{
+	  if ((*it_CMMEtSums)->dataID()>15)
+	    {
+	      vBS_CMMEtSums.push_back(**it_CMMEtSums);	       
+	    }
+	}   
+      for( it_CMMEtSums  = Sim_CMMEtSums->begin(); it_CMMEtSums < Sim_CMMEtSums->end(); ++it_CMMEtSums )
+	{
+	  if ((*it_CMMEtSums)->dataID()>15)
+	    {
+	      vSim_CMMEtSums.push_back(**it_CMMEtSums);	
+	    }       
+	}   
+      
+      // Step over all cells and compare
+      std::vector <LVL1::CMMEtSums>::iterator it_BS_CMMEtSums;
+      std::vector <LVL1::CMMEtSums>::iterator it_Sim_CMMEtSums;
+      int  foundModule;
 
-	  m_h_SimBSMon_JEP->Fill(1,(*it_Sim_CMMEtSums).crate()*19 + 16 + 1,1);
+      it_BS_CMMEtSums=vBS_CMMEtSums.begin();
+      
+      mLog<<MSG::DEBUG<<"CMMEtSums Calculation difference for"<<endreq;
+      while (it_BS_CMMEtSums<vBS_CMMEtSums.end())
+	{
+	  foundModule = 0;
+	  noMatchfound=0;
+	  it_Sim_CMMEtSums=vSim_CMMEtSums.begin();
+	  
+	  while ((foundModule==0)and(it_Sim_CMMEtSums<vSim_CMMEtSums.end()))
+	    {
+	      if (((*it_BS_CMMEtSums).crate()==(*it_Sim_CMMEtSums).crate())
+		  and((*it_BS_CMMEtSums).dataID()==(*it_Sim_CMMEtSums).dataID()))
+		{
+		  foundModule=1;
+		  
+		  if (((*it_BS_CMMEtSums).Ex()!=(*it_Sim_CMMEtSums).Ex())
+		      or ((*it_BS_CMMEtSums).Ey()!=(*it_Sim_CMMEtSums).Ey())
+		      or ((*it_BS_CMMEtSums).Et()!=(*it_Sim_CMMEtSums).Et()))
+		    {
+		      mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_CMMEtSums).crate()<<" DataId "<<(*it_BS_CMMEtSums).dataID()<<endreq;
+		      mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_CMMEtSums).Ex()<<endreq;
+		      mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_CMMEtSums).Ey()<<endreq;
+		      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_CMMEtSums).Et()<<endreq;
+		      
+		      mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_CMMEtSums).Ex()<<endreq;
+		      mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_CMMEtSums).Ey()<<endreq;
+		      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_CMMEtSums).Et()<<endreq;
+		      
+		      noMatchfound=1;    
+		    }
+		  m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums).crate()*19 + 16 + 1,noMatchfound);
+		  
+		  vBS_CMMEtSums.erase(it_BS_CMMEtSums);
+		  vSim_CMMEtSums.erase(it_Sim_CMMEtSums);
+		}
+	      else it_Sim_CMMEtSums=it_Sim_CMMEtSums+1;
+	    }
+	  if (foundModule==0)it_BS_CMMEtSums=it_BS_CMMEtSums+1;
+	}
+      
+      if (vBS_CMMEtSums.size()!=0)
+	{
+	  mLog<<MSG::DEBUG<<"CMMEtSums: additional BS data for"<<endreq;
+	  
+	  //fill errorcounter
+	  for( it_BS_CMMEtSums  = vBS_CMMEtSums.begin(); it_BS_CMMEtSums <  vBS_CMMEtSums. end(); ++it_BS_CMMEtSums )
+	    {
+	      mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_CMMEtSums).crate()<<" DataId "<<(*it_BS_CMMEtSums).dataID()<<endreq;
+	      mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_CMMEtSums).Ex()<<endreq;
+	      mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_CMMEtSums).Ey()<<endreq;
+	      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_CMMEtSums).Et()<<endreq;
+	      
+	      m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums).crate()*19 + 16 + 1,1);
+	      
+	    }
+	}
+      
+      if (vSim_CMMEtSums.size()!=0)
+	{
+	  mLog<<MSG::DEBUG<<"CMMEtSums: additional Sim data for"<<endreq;
+	  
+	  //fill errorcounter
+	  for( it_Sim_CMMEtSums  = vSim_CMMEtSums.begin(); it_Sim_CMMEtSums <  vSim_CMMEtSums. end(); ++it_Sim_CMMEtSums )
+	    {
+	      mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_CMMEtSums).crate()<<" DataId "<<(*it_Sim_CMMEtSums).dataID()<<endreq;
+	      mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_CMMEtSums).Ex()<<endreq;
+	      mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_CMMEtSums).Ey()<<endreq;
+	      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_CMMEtSums).Et()<<endreq;
+	      
+	      m_h_SimBSMon_JEP->Fill(1,(*it_Sim_CMMEtSums).crate()*19 + 16 + 1,1);
+	    }
 	}
     }
-  
-  
+      
   // =============================================================================================
   // ================= Crate CMM Jet Hits -> System CMM Jet Hits =================================
   // =============================================================================================
@@ -1404,151 +1424,156 @@ StatusCode JEPTransPerfMon::fillHistograms()
   // Check	Funktionality
   //            JEMJetRoI(JEMDAQ.JetElements) = JEPRoI.JEMRoIJetHits
   // ---------------------------------------------------------------------------------------------
+  if (m_CompareWithSimulation ==1)
+    {
 
-  mLog << MSG::DEBUG << "==== JEM RoI: Funktionality ===="<< endreq ;
-
-  const JemRoiCollection* BS_JEMRoI;
-  sc = m_storeGate->retrieve(BS_JEMRoI, m_BS_JEMRoILocation);
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      mLog << MSG::INFO << "No JEMRoI found in TES at "<< m_BS_JEMRoILocation << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  
-  const JemRoiCollection* Sim_JEMRoI;
-  sc = m_storeGate->retrieve(Sim_JEMRoI, m_Sim_JEMRoILocation);
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      mLog << MSG::INFO << "No JEMRoI found in TES at "<< m_Sim_JEMRoILocation << endreq ;
-      return StatusCode::SUCCESS;
-    }
-  
-  std::vector <LVL1::JEMRoI>  vBS_JEMRoI;
-  std::vector <LVL1::JEMRoI>  vSim_JEMRoI;
-  //use standard vector instead of datavector for transmissioncheck:
-  //datavector erases not only the pointer  in the vector, but also the referenced object
-  //-> segmentation fault!
-  
-  //fill vectors
-  JemRoiCollection::const_iterator it_JEMRoI ;
-  
-  for( it_JEMRoI  = BS_JEMRoI->begin(); it_JEMRoI < BS_JEMRoI->end(); ++it_JEMRoI )
-    {
-      vBS_JEMRoI.push_back(**it_JEMRoI);	       
-    }   
-  for( it_JEMRoI  = Sim_JEMRoI->begin(); it_JEMRoI < Sim_JEMRoI->end(); ++it_JEMRoI )
-    {
-      vSim_JEMRoI.push_back(**it_JEMRoI);	       
-    }   
-  
-  // Step over all cells and compare
-  std::vector <LVL1::JEMRoI>::iterator it_BS_JEMRoI;
-  std::vector <LVL1::JEMRoI>::iterator it_Sim_JEMRoI;
-  
-  it_BS_JEMRoI=vBS_JEMRoI.begin();
-  
-  mLog<<MSG::DEBUG<<"JEMRoI Calculation difference for"<<endreq;
-  while (it_BS_JEMRoI<vBS_JEMRoI.end())
-    {
-      foundModule = 0;
-      noMatchfound=0;
-      it_Sim_JEMRoI=vSim_JEMRoI.begin();
+      mLog << MSG::DEBUG << "==== JEM RoI: Funktionality ===="<< endreq ;
       
-      while ((foundModule==0)and(it_Sim_JEMRoI<vSim_JEMRoI.end()))
+      const JemRoiCollection* BS_JEMRoI;
+      sc = m_storeGate->retrieve(BS_JEMRoI, m_BS_JEMRoILocation);
+      if( (sc==StatusCode::FAILURE) ) 
 	{
+	  mLog << MSG::INFO << "No JEMRoI found in TES at "<< m_BS_JEMRoILocation << endreq ;
+	  return StatusCode::SUCCESS;
+	}
+      
+      const JemRoiCollection* Sim_JEMRoI;
+      sc = m_storeGate->retrieve(Sim_JEMRoI, m_Sim_JEMRoILocation);
+      if( (sc==StatusCode::FAILURE) ) 
+	{
+	  mLog << MSG::INFO << "No JEMRoI found in TES at "<< m_Sim_JEMRoILocation << endreq ;
+	  return StatusCode::SUCCESS;
+	}
+      
+      std::vector <LVL1::JEMRoI>  vBS_JEMRoI;
+      std::vector <LVL1::JEMRoI>  vSim_JEMRoI;
+      //use standard vector instead of datavector for transmissioncheck:
+      //datavector erases not only the pointer  in the vector, but also the referenced object
+      //-> segmentation fault!
+      int foundModule;
+      
+      //fill vectors
+      JemRoiCollection::const_iterator it_JEMRoI ;
+      
+      for( it_JEMRoI  = BS_JEMRoI->begin(); it_JEMRoI < BS_JEMRoI->end(); ++it_JEMRoI )
+	{
+	  vBS_JEMRoI.push_back(**it_JEMRoI);	       
+	}   
+      for( it_JEMRoI  = Sim_JEMRoI->begin(); it_JEMRoI < Sim_JEMRoI->end(); ++it_JEMRoI )
+	{
+	  vSim_JEMRoI.push_back(**it_JEMRoI);	       
+	}   
+      
+      // Step over all cells and compare
+      std::vector <LVL1::JEMRoI>::iterator it_BS_JEMRoI;
+      std::vector <LVL1::JEMRoI>::iterator it_Sim_JEMRoI;
+      
+      it_BS_JEMRoI=vBS_JEMRoI.begin();
+      
+      mLog<<MSG::DEBUG<<"JEMRoI Calculation difference for"<<endreq;
+      while (it_BS_JEMRoI<vBS_JEMRoI.end())
+	{
+	  foundModule = 0;
+	  noMatchfound=0;
+	  it_Sim_JEMRoI=vSim_JEMRoI.begin();
 	  
-	  if (((*it_BS_JEMRoI).crate()==(*it_Sim_JEMRoI).crate())
-	      and((*it_BS_JEMRoI).jem()==(*it_Sim_JEMRoI).jem())
-	      and ((*it_BS_JEMRoI).frame()==(*it_Sim_JEMRoI).frame())
-	      and ((*it_BS_JEMRoI).location()==(*it_Sim_JEMRoI).location())
-)
+	  while ((foundModule==0)and(it_Sim_JEMRoI<vSim_JEMRoI.end()))
 	    {
-	      foundModule=1;
 	      
-	      if ((*it_BS_JEMRoI).hits()!=(*it_Sim_JEMRoI).hits())
+	      if (((*it_BS_JEMRoI).crate()==(*it_Sim_JEMRoI).crate())
+		  and((*it_BS_JEMRoI).jem()==(*it_Sim_JEMRoI).jem())
+		  and ((*it_BS_JEMRoI).frame()==(*it_Sim_JEMRoI).frame())
+		  and ((*it_BS_JEMRoI).location()==(*it_Sim_JEMRoI).location())
+		  )
 		{
-		  mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMRoI).crate()<<" Module "<<(*it_BS_JEMRoI).jem()<<" frame "<<(*it_BS_JEMRoI).frame() <<" location "<<(*it_BS_JEMRoI).location() <<endreq;
-		  mLog<<MSG::VERBOSE<<"BS:  RoI "<<Help->Binary((*it_BS_JEMRoI).hits(),8)<<endreq;
-		  mLog<<MSG::VERBOSE<<"Sim: RoI "<<Help->Binary((*it_Sim_JEMRoI).hits(),8)<<endreq;
+		  foundModule=1;
 		  
-		  noMatchfound=1;
+		  if ((*it_BS_JEMRoI).hits()!=(*it_Sim_JEMRoI).hits())
+		    {
+		      mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMRoI).crate()<<" Module "<<(*it_BS_JEMRoI).jem()<<" frame "<<(*it_BS_JEMRoI).frame() <<" location "<<(*it_BS_JEMRoI).location() <<endreq;
+		      mLog<<MSG::VERBOSE<<"BS:  RoI "<<Help->Binary((*it_BS_JEMRoI).hits(),8)<<endreq;
+		      mLog<<MSG::VERBOSE<<"Sim: RoI "<<Help->Binary((*it_Sim_JEMRoI).hits(),8)<<endreq;
+		      
+		      noMatchfound=1;
+		    }
+		  m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMRoI).crate()*19+(*it_BS_JEMRoI).jem()+1),1);
+		  
+		  vBS_JEMRoI.erase(it_BS_JEMRoI);
+		  vSim_JEMRoI.erase(it_Sim_JEMRoI);
 		}
-	      m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMRoI).crate()*19+(*it_BS_JEMRoI).jem()+1),1);
-	      
-	      vBS_JEMRoI.erase(it_BS_JEMRoI);
-	      vSim_JEMRoI.erase(it_Sim_JEMRoI);
+	      else it_Sim_JEMRoI=it_Sim_JEMRoI+1;
 	    }
-	  else it_Sim_JEMRoI=it_Sim_JEMRoI+1;
+	  if (foundModule==0)it_BS_JEMRoI=it_BS_JEMRoI+1;
 	}
-      if (foundModule==0)it_BS_JEMRoI=it_BS_JEMRoI+1;
-    }
-  
-  if (vBS_JEMRoI.size()!=0)
-    {
-      mLog<<MSG::DEBUG<<"JEMRoI: additional BS data for "<<endreq;
       
-      //fill errorcounter
-      for( it_BS_JEMRoI  = vBS_JEMRoI.begin(); it_BS_JEMRoI <  vBS_JEMRoI. end(); ++it_BS_JEMRoI )
+      if (vBS_JEMRoI.size()!=0)
 	{
-	  mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_JEMRoI).crate()<<" Module "<<(*it_BS_JEMRoI).jem()<<" frame "<<(*it_BS_JEMRoI).frame() <<" location "<<(*it_BS_JEMRoI).location() <<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: RoI "<<Help->Binary((*it_BS_JEMRoI).hits(),8)<<endreq;
+	  mLog<<MSG::DEBUG<<"JEMRoI: additional BS data for "<<endreq;
 	  
-	  m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMRoI).crate()*19+(*it_BS_JEMRoI).jem()+1),1);
+	  //fill errorcounter
+	  for( it_BS_JEMRoI  = vBS_JEMRoI.begin(); it_BS_JEMRoI <  vBS_JEMRoI. end(); ++it_BS_JEMRoI )
+	    {
+	      mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_JEMRoI).crate()<<" Module "<<(*it_BS_JEMRoI).jem()<<" frame "<<(*it_BS_JEMRoI).frame() <<" location "<<(*it_BS_JEMRoI).location() <<endreq;
+	      mLog<<MSG::VERBOSE<<"BS: RoI "<<Help->Binary((*it_BS_JEMRoI).hits(),8)<<endreq;
+	      
+	      m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMRoI).crate()*19+(*it_BS_JEMRoI).jem()+1),1);
+	    }
 	}
-    }
-  
-  if (vSim_JEMRoI.size()!=0)
-    {
-      mLog<<MSG::DEBUG<<"JEMRoI: additional Sim data for"<<endreq;
       
-      //fill errorcounter
-      for( it_Sim_JEMRoI  = vSim_JEMRoI.begin(); it_Sim_JEMRoI <  vSim_JEMRoI. end(); ++it_Sim_JEMRoI )
+      if (vSim_JEMRoI.size()!=0)
 	{
-	  mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_JEMRoI).crate()<<" Module "<<(*it_Sim_JEMRoI).jem()<<" frame "<<(*it_Sim_JEMRoI).frame() <<" location "<<(*it_Sim_JEMRoI).location() <<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: RoI "<<Help->Binary((*it_Sim_JEMRoI).hits(),8)<<endreq;
+	  mLog<<MSG::DEBUG<<"JEMRoI: additional Sim data for"<<endreq;
 	  
-	  //m_h_SimBSMon_JEP->Fill(3,((*it_Sim_JEMRoI).crate()*19+(*it_Sim_JEMRoI).jem()+1),1);
+	  //fill errorcounter
+	  for( it_Sim_JEMRoI  = vSim_JEMRoI.begin(); it_Sim_JEMRoI <  vSim_JEMRoI. end(); ++it_Sim_JEMRoI )
+	    {
+	      mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_JEMRoI).crate()<<" Module "<<(*it_Sim_JEMRoI).jem()<<" frame "<<(*it_Sim_JEMRoI).frame() <<" location "<<(*it_Sim_JEMRoI).location() <<endreq;
+	      mLog<<MSG::VERBOSE<<"Sim: RoI "<<Help->Binary((*it_Sim_JEMRoI).hits(),8)<<endreq;
+	      
+	      //m_h_SimBSMon_JEP->Fill(3,((*it_Sim_JEMRoI).crate()*19+(*it_Sim_JEMRoI).jem()+1),1);
+	    }
 	}
     }
-  
   // ================= CMM RoI ========================================================
   
-  mLog << MSG::DEBUG << "==== CMM RoI: Funktionality ===="<< endreq ;
-
-  // retrieve RoI information from Storegate
-  LVL1::CMMRoI* BS_CR = new LVL1::CMMRoI ;
-  sc = m_storeGate->retrieve (BS_CR, m_BS_CMMRoILocation);
-  if (sc==StatusCode::FAILURE)
+    if (m_CompareWithSimulation ==1)
     {
-      mLog <<MSG::INFO<<"No BS CMM RoI found in TES at "<< m_BS_CMMRoILocation<<endreq;
-      return StatusCode::SUCCESS;    
+      mLog << MSG::DEBUG << "==== CMM RoI: Funktionality ===="<< endreq ;
+      
+      // retrieve RoI information from Storegate
+      LVL1::CMMRoI* BS_CR = new LVL1::CMMRoI ;
+      sc = m_storeGate->retrieve (BS_CR, m_BS_CMMRoILocation);
+      if (sc==StatusCode::FAILURE)
+	{
+	  mLog <<MSG::INFO<<"No BS CMM RoI found in TES at "<< m_BS_CMMRoILocation<<endreq;
+	  return StatusCode::SUCCESS;    
+	}
+      
+      LVL1::CMMRoI* Sim_CR = new LVL1::CMMRoI ;
+      sc = m_storeGate->retrieve (Sim_CR, m_Sim_CMMRoILocation);
+      if (sc==StatusCode::FAILURE)
+	{
+	  mLog <<MSG::INFO<<"No Sim CMM RoI found in TES at "<< m_Sim_CMMRoILocation<<endreq;
+	  return StatusCode::SUCCESS;    
+	}
+      
+      noMatchfound=0;  
+      if ( ((*BS_CR).jetEtHits()!=(*Sim_CR).jetEtHits())or((*BS_CR).sumEtHits()!=(*Sim_CR).sumEtHits())or((*BS_CR).missingEtHits()!=(*Sim_CR).missingEtHits()))  
+	{
+	  mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for JetEtHits, SumEtHits or MissingEtHits"<<endreq;
+	  noMatchfound=1; 
+	}
+      m_h_SimBSMon_JEP->Fill(3,(19+16+1),noMatchfound);
+      
+      
+      noMatchfound=0; 
+      if ( ((*BS_CR).ex()!=(*Sim_CR).ex())or((*BS_CR).ey()!=(*Sim_CR).ey())or((*BS_CR).et()!=(*Sim_CR).et()))  
+	{
+	  mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for Ex, Ey or Et"<<endreq;
+	  noMatchfound=1; 
+	}
+      m_h_SimBSMon_JEP->Fill(3,(19+16+1),noMatchfound);
     }
-
-  LVL1::CMMRoI* Sim_CR = new LVL1::CMMRoI ;
-  sc = m_storeGate->retrieve (Sim_CR, m_Sim_CMMRoILocation);
-  if (sc==StatusCode::FAILURE)
-    {
-      mLog <<MSG::INFO<<"No Sim CMM RoI found in TES at "<< m_Sim_CMMRoILocation<<endreq;
-      return StatusCode::SUCCESS;    
-    }
-
-  noMatchfound=0;  
-  if ( ((*BS_CR).jetEtHits()!=(*Sim_CR).jetEtHits())or((*BS_CR).sumEtHits()!=(*Sim_CR).sumEtHits())or((*BS_CR).missingEtHits()!=(*Sim_CR).missingEtHits()))  
-    {
-      mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for JetEtHits, SumEtHits or MissingEtHits"<<endreq;
-      noMatchfound=1; 
-    }
-  m_h_SimBSMon_JEP->Fill(3,(19+16+1),noMatchfound);
-
-
-  noMatchfound=0; 
-  if ( ((*BS_CR).ex()!=(*Sim_CR).ex())or((*BS_CR).ey()!=(*Sim_CR).ey())or((*BS_CR).et()!=(*Sim_CR).et()))  
-    {
-      mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for Ex, Ey or Et"<<endreq;
-      noMatchfound=1; 
-    }
-  m_h_SimBSMon_JEP->Fill(3,(19+16+1),noMatchfound);
-  
   
 
 
@@ -1587,10 +1612,13 @@ StatusCode JEPTransPerfMon::procHistograms( bool isEndOfEventsBlock,
 	  buffer<<m_NoEvents;
 	  std::string title;
 	  
-	  title = m_h_SimBSMon_JEP-> GetTitle();
-	  title=title + " | #events: " + buffer.str();
-	  m_h_SimBSMon_JEP->SetTitle(title.c_str());
-	  
+	  if (m_CompareWithSimulation ==1)
+	    {
+	      title = m_h_SimBSMon_JEP-> GetTitle();
+	      title=title + " | #events: " + buffer.str();
+	      m_h_SimBSMon_JEP->SetTitle(title.c_str());
+	    }
+
 	  title = m_h_TransCheck_JEP-> GetTitle();
 	  title=title + " | #events: " + buffer.str();
 	  m_h_TransCheck_JEP->SetTitle(title.c_str());

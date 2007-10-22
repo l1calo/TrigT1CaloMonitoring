@@ -1,4 +1,21 @@
-include ("TrigT1CaloMonitoring/TrigT1CaloMonitoring_L1CaloSimulation.py")
+EventNoInHistoTitle=True
+CompareWithSimulation=False
+
+from TrigT1Calo.TrigT1CaloConf import LVL1__JetElementMaker
+from AthenaCommon.AlgSequence import AlgSequence
+myjob = AlgSequence()
+myjob += LVL1__JetElementMaker( 'JetElementMaker' )
+
+# JetElementMaker
+#input (from BS)
+myjob.JetElementMaker.TriggerTowerLocation ="TriggerTowers"  
+#output
+myjob.JetElementMaker.JetElementLocation ="Sim_JetElements"
+#job.JetElementMaker.OutputLevel = VERBOSE
+
+
+if CompareWithSimulation:
+    include ("TrigT1CaloMonitoring/TrigT1CaloMonitoring_L1CaloSimulation.py")
 
 # ************************
 # Monitoring configuration
@@ -67,8 +84,6 @@ include("LArDetDescr/LArDetDescr_joboptions.py")
 #include( "LArConditionsCommon/LArIdMap_comm_jobOptions.py" )
 
 
-EventNoInHistoTitle=True
-
 #--------------------------------- PPM -------------------------------------------
 L1CaloMan.AthenaMonTools += [ "PPrMon/L1PPrMonTool" ]
 #toolSvc.L1PPrMonTool.DataType = "M3"  
@@ -127,13 +142,14 @@ toolSvc.BS_L1JEMMonTool.ErrorPathInRootFile = "L1Calo/02_Errors_JEM"
 toolSvc.BS_L1JEMMonTool.EventNoInHistoTitle = EventNoInHistoTitle
 #toolSvc.BS_L1JEMMonTool.OutputLevel = DEBUG
 
-L1CaloMan.AthenaMonTools += [ "JEMMon/Sim_L1JEMMonTool" ]
-toolSvc.Sim_L1JEMMonTool.DataType = "Sim"  #BS or Sim data?
-toolSvc.Sim_L1JEMMonTool.JetElementLocation = "Sim_JetElements"
-toolSvc.Sim_L1JEMMonTool.JEMHitsLocation = "Sim_JEMHits"
-toolSvc.Sim_L1JEMMonTool.JEMEtSumsLocation = "Sim_JEMEtSums"
-toolSvc.Sim_L1JEMMonTool.JEMRoILocation = "Sim_JEMRoIs"
-toolSvc.Sim_L1JEMMonTool.PathInRootFile = "L1Calo/Sim/2_JEP_JEM"
+if CompareWithSimulation:
+    L1CaloMan.AthenaMonTools += [ "JEMMon/Sim_L1JEMMonTool" ]
+    toolSvc.Sim_L1JEMMonTool.DataType = "Sim"  #BS or Sim data?
+    toolSvc.Sim_L1JEMMonTool.JetElementLocation = "Sim_JetElements"
+    toolSvc.Sim_L1JEMMonTool.JEMHitsLocation = "Sim_JEMHits"
+    toolSvc.Sim_L1JEMMonTool.JEMEtSumsLocation = "Sim_JEMEtSums"
+    toolSvc.Sim_L1JEMMonTool.JEMRoILocation = "Sim_JEMRoIs"
+    toolSvc.Sim_L1JEMMonTool.PathInRootFile = "L1Calo/Sim/2_JEP_JEM"
 #toolSvc.Sim_L1JEMMonTool.OutputLevel = DEBUG
 
 #----------------------------------- CMM ------------------------------------------
@@ -147,15 +163,17 @@ toolSvc.BS_L1CMMMonTool.ErrorPathInRootFile = "L1Calo/03_Errors_CMM"
 toolSvc.BS_L1CMMMonTool.EventNoInHistoTitle = EventNoInHistoTitle
 #toolSvc.BS_L1CMMMonTool.OutputLevel = DEBUG
 
-L1CaloMan.AthenaMonTools += [ "CMMMon/Sim_L1CMMMonTool" ]
-toolSvc.Sim_L1CMMMonTool.DataType = "Sim"  #BS or Sim data?
-toolSvc.Sim_L1CMMMonTool.CMMJetHitsLocation = "Sim_CMMJetHits"
-toolSvc.Sim_L1CMMMonTool.CMMEtSumsLocation = "Sim_CMMEtSums"
-toolSvc.Sim_L1CMMMonTool.CMMRoILocation = "Sim_CMMRoIs"
-toolSvc.Sim_L1CMMMonTool.PathInRootFile = "L1Calo/Sim/3_JEP_CMM"
+if CompareWithSimulation:
+    L1CaloMan.AthenaMonTools += [ "CMMMon/Sim_L1CMMMonTool" ]
+    toolSvc.Sim_L1CMMMonTool.DataType = "Sim"  #BS or Sim data?
+    toolSvc.Sim_L1CMMMonTool.CMMJetHitsLocation = "Sim_CMMJetHits"
+    toolSvc.Sim_L1CMMMonTool.CMMEtSumsLocation = "Sim_CMMEtSums"
+    toolSvc.Sim_L1CMMMonTool.CMMRoILocation = "Sim_CMMRoIs"
+    toolSvc.Sim_L1CMMMonTool.PathInRootFile = "L1Calo/Sim/3_JEP_CMM"
 #toolSvc.Sim_L1CMMMonTool.OutputLevel = DEBUG
 
 #--------------------- Transmission and Performance ------------------------------
+
 L1CaloMan.AthenaMonTools += [ "JEPTransPerfMon/JEPTransPerfMonTool" ]
 toolSvc.JEPTransPerfMonTool.BS_JetElementLocation = "JetElements"
 #toolSvc.JEPTransPerfMonTool.BS_TriggerTowerLocation = "TriggerTowers"
@@ -178,6 +196,8 @@ toolSvc.JEPTransPerfMonTool.Sim_CMMRoILocation = "Sim_CMMRoIs"
 
 toolSvc.JEPTransPerfMonTool.PathInRootFile = "L1Calo/3_JEP_TransmissionAndPerformance"
 toolSvc.JEPTransPerfMonTool.EventNoInHistoTitle = EventNoInHistoTitle
+toolSvc.JEPTransPerfMonTool.CompareWithSimulation = CompareWithSimulation
+
 #toolSvc.JEPTransPerfMonTool.OutputLevel = VERBOSE
 #toolSvc.JEPTransPerfMonTool.OutputLevel = WARNING
 
@@ -194,14 +214,15 @@ toolSvc.L1BSCPMMonTool.RootDirectory = "L1Calo"
 toolSvc.L1BSCPMMonTool.SingleDirectory = False
 #toolSvc.L1BSCPMMonTool.OutputLevel = DEBUG
 
-L1CaloMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
-toolSvc.L1SimCPMMonTool.TriggerTowerLocation = "TriggerTowers"
-toolSvc.L1SimCPMMonTool.CPMTowerLocation = "Sim_CPMTowers"
-toolSvc.L1SimCPMMonTool.CPMHitsLocation = "Sim_CPMHits"
-toolSvc.L1SimCPMMonTool.CMMCPHitsLocation = "Sim_CMMCPHits"
-toolSvc.L1SimCPMMonTool.CPMRoILocation = "Sim_CPMRoIs"
-toolSvc.L1SimCPMMonTool.RootDirectory = "L1Calo/Sim"
-toolSvc.L1SimCPMMonTool.SingleDirectory = False
+if CompareWithSimulation:
+    L1CaloMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
+    toolSvc.L1SimCPMMonTool.TriggerTowerLocation = "TriggerTowers"
+    toolSvc.L1SimCPMMonTool.CPMTowerLocation = "Sim_CPMTowers"
+    toolSvc.L1SimCPMMonTool.CPMHitsLocation = "Sim_CPMHits"
+    toolSvc.L1SimCPMMonTool.CMMCPHitsLocation = "Sim_CMMCPHits"
+    toolSvc.L1SimCPMMonTool.CPMRoILocation = "Sim_CPMRoIs"
+    toolSvc.L1SimCPMMonTool.RootDirectory = "L1Calo/Sim"
+    toolSvc.L1SimCPMMonTool.SingleDirectory = False
 #toolSvc.L1SimCPMMonTool.OutputLevel = DEBUG
 
 
