@@ -1,5 +1,6 @@
-2007-10-20  Johanna Fleckner  <fleckner@lxplus235.cern.ch>
+2007-10-22  Johanna Fleckner  <fleckner@lxplus241.cern.ch>
 	* tag TrigT1CaloMonitoring-00-01-11
+	* share/TrigT1CaloMonitoring_topOptions.py adjust for RecExCommission
 	* src/JEPTransPerfMon.cxx remove use of L1JetElementTool for M5
 
 2007-10-19  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
