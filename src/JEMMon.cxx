@@ -119,7 +119,9 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
   MonGroup JEM_Error( this, (m_ErrorPathInRootFile).c_str(), shift, eventsBlock );
   HistoBooker* Error_Booker = new HistoBooker(&JEM_Error, &mLog, "");
 
-  if( isNewEventsBlock || isNewLumiBlock ) 
+  if ( isNewEventsBlock|| isNewLumiBlock) { }
+
+  if( isNewRun ) 
     {	
       Helper* Help = new Helper();
       m_NoEvents=0;
@@ -275,9 +277,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_JEMRoI_error->GetYaxis()->SetBinLabel(35, "Crate 1: ");
 	}
     }
-  
-  if( isNewRun ) { }
-  
+    
   return StatusCode( StatusCode::SUCCESS );
 }
 

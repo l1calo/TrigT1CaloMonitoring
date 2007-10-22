@@ -101,7 +101,9 @@ StatusCode PPrPerfMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBloc
   MonGroup Calo_Dist( this, (m_PathInRootFile+"_CaloTTEnergyDistribution").c_str(), shift, eventsBlock );
   HistoBooker* EnergyDistribution_Booker = new HistoBooker(&Calo_Dist, &log, m_DataType);
 
-  if( isNewEventsBlock || isNewLumiBlock ) 
+  if ( isNewEventsBlock|| isNewLumiBlock) { }
+
+  if(isNewRun  ) 
     {	
 
       Helper* Help = new Helper();
@@ -169,7 +171,6 @@ StatusCode PPrPerfMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBloc
 	  m_h_CaloTT_hadLUT_phi->SetBins(64,Help->TTPhiBinning());  
 	}
     }
-  if( isNewRun ) { }
 
   return StatusCode::SUCCESS;
 }

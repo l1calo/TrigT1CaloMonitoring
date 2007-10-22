@@ -118,17 +118,17 @@ job.JEPCMMMaker.CMMEtSumsLocation = "Sim_CMMEtSums"
 job.JEPCMMMaker.CMMRoILocation = "Sim_CMMRoIs"
 job.JEPCMMMaker.JEPBSCollectionLocation = "Sim_JEPBS"
 job.JEPCMMMaker.JEPRoIBSCollectionLocation = "Sim_JEPRoIBS"
-##job.JEPCMMMaker.OutputLevel = DEBUG
+job.JEPCMMMaker.OutputLevel = ERROR
 
-## CP CMMs
-##input (from BS)
-#job.CPCMMMaker.CPMTowerLocation = "CPMTowers"
-#job.CPCMMMaker.CPMHitsLocation = "CPMHits"
-#job.CPCMMMaker.CPMRoILocation = "Sim_CPMRoIs"
-##input (from Simulation - intermediate data)
-#job.CPCMMMaker.EmTauROILocation = "Sim_EmTauRoIs"
-##output
-#job.CPCMMMaker.CMMCPHitsLocation = "Sim_CMMCPHits"
-#job.CPCMMMaker.CPBSCollectionLocation = "Sim_CPBS"
-##job.CPCMMMaker.OutputLevel = DEBUG
+# CP CMMs
+#input (from BS)
+job.CPCMMMaker.CPMTowerLocation = "CPMTowers"
+job.CPCMMMaker.CPMHitsLocation = "CPMHits"
+job.CPCMMMaker.CPMRoILocation = "Sim_CPMRoIs"
+#input (from Simulation - intermediate data)
+job.CPCMMMaker.EmTauROILocation = "Sim_EmTauRoIs"
+#output
+job.CPCMMMaker.CMMCPHitsLocation = "Sim_CMMCPHits"
+job.CPCMMMaker.CPBSCollectionLocation = "Sim_CPBS"
+#job.CPCMMMaker.OutputLevel = DEBUG
 

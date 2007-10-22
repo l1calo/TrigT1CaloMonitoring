@@ -186,6 +186,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
   MonGroup NoEvents( this, (m_EventPathInRootFile).c_str(), expert, eventsBlock );
   HistoBooker* NoEvent_Booker = new HistoBooker(&NoEvents, &log, "");
 
+  if ( isNewEventsBlock|| isNewLumiBlock) { }
+
   if( isNewRun )
 
     //if( isNewEventsBlock || isNewLumiBlock ) 
@@ -456,8 +458,6 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_NumberEvents->GetXaxis()->SetBinLabel(1,"Number of Events");
 
     }
-
-  if( isNewRun ) { }
 
   return StatusCode::SUCCESS;
 }

@@ -313,8 +313,10 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
   if( m_dataType == AthenaMonManager::cosmics ) {
     // book histograms that are only relevant for cosmics data...
   }
+
+  if ( isNewEventsBlock|| isNewLumiBlock) { }
   
-  if( isNewEventsBlock || isNewLumiBlock ) 
+  if( isNewRun ) 
     {	
       m_NoEvents=0;
 
@@ -417,8 +419,6 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
 
 
    }
-  if( isNewRun ) { }
-  
   return StatusCode( StatusCode::SUCCESS );
 }
 

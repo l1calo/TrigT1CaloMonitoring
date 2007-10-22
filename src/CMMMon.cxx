@@ -121,7 +121,9 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
   
-  if( isNewEventsBlock || isNewLumiBlock ) 
+  if ( isNewEventsBlock|| isNewLumiBlock) { }
+
+  if( isNewRun ) 
     {	
       m_NoEvents=0;
       //----------------------------------  CMM Input data from JEMs -----------------------------
@@ -223,7 +225,6 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(8, "Overflow (Et)");
 	}
     }
-  if( isNewRun ) { }
   
   return StatusCode( StatusCode::SUCCESS );
 }

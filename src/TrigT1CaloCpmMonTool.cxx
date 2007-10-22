@@ -125,7 +125,9 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   std::string cpmErrDir("05_Errors_CPM");
   std::string cmmErrDir("06_Errors_CMM");
 
-  if ( isNewEventsBlock || isNewLumiBlock ) {	
+  if ( isNewEventsBlock|| isNewLumiBlock) { }
+
+  if ( isNewRun ) {	
   
   if (m_oneDir) newGroup(cpmDir, shift, eventsBlock );
 
@@ -385,8 +387,6 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_monGroup = 0;
 
   } // end if (isNewEventsBlock ...
-
-  if( isNewRun ) { }
 
   return StatusCode::SUCCESS;
 }
