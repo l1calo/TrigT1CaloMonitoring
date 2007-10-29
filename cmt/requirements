@@ -15,7 +15,7 @@ use AtlasDoxygen		AtlasDoxygen-00-*	Tools
 use AtlasROOT			AtlasROOT-02-*		External
 
 use CaloIdentifier      	CaloIdentifier-00-*   	Calorimeter
-use CaloEvent           	CaloEvent-*           	Calorimeter
+#use CaloEvent           	CaloEvent-*           	Calorimeter
 
 use TrigT1Calo			TrigT1Calo-* 	      	Trigger/TrigT1
 use TrigT1Interfaces    	TrigT1Interfaces-*    	Trigger/TrigT1
