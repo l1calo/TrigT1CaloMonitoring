@@ -153,8 +153,8 @@ JEPTransPerfMon::JEPTransPerfMon( const std::string & type, const std::string & 
 
   declareProperty( "BS_CMMRoILocation", m_BS_CMMRoILocation =  LVL1::TrigT1CaloDefs::CMMRoILocation) ;
   declareProperty( "Sim_CMMRoILocation", m_Sim_CMMRoILocation =  LVL1::TrigT1CaloDefs::CMMRoILocation) ;
-  declareProperty( "EventNoInHistoTitle", m_EventNoInHisto = 1) ;
 
+  declareProperty( "Offline", m_Offline = 1) ;
   declareProperty( "CompareWithSimulation", m_CompareWithSimulation = 1) ;
 
 
@@ -302,10 +302,10 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
   ManagedMonitorToolBase::LevelOfDetail_t LevelOfDetail=shift;
   if (m_DataType=="Sim") LevelOfDetail = expert;
 
-  MonGroup CMM_transmission ( this, (m_PathInRootFile ).c_str(), shift, eventsBlock );
+  MonGroup CMM_transmission ( this, (m_PathInRootFile ).c_str(), shift, run );
   HistoBooker* transmission_Booker = new HistoBooker(&CMM_transmission, &mLog, "");
   
-  MonGroup SimBSComparison_JEM ( this, (m_PathInRootFile).c_str(), shift, eventsBlock );
+  MonGroup SimBSComparison_JEM ( this, (m_PathInRootFile).c_str(), shift, run );
   HistoBooker* JEM_Booker = new HistoBooker(&SimBSComparison_JEM, &mLog, m_DataType);
 
   if( m_environment == AthenaMonManager::online ) {
@@ -327,8 +327,8 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
 
       m_h_usedModules=transmission_Booker->book2F("JEM_usedModules", "JEM used modules", 4,0.5,4.5,35,0.5,35.5, "", "");
 
-      m_h_TransCheck_emJetElements=transmission_Booker->book2F("emJE_TransPerfCheck", "em JE Transmission and Performance Check for all Timeslices (TT|JE)", (5*m_NoLUTSlices),0.5,(5*m_NoLUTSlices+.5), 35,0.5,35.5, "", "");
-      m_h_TransCheck_hadJetElements=transmission_Booker->book2F("hadJE_TransPerfCheck", "had JE Transmission and Performance Check for all Timeslices (TT|JE)",(5*m_NoLUTSlices),0.5,(5*m_NoLUTSlices+.5), 35,0.5,35.5, "", "");
+      m_h_TransCheck_emJetElements=transmission_Booker->book2F("emJE_TransPerfCheck", "em JE Transmission and Performance Check for all Timeslices (TT|JE)", (1*m_NoLUTSlices),0.5,(1*m_NoLUTSlices+.5), 35,0.5,35.5, "", "");
+      m_h_TransCheck_hadJetElements=transmission_Booker->book2F("hadJE_TransPerfCheck", "had JE Transmission and Performance Check for all Timeslices (TT|JE)",(1*m_NoLUTSlices),0.5,(1*m_NoLUTSlices+.5), 35,0.5,35.5, "", "");
 
       for (int i = 0; i < 16; i++)
 	{
@@ -351,7 +351,7 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
       m_h_usedModules->GetYaxis()->SetBinLabel(35, "Crate 1");
 
       int k=1;
-      for (int i=0; i<5;i++)
+      for (int i=2; i<3;i++)
 	{
 	  for (int j=0; j<m_NoLUTSlices; j++)
 	    {
@@ -531,7 +531,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 
   //JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_jetElements, int JE_TS, const JECollection* jetElements, MsgStream::MsgStream* mLog)
   int k=1;
-  for (int i=0; i<5;i++)
+  for (int i=2; i<3;i++)
     {
       for (int j=0; j<m_NoLUTSlices; j++)
 	{
@@ -899,7 +899,9 @@ StatusCode JEPTransPerfMon::fillHistograms()
       while ((found==0)and(it_vJEMHits<vJEMHits.end()))
 	{
 	  if (((*it_vCMMJEMHits).crate()==(*it_vJEMHits).crate())
-	      and((*it_vCMMJEMHits).dataID()==(*it_vJEMHits).module()))
+	      // changes only for M5 !!!!!!!!!!!!1
+	      //and((*it_vCMMJEMHits).dataID()==(*it_vJEMHits).module()))
+	      and(((*it_vCMMJEMHits).dataID()+1)==(*it_vJEMHits).module()))
 	    {
 	      if ((*it_vCMMJEMHits).Hits()!=(*it_vJEMHits).JetHits())
 		{
@@ -931,10 +933,14 @@ StatusCode JEPTransPerfMon::fillHistograms()
       mLog<<MSG::DEBUG<<vCMMJEMHits.size()<<"JEMHits Transmission: additional CMM information"<<endreq;
       for( it_vCMMJEMHits  = vCMMJEMHits.begin(); it_vCMMJEMHits <  vCMMJEMHits. end(); ++it_vCMMJEMHits )
 	{
-	  mLog<<MSG::DEBUG<<"Crate "<<(*it_vCMMJEMHits).crate()<<" Module "<<(*it_vCMMJEMHits).dataID()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Hit "<<(*it_vCMMJEMHits).Hits()<<endreq;
+	  // changes only for M5 !!!!!!!!!!!!1
+	  //mLog<<MSG::DEBUG<<"Crate "<<(*it_vCMMJEMHits).crate()<<" Module "<<(*it_vCMMJEMHits).dataID()<<endreq;
+	  mLog<<MSG::DEBUG<<"Crate "<<(*it_vCMMJEMHits).crate()<<" Module "<<((*it_vCMMJEMHits).dataID()+1)<<endreq;
+	  mLog<<MSG::VERBOSE<<"Hit "<<Help->Binary((*it_vCMMJEMHits).Hits(),24)<<endreq;
 	  
-	  if ((*it_vCMMJEMHits).Hits()>0) m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits).crate()*20+(*it_vCMMJEMHits).dataID()+1,1);
+	  // changes only for M5 !!!!!!!!!!!!1
+	  //if ((*it_vCMMJEMHits).Hits()>0) m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits).crate()*20+(*it_vCMMJEMHits).dataID()+1,1);
+	  if ((*it_vCMMJEMHits).Hits()>0) m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits).crate()*20+(*it_vCMMJEMHits).dataID()+1+1,1);
 	}
     }
   
@@ -945,7 +951,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
       for( it_vJEMHits  =  vJEMHits.begin(); it_vJEMHits <  vJEMHits. end(); ++it_vJEMHits )
 	{
 	  mLog<<MSG::DEBUG<<"Crate "<<(*it_vJEMHits).crate()<<" Module "<<(*it_vJEMHits).module()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Hit "<<(*it_vJEMHits).JetHits()<<endreq;
+	  mLog<<MSG::VERBOSE<<"Hit "<<Help->Binary((*it_vJEMHits).JetHits(),24)<<endreq;
 	  
 	  if ((*it_vJEMHits).JetHits()>0) m_h_TransCheck_JEP->Fill(1,(*it_vJEMHits).crate()*20+(*it_vJEMHits).module()+1,1);
 	}
@@ -1603,7 +1609,7 @@ StatusCode JEPTransPerfMon::procHistograms( bool isEndOfEventsBlock,
     {  
     }
  
-  if(m_EventNoInHisto==1)
+  if(m_Offline==1)
     {      
       if( isEndOfRun ) 
 	{
@@ -1663,7 +1669,7 @@ void JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_je
       int crate = ToHW.jepCrate(coord);
       int module=ToHW.jepModule(coord);
 
-      *mLog <<MSG::VERBOSE<<"JE Crate: "<<crate<<" Module: "<<module<<endreq;
+      //*mLog <<MSG::VERBOSE<<"JE Crate: "<<crate<<" Module: "<<module<<endreq;
 
       
       while ((JEFound==0)and(it_TT_je < TT_jetElements->end()))
@@ -1672,82 +1678,30 @@ void JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_je
 	    {
 	      JEFound=1;
 	      
-	      if ((*it_TT_je)->emEnergyVec()[TT_TS]==(*it_je)->emEnergyVec()[JE_TS])
-		{
-		  em_NoJEMatchFound=0; 
-		  //*mLog << MSG::DEBUG << "em Match Found eta: "<<(*it_TT_je)->eta()<<" phi: " <<(*it_TT_je)->phi()<<" energy HW: " << (*it_je)->emEnergyVec()[JE_TS]<<" SW: " << (*it_TT_je)->emEnergyVec()[TT_TS]<< endreq ;
-
-		}
+	      if ((*it_TT_je)->emEnergyVec()[TT_TS]==(*it_je)->emEnergyVec()[JE_TS]) em_NoJEMatchFound=0; 	      
+	      if ((*it_TT_je)->hadEnergyVec()[TT_TS]==(*it_je)->hadEnergyVec()[JE_TS]) had_NoJEMatchFound=0;     
 	      
-	      if ((*it_TT_je)->hadEnergyVec()[TT_TS]==(*it_je)->hadEnergyVec()[JE_TS])
-		{
-		  had_NoJEMatchFound=0;     
-
-		}	      
+	      //m_h_TransCheck_emJetElements->Fill(k,(crate*18+module+1),em_NoJEMatchFound);
+	      //m_h_TransCheck_hadJetElements->Fill(k,(crate*18+module+1),had_NoJEMatchFound);
 	    }
 	  if ((JEFound==0)and(it_TT_je < TT_jetElements->end())) it_TT_je ++;
 	}
 
       if (em_NoJEMatchFound==1 and JEFound==1)
 	{
-
-
-
-
-
-      Identifier EmTowerId,HadTowerId;
-
-      int detside= m_l1CaloTTIdTools->pos_neg_z((*it_TT_je)->eta());
-      int detregion = m_l1CaloTTIdTools->regionIndex((*it_TT_je)->eta());
-      int eta=m_l1CaloTTIdTools->etaIndex((*it_TT_je)->eta());
-      int phi=m_l1CaloTTIdTools->phiIndex((*it_TT_je)->eta(), (*it_TT_je)->phi());
-      
-      //---------------------------- EM Energy -----------------------------
-      EmTowerId = m_lvl1Helper->tower_id(detside, 0, detregion,eta,phi );  
-      HadTowerId = m_lvl1Helper->tower_id(detside, 1, detregion,eta,phi );  
-      int crate, module;
-      try 
-	{
-	  HWIdentifier ttOnlId = m_ttSvc->createTTChannelID(EmTowerId);
-	  crate     = m_l1ttonlineHelper->crate(ttOnlId);
-	  module    = m_l1ttonlineHelper->module(ttOnlId);
-	  //mLog << MSG::DEBUG << "em PPM crate: " << crate<<"  module: "<<module << endreq ;
-	} 
-      catch(LArID_Exception& except) 
-	{
-	  *mLog << MSG::ERROR << "LArID_Exception " << (std::string) except << endreq ;
-	}
-
-
-
-
-
-
-
-
-
 	  *mLog << MSG::VERBOSE << "no em Match Found eta: "<<(*it_TT_je)->eta()<<" phi: " <<(*it_TT_je)->phi()<<" energy HW: " << (*it_je)->emEnergyVec()[JE_TS]<<" SW: " << (*it_TT_je)->emEnergyVec()[TT_TS]<< endreq ;
 	  *mLog << MSG::VERBOSE << "PPM data from Crate: "<<crate<<" Module: " <<module<< endreq ;
-
 	}
+
       if (had_NoJEMatchFound==1 and JEFound==1)
 	{
 	  *mLog << MSG::VERBOSE << "no had Match Found eta: "<<(*it_TT_je)->eta()<<" phi: " <<(*it_TT_je)->phi()<<" energy HW: " << (*it_je)->hadEnergyVec()[JE_TS]<<" SW: " << (*it_TT_je)->hadEnergyVec()[TT_TS]<< endreq ;
 	}
 
-      if (JEFound==1)
-	{
-	  //*mLog <<MSG::VERBOSE<<"JEFound=1"<<endreq;
-	  //*mLog << MSG::VERBOSE << "em NoJEMatchFound "<<em_NoJEMatchFound<<" Module: " << module<<" crate: "<<crate <<" energy HW: " << (*it_je)->emEnergyVec()[JE_TS]<<" SW: " << (*it_TT_je)->emEnergyVec()[TT_TS]<< endreq ;
-	  
-	  //*mLog << MSG::VERBOSE << "had NoJEMatchFound "<<had_NoJEMatchFound<<" Module: " << module<<" crate: "<<crate <<" energy HW: " << (*it_je)->hadEnergyVec()[JE_TS]<<" SW: " << (*it_TT_je)->hadEnergyVec()[TT_TS]<< endreq ;
-	  *mLog <<MSG::VERBOSE<<endreq;
-	}
-      else
+      if (JEFound==0)
 	{
 	  *mLog <<MSG::VERBOSE<<"JEFound=0"<<endreq;
 	  *mLog << MSG::VERBOSE << " Module: " << module<<" crate: "<<crate <<" eta "<<(*it_je)->eta()<<" phi "<< (*it_je)->phi()<<endreq ;
-	  
 	}
       m_h_TransCheck_emJetElements->Fill(k,(crate*18+module+1),em_NoJEMatchFound);
       m_h_TransCheck_hadJetElements->Fill(k,(crate*18+module+1),had_NoJEMatchFound);

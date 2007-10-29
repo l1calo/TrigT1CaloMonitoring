@@ -61,6 +61,8 @@ protected:
    std::string m_JEMRoILocation;
    int m_SliceNo;
    bool  m_EventNoInHisto;
+   int m_MaxEnergyRange;
+   bool m_Offline;
 
    std::string m_DataType;   
    std::string m_PathInRootFile;   

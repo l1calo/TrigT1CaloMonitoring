@@ -89,6 +89,8 @@ private:
   std::string m_cpmRoiLocation;
   /// Trigger Tower container StoreGate key
   std::string m_triggerTowerLocation;
+  int m_MaxEnergyRange;
+  bool m_Offline;
   
   /// Root directory
   std::string m_rootDir;

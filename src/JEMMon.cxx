@@ -59,7 +59,8 @@ JEMMon::JEMMon( const std::string & type, const std::string & name,
   declareProperty( "JEMEtSumsLocation", m_JEMEtSumsLocation=   LVL1::TrigT1CaloDefs::JEMEtSumsLocation) ;
   declareProperty( "JEMRoILocation", m_JEMRoILocation =  LVL1::TrigT1CaloDefs::JEMRoILocation) ;
   declareProperty( "NumberOfSlices", m_SliceNo = 5);
-  declareProperty( "EventNoInHistoTitle", m_EventNoInHisto = 1) ;
+  declareProperty( "MaxEnergyRange", m_MaxEnergyRange = 50) ;
+  declareProperty( "Offline", m_Offline = 1) ;
 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/JEM") ;
   declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
@@ -104,19 +105,19 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
   ManagedMonitorToolBase::LevelOfDetail_t LevelOfDetail=shift;
   if (m_DataType=="Sim") LevelOfDetail = expert;
 
-  MonGroup JetElements_expert (this,(m_PathInRootFile+"_input").c_str() ,expert, eventsBlock);
+  MonGroup JetElements_expert (this,(m_PathInRootFile+"_input").c_str() ,expert, run);
   HistoBooker* expert_Booker = new HistoBooker(&JetElements_expert, &mLog, m_DataType);
 
-  MonGroup JetElements_shift (this,(m_PathInRootFile+"_input").c_str() ,LevelOfDetail, eventsBlock);
+  MonGroup JetElements_shift (this,(m_PathInRootFile+"_input").c_str() ,LevelOfDetail, run);
   HistoBooker* shift_Booker = new HistoBooker(&JetElements_shift, &mLog, m_DataType);
   
-  MonGroup JEM_DAQ ( this, (m_PathInRootFile+"_DAQ").c_str(), expert, eventsBlock );
+  MonGroup JEM_DAQ ( this, (m_PathInRootFile+"_DAQ").c_str(), expert, run );
   HistoBooker* DAQ_Booker = new HistoBooker(&JEM_DAQ, &mLog, m_DataType);
 
-  MonGroup JEM_RoI ( this, (m_PathInRootFile+"_RoI").c_str(), LevelOfDetail, eventsBlock );
+  MonGroup JEM_RoI ( this, (m_PathInRootFile+"_RoI").c_str(), LevelOfDetail, run );
   HistoBooker* RoI_Booker = new HistoBooker(&JEM_RoI, &mLog, m_DataType);
 
-  MonGroup JEM_Error( this, (m_ErrorPathInRootFile).c_str(), shift, eventsBlock );
+  MonGroup JEM_Error( this, (m_ErrorPathInRootFile).c_str(), shift, run );
   HistoBooker* Error_Booker = new HistoBooker(&JEM_Error, &mLog, "");
 
   if ( isNewEventsBlock|| isNewLumiBlock) { }
@@ -137,8 +138,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       m_h_je_hadphi->SetBins(32,Help->JEPhiBinning());
 
 
-      m_h_je_emenergy = expert_Booker->book1F("EmEnergy_JEM_input", "JE EM energy distribution  --  JEM input", 100, 0, 100, "em energy [GeV]" , "#");
-      m_h_je_hadenergy  = expert_Booker->book1F("HadEnergy_JEM_input", "JE HAD energy distribution  --  JEM input", 100, 0, 100, "had energy [GeV]" , "#");
+      m_h_je_emenergy = expert_Booker->book1F("EmEnergy_JEM_input", "JE EM energy distribution  --  JEM input", m_MaxEnergyRange, 0, m_MaxEnergyRange, "em energy [GeV]" , "#");
+      m_h_je_hadenergy  = expert_Booker->book1F("HadEnergy_JEM_input", "JE HAD energy distribution  --  JEM input", m_MaxEnergyRange, 0, m_MaxEnergyRange, "had energy [GeV]" , "#");
 
 
       m_h_je_energy_emHitMap = shift_Booker->book2F("JE_EM_HitMap_energy_JEM_input", "#eta - #phi map of EM JE weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4 , "#eta", "#phi");
@@ -172,7 +173,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	    }
 
 	  // ----------------------------------- Error Histos ------------------------------------------------------
-	  m_h_je_error = Error_Booker->book2F("JEM_Error","JEM S-Link Error per Module and Crate",12,0.5,12.5,35,0.5,35.5,"","");
+	  m_h_je_error = Error_Booker->book2F("JEM_Error","JEM SubStatus Word Error per Module and Crate",12,0.5,12.5,35,0.5,35.5,"","");
 	  //m_h_je_error -> SetOption ("text");
 	  m_h_je_error->GetXaxis()->SetBinLabel(1, "EM Parity");
 	  m_h_je_error->GetXaxis()->SetBinLabel(2, "HAD Parity");
@@ -211,9 +212,9 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       m_h_JEMHits_FwdHitsRight = DAQ_Booker->book1F("FwdHitsRight_JEM_DAQ", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "#");
       m_h_JEMHits_FwdHitsLeft = DAQ_Booker->book1F("FwdHitsLeft_JEM_DAQ", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "#");
       
-      m_h_JEMEtSums_Ex = DAQ_Booker->book1F("Ex_JEM_DAQ", "JEM E_{x}^{JEM}  --  JEM DAQ", 250, 0,250, "Ex [GeV]", "#");
-      m_h_JEMEtSums_Ey = DAQ_Booker->book1F("Ey_JEM_DAQ", "JEM E_{y}^{JEM}  --  JEM DAQ", 250, 0,250, "Ey [GeV]", "#");
-      m_h_JEMEtSums_Et = DAQ_Booker->book1F("Et_JEM_DAQ", "JEM E_{t}^{JEM}  --  JEM DAQ", 250, 0,250, "Et [GeV]", "#");
+      m_h_JEMEtSums_Ex = DAQ_Booker->book1F("Ex_JEM_DAQ", "JEM E_{x}^{JEM}  --  JEM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ex [GeV]", "#");
+      m_h_JEMEtSums_Ey = DAQ_Booker->book1F("Ey_JEM_DAQ", "JEM E_{y}^{JEM}  --  JEM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "#");
+      m_h_JEMEtSums_Et = DAQ_Booker->book1F("Et_JEM_DAQ", "JEM E_{t}^{JEM}  --  JEM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "#");
       
       //---------------------------- RoI histos -----------------------------
       m_h_JEMRoI_MainHits = RoI_Booker->book1F("MainHits_JEM_RoI", "Main Jet Hit Multiplicity per Threshold  --  JEM RoI", 8, -0.5, 7.5,  "Threshold No.", "#");      
@@ -254,7 +255,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	  std::string name,title;
 	  std::stringstream buffer;
 
-	  m_h_JEMRoI_error = Error_Booker->book2F("JEMROI_Error","JEMROI S-Link Parity and Saturation per Module and Crate",5,0.5,5.5,35,0.5,35.5,"","");
+	  m_h_JEMRoI_error = Error_Booker->book2F("JEMROI_Error","JEMROI Parity and Saturation per Module and Crate",5,0.5,5.5,35,0.5,35.5,"","");
 	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(1, "Parity (Main Jets)");
 	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(2, "Parity (Fwd Jets)");
 	  
@@ -588,7 +589,7 @@ StatusCode JEMMon::procHistograms( bool isEndOfEventsBlock,
     {  
     }
 	
-  if(m_EventNoInHisto==1)
+  if(m_Offline==1)
     {
       if (m_DataType=="BS")
 	{

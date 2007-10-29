@@ -19,11 +19,11 @@ CBNTAthenaAware = False
 ATLASCosmicFlags.IOVDbSvcGlobalTagData = 'COMCOND-001-00'
 ATLASCosmicFlags.doMonitoring=True
 ATLASCosmicFlags.doLVL1Calo=True
-#ATLASCosmicFlags.doInDet=False
-#ATLASCosmicFlags.doMuons=False
-#ATLASCosmicFlags.doLAr=False
-#ATLASCosmicFlags.doTile=False
-#ATLASCosmicFlags.doCaloTrkMuId=False
+ATLASCosmicFlags.doInDet=False
+ATLASCosmicFlags.doMuons=False
+ATLASCosmicFlags.doLAr=False
+ATLASCosmicFlags.doTile=False
+ATLASCosmicFlags.doCaloTrkMuId=False
 
 
 #
@@ -71,10 +71,10 @@ ToolSvc.EventData2XML.OutputLevel=ERROR
 #MessageSvc.OutputLevel=DEBUG
 
 
-LArDBConnection=" <dbConnection>impl=cool;techno=sqlite;schema= /det/lar/project/databases/COMCOND200.db;X:COMP200:</dbConnection>"
+#LArDBConnection=" <dbConnection>impl=cool;techno=sqlite;schema= /det/lar/project/databases/COMCOND200.db;X:COMP200:</dbConnection>"
 
-PoolSvc.ReadCatalog+=["xmlcatalog_file:/det/lar/project/databases/intr130/PoolFileCatalog.xml"]
-PoolSvc.ReadCatalog+=["xmlcatalog_file:/det/lar/lar/project/databases/comcond.000002.lar_conditions.recon.pool.v0000/PoolFileCatalog.xml"]
+#PoolSvc.ReadCatalog+=["xmlcatalog_file:/det/lar/project/databases/intr130/PoolFileCatalog.xml"]
+#PoolSvc.ReadCatalog+=["xmlcatalog_file:/det/lar/lar/project/databases/comcond.000002.lar_conditions.recon.pool.v0000/PoolFileCatalog.xml"]
 
 theApp.Dlls += ["LArRawConditions","LArCondAthenaPoolPoolCnv","LArCalibTools","LArCalibUtils"]
 theApp.Dlls += ["MuonByteStream"]

@@ -57,6 +57,8 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
   declareProperty("TriggerTowerLocation",
                  m_triggerTowerLocation =
 		                   LVL1::TrigT1CaloDefs::TriggerTowerLocation);
+  declareProperty( "MaxEnergyRange", m_MaxEnergyRange = 50) ;
+  declareProperty( "Offline", m_Offline = 1) ;
 
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
   declareProperty("SingleDirectory", m_oneDir = false);
@@ -129,11 +131,11 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   if ( isNewRun ) {	
   
-  if (m_oneDir) newGroup(cpmDir, shift, eventsBlock );
+  if (m_oneDir) newGroup(cpmDir, shift, run );
 
   //  Timeslice checks
 
-  newGroup(cpmDir + "_slices", shift, eventsBlock );
+  newGroup(cpmDir + "_slices", shift, run );
 
   for (int crate = 0; crate < 4; ++crate) {
     std::ostringstream cnum;
@@ -150,7 +152,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
     m_v_PP_CP_slice.push_back(hist);
   }
 
-  newGroup(cmmDir + "_slices", shift, eventsBlock );
+  newGroup(cmmDir + "_slices", shift, run );
 
   for (int crate = 0; crate < 4; ++crate) {
     std::ostringstream cnum;
@@ -169,12 +171,12 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  CPM Tower - Trigger Tower comparison Histos
 
-  newGroup(pprDir + "_Towers", expert, eventsBlock );
+  newGroup(pprDir + "_Towers", expert, run );
 
   m_h_TT_Em_Et = book1D("TT_EM_Et","Trigger Tower EM Et Noise",20,0,20);
   m_h_TT_Had_Et = book1D("TT_HAD_Et","Trigger Tower HAD Et Noise",20,0,20);
-  m_h_TT_Em_Et_s = book1D("TT_EM_Et_s","Trigger Tower EM Et Signal",235,20,255);
-  m_h_TT_Had_Et_s = book1D("TT_HAD_Et_s","Trigger Tower HAD Et Signal",235,20,255);
+  m_h_TT_Em_Et_s = book1D("TT_EM_Et_s","Trigger Tower EM Et Signal",m_MaxEnergyRange,0,m_MaxEnergyRange);
+  m_h_TT_Had_Et_s = book1D("TT_HAD_Et_s","Trigger Tower HAD Et Signal",m_MaxEnergyRange,0,m_MaxEnergyRange);
   m_h_TT_Em_eta = book1D("TT_EM_eta","Trigger Tower EM eta",50,-2.5,2.5);
   m_h_TT_Had_eta = book1D("TT_HAD_eta","Trigger Tower HAD eta",50,-2.5,2.5);
   m_h_TT_Em_phi = book1D("TT_EM_phi","Trigger Tower EM phi ",64,0,m_phiMax);
@@ -188,12 +190,12 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_TT_Had_eta_phi_w = book2D("TT_HAD_eta_phi_w",
       "Trigger Tower HAD eta/phi weighted;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
 
-  newGroup(cpmDir + "_Towers", shift, eventsBlock );
+  newGroup(cpmDir + "_Towers", shift, run );
 
   m_h_CT_Em_Et = book1D("CT_EM_Et","CPM Tower EM Et Noise",20,0,20);
   m_h_CT_Had_Et = book1D("CT_HAD_Et","CPM Tower HAD Et Noise",20,0,20);
-  m_h_CT_Em_Et_s = book1D("CT_EM_Et_s","CPM Tower EM Et Signal",235,20,255);
-  m_h_CT_Had_Et_s = book1D("CT_HAD_Et_s","CPM Tower HAD Et Signal",235,20,255);
+  m_h_CT_Em_Et_s = book1D("CT_EM_Et_s","CPM Tower EM Et Signal",m_MaxEnergyRange,0,m_MaxEnergyRange);
+  m_h_CT_Had_Et_s = book1D("CT_HAD_Et_s","CPM Tower HAD Et Signal",m_MaxEnergyRange,0,m_MaxEnergyRange);
   m_h_CT_Em_eta = book1D("CT_EM_eta","CPM Tower EM eta",50,-2.5,2.5);
   m_h_CT_Had_eta = book1D("CT_HAD_eta","CPM Tower HAD eta",50,-2.5,2.5);
   m_h_CT_Em_phi = book1D("CT_EM_phi","CPM Tower EM phi ",64,0,m_phiMax);
@@ -209,7 +211,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  CPM Tower error bits
 
-  newGroup(cpmErrDir + "_Towers", shift, eventsBlock );
+  newGroup(cpmErrDir + "_Towers", shift, run );
 
   m_h_CT_Em_parity = book2D("CT_EM_parity",
             "CPM Tower EM Parity Errors;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
@@ -230,7 +232,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  Trigger Tower/CPM Tower event by event comparison plots
 
-  newGroup(cpmDir + "_input", shift, eventsBlock );
+  newGroup(cpmDir + "_input", shift, run );
 
   m_h_TTeqCT_Em_eta_phi = book2D("TTeqCT_EM_eta_phi",
     "Trigger/CPM Tower match EM eta/phi;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
@@ -251,7 +253,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  CPM RoIs
 
-  newGroup(cpmDir + "_RoIs", shift, eventsBlock );
+  newGroup(cpmDir + "_RoIs", shift, run );
 
   for (int thresh = 0; thresh < 16; ++thresh) {
     std::ostringstream cnum;
@@ -272,14 +274,14 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
                                     65, -halfPhiBin, m_phiMax+halfPhiBin));
   }
 
-  newGroup(cpmErrDir + "_RoIs", shift, eventsBlock );
+  newGroup(cpmErrDir + "_RoIs", shift, run );
 
   m_h_RoI_Parity = book2D("CPM_RoI_Parity",
             "CPM RoI Parity Errors;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
 
   //  CPM Hits
   
-  newGroup(cpmDir + "_Hits", shift, eventsBlock );
+  newGroup(cpmDir + "_Hits", shift, run );
 
   for (int thresh = 0; thresh < 16; ++thresh) {
     std::ostringstream cnum;
@@ -297,7 +299,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  CMM-CP Hits
 
-  newGroup(cmmDir + "_Hits", shift, eventsBlock );
+  newGroup(cmmDir + "_Hits", shift, run );
 
   for (int thresh = 0; thresh < 16; ++thresh) {
     std::ostringstream cnum;
@@ -328,7 +330,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  CMM error bits
 
-  newGroup(cmmErrDir, shift, eventsBlock );
+  newGroup(cmmErrDir, shift, run );
 
   m_h_CMM_L_parity = book1D("CMM_L_parity",
                  "CMM Parity Errors Em/Tau (Left);Crate/CPM", 56, 0, 56);
@@ -350,7 +352,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  CPM/CMM Hits event by event comparisons
 
-  newGroup(cmmDir + "_input", shift, eventsBlock );
+  newGroup(cmmDir + "_input", shift, run );
 
   m_h_CPMeqCMM_hits1 = book1D("CPMeqCMM_hits1",
                  "CPM-CMM Hits match Em/Tau (Left);Crate/CPM", 56, 0, 56);
@@ -379,14 +381,14 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  Error Summary
 
-  newGroup(cpErrDir + "_summary", shift, eventsBlock );
+  newGroup(cpErrDir + "_summary", shift, run );
 
   m_h_CP_errors = book1D("CP_Error_Summary", "CP Error Summary", 9, 0, 9);
 
   delete m_monGroup;
   m_monGroup = 0;
 
-  } // end if (isNewEventsBlock ...
+  } 
 
   return StatusCode::SUCCESS;
 }
@@ -396,6 +398,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 /*---------------------------------------------------------*/
 {
   MsgStream log(msgSvc(), name());
+  log << MSG::DEBUG << "in TrigT1CaloCpmMonTool::fillHistograms()"<< endreq; 
   
 
   //Retrieve Trigger Towers from SG
@@ -437,6 +440,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
   //=============================================
   //   CPM Tower - Trigger Tower comparison plots
   //=============================================
+  log << MSG::DEBUG << "CPM Tower - Trigger Tower comparison plots"<< endreq; 
 
   // Maps for one-one comparisons
   TriggerTowerMap ttMap;
@@ -459,7 +463,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       const double phiMod = phi * m_phiScale;
       if (em && eta > -2.5 && eta < 2.5) {
         m_h_TT_Em_Et->Fill(em, 1.);
-        if (em > 10) m_h_TT_Em_Et_s->Fill(em, 1.);
+        //if (em > 10) m_h_TT_Em_Et_s->Fill(em, 1.);
+        m_h_TT_Em_Et_s->Fill(em, 1.);
         m_h_TT_Em_eta->Fill(eta, 1.);
         m_h_TT_Em_phi->Fill(phiMod, 1.);
         m_h_TT_Em_eta_phi->Fill(eta, phiMod, 1.);
@@ -467,7 +472,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       }
       if (had && eta > -2.5 && eta < 2.5) {
         m_h_TT_Had_Et->Fill(had, 1.);
-        if (had > 10) m_h_TT_Had_Et_s->Fill(had, 1.);
+        //if (had > 10) m_h_TT_Had_Et_s->Fill(had, 1.);
+        m_h_TT_Had_Et_s->Fill(had, 1.);
         m_h_TT_Had_eta->Fill(eta, 1.);
         m_h_TT_Had_phi->Fill(phiMod, 1.);
         m_h_TT_Had_eta_phi->Fill(eta, phiMod, 1.);
@@ -497,7 +503,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       m_v_CPM_slices[crate]->Fill(slices, peak, 1.);
       if (em) {
         m_h_CT_Em_Et->Fill(em, 1.);
-        if (em > 10) m_h_CT_Em_Et_s->Fill(em, 1.);
+        //if (em > 10) m_h_CT_Em_Et_s->Fill(em, 1.);
+        m_h_CT_Em_Et_s->Fill(em, 1.);
         m_h_CT_Em_eta->Fill(eta, 1.);
         m_h_CT_Em_phi->Fill(phiMod, 1.);
         m_h_CT_Em_eta_phi->Fill(eta, phiMod, 1.);
@@ -505,7 +512,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       }
       if (had) {
         m_h_CT_Had_Et->Fill(had, 1.);
-        if (had > 10) m_h_CT_Had_Et_s->Fill(had, 1.);
+        //if (had > 10) m_h_CT_Had_Et_s->Fill(had, 1.);
+        m_h_CT_Had_Et_s->Fill(had, 1.);
         m_h_CT_Had_eta->Fill(eta, 1.);
         m_h_CT_Had_phi->Fill(phiMod, 1.);
         m_h_CT_Had_eta_phi->Fill(eta, phiMod, 1.);
@@ -661,6 +669,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
   //=============================================
   //  CPM RoIs
   //=============================================
+  log << MSG::DEBUG << "CPM RoIs"<< endreq; 
 
   if (cpmRoiTES) {
     LVL1::CPRoIDecoder decoder;
@@ -697,6 +706,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
   //=============================================
   //  CPM Hits
   //=============================================
+  log << MSG::DEBUG << "CPM Hits"<< endreq; 
 
   CpmHitsMap cpmMap;
   maxKey = 0;
@@ -733,6 +743,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
   //=============================================
   //  CMM-CP Hits
   //=============================================
+  log << MSG::DEBUG << "CMM-CP Hits"<< endreq; 
 
   CmmCpHitsMap cmmMap;
 
@@ -929,54 +940,57 @@ StatusCode TrigT1CaloCpmMonTool::procHistograms(bool isEndOfEventsBlock,
 /*---------------------------------------------------------*/
 {
   MsgStream log(msgSvc(), name());
+  log << MSG::DEBUG << "TrigT1CaloCpmMonTool::procHistograms"<< endreq; 
 
-  if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
-    // Fill Error summary hist
-    int bin = 0;
-    m_h_CP_errors->Fill(bin++, m_h_TTneCT_Em_eta_phi->GetEffectiveEntries() +
-                               m_h_TTnoCT_Em_eta_phi->GetEffectiveEntries() +
-			       m_h_CTnoTT_Em_eta_phi->GetEffectiveEntries() +
-			       m_h_TTneCT_Had_eta_phi->GetEffectiveEntries() +
-			       m_h_TTnoCT_Had_eta_phi->GetEffectiveEntries() +
-			       m_h_CTnoTT_Had_eta_phi->GetEffectiveEntries()
-			                                                > 0.);
-    m_h_CP_errors->Fill(bin++, m_h_CT_Em_parity->GetEffectiveEntries() +
-                               m_h_CT_Had_parity->GetEffectiveEntries() > 0.);
-    m_h_CP_errors->Fill(bin++, m_h_CT_Em_link->GetEffectiveEntries() +
-                               m_h_CT_Had_link->GetEffectiveEntries() > 0.);
-    m_h_CP_errors->Fill(bin++, m_h_CT_status->GetEffectiveEntries() > 0.);
-    m_h_CP_errors->Fill(bin++, m_h_RoI_Parity->GetEffectiveEntries() > 0.);
-    m_h_CP_errors->Fill(bin++, m_h_CPMneCMM_hits0->GetEffectiveEntries() +
-                               m_h_CPMneCMM_hits1->GetEffectiveEntries() +
-			       m_h_CPMnoCMM_hits0->GetEffectiveEntries() +
-			       m_h_CPMnoCMM_hits1->GetEffectiveEntries() +
-			       m_h_CMMnoCPM_hits0->GetEffectiveEntries() +
-			       m_h_CMMnoCPM_hits1->GetEffectiveEntries() > 0.);
-    m_h_CP_errors->Fill(bin++, m_h_CMM_R_parity->GetEffectiveEntries() +
-                               m_h_CMM_L_parity->GetEffectiveEntries() > 0.);
-    m_h_CP_errors->Fill(bin++, m_h_CMM_status->GetEffectiveEntries() > 0.);
-    int sumTe = 0;
-    for (int thresh = 0; thresh < 16; ++thresh) {
-      sumTe += (m_v_CMM_T_thresholds[thresh]->GetBinContent(4) !=
-                m_v_CMM_T_thresholds[thresh]->GetBinContent(16)) +
-               (m_v_CMM_T_thresholds[thresh]->GetBinContent(9) !=
-	        m_v_CMM_T_thresholds[thresh]->GetBinContent(17)) +
-               (m_v_CMM_T_thresholds[thresh]->GetBinContent(14) !=
-	        m_v_CMM_T_thresholds[thresh]->GetBinContent(18));
+  if (m_Offline==1)
+    {
+      if (isEndOfRun) {
+	// Fill Error summary hist
+	int bin = 0;
+	m_h_CP_errors->Fill(bin++, m_h_TTneCT_Em_eta_phi->GetEffectiveEntries() +
+			    m_h_TTnoCT_Em_eta_phi->GetEffectiveEntries() +
+			    m_h_CTnoTT_Em_eta_phi->GetEffectiveEntries() +
+			    m_h_TTneCT_Had_eta_phi->GetEffectiveEntries() +
+			    m_h_TTnoCT_Had_eta_phi->GetEffectiveEntries() +
+			    m_h_CTnoTT_Had_eta_phi->GetEffectiveEntries()
+			    > 0.);
+	m_h_CP_errors->Fill(bin++, m_h_CT_Em_parity->GetEffectiveEntries() +
+			    m_h_CT_Had_parity->GetEffectiveEntries() > 0.);
+	m_h_CP_errors->Fill(bin++, m_h_CT_Em_link->GetEffectiveEntries() +
+			    m_h_CT_Had_link->GetEffectiveEntries() > 0.);
+	m_h_CP_errors->Fill(bin++, m_h_CT_status->GetEffectiveEntries() > 0.);
+	m_h_CP_errors->Fill(bin++, m_h_RoI_Parity->GetEffectiveEntries() > 0.);
+	m_h_CP_errors->Fill(bin++, m_h_CPMneCMM_hits0->GetEffectiveEntries() +
+			    m_h_CPMneCMM_hits1->GetEffectiveEntries() +
+			    m_h_CPMnoCMM_hits0->GetEffectiveEntries() +
+			    m_h_CPMnoCMM_hits1->GetEffectiveEntries() +
+			    m_h_CMMnoCPM_hits0->GetEffectiveEntries() +
+			    m_h_CMMnoCPM_hits1->GetEffectiveEntries() > 0.);
+	m_h_CP_errors->Fill(bin++, m_h_CMM_R_parity->GetEffectiveEntries() +
+			    m_h_CMM_L_parity->GetEffectiveEntries() > 0.);
+	m_h_CP_errors->Fill(bin++, m_h_CMM_status->GetEffectiveEntries() > 0.);
+	int sumTe = 0;
+	for (int thresh = 0; thresh < 16; ++thresh) {
+	  sumTe += (m_v_CMM_T_thresholds[thresh]->GetBinContent(4) !=
+		    m_v_CMM_T_thresholds[thresh]->GetBinContent(16)) +
+	    (m_v_CMM_T_thresholds[thresh]->GetBinContent(9) !=
+	     m_v_CMM_T_thresholds[thresh]->GetBinContent(17)) +
+	    (m_v_CMM_T_thresholds[thresh]->GetBinContent(14) !=
+	     m_v_CMM_T_thresholds[thresh]->GetBinContent(18));
+	}
+	m_h_CP_errors->Fill(bin, sumTe > 0);
+	bin = 1;
+	m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "PPr-CPM");
+	m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CPM parity");
+	m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CPM link");
+	m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CPM status");
+	m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "RoI parity");
+	m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CPM-CMM");
+	m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CMM parity");
+	m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CMM status");
+	m_h_CP_errors->GetXaxis()->SetBinLabel(bin,   "crate-sys");
+      }
     }
-    m_h_CP_errors->Fill(bin, sumTe > 0);
-    bin = 1;
-    m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "PPr-CPM");
-    m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CPM parity");
-    m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CPM link");
-    m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CPM status");
-    m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "RoI parity");
-    m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CPM-CMM");
-    m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CMM parity");
-    m_h_CP_errors->GetXaxis()->SetBinLabel(bin++, "CMM status");
-    m_h_CP_errors->GetXaxis()->SetBinLabel(bin,   "crate-sys");
-  }
-
   return StatusCode::SUCCESS;
 }
 

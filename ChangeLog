@@ -1,3 +1,11 @@
+2007-10-28  Johanna Fleckner  <fleckner@lxplus241.cern.ch>
+	* tag TrigT1CaloMonitoring-00-01-12
+	* book histograms only at start-up
+	* change wrong filling of CMM errors
+	* make energy ranges for all energy histograms configurable
+	* execute procHists only in offline
+	* adjust monitoring to CP firmware in JEP CMMs (JEM-number-shift between JEM-number and CMM-JEM-number)
+
 2007-10-22  Johanna Fleckner  <fleckner@lxplus241.cern.ch>
 	* tag TrigT1CaloMonitoring-00-01-11
 	* share/TrigT1CaloMonitoring_topOptions.py adjust for RecExCommission

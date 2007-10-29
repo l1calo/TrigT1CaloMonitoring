@@ -59,7 +59,9 @@ protected:
    std::string m_PathInRootFile;   
    std::string m_ErrorPathInRootFile;
    int m_NoEvents;
-   bool  m_EventNoInHisto;
+   int m_MaxEnergyRange;
+   bool m_Offline;
+
 
   /** Histos */   
    // CMM Jet Hits
@@ -98,7 +100,9 @@ protected:
    TH2F* m_h_CMMJet_error;
    TH2F* m_h_CMMEnergy_error;
    TH1F* m_h_CMMRoI_error;
-
+   TH1F* m_h_TriggeredSlice_Energy;
+   TH1F* m_h_TriggeredSlice_Jet;
+	  
 };
 
 

@@ -102,6 +102,7 @@ protected:
    std::string m_BS_TriggerTowerLocation;
    int m_NoLUTSlices;
    bool  m_EventNoInHisto;
+   bool m_Offline;
 
    std::string m_BS_JEMHitsLocation;
    std::string m_Sim_JEMHitsLocation;

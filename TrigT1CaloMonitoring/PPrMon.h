@@ -54,12 +54,13 @@ private:
   int m_SliceNo;
   bool m_TT_DistPerChannel;
   bool m_TT_DistPerChannelAndTimeSlice;
+  int m_MaxEnergyRange;
+  bool m_Offline;
 
   std::string m_DataType;
   std::string m_PathInRootFile;
   std::string m_ErrorPathInRootFile;
   std::string m_EventPathInRootFile;
-  bool  m_EventNoInHisto;
      
 protected:
    /** a handle on Store Gate for access to the Event Store */

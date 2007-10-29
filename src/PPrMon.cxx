@@ -43,12 +43,13 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   declareProperty("ADCHitMap_Thresh",  m_TT_ADC_HitMap_Thresh = 15);
   declareProperty("DistPerChannel", m_TT_DistPerChannel=1);
   declareProperty("DistPerChannelAndTimeSlice", m_TT_DistPerChannelAndTimeSlice=0);
- 
+  declareProperty( "MaxEnergyRange", m_MaxEnergyRange = 50) ;
+  declareProperty( "Offline", m_Offline = 1) ;
+
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/L1Calo/PPr") ;
   declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
   declareProperty( "EventPathInRootFile", m_EventPathInRootFile="Stats/L1Calo") ;
   declareProperty( "DataType", m_DataType="") ;
-  declareProperty( "EventNoInHistoTitle", m_EventNoInHisto = 1) ;
 
   m_SliceNo=5;
 }
@@ -158,32 +159,32 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
     // book histograms that are only relevant for cosmics data...
   }
 
-  MonGroup TT_EmADCPeak( this, (m_PathInRootFile+"_EmADCPeak").c_str(), expert, eventsBlock );
+  MonGroup TT_EmADCPeak( this, (m_PathInRootFile+"_EmADCPeak").c_str(), expert, run );
   HistoBooker* EmADCPeak_Booker = new HistoBooker(&TT_EmADCPeak, &log, m_DataType);
 
-  MonGroup TT_HadADCPeak( this, (m_PathInRootFile+"_HadADCPeak").c_str(), expert, eventsBlock );
+  MonGroup TT_HadADCPeak( this, (m_PathInRootFile+"_HadADCPeak").c_str(), expert, run );
   HistoBooker* HadADCPeak_Booker = new HistoBooker(&TT_HadADCPeak, &log, m_DataType);
 
-  MonGroup TT_EmLUTPeak( this, (m_PathInRootFile+"_EmLUTPeak").c_str(), expert, eventsBlock );
+  MonGroup TT_EmLUTPeak( this, (m_PathInRootFile+"_EmLUTPeak").c_str(), expert, run );
   HistoBooker* EmLUTPeak_Booker = new HistoBooker(&TT_EmLUTPeak, &log, m_DataType);
 
-  MonGroup TT_HadLUTPeak( this, (m_PathInRootFile+"_HadLUTPeak").c_str(), expert, eventsBlock );
+  MonGroup TT_HadLUTPeak( this, (m_PathInRootFile+"_HadLUTPeak").c_str(), expert, run );
   HistoBooker* HadLUTPeak_Booker = new HistoBooker(&TT_HadLUTPeak, &log, m_DataType);
 
 
-  MonGroup TT_HitMaps( this, (m_PathInRootFile+"_LUTHitMaps").c_str(), shift, eventsBlock );
+  MonGroup TT_HitMaps( this, (m_PathInRootFile+"_LUTHitMaps").c_str(), shift, run );
   HistoBooker* HitMaps_Booker = new HistoBooker(&TT_HitMaps, &log, m_DataType);
 
-  MonGroup TT_ADC( this, (m_PathInRootFile+"_ADCTimeSlices").c_str(), shift, eventsBlock );
+  MonGroup TT_ADC( this, (m_PathInRootFile+"_ADCTimeSlices").c_str(), shift, run );
   HistoBooker* ADCTimeSlice_Booker = new HistoBooker(&TT_ADC, &log, m_DataType);
 
-  MonGroup TT_LUTPeakDist( this, (m_PathInRootFile+"_LUTPeakDistribution").c_str(), shift, eventsBlock );
+  MonGroup TT_LUTPeakDist( this, (m_PathInRootFile+"_LUTPeakDistribution").c_str(), shift, run );
   HistoBooker* LUTPeakDistribution_Booker = new HistoBooker(&TT_LUTPeakDist, &log, m_DataType);
 
-  MonGroup TT_Error( this, (m_ErrorPathInRootFile).c_str(), shift, eventsBlock );
+  MonGroup TT_Error( this, (m_ErrorPathInRootFile).c_str(), shift, run );
   HistoBooker* Error_Booker = new HistoBooker(&TT_Error, &log, "");
 
-  MonGroup NoEvents( this, (m_EventPathInRootFile).c_str(), expert, eventsBlock );
+  MonGroup NoEvents( this, (m_EventPathInRootFile).c_str(), expert, run );
   HistoBooker* NoEvent_Booker = new HistoBooker(&NoEvents, &log, "");
 
   if ( isNewEventsBlock|| isNewLumiBlock) { }
@@ -291,7 +292,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_HitMap_hadLUT_Thresh2->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning());  
       
       //---------------------------- distribution of LUT peak per detector region -----------------------------
-      m_h_TT_emLUT=LUTPeakDistribution_Booker->book1F("emLUT_peak","EM LUT: Distribution of Peak",256,-0.5,255.5,"em LUT Peak [GeV]");
+      m_h_TT_emLUT=LUTPeakDistribution_Booker->book1F("emLUT_peak","EM LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"em LUT Peak [GeV]");
       m_h_TT_emLUT_eta=LUTPeakDistribution_Booker->book1F("emLUT_eta","EM LUT: Distribution of Peak per #eta",21,-0.5,255.5,"#eta");
       m_h_TT_emLUT_eta->SetBins(66,Help->TTEtaBinning());
       
@@ -299,14 +300,14 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_emLUT_phi->SetBins(64,Help->TTPhiBinning());  
       
       
-      m_h_TT_hadLUT=LUTPeakDistribution_Booker->book1F("hadLUT_Dist","HAD LUT: Distribution of Peak",256,-0.5,255.5,"had LUT Peak [GeV]"); 
+      m_h_TT_hadLUT=LUTPeakDistribution_Booker->book1F("hadLUT_Dist","HAD LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"had LUT Peak [GeV]"); 
       m_h_TT_hadLUT_eta=LUTPeakDistribution_Booker->book1F("hadLUT_eta","HAD LUT: Distribution of Peak per #eta",256,-0.5,255.5,"#eta");
       m_h_TT_hadLUT_eta->SetBins(66,Help->TTEtaBinning());
       m_h_TT_hadLUT_phi=LUTPeakDistribution_Booker->book1F("hadLUT_phi","HAD LUT: Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
       m_h_TT_hadLUT_phi->SetBins(64,Help->TTPhiBinning());  
       
-      //---------------------------- S-Link errors -----------------------------
-      m_h_TT_emerror=Error_Booker->book1F("TT_emerror","EM TT S-Link errors",17,0.5,17.5,"");
+      //---------------------------- SubStatus Word errors -----------------------------
+      m_h_TT_emerror=Error_Booker->book1F("TT_emerror","EM TT SubStatus Word errors",17,0.5,17.5,"");
       
       m_h_TT_emerror->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_emerror->GetXaxis()->SetBinLabel(2, "MCMAbsent");
@@ -326,7 +327,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_emerror->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
       m_h_TT_emerror->GetXaxis()->SetBinLabel(17, "FailingBCN");
 
-      m_h_TT_haderror=Error_Booker->book1F("TT_haderror","HAD TT S-Link errors",17,0.5,17.5,"");
+      m_h_TT_haderror=Error_Booker->book1F("TT_haderror","HAD TT SubStatus Word errors",17,0.5,17.5,"");
       
       m_h_TT_haderror->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_haderror->GetXaxis()->SetBinLabel(2, "MCMAbsent");
@@ -346,7 +347,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_haderror->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
       m_h_TT_haderror->GetXaxis()->SetBinLabel(17, "FailingBCN");
       
-      m_h_TT_error_Crate_03=Error_Booker->book2F("TT_error_Crate_0-3","TT S-Link errors in crates 0-3",17,0.5,17.5,71,0.5,71.5,"","");
+      m_h_TT_error_Crate_03=Error_Booker->book2F("TT_error_Crate_0-3","TT SubStatus Word errors in crates 0-3",17,0.5,17.5,71,0.5,71.5,"","");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(2, "MCMAbsent");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(3, "Timeout");
@@ -365,7 +366,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(17, "FailingBCN");
 
-      m_h_TT_error_Crate_47=Error_Booker->book2F("TT_error_Crate_4-7","TT S-Link errors in crates 4-7",17,0.5,17.5,71,0.5,71.5,"","");
+      m_h_TT_error_Crate_47=Error_Booker->book2F("TT_error_Crate_4-7","TT SubStatus Word errors in crates 4-7",17,0.5,17.5,71,0.5,71.5,"","");
       m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(2, "MCMAbsent");
       m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(3, "Timeout");
@@ -583,7 +584,7 @@ StatusCode PPrMon::fillHistograms()
       
       
 
-      //---------------------------- S-Link errors -----------------------------
+      //---------------------------- SubStatus Word errors -----------------------------
       //----------------------------- em ---------------------------------------
 
       LVL1::DataError emerr((*TriggerTowerIterator)-> emError());
@@ -802,7 +803,7 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBloc
     {  
     }
 	
-  if(m_EventNoInHisto==1)
+  if(m_Offline==1)
     {
       if( isEndOfRun ) 
 	{   
