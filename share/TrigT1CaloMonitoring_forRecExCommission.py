@@ -2,6 +2,17 @@ Offline= not ATLASCosmicFlags.doOnline
 CompareWithSimulation=True
 MaxEnergyRange = 50
 
+if not ATLASCosmicFlags.doCTPMon:
+    log.info("will setup LVL1ConfigSvc and add instance to ServiceMgr")
+    from TrigConfigSvc.TrigConfigSvcConfig import LVL1ConfigSvc
+    LVL1ConfigSvc = LVL1ConfigSvc('LVL1ConfigSvc')
+    LVL1ConfigSvc.ConfigSource = "XML"
+    #LVL1ConfigSvc.XMLFile = "TrigT1CTMonitoring/LVL1ConfigCosmic.xml"
+    LVL1ConfigSvc.CreateLegacyObjects = True
+    LVL1ConfigSvc.DumpTTVmap = False
+    # LVL1ConfigSvc.OutputLevel = VERBOSE
+    svcMgr += LVL1ConfigSvc
+    theApp.CreateSvc += [ "TrigConf::LVL1ConfigSvc/LVL1ConfigSvc" ]
 
 
 
@@ -99,13 +110,17 @@ toolSvc.L1PPrMonTool.DistPerChannelAndTimeSlice = False
 toolSvc.L1PPrMonTool.LUTHitMap_Thresh0 = 1
 toolSvc.L1PPrMonTool.LUTHitMap_Thresh1 = 3
 toolSvc.L1PPrMonTool.LUTHitMap_Thresh2 = 7
-toolSvc.L1PPrMonTool.ADCHitMap_Thresh = 30
+toolSvc.L1PPrMonTool.ADCHitMap_Thresh = 45
 toolSvc.L1PPrMonTool.MaxEnergyRange = MaxEnergyRange
+toolSvc.L1PPrMonTool.ADCTimingPerChannel = 0
+toolSvc.L1PPrMonTool.HADFADCCut = 40
+toolSvc.L1PPrMonTool.ADCPedestal = 35
 toolSvc.L1PPrMonTool.PathInRootFile = "L1Calo/1_PPr"
 toolSvc.L1PPrMonTool.ErrorPathInRootFile = "L1Calo/01_Errors_PPr"
 toolSvc.L1PPrMonTool.EventPathInRootFile = "L1Calo"
 toolSvc.L1PPrMonTool.Offline = Offline
 #toolSvc.L1PPrMonTool.OutputLevel = DEBUG
+
 
 #---------------------------- Performance Checks -----------------------------------
 

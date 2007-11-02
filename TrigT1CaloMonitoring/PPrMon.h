@@ -25,6 +25,7 @@
 #include <vector>
 #include "TH1.h"
 #include "TH2.h"
+#include "TProfile2D.h"
 //class StoreGateSvc;
 
 class PPrMon: public ManagedMonitorToolBase
@@ -43,8 +44,9 @@ class PPrMon: public ManagedMonitorToolBase
   virtual StatusCode procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun );
 
 private:
-  int PeakPosition(const std::vector<int> & Vec);
-  int max(int ValuePosition1,int ValuePosition2, const std::vector<int> & Vec);
+
+  double recTime(const std::vector<int>& vFAdc);
+  int FADCSum(const std::vector<int>& vFAdc) ;
 
   std::string m_TriggerTowerContainerName;
   int m_TT_HitMap_Thresh0;
@@ -56,6 +58,9 @@ private:
   bool m_TT_DistPerChannelAndTimeSlice;
   int m_MaxEnergyRange;
   bool m_Offline;
+  int m_TT_ADC_Pedestal;
+  bool m_TT_ADCTimingPerChannel;
+  int m_HADFADCCut;
 
   std::string m_DataType;
   std::string m_PathInRootFile;
@@ -90,6 +95,15 @@ protected:
   std::map <int,TH2F*> m_h_TT_HitMap_hadADC;
   std::map <int,TH2F*> m_h_TT_HitMap_had_ADCPeak_TimeSlice;
   std::map <int,TH2F*> m_h_TT_HitMap_em_ADCPeak_TimeSlice;
+  std::map <int,TH1F*> m_h_TT_HitMap_emADCChannel_timing;
+  std::map <int,TProfile*> m_h_TT_HitMap_hadADCChannel_timing;
+
+  //timing HitMaps
+  TProfile2D* m_h_TT_ADC_emTiming_signal;
+  TProfile2D* m_h_TT_ADC_hadTiming_signal;
+
+  TProfile2D* m_h_TT_ADC_emTiming_nosignal;
+  TProfile2D* m_h_TT_ADC_hadTiming_nosignal;
 
   //LUT Hitmaps per threshold
    TH2F* m_h_TT_HitMap_emLUT_Thresh0;

@@ -40,11 +40,14 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   declareProperty("LUTHitMap_Thresh0",  m_TT_HitMap_Thresh0 = 1);
   declareProperty("LUTHitMap_Thresh1",  m_TT_HitMap_Thresh1 = 3);
   declareProperty("LUTHitMap_Thresh2",  m_TT_HitMap_Thresh2 = 7);
+  declareProperty("ADCPedestal",  m_TT_ADC_Pedestal = 40);
   declareProperty("ADCHitMap_Thresh",  m_TT_ADC_HitMap_Thresh = 15);
   declareProperty("DistPerChannel", m_TT_DistPerChannel=1);
   declareProperty("DistPerChannelAndTimeSlice", m_TT_DistPerChannelAndTimeSlice=0);
   declareProperty( "MaxEnergyRange", m_MaxEnergyRange = 50) ;
   declareProperty( "Offline", m_Offline = 1) ;
+  declareProperty( "ADCTimingPerChannel", m_TT_ADCTimingPerChannel=1);
+  declareProperty( "HADFADCCut",  m_HADFADCCut=80);
 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/L1Calo/PPr") ;
   declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
@@ -165,6 +168,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
   MonGroup TT_HadADCPeak( this, (m_PathInRootFile+"_HadADCPeak").c_str(), expert, run );
   HistoBooker* HadADCPeak_Booker = new HistoBooker(&TT_HadADCPeak, &log, m_DataType);
 
+  MonGroup TT_HadADCTiming( this, (m_PathInRootFile+"_HadADCTiming").c_str(), expert, run );
+
   MonGroup TT_EmLUTPeak( this, (m_PathInRootFile+"_EmLUTPeak").c_str(), expert, run );
   HistoBooker* EmLUTPeak_Booker = new HistoBooker(&TT_EmLUTPeak, &log, m_DataType);
 
@@ -240,6 +245,29 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	    }
 	}
 
+
+     if (m_TT_ADCTimingPerChannel==1)
+	{
+	  for(;tower_it!=m_lvl1Helper->tower_end();++tower_it) 
+	    {
+	      Identifier towerId = (*tower_it);
+
+	      buffer.str("");
+	      etabuffer.str("");
+	      phibuffer.str("");
+	      buffer<<towerId;
+	      etabuffer<<m_l1CaloTTIdTools->IDeta(towerId);
+	      phibuffer<<m_l1CaloTTIdTools->IDphi(towerId);
+	      
+	      if (m_lvl1Helper->sampling(towerId)==1 and m_l1CaloTTIdTools->IDeta(towerId)<1 and m_l1CaloTTIdTools->IDeta(towerId)>-1) //HAD TT with -1<eta<1
+		{
+		  name = "hadADCTiming_" + buffer.str();
+		  title = "TT had ADC Timing for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
+		  m_h_TT_HitMap_hadADCChannel_timing[towerId]=new TProfile(name.c_str(),title.c_str(),5,0,5);
+		  TT_HadADCTiming.regHist(m_h_TT_HitMap_hadADCChannel_timing[towerId]);
+		}
+	    }
+	}
       //---------------------------- ADC Hitmaps per TimeSlice -----------------------------
       for(int i=0;i<m_SliceNo;i++) 
 	{
@@ -258,7 +286,38 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	  m_h_TT_HitMap_hadADC[i]=ADCTimeSlice_Booker->book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
 	  m_h_TT_HitMap_hadADC[i]->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
 	}
+
+
+
+
+
       
+      m_h_TT_ADC_hadTiming_signal=new TProfile2D("ADC_hadTiming_signal","Average Maximum TimeSlice for had Signal (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI);
+      TT_ADC.regHist (m_h_TT_ADC_hadTiming_signal);
+      m_h_TT_ADC_hadTiming_signal-> SetOption ("colz");
+      m_h_TT_ADC_hadTiming_signal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+
+      m_h_TT_ADC_hadTiming_nosignal=new TProfile2D("ADC_hadTiming_nosignal","Average Maximum TimeSlice for had Noise (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI);
+      TT_ADC.regHist (m_h_TT_ADC_hadTiming_nosignal);
+      m_h_TT_ADC_hadTiming_nosignal-> SetOption ("colz");
+      m_h_TT_ADC_hadTiming_nosignal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+
+
+
+
+
+
+      m_h_TT_ADC_emTiming_signal=new TProfile2D("ADC_emTiming_signal","em Timing",100,-4.9,4.9, 64,0,2*M_PI);
+      TT_ADC.regHist (m_h_TT_ADC_emTiming_signal);
+      m_h_TT_ADC_emTiming_signal-> SetOption ("colz");
+      m_h_TT_ADC_emTiming_signal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+
+
+      m_h_TT_ADC_emTiming_nosignal=new TProfile2D("ADC_emTiming_nosignal","em Timing",100,-4.9,4.9, 64,0,2*M_PI);
+      TT_ADC.regHist (m_h_TT_ADC_emTiming_nosignal);
+      m_h_TT_ADC_emTiming_nosignal-> SetOption ("colz");
+      m_h_TT_ADC_emTiming_nosignal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+
       //---------------------------- LUT Hitmaps per threshold -----------------------------
       buffer.str("");
       buffer<<m_TT_HitMap_Thresh0;
@@ -538,6 +597,7 @@ StatusCode PPrMon::fillHistograms()
       HadEnergy = (*TriggerTowerIterator)->hadLUT()[(*TriggerTowerIterator)->hadPeak()];
       if (m_TT_DistPerChannel==1) m_h_TT_HadLUTPeak[HadTowerId]->Fill(HadEnergy,1);
 
+
       // had energy distribution per detector region
       if (HadEnergy>0) 
 	{
@@ -575,10 +635,39 @@ StatusCode PPrMon::fillHistograms()
 	      if (( (*TriggerTowerIterator)->hadADC())[i] > m_TT_ADC_HitMap_Thresh)
 		{
 		  m_h_TT_HitMap_hadADC[i] ->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+
+
+		  if (m_TT_ADCTimingPerChannel==1 and (*TriggerTowerIterator)->eta()<1 and (*TriggerTowerIterator)->eta()>-1)
+		    {
+		      if (FADCSum((*TriggerTowerIterator)->hadADC())>m_HADFADCCut) m_h_TT_HitMap_hadADCChannel_timing[HadTowerId]->Fill(i,(*TriggerTowerIterator)->hadADC()[i]);
+		    }
 		}
 	    }
 	}    
+
+      //Peak timing
+      int m_FADCSum=0;
       
+      double max;
+
+      m_FADCSum=FADCSum((*TriggerTowerIterator)->hadADC());
+
+      if (m_FADCSum>m_HADFADCCut)
+	{
+	  max = recTime((*TriggerTowerIterator)->hadADC())+1;
+	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
+	  m_h_TT_ADC_hadTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max);
+	}
+      else
+	{
+	  max=recTime((*TriggerTowerIterator)->hadADC())+1;
+	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
+	  m_h_TT_ADC_hadTiming_nosignal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max);
+	}
+
+
+
+
       //---------------------------- offlineTTID -> OnlineTTID -----------------------------
 
       
@@ -775,7 +864,7 @@ StatusCode PPrMon::fillHistograms()
       m_h_TT_triggeredSlice_em->Fill((*TriggerTowerIterator)->emADCPeak(),1);
       m_h_TT_triggeredSlice_had->Fill((*TriggerTowerIterator)->hadADCPeak(),1);
 
-      int Peak=PeakPosition(((*TriggerTowerIterator)->emADC()));
+      /*int Peak=PeakPosition(((*TriggerTowerIterator)->emADC()));
       if ((*TriggerTowerIterator)->emADC()[Peak]>4)
 	{
 	  m_h_TT_HitMap_em_ADCPeak_TimeSlice[Peak]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
@@ -785,7 +874,7 @@ StatusCode PPrMon::fillHistograms()
       if ((*TriggerTowerIterator)->hadADC()[Peak]>4)
 	{
 	  m_h_TT_HitMap_had_ADCPeak_TimeSlice[Peak]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-	}
+	  }*/
 
     }
 
@@ -849,19 +938,72 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBloc
   return StatusCode( StatusCode::SUCCESS );
 }
 
+
 /*---------------------------------------------------------*/
-int PPrMon::PeakPosition(const std::vector<int> & Vec)
+double PPrMon::recTime(const std::vector<int>& vFAdc) {
 /*---------------------------------------------------------*/
-{
-  return max(max(max(0,1,Vec),max(2,3,Vec),Vec),4,Vec);
+
+  double x[3];
+  double y[3];
+  double binshift = 0.;
+  
+  int indmax=0;
+  int index=0;
+  std::vector<int>::const_iterator it = vFAdc.begin();
+  for(;it!=vFAdc.end();++it,++index) {
+    if(vFAdc[indmax]<*it) indmax=index;
+  }
+  
+  //cout<<"indmax: "<<indmax<<endl;
+  
+  double max = 0.;
+  
+  if(indmax==0) {
+    max=0.+binshift;
+    //x[0] = 0 + binshift;  y[0] = vFAdc[0];
+    //x[1] = 1     + binshift; y[1] = vFAdc[1];
+    //x[2] = 2 + 1 +binshift; y[2] = vFAdc[2];
+  } else if(indmax==4) {
+    max=4.+binshift;
+    //x[0] = 2 + binshift;  y[0] = vFAdc[2];
+    //x[1] = 3     + binshift; y[1] = vFAdc[3];
+    //x[2] = 4 + 1 +binshift; y[2] = vFAdc[4];
+  } else {
+    //if(indmax!=0 && indmax!=4) {
+    
+    x[0] = indmax - 1 + binshift;  y[0] = vFAdc[indmax-1];
+    x[1] = indmax     + binshift; y[1] = vFAdc[indmax];
+    x[2] = indmax + 1 +binshift; y[2] = vFAdc[indmax+1];
+    
+    double a = ( (x[0]-x[2])*(y[1]-y[2]) - (x[1]-x[2])*(y[0]-y[2]) ) / (
+									(x[0]-x[2])*(x[1]*x[1]-x[2]*x[2]) - (x[1]-x[2])*(x[0]*x[0]-x[2]*x[2]) );
+    double b = ( (y[1]-y[2])*(x[0]*x[0]-x[2]*x[2]) -
+		 (y[0]-y[2])*(x[1]*x[1]-x[2]*x[2]) ) / (
+							(x[1]-x[2])*(x[0]*x[0]-x[2]*x[2]) - (x[0]-x[2])*(x[1]*x[1]-x[2]*x[2]) );
+    double c = y[0] - b*x[0] - a*x[0]*x[0];
+    max = -b/(2*a);
+    
+  }
+  
+  return max;
 }
 
 
 
 /*---------------------------------------------------------*/
-int PPrMon::max(int ValuePosition1,int ValuePosition2, const std::vector<int> & Vec)
-/*---------------------------------------------------------*/
-{
-  if (Vec[ValuePosition1]>=Vec[ValuePosition2]) return ValuePosition1;
-  else return ValuePosition2;
+int PPrMon::FADCSum(const std::vector<int>& vFAdc) {
+  /*---------------------------------------------------------*/
+  
+  std::vector<int>::const_iterator it = vFAdc.begin();
+  int FADCSum =0;
+  int FADCMin=999999;
+  for(;it!=vFAdc.end();++it) {
+    FADCSum+=*it;
+    if(*it<FADCMin)FADCMin=*it;
+  }
+
+  FADCSum-=vFAdc.size()*FADCMin; // pseudo pedestal subtraction...
+  
+  return FADCSum;
 }
+
