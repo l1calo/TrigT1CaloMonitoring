@@ -61,6 +61,7 @@ private:
   int m_TT_ADC_Pedestal;
   bool m_TT_ADCTimingPerChannel;
   int m_HADFADCCut;
+  int m_EMFADCCut;
 
   std::string m_DataType;
   std::string m_PathInRootFile;
@@ -89,21 +90,16 @@ protected:
   std::map <Identifier, TH1F*>  m_h_TT_HadADCPeak;
   std::map <Identifier, TH1F*>  m_h_TT_EmLUTPeak;
   std::map <Identifier, TH1F*>  m_h_TT_HadLUTPeak;
+  std::map <int,TProfile*> m_h_TT_HitMap_emADCChannel_timing;
+  std::map <int,TProfile*> m_h_TT_HitMap_hadADCChannel_timing;
 
   //ADC Hitmaps per TimeSlice
   std::map <int,TH2F*> m_h_TT_HitMap_emADC;
   std::map <int,TH2F*> m_h_TT_HitMap_hadADC;
-  std::map <int,TH2F*> m_h_TT_HitMap_had_ADCPeak_TimeSlice;
-  std::map <int,TH2F*> m_h_TT_HitMap_em_ADCPeak_TimeSlice;
-  std::map <int,TH1F*> m_h_TT_HitMap_emADCChannel_timing;
-  std::map <int,TProfile*> m_h_TT_HitMap_hadADCChannel_timing;
 
   //timing HitMaps
   TProfile2D* m_h_TT_ADC_emTiming_signal;
   TProfile2D* m_h_TT_ADC_hadTiming_signal;
-
-  TProfile2D* m_h_TT_ADC_emTiming_nosignal;
-  TProfile2D* m_h_TT_ADC_hadTiming_nosignal;
 
   //LUT Hitmaps per threshold
    TH2F* m_h_TT_HitMap_emLUT_Thresh0;

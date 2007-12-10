@@ -129,36 +129,36 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
     {	
       m_NoEvents=0;
       //----------------------------------  CMM Input data from JEMs -----------------------------
-      m_h_CMMJetHits_JEM_MainHits=input_Booker->book1F("MainHits_CMM_input", "Main Jet Hit Multiplicity per Threshold  --  CMM input", 8, -0.5, 7.5, "Threshold No.", "#");
-      m_h_CMMJetHits_JEM_FwdHitsRight=input_Booker->book1F("FwdHitsRight_CMM_input", "Forward Right Jet Hit Multiplicity per Threshold  --  CMM input",4 , -0.5, 3.5, "Threshold No.", "#");
-      m_h_CMMJetHits_JEM_FwdHitsLeft=input_Booker->book1F("FwdHitsLeft_CMM_input", "Forward Left Jet Hit Multiplicity per Threshold  --  CMM input", 4 , -0.5, 3.5,  "Threshold No.", "#");
+      m_h_CMMJetHits_JEM_MainHits=input_Booker->book1F("MainHits_CMM_input", "Main Jet Hit Multiplicity per Threshold  --  CMM input", 8, -0.5, 7.5, "Threshold No.", "N");
+      m_h_CMMJetHits_JEM_FwdHitsRight=input_Booker->book1F("FwdHitsRight_CMM_input", "Forward Right Jet Hit Multiplicity per Threshold  --  CMM input",4 , -0.5, 3.5, "Threshold No.", "N");
+      m_h_CMMJetHits_JEM_FwdHitsLeft=input_Booker->book1F("FwdHitsLeft_CMM_input", "Forward Left Jet Hit Multiplicity per Threshold  --  CMM input", 4 , -0.5, 3.5,  "Threshold No.", "N");
 
-      m_h_CMMEtSums_JEM_Ex=input_Booker->book1F("Ex_CMM_input", "CMM E_{x}^{JEM}  --  CMM input", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ex [GeV]", "#");
-      m_h_CMMEtSums_JEM_Ey=input_Booker->book1F("Ey_CMM_input", "CMM E_{y}^{JEM}  --  CMM input", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "#");
-      m_h_CMMEtSums_JEM_Et=input_Booker->book1F("Et_CMM_input", "CMM E_{t}^{JEM}  --  CMM input", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "#");
+      m_h_CMMEtSums_JEM_Ex=input_Booker->book1F("Ex_CMM_input", "CMM E_{x}^{JEM}  --  CMM input", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ex [GeV]", "N");
+      m_h_CMMEtSums_JEM_Ey=input_Booker->book1F("Ey_CMM_input", "CMM E_{y}^{JEM}  --  CMM input", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "N");
+      m_h_CMMEtSums_JEM_Et=input_Booker->book1F("Et_CMM_input", "CMM E_{t}^{JEM}  --  CMM input", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "N");
       
 
       //---------------------------------- CMM output to DAQ -----------------------------
-      m_h_CMMJetHits_MainJets = DAQ_Booker->book1F("TotalMainHits_CMM_DAQ", "Main Jet Hit Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "#");
-      m_h_CMMJetHits_FwdJetsRight = DAQ_Booker->book1F("TotalFwdHitsRight_CMM_DAQ", "Forward Right Jet Hit Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5, "Threshold No.", "#");
-      m_h_CMMJetHits_FwdJetsLeft = DAQ_Booker->book1F("TotalFwdHitsLeft_CMM_DAQ", "Forward Left Jet Hit Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5,  "Threshold No.", "#");
-      m_h_CMMJetHits_EtMap = DAQ_Booker->book1F("JetEtHits_CMM_DAQ", "JetEt Hit Multiplicity per Threshold  --  CMM DAQ", 4 ,-0.5, 3.5, "Threshold No.", "#");
-      m_h_CMMEtSums_MissingEtMap = DAQ_Booker->book1F("MissingEtHits_CMM_DAQ", "MissingEt Hit Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "#");
-      m_h_CMMEtSums_SumEtMap = DAQ_Booker->book1F("SumEtHits_CMM_DAQ", "SumEt Hit Multiplicity per Threshold  --  CMM DAQ", 4, -0.5, 3.5, "Threshold No.", "#");
+      m_h_CMMJetHits_MainJets = DAQ_Booker->book1F("TotalMainHits_CMM_DAQ", "Main Jet Hit Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "N");
+      m_h_CMMJetHits_FwdJetsRight = DAQ_Booker->book1F("TotalFwdHitsRight_CMM_DAQ", "Forward Right Jet Hit Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5, "Threshold No.", "N");
+      m_h_CMMJetHits_FwdJetsLeft = DAQ_Booker->book1F("TotalFwdHitsLeft_CMM_DAQ", "Forward Left Jet Hit Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5,  "Threshold No.", "N");
+      m_h_CMMJetHits_EtMap = DAQ_Booker->book1F("JetEtHits_CMM_DAQ", "JetEt Hit Multiplicity per Threshold  --  CMM DAQ", 4 ,-0.5, 3.5, "Threshold No.", "N");
+      m_h_CMMEtSums_MissingEtMap = DAQ_Booker->book1F("MissingEtHits_CMM_DAQ", "MissingEt Hit Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "N");
+      m_h_CMMEtSums_SumEtMap = DAQ_Booker->book1F("SumEtHits_CMM_DAQ", "SumEt Hit Multiplicity per Threshold  --  CMM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
 
-      m_h_CMMEtSums_Ex = DAQ_Booker->book1F("Ex_CMM_DAQ", "CMM E_{x}^{CMM}  --  CMM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ex [GeV]", "#");
-      m_h_CMMEtSums_Ey = DAQ_Booker->book1F("Ey_CMM_DAQ", "CMM E_{y}^{CMM}  --  CMM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "#");
-      m_h_CMMEtSums_Et = DAQ_Booker->book1F("Et_CMM_DAQ", "CMM E_{t}^{CMM}  --  CMM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "#");
+      m_h_CMMEtSums_Ex = DAQ_Booker->book1F("Ex_CMM_DAQ", "CMM E_{x}^{CMM}  --  CMM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ex [GeV]", "N");
+      m_h_CMMEtSums_Ey = DAQ_Booker->book1F("Ey_CMM_DAQ", "CMM E_{y}^{CMM}  --  CMM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "N");
+      m_h_CMMEtSums_Et = DAQ_Booker->book1F("Et_CMM_DAQ", "CMM E_{t}^{CMM}  --  CMM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "N");
 
 
       //---------------------------------- CMM output to RoI -----------------------------
-      m_h_CMMRoI_JetEtHits =RoI_Booker->book1F("JetEtHits_CMM_RoI","JetEt Hit Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","#");
-      m_h_CMMRoI_MissingEtHits =RoI_Booker->book1F("MissingEtHits_CMM_RoI","MissingEt Hit Multiplicity per Threshold  --  CMM RoI", 8, -0.5,7.5,"Threshold No.","#");
-      m_h_CMMRoI_SumEtHits =RoI_Booker->book1F("SumEtHits_CMM_RoI","SumEt Hit Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","#");
+      m_h_CMMRoI_JetEtHits =RoI_Booker->book1F("JetEtHits_CMM_RoI","JetEt Hit Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","N");
+      m_h_CMMRoI_MissingEtHits =RoI_Booker->book1F("MissingEtHits_CMM_RoI","MissingEt Hit Multiplicity per Threshold  --  CMM RoI", 8, -0.5,7.5,"Threshold No.","N");
+      m_h_CMMRoI_SumEtHits =RoI_Booker->book1F("SumEtHits_CMM_RoI","SumEt Hit Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","N");
 
-      m_h_CMMRoI_Ex = RoI_Booker->book1F("Ex_CMM_RoI", "CMM E_{x}^{CMM}  --  CMM RoI", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ex [GeV]", "#");
-      m_h_CMMRoI_Ey = RoI_Booker->book1F("Ey_CMM_RoI", "CMM E_{y}^{CMM}  --  CMM RoI", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "#");
-      m_h_CMMRoI_Et = RoI_Booker->book1F("Et_CMM_RoI", "CMM E_{t}^{CMM}  --  CMM RoI", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "#");
+      m_h_CMMRoI_Ex = RoI_Booker->book1F("Ex_CMM_RoI", "CMM E_{x}^{CMM}  --  CMM RoI", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ex [GeV]", "N");
+      m_h_CMMRoI_Ey = RoI_Booker->book1F("Ey_CMM_RoI", "CMM E_{y}^{CMM}  --  CMM RoI", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "N");
+      m_h_CMMRoI_Et = RoI_Booker->book1F("Et_CMM_RoI", "CMM E_{t}^{CMM}  --  CMM RoI", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "N");
 
 
       if (m_DataType=="BS")
@@ -415,9 +415,9 @@ StatusCode CMMMon::fillHistograms()
 	  ey=expand.Expand( (*it_CMMEtSums)-> Ey());
 	  et=expand.Expand( (*it_CMMEtSums)-> Et() );
 	  
-	  m_h_CMMEtSums_JEM_Ex -> Fill( ex, 1.);
-	  m_h_CMMEtSums_JEM_Ey -> Fill( ey, 1.);
-	  m_h_CMMEtSums_JEM_Et -> Fill( et, 1.);
+	  if (ex>0) m_h_CMMEtSums_JEM_Ex -> Fill( ex, 1.);
+	  if (ey>0) m_h_CMMEtSums_JEM_Ey -> Fill( ey, 1.);
+	  if (et>0) m_h_CMMEtSums_JEM_Et -> Fill( et, 1.);
 	}
       
       // -----------------------------------------------------------------------------------------
@@ -438,9 +438,9 @@ StatusCode CMMMon::fillHistograms()
 	  temp.assign(temp,temp.length()-14,14);
 	  Ey=Help->Multiplicity(temp,0,14);
 
-	  m_h_CMMEtSums_Ex -> Fill( Ex, 1.);
-	  m_h_CMMEtSums_Ey -> Fill( Ey, 1.);
-	  m_h_CMMEtSums_Et -> Fill( (*it_CMMEtSums)-> Et(), 1.);
+	  if (Ex>0) m_h_CMMEtSums_Ex -> Fill( Ex, 1.);
+	  if (Ey>0) m_h_CMMEtSums_Ey -> Fill( Ey, 1.);
+	  if ((*it_CMMEtSums)-> Et()>0) m_h_CMMEtSums_Et -> Fill( (*it_CMMEtSums)-> Et(), 1.);
 	  mLog<<MSG::DEBUG<<"    Ex: "<<Ex<<"; Ey: "<<Ey<<"; Et "<<(*it_CMMEtSums)->Et()<<endreq;
 	  mLog<<MSG::DEBUG<<"Roh Ex: "<<(*it_CMMEtSums)->Ex()<<"; Ey: "<<(*it_CMMEtSums)->Ey()<<"; Et "<<(*it_CMMEtSums)->Et()<<endreq;
 
@@ -584,9 +584,9 @@ StatusCode CMMMon::fillHistograms()
   mLog<<MSG::DEBUG<<"    Ex: "<<Ex<<"; Ey: "<<Ey<<"; Et "<<(CR)->et()<<endreq;
   mLog<<MSG::DEBUG<<"Roh Ex: "<<(CR)-> ex()<<"; Ey: "<<(CR)-> ey()<<"; Et "<<(CR)-> et()<<endreq;
 
-  m_h_CMMRoI_Ex -> Fill( Ex,1);
-  m_h_CMMRoI_Ey -> Fill( Ey,1);
-  m_h_CMMRoI_Et -> Fill( (CR)->et(),1);
+  if(Ex>0) m_h_CMMRoI_Ex -> Fill( Ex,1);
+  if(Ey>0) m_h_CMMRoI_Ey -> Fill( Ey,1);
+  if((CR)->et()>0) m_h_CMMRoI_Et -> Fill( (CR)->et(),1);
   
   // errors
   if (m_DataType=="BS")

@@ -110,9 +110,10 @@ toolSvc.L1PPrMonTool.DistPerChannelAndTimeSlice = False
 toolSvc.L1PPrMonTool.LUTHitMap_Thresh0 = 1
 toolSvc.L1PPrMonTool.LUTHitMap_Thresh1 = 3
 toolSvc.L1PPrMonTool.LUTHitMap_Thresh2 = 7
-toolSvc.L1PPrMonTool.ADCHitMap_Thresh = 45
+toolSvc.L1PPrMonTool.ADCHitMap_Thresh = 50
 toolSvc.L1PPrMonTool.MaxEnergyRange = MaxEnergyRange
-toolSvc.L1PPrMonTool.ADCTimingPerChannel = 0
+toolSvc.L1PPrMonTool.ADCTimingPerChannel = True
+toolSvc.L1PPrMonTool.EMFADCCut = 40
 toolSvc.L1PPrMonTool.HADFADCCut = 40
 toolSvc.L1PPrMonTool.ADCPedestal = 35
 toolSvc.L1PPrMonTool.PathInRootFile = "L1Calo/1_PPr"
@@ -120,6 +121,7 @@ toolSvc.L1PPrMonTool.ErrorPathInRootFile = "L1Calo/01_Errors_PPr"
 toolSvc.L1PPrMonTool.EventPathInRootFile = "L1Calo"
 toolSvc.L1PPrMonTool.Offline = Offline
 #toolSvc.L1PPrMonTool.OutputLevel = DEBUG
+#toolSvc.L1PPrMonTool.OutputLevel = VERBOSE
 
 
 #---------------------------- Performance Checks -----------------------------------

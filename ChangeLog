@@ -1,5 +1,13 @@
+2007-12-03  Johanna Fleckner  <fleckner@lxplus241.cern.ch>
+	* tag TrigT1CaloMonitoring-00-01-15
+	* Tag for Diploma Thesis
+
 2007-10-28  Johanna Fleckner  <fleckner@lxplus241.cern.ch>
-	* tag TrigT1CaloMonitoring-00-01-12
+	* tag TrigT1CaloMonitoring-00-01-14
+	* Add tool for ADC-Timing monitoring
+
+2007-10-28  Johanna Fleckner  <fleckner@lxplus241.cern.ch>
+	* tag TrigT1CaloMonitoring-00-01-13
 	* book histograms only at start-up
 	* change wrong filling of CMM errors
 	* make energy ranges for all energy histograms configurable

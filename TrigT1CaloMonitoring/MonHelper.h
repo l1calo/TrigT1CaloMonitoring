@@ -34,12 +34,12 @@ class HistoBooker
 
      //books TH1F-Histos to a MonGroup
      TH1F* book1F(std::string HistoName, std::string HistoTitle, 
-		  int NoBins, double xmin, double xmax, std::string xAxisTitle, std::string yAxisTitle = "#");
+		  int NoBins, double xmin, double xmax, std::string xAxisTitle, std::string yAxisTitle = "N");
 
      //books TH2F-Histos to a MonGroup
      TH2F* book2F(std::string HistoName, std::string HistoTitle, 
 		  int xBins, double xmin, double xmax, int yBins, double ymin, double ymax, 
-		  std::string xAxisTitle, std::string yAxisTitle="#");
+		  std::string xAxisTitle, std::string yAxisTitle="N");
  protected:
      ManagedMonitorToolBase::MonGroup* m_MonGroup;
      std::string m_DataType;

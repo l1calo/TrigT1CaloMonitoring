@@ -48,6 +48,7 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   declareProperty( "Offline", m_Offline = 1) ;
   declareProperty( "ADCTimingPerChannel", m_TT_ADCTimingPerChannel=1);
   declareProperty( "HADFADCCut",  m_HADFADCCut=80);
+  declareProperty( "EMFADCCut",  m_EMFADCCut=80);
 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/L1Calo/PPr") ;
   declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
@@ -162,13 +163,14 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
     // book histograms that are only relevant for cosmics data...
   }
 
-  MonGroup TT_EmADCPeak( this, (m_PathInRootFile+"_EmADCPeak").c_str(), expert, run );
+  MonGroup TT_EmADCPeak( this, (m_PathInRootFile+"_EmFADCPeak").c_str(), expert, run );
   HistoBooker* EmADCPeak_Booker = new HistoBooker(&TT_EmADCPeak, &log, m_DataType);
 
-  MonGroup TT_HadADCPeak( this, (m_PathInRootFile+"_HadADCPeak").c_str(), expert, run );
+  MonGroup TT_HadADCPeak( this, (m_PathInRootFile+"_HadFADCPeak").c_str(), expert, run );
   HistoBooker* HadADCPeak_Booker = new HistoBooker(&TT_HadADCPeak, &log, m_DataType);
 
-  MonGroup TT_HadADCTiming( this, (m_PathInRootFile+"_HadADCTiming").c_str(), expert, run );
+  MonGroup TT_HadADCTiming( this, (m_PathInRootFile+"_HadFADCTiming").c_str(), expert, run );
+  MonGroup TT_EmADCTiming( this, (m_PathInRootFile+"_EmFADCTiming").c_str(), expert, run );
 
   MonGroup TT_EmLUTPeak( this, (m_PathInRootFile+"_EmLUTPeak").c_str(), expert, run );
   HistoBooker* EmLUTPeak_Booker = new HistoBooker(&TT_EmLUTPeak, &log, m_DataType);
@@ -176,11 +178,10 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
   MonGroup TT_HadLUTPeak( this, (m_PathInRootFile+"_HadLUTPeak").c_str(), expert, run );
   HistoBooker* HadLUTPeak_Booker = new HistoBooker(&TT_HadLUTPeak, &log, m_DataType);
 
-
   MonGroup TT_HitMaps( this, (m_PathInRootFile+"_LUTHitMaps").c_str(), shift, run );
   HistoBooker* HitMaps_Booker = new HistoBooker(&TT_HitMaps, &log, m_DataType);
 
-  MonGroup TT_ADC( this, (m_PathInRootFile+"_ADCTimeSlices").c_str(), shift, run );
+  MonGroup TT_ADC( this, (m_PathInRootFile+"_FADCHitMaps").c_str(), shift, run );
   HistoBooker* ADCTimeSlice_Booker = new HistoBooker(&TT_ADC, &log, m_DataType);
 
   MonGroup TT_LUTPeakDist( this, (m_PathInRootFile+"_LUTPeakDistribution").c_str(), shift, run );
@@ -207,6 +208,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       std::string name,title;
       std::stringstream buffer, etabuffer,phibuffer;
       
+      log << MSG::DEBUG << "before book::energy dists" << endreq;
       if (m_TT_DistPerChannel==1)
 	{
 	  for(;tower_it!=m_lvl1Helper->tower_end();++tower_it) 
@@ -222,9 +224,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	      
 	      if (m_lvl1Helper->sampling(towerId)==0) //EM TT
 		{
-		  name = "emADCTT_" + buffer.str();
-		  title = "TT EM ADC Distribution of Peak for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_EmADCPeak[towerId]=EmADCPeak_Booker->book1F(name,title,256,-0.5,255.5,"em ADC values");
+		  name = "emFADCTT_" + buffer.str();
+		  title = "TT EM FADC Distribution of Peak for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
+		  m_h_TT_EmADCPeak[towerId]=EmADCPeak_Booker->book1F(name,title,256,-0.5,255.5,"em FADC values");
 		  
 		  
 		  name = "emLUTTT_" + buffer.str();
@@ -234,9 +236,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	      
 	      if (m_lvl1Helper->sampling(towerId)==1) //Had TT
 		{
-		  name = "hadADCTT_" + buffer.str();
-		  title = "TT HAD ADC Distribution of Peak for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_HadADCPeak[towerId]=HadADCPeak_Booker->book1F(name,title,256,-0.5,255.5,"had ADC values");
+		  name = "hadFADCTT_" + buffer.str();
+		  title = "TT HAD FADC Distribution of Peak for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
+		  m_h_TT_HadADCPeak[towerId]=HadADCPeak_Booker->book1F(name,title,256,-0.5,255.5,"had FADC values");
 		  
 		  name = "hadLUTTT_" + buffer.str();
 		  title = "TT EM LUT Distribution of Peak for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
@@ -245,7 +247,29 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	    }
 	}
 
+      //---------------------------- ADC Hitmaps per TimeSlice -----------------------------
+      for(int i=0;i<m_SliceNo;i++) 
+	{
+	  buffer.str("");
+	  buffer<<i;
+	  etabuffer.str("");
+	  etabuffer<<m_TT_ADC_HitMap_Thresh;
+	  
+	  name = "emFADCHitMap_" + buffer.str();
+	  title = "#eta - #phi Map of EM FADC > " + etabuffer.str() +" for timeslice " + buffer.str();
+	  m_h_TT_HitMap_emADC[i]=ADCTimeSlice_Booker->book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  m_h_TT_HitMap_emADC[i]->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+	  
+	  name = "hadFADCHitMap_" + buffer.str();
+	  title = "#eta - #phi Map of HAD FADC > " + etabuffer.str() +" for timeslice " + buffer.str();
+	  m_h_TT_HitMap_hadADC[i]=ADCTimeSlice_Booker->book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  m_h_TT_HitMap_hadADC[i]->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+	}
 
+
+
+
+      //---------------------------- Timing of FADC Signal -----------------------------
      if (m_TT_ADCTimingPerChannel==1)
 	{
 	  for(;tower_it!=m_lvl1Helper->tower_end();++tower_it) 
@@ -259,64 +283,42 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	      etabuffer<<m_l1CaloTTIdTools->IDeta(towerId);
 	      phibuffer<<m_l1CaloTTIdTools->IDphi(towerId);
 	      
-	      if (m_lvl1Helper->sampling(towerId)==1 and m_l1CaloTTIdTools->IDeta(towerId)<1 and m_l1CaloTTIdTools->IDeta(towerId)>-1) //HAD TT with -1<eta<1
+	      if (m_lvl1Helper->sampling(towerId)==1 )
 		{
-		  name = "hadADCTiming_" + buffer.str();
-		  title = "TT had ADC Timing for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_HitMap_hadADCChannel_timing[towerId]=new TProfile(name.c_str(),title.c_str(),5,0,5);
+		  name = "hadFADCTiming_" + buffer.str();
+		  title = "TT had FADC Timing for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
+		  m_h_TT_HitMap_hadADCChannel_timing[towerId]=new TProfile(name.c_str(),title.c_str(),5,-0.5,4.5);
 		  TT_HadADCTiming.regHist(m_h_TT_HitMap_hadADCChannel_timing[towerId]);
+		  m_h_TT_HitMap_hadADCChannel_timing[towerId]->GetXaxis()->SetTitle("TimeSlice No");
+		  m_h_TT_HitMap_hadADCChannel_timing[towerId]->GetYaxis()->SetTitle("had FADC counts");
+		}
+
+	      if (m_lvl1Helper->sampling(towerId)==0) 
+		{
+		  name = "emFADCTiming_" + buffer.str();
+		  title = "TT em FADC Timing for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
+		  m_h_TT_HitMap_emADCChannel_timing[towerId]=new TProfile(name.c_str(),title.c_str(),5,-0.5,4.5);
+		  TT_EmADCTiming.regHist(m_h_TT_HitMap_emADCChannel_timing[towerId]);
+		  m_h_TT_HitMap_emADCChannel_timing[towerId]->GetXaxis()->SetTitle("TimeSlice No");
+		  m_h_TT_HitMap_emADCChannel_timing[towerId]->GetYaxis()->SetTitle("em FADC counts");
 		}
 	    }
 	}
-      //---------------------------- ADC Hitmaps per TimeSlice -----------------------------
-      for(int i=0;i<m_SliceNo;i++) 
-	{
-	  buffer.str("");
-	  buffer<<i;
-	  etabuffer.str("");
-	  etabuffer<<m_TT_ADC_HitMap_Thresh;
-	  
-	  name = "emADCHitMap_" + buffer.str();
-	  title = "#eta - #phi Map of EM ADC > " + etabuffer.str() +" for timeslice " + buffer.str();
-	  m_h_TT_HitMap_emADC[i]=ADCTimeSlice_Booker->book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  m_h_TT_HitMap_emADC[i]->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
-	  
-	  name = "hadADCHitMap_" + buffer.str();
-	  title = "#eta - #phi Map of HAD ADC > " + etabuffer.str() +" for timeslice " + buffer.str();
-	  m_h_TT_HitMap_hadADC[i]=ADCTimeSlice_Booker->book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  m_h_TT_HitMap_hadADC[i]->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
-	}
-
-
-
-
-
       
       m_h_TT_ADC_hadTiming_signal=new TProfile2D("ADC_hadTiming_signal","Average Maximum TimeSlice for had Signal (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI);
       TT_ADC.regHist (m_h_TT_ADC_hadTiming_signal);
       m_h_TT_ADC_hadTiming_signal-> SetOption ("colz");
       m_h_TT_ADC_hadTiming_signal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
-
-      m_h_TT_ADC_hadTiming_nosignal=new TProfile2D("ADC_hadTiming_nosignal","Average Maximum TimeSlice for had Noise (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI);
-      TT_ADC.regHist (m_h_TT_ADC_hadTiming_nosignal);
-      m_h_TT_ADC_hadTiming_nosignal-> SetOption ("colz");
-      m_h_TT_ADC_hadTiming_nosignal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
-
-
-
-
-
+      m_h_TT_ADC_hadTiming_signal->GetXaxis()->SetTitle("#eta");
+      m_h_TT_ADC_hadTiming_signal->GetYaxis()->SetTitle("#phi");
 
       m_h_TT_ADC_emTiming_signal=new TProfile2D("ADC_emTiming_signal","em Timing",100,-4.9,4.9, 64,0,2*M_PI);
       TT_ADC.regHist (m_h_TT_ADC_emTiming_signal);
       m_h_TT_ADC_emTiming_signal-> SetOption ("colz");
       m_h_TT_ADC_emTiming_signal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+      m_h_TT_ADC_emTiming_signal->GetXaxis()->SetTitle("#eta");
+      m_h_TT_ADC_emTiming_signal->GetYaxis()->SetTitle("#phi");
 
-
-      m_h_TT_ADC_emTiming_nosignal=new TProfile2D("ADC_emTiming_nosignal","em Timing",100,-4.9,4.9, 64,0,2*M_PI);
-      TT_ADC.regHist (m_h_TT_ADC_emTiming_nosignal);
-      m_h_TT_ADC_emTiming_nosignal-> SetOption ("colz");
-      m_h_TT_ADC_emTiming_nosignal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
 
       //---------------------------- LUT Hitmaps per threshold -----------------------------
       buffer.str("");
@@ -492,27 +494,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_triggeredSlice_em=ADCTimeSlice_Booker->book1F("TT_EMTriggeredSlice","Number of the EM Triggered Slice",7,-0.5,6.5,"#Slice");
       m_h_TT_triggeredSlice_had=ADCTimeSlice_Booker->book1F("TT_HADTriggeredSlice","Number of the HAD Triggered Slice",7,-0.5,6.5,"#Slice");
       
-      for (int i=0; i<5; i++)
-	{
-	  buffer.str("");
-	  buffer<<i;
-	  
-	  name = "emHitMap_ADC-Peak_TimeSlice_" + buffer.str();
-	  title = "#eta - #phi Map of em ADC Peak for TimeSlice "+ buffer.str();
-
-	  m_h_TT_HitMap_em_ADCPeak_TimeSlice[i]=ADCTimeSlice_Booker->book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  m_h_TT_HitMap_em_ADCPeak_TimeSlice[i]->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
-
-	  buffer.str("");
-	  buffer<<i;
-	  
-	  name = "hadHitMap_ADC-Peak_TimeSlice_" + buffer.str();
-	  title = "#eta - #phi Map of had ADC Peak for TimeSlice "+ buffer.str();
-
-	  m_h_TT_HitMap_had_ADCPeak_TimeSlice[i]=ADCTimeSlice_Booker->book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  m_h_TT_HitMap_had_ADCPeak_TimeSlice[i]->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
-
-	}
+   
       //----------------------------- number of events ----------------------------------
       m_h_NumberEvents= NoEvent_Booker->book1F("NumberEvents","Number of processed events",1,0.5,1.5,"");
       m_h_NumberEvents->GetXaxis()->SetBinLabel(1,"Number of Events");
@@ -561,10 +543,10 @@ StatusCode PPrMon::fillHistograms()
       EmTowerId = m_lvl1Helper->tower_id(detside, 0, detregion,eta,phi );  
       // em ADC Peak per channel
       int EmEnergy = (*TriggerTowerIterator)->emADC()[(*TriggerTowerIterator)->emADCPeak()];
-      if (m_TT_DistPerChannel==1) m_h_TT_EmADCPeak[EmTowerId]->Fill(EmEnergy,1);
+      //if (m_TT_DistPerChannel==1) m_h_TT_EmADCPeak[EmTowerId]->Fill(EmEnergy,1);
       // em LUT Peak per channel
       EmEnergy = (*TriggerTowerIterator)->emLUT()[(*TriggerTowerIterator)->emPeak()];
-      if (m_TT_DistPerChannel==1) m_h_TT_EmLUTPeak[EmTowerId]->Fill(EmEnergy,1);
+      //if (m_TT_DistPerChannel==1) m_h_TT_EmLUTPeak[EmTowerId]->Fill(EmEnergy,1);
 
       // em energy distributions per detector region
       if (EmEnergy>0) 
@@ -574,7 +556,7 @@ StatusCode PPrMon::fillHistograms()
 	  m_h_TT_emLUT->Fill(EmEnergy,1);
 	}
 	
-      // EM LUT HitMaps   
+       //---------------------------- EM LUT HitMaps -----------------------------
       if (EmEnergy>m_TT_HitMap_Thresh0)
 	{
 	  m_h_TT_HitMap_emLUT_Thresh0->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
@@ -592,10 +574,10 @@ StatusCode PPrMon::fillHistograms()
       HadTowerId = m_lvl1Helper->tower_id(detside, 1, detregion,eta,phi );  
       // HAD ADC Peak per channel      
       int HadEnergy = (*TriggerTowerIterator)->hadADC()[(*TriggerTowerIterator)->hadADCPeak()];
-      if (m_TT_DistPerChannel==1) m_h_TT_HadADCPeak[HadTowerId]->Fill(HadEnergy,1);
+      //if (m_TT_DistPerChannel==1) m_h_TT_HadADCPeak[HadTowerId]->Fill(HadEnergy,1);
       // had LUT peak per channel
       HadEnergy = (*TriggerTowerIterator)->hadLUT()[(*TriggerTowerIterator)->hadPeak()];
-      if (m_TT_DistPerChannel==1) m_h_TT_HadLUTPeak[HadTowerId]->Fill(HadEnergy,1);
+      //if (m_TT_DistPerChannel==1) m_h_TT_HadLUTPeak[HadTowerId]->Fill(HadEnergy,1);
 
 
       // had energy distribution per detector region
@@ -606,7 +588,7 @@ StatusCode PPrMon::fillHistograms()
 	  m_h_TT_hadLUT->Fill(HadEnergy,1);
 	}
      
-      // had LUT HitMaps   
+       //---------------------------- had LUT HitMaps -----------------------------
       if (HadEnergy>m_TT_HitMap_Thresh0)
 	{
 	  m_h_TT_HitMap_hadLUT_Thresh0->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
@@ -620,7 +602,7 @@ StatusCode PPrMon::fillHistograms()
 	  m_h_TT_HitMap_hadLUT_Thresh2->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
 	}
 
-      // ADC HitMaps per timeslice
+       //---------------------------- ADC HitMaps per timeslice -----------------------------
       for (int i=0; i<m_SliceNo;i++)
 	{
 	  if (i<( (*TriggerTowerIterator)->emADC()).size())
@@ -630,47 +612,62 @@ StatusCode PPrMon::fillHistograms()
 		  m_h_TT_HitMap_emADC[i] ->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
 		}
 	    }
+
 	  if (i<( (*TriggerTowerIterator)->hadADC()).size())
 	    {
 	      if (( (*TriggerTowerIterator)->hadADC())[i] > m_TT_ADC_HitMap_Thresh)
 		{
-		  m_h_TT_HitMap_hadADC[i] ->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-
-
-		  if (m_TT_ADCTimingPerChannel==1 and (*TriggerTowerIterator)->eta()<1 and (*TriggerTowerIterator)->eta()>-1)
-		    {
-		      if (FADCSum((*TriggerTowerIterator)->hadADC())>m_HADFADCCut) m_h_TT_HitMap_hadADCChannel_timing[HadTowerId]->Fill(i,(*TriggerTowerIterator)->hadADC()[i]);
-		    }
+		  m_h_TT_HitMap_hadADC[i] ->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);	  
 		}
 	    }
 	}    
 
-      //Peak timing
-      int m_FADCSum=0;
-      
+        //---------------------------- Timing of FADC Signal -----------------------------
+      int hadFADCSum=0;     
+      int emFADCSum=0;     
       double max;
 
-      m_FADCSum=FADCSum((*TriggerTowerIterator)->hadADC());
+      emFADCSum=FADCSum((*TriggerTowerIterator)->emADC());
+      hadFADCSum=FADCSum((*TriggerTowerIterator)->hadADC());
 
-      if (m_FADCSum>m_HADFADCCut)
+      if (m_TT_ADCTimingPerChannel==1)
+	{
+	  for (int i=0; i<m_SliceNo;i++)
+	    {
+	      if (i<( (*TriggerTowerIterator)->emADC()).size())
+		{ 
+		  if (emFADCSum>m_EMFADCCut) 
+		    {
+		      m_h_TT_HitMap_emADCChannel_timing[EmTowerId]->Fill(i,(*TriggerTowerIterator)->emADC()[i]);
+		    }
+		}
+	      
+	      if (i<( (*TriggerTowerIterator)->hadADC()).size())
+		{
+		  if (hadFADCSum>m_HADFADCCut) 
+		    {
+		      m_h_TT_HitMap_hadADCChannel_timing[HadTowerId]->Fill(i,(*TriggerTowerIterator)->hadADC()[i]);
+		    }
+		}
+	    }
+	}
+
+      if (emFADCSum>m_EMFADCCut)
+	{
+	  max = recTime((*TriggerTowerIterator)->emADC())+1;
+	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
+	  m_h_TT_ADC_emTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max);
+	}
+
+      if (hadFADCSum>m_HADFADCCut)
 	{
 	  max = recTime((*TriggerTowerIterator)->hadADC())+1;
 	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
 	  m_h_TT_ADC_hadTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max);
 	}
-      else
-	{
-	  max=recTime((*TriggerTowerIterator)->hadADC())+1;
-	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
-	  m_h_TT_ADC_hadTiming_nosignal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max);
-	}
 
 
 
-
-      //---------------------------- offlineTTID -> OnlineTTID -----------------------------
-
-      
       
 
       //---------------------------- SubStatus Word errors -----------------------------
@@ -678,7 +675,8 @@ StatusCode PPrMon::fillHistograms()
 
       LVL1::DataError emerr((*TriggerTowerIterator)-> emError());
 
-      int crate, module;
+      int crate=0;
+      int module=0;
       try 
 	{
 	  HWIdentifier ttOnlId = m_ttSvc->createTTChannelID(EmTowerId);
@@ -728,7 +726,7 @@ StatusCode PPrMon::fillHistograms()
       // FailingBCN
       m_h_TT_emerror->Fill(17,emerr.get(24));
 
-      //---------------- per crate and module -------------------------  m_h_TT_error_Crate_03
+      //---------------- per crate and module -------------------------  
       // ChannelDisabled
       m_h_TT_error_Crate_03->Fill(1,(module-4)+(crate*18),emerr.get(4));
       // MCMAbsent
@@ -853,28 +851,17 @@ StatusCode PPrMon::fillHistograms()
       m_h_TT_error_Crate_47->Fill(17,(module-4)+((crate-4)*18),haderr.get(24));
 
 
-
-
       m_h_TT_em_GLinkDown->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), emerr.get(22)); 
       m_h_TT_em_GLinkTimeout->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), emerr.get(23)); 
       m_h_TT_had_GLinkDown->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), haderr.get(22)); 
       m_h_TT_had_GLinkTimeout->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), haderr.get(23)); 
 
+
+
       // number of triggered slice
       m_h_TT_triggeredSlice_em->Fill((*TriggerTowerIterator)->emADCPeak(),1);
       m_h_TT_triggeredSlice_had->Fill((*TriggerTowerIterator)->hadADCPeak(),1);
 
-      /*int Peak=PeakPosition(((*TriggerTowerIterator)->emADC()));
-      if ((*TriggerTowerIterator)->emADC()[Peak]>4)
-	{
-	  m_h_TT_HitMap_em_ADCPeak_TimeSlice[Peak]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-	}
-
-      Peak=PeakPosition(((*TriggerTowerIterator)->hadADC()));
-      if ((*TriggerTowerIterator)->hadADC()[Peak]>4)
-	{
-	  m_h_TT_HitMap_had_ADCPeak_TimeSlice[Peak]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-	  }*/
 
     }
 
