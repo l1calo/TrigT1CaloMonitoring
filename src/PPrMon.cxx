@@ -170,7 +170,10 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
   HistoBooker* HadADCPeak_Booker = new HistoBooker(&TT_HadADCPeak, &log, m_DataType);
 
   MonGroup TT_HadADCTiming( this, (m_PathInRootFile+"_HadFADCTiming").c_str(), expert, run );
+  HistoBooker* HadADCTiming_Booker = new HistoBooker(&TT_HadADCTiming, &log, m_DataType);
+
   MonGroup TT_EmADCTiming( this, (m_PathInRootFile+"_EmFADCTiming").c_str(), expert, run );
+  HistoBooker* EmADCTiming_Booker = new HistoBooker(&TT_EmADCTiming, &log, m_DataType);
 
   MonGroup TT_EmLUTPeak( this, (m_PathInRootFile+"_EmLUTPeak").c_str(), expert, run );
   HistoBooker* EmLUTPeak_Booker = new HistoBooker(&TT_EmLUTPeak, &log, m_DataType);
@@ -287,37 +290,23 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 		{
 		  name = "hadFADCTiming_" + buffer.str();
 		  title = "TT had FADC Timing for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_HitMap_hadADCChannel_timing[towerId]=new TProfile(name.c_str(),title.c_str(),5,-0.5,4.5);
-		  TT_HadADCTiming.regHist(m_h_TT_HitMap_hadADCChannel_timing[towerId]);
-		  m_h_TT_HitMap_hadADCChannel_timing[towerId]->GetXaxis()->SetTitle("TimeSlice No");
-		  m_h_TT_HitMap_hadADCChannel_timing[towerId]->GetYaxis()->SetTitle("had FADC counts");
+		  m_h_TT_HitMap_hadADCChannel_timing[towerId]= HadADCTiming_Booker -> bookProfile(name, title,5,-0.5,4.5, "TimeSlice No", "had FADC counts");
 		}
 
 	      if (m_lvl1Helper->sampling(towerId)==0) 
 		{
 		  name = "emFADCTiming_" + buffer.str();
 		  title = "TT em FADC Timing for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_HitMap_emADCChannel_timing[towerId]=new TProfile(name.c_str(),title.c_str(),5,-0.5,4.5);
-		  TT_EmADCTiming.regHist(m_h_TT_HitMap_emADCChannel_timing[towerId]);
-		  m_h_TT_HitMap_emADCChannel_timing[towerId]->GetXaxis()->SetTitle("TimeSlice No");
-		  m_h_TT_HitMap_emADCChannel_timing[towerId]->GetYaxis()->SetTitle("em FADC counts");
+		  m_h_TT_HitMap_emADCChannel_timing[towerId]= EmADCTiming_Booker -> bookProfile(name, title,5,-0.5,4.5, "TimeSlice No", "had FADC counts");
 		}
 	    }
 	}
       
-      m_h_TT_ADC_hadTiming_signal=new TProfile2D("ADC_hadTiming_signal","Average Maximum TimeSlice for had Signal (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI);
-      TT_ADC.regHist (m_h_TT_ADC_hadTiming_signal);
-      m_h_TT_ADC_hadTiming_signal-> SetOption ("colz");
+     m_h_TT_ADC_hadTiming_signal= ADCTimeSlice_Booker->bookProfile2D("ADC_hadTiming_signal","Average Maximum TimeSlice for had Signal (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI,"#eta", "#phi");
       m_h_TT_ADC_hadTiming_signal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
-      m_h_TT_ADC_hadTiming_signal->GetXaxis()->SetTitle("#eta");
-      m_h_TT_ADC_hadTiming_signal->GetYaxis()->SetTitle("#phi");
 
-      m_h_TT_ADC_emTiming_signal=new TProfile2D("ADC_emTiming_signal","em Timing",100,-4.9,4.9, 64,0,2*M_PI);
-      TT_ADC.regHist (m_h_TT_ADC_emTiming_signal);
-      m_h_TT_ADC_emTiming_signal-> SetOption ("colz");
+      m_h_TT_ADC_emTiming_signal=ADCTimeSlice_Booker->bookProfile2D("ADC_emTiming_signal","em Timing",100,-4.9,4.9, 64,0,2*M_PI, "#eta", "#phi");
       m_h_TT_ADC_emTiming_signal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
-      m_h_TT_ADC_emTiming_signal->GetXaxis()->SetTitle("#eta");
-      m_h_TT_ADC_emTiming_signal->GetYaxis()->SetTitle("#phi");
 
 
       //---------------------------- LUT Hitmaps per threshold -----------------------------
@@ -688,7 +677,7 @@ StatusCode PPrMon::fillHistograms()
 	{
 	  log << MSG::ERROR << "LArID_Exception " << (std::string) except << endreq ;
 	}
-      if (crate>3) log << MSG::ERROR << "Wrong em Crate " << crate << endreq ;
+      if (crate>3) log << MSG::INFO << "Wrong em Crate " << crate << endreq ;
 
 
       // ChannelDisabled
@@ -812,7 +801,7 @@ StatusCode PPrMon::fillHistograms()
 	{
 	  log << MSG::ERROR << "LArID_Exception " << (std::string) except << endreq ;
 	}
-      if (crate<4) log << MSG::ERROR << "Wrong had Crate " << crate << endreq ;
+      if (crate<4) log << MSG::INFO << "Wrong had Crate " << crate << endreq ;
 
       //---------------- per crate and module -------------------------  m_h_TT_error_Crate_03
       // ChannelDisabled

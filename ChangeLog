@@ -1,12 +1,17 @@
-2007-12-03  Johanna Fleckner  <fleckner@lxplus241.cern.ch>
+2007-12-14  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
+	* tag TrigT1CaloMonitoring-00-01-16
+	* Update JOs to Configurables
+	* remove unchecked statuscodes and unnecessary histos
+
+2007-12-03  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
 	* tag TrigT1CaloMonitoring-00-01-15
 	* Tag for Diploma Thesis
 
-2007-10-28  Johanna Fleckner  <fleckner@lxplus241.cern.ch>
+2007-10-28  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
 	* tag TrigT1CaloMonitoring-00-01-14
 	* Add tool for ADC-Timing monitoring
 
-2007-10-28  Johanna Fleckner  <fleckner@lxplus241.cern.ch>
+2007-10-28  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
 	* tag TrigT1CaloMonitoring-00-01-13
 	* book histograms only at start-up
 	* change wrong filling of CMM errors
@@ -14,7 +19,7 @@
 	* execute procHists only in offline
 	* adjust monitoring to CP firmware in JEP CMMs (JEM-number-shift between JEM-number and CMM-JEM-number)
 
-2007-10-22  Johanna Fleckner  <fleckner@lxplus241.cern.ch>
+2007-10-22  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
 	* tag TrigT1CaloMonitoring-00-01-11
 	* share/TrigT1CaloMonitoring_topOptions.py adjust for RecExCommission
 	* src/JEPTransPerfMon.cxx remove use of L1JetElementTool for M5

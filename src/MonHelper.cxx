@@ -77,6 +77,47 @@ TH1F* HistoBooker::book1F(std::string HistoName, std::string HistoTitle,
   return hist;
 }
 
+/*---------------------------------------------------------*/
+TProfile* HistoBooker::bookProfile(std::string HistoName, std::string HistoTitle, 
+	     int NoBins, double xmin, double xmax, std::string xAxisTitle, std::string yAxisTitle)
+/*---------------------------------------------------------*/
+{
+  //set Histo values
+  std::string name,title;
+  if (m_DataType=="")
+    {
+      name=HistoName;
+      title=HistoTitle;
+    }
+  else
+    {
+      name=m_DataType + "_" + HistoName;
+      title=m_DataType + ": " + HistoTitle;
+    }
+
+  TProfile* hist = new TProfile(TString(name), TString(title), NoBins, xmin, xmax);
+  hist -> GetXaxis() -> SetTitle(TString(xAxisTitle));
+  hist -> GetYaxis() -> SetTitle(TString(yAxisTitle));
+ 
+ //book histo to corresponding mongroup
+  StatusCode regtest = m_MonGroup->regHist (hist);
+
+  if (regtest != StatusCode::SUCCESS) 
+    {
+      *m_log << MSG::WARNING << "Could not register histogram : " 
+	     << hist->GetName()  << endreq;
+    }
+
+  if (regtest = StatusCode::SUCCESS) 
+    {
+      *m_log << MSG::VERBOSE << "Registered histogram : " 
+	     << hist->GetName()  << endreq;
+    }
+  
+  
+  return hist;
+}
+
 
 /*---------------------------------------------------------*/
 TH2F* HistoBooker::book2F(std::string HistoName, std::string HistoTitle, 
@@ -119,6 +160,49 @@ TH2F* HistoBooker::book2F(std::string HistoName, std::string HistoTitle,
  
   return hist;
 }
+
+/*---------------------------------------------------------*/
+TProfile2D* HistoBooker::bookProfile2D(std::string HistoName, std::string HistoTitle, 
+	     int xBins, double xmin, double xmax, int yBins, double ymin, double ymax, 
+	     std::string xAxisTitle, std::string yAxisTitle)
+/*---------------------------------------------------------*/
+{
+  //set Histo values
+  std::string name,title;
+  if (m_DataType=="")
+    {
+      name=HistoName;
+      title=HistoTitle;
+    }
+  else
+    {
+      name=m_DataType + "_" + HistoName;
+      title=m_DataType + ": " + HistoTitle;
+    }
+
+  TProfile2D* hist = new TProfile2D(TString(name), TString(title), xBins, xmin, xmax, yBins, ymin, ymax);
+  hist -> GetXaxis() -> SetTitle(TString(xAxisTitle));
+  hist -> GetYaxis() -> SetTitle(TString(yAxisTitle));
+  hist-> SetOption ("colz");
+
+  //book histo to corresponding mongroup
+  StatusCode regtest = m_MonGroup->regHist (hist);
+
+  if (regtest != StatusCode::SUCCESS) 
+    {
+      *m_log << MSG::WARNING << "Could not register histogram : " 
+	     << hist->GetName()  << endreq;
+    }
+
+  if (regtest = StatusCode::SUCCESS) 
+    {
+      *m_log << MSG::VERBOSE << "Registered histogram : " 
+	     << hist->GetName()  << endreq;
+    }
+ 
+  return hist;
+}
+
 
 // Helper class that provides:
 // - bin widths for TriggerTower and JetElements in eta and phi (respects the changing bin widt)

@@ -375,52 +375,6 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
 	{
 	  m_h_SimBSMon_JEP=JEM_Booker->book2F("JEP_Calc_Error", "JEP Hardware Output compared to Simulation: Differences", 3,0.5,3.5,37,0.5,37.5, "", "");
 	  //m_h_SimBSMon_JEP-> SetOption ("text");
-
-
-	  //============== remove ====================
-	  m_h_SimBSMon_JEP_Energy=JEM_Booker->book2F("JEP_Calc_Error_Energy", "JEP _Energy Hardware Output compared to Simulation: Differences", 1,0.5,1.5,37,0.5,37.5, "", "");
-	  m_h_SimBSMon_JEP_Energy_withoutFix=JEM_Booker->book2F("JEP_Calc_Error_withoutFix", "JEP Hardware Output compared to Simulation_withoutFix: Differences", 1,0.5,1.5,37,0.5,37.5, "", "");
-
-	  m_h_SimBSMon_JEP_Energy->GetXaxis()->SetBinLabel(1, "CalcErrors E_{x}, E_{y}, E_{t}");
-	  m_h_SimBSMon_JEP_Energy_withoutFix->GetXaxis()->SetBinLabel(1, "CalcErrors E_{x}, E_{y}, E_{t}");
-
-
-	
-	  m_h_SimBSMon_JEP_Energy->GetYaxis()->SetBinLabel(17, "CMM");
-	  m_h_SimBSMon_JEP_Energy_withoutFix->GetYaxis()->SetBinLabel(17, "CMM");
-
-	  m_h_SimBSMon_JEP_Energy->GetYaxis()->SetBinLabel(18, "Crate 0: ");
-	  m_h_SimBSMon_JEP_Energy_withoutFix->GetYaxis()->SetBinLabel(18, "Crate 0: ");
-	  m_h_SimBSMon_JEP_Energy->GetYaxis()->SetBinLabel(36, "CMM");
-	  m_h_SimBSMon_JEP_Energy_withoutFix->GetYaxis()->SetBinLabel(36, "CMM");
-	  m_h_SimBSMon_JEP_Energy->GetYaxis()->SetBinLabel(37, "Crate 1: ");
-	  m_h_SimBSMon_JEP_Energy_withoutFix->GetYaxis()->SetBinLabel(37, "Crate 1: ");
-
-	  for (int i = 0; i < 16; i++)
-	    {
-	      buffer.str("");
-	      buffer<<i;
-	      
-	      name = "JEM " + buffer.str();
-	      m_h_SimBSMon_JEP_Energy->GetYaxis()->SetBinLabel((i+1), name.c_str());
-	      m_h_SimBSMon_JEP_Energy_withoutFix->GetYaxis()->SetBinLabel((i+1), name.c_str());
-
-	      buffer.str("");
-	      buffer<<i;
-	      
-	      name = "JEM " + buffer.str();
-	      m_h_SimBSMon_JEP_Energy->GetYaxis()->SetBinLabel((i+1+19), name.c_str());
-	      m_h_SimBSMon_JEP_Energy_withoutFix->GetYaxis()->SetBinLabel((i+1+19), name.c_str());
-
-	    }
-
-
-
- 
-      //=============== revove =============================
-
-
-	  
 	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(1, "CalcErrors E_{x}, E_{y}, E_{t}");
 	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(2, "CalcErrors JetHits");
 	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(3, "CalcErrors RoIs");
@@ -451,54 +405,6 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
 
       //---------------------------------- Backplane transmission checks -----------------------------
       m_h_TransCheck_JEP=transmission_Booker->book2F("JEP_TransCheck", "JEP Backplane Transmission Check JEM -> CMM per Module and Crate", 2,0.5,2.5,36,0.5,36.5, "", "");
-
-   // ------- remove -------------------
-    m_h_TransCheck_JEP_Energy=transmission_Booker->book2F("JEP_TransCheck_Energy", "JEP Backplane Energy Transmission Check JEM -> CMM per Module and Crate", 1,0.5,1.5,36,0.5,36.5, "", "");
-    m_h_TransCheck_JEP_Hits=transmission_Booker->book2F("JEP_TransCheck_Hits", "JEP Backplane Hits Transmission Check JEM -> CMM per Module and Crate", 1,0.5,1.5,36,0.5,36.5, "", "");
-    m_h_TransCheck_JEP_Hits_withoutFix=transmission_Booker->book2F("JEP_TransCheck_Hits_withoutFix", "JEP Backplane Hits_withoutFix Transmission Check JEM -> CMM per Module and Crate", 1,0.5,1.5,36,0.5,36.5, "", "");
-
-
-    m_h_TransCheck_JEP_Hits->GetXaxis()->SetBinLabel(1, "TransErrors JetHits");
-    m_h_TransCheck_JEP_Hits_withoutFix->GetXaxis()->SetBinLabel(1, "TransErrors JetHits");
-
-    m_h_TransCheck_JEP_Energy->GetXaxis()->SetBinLabel(1, "TransErrors E_{x}, E_{y}, E_{t}");
-
-     for (int i = 0; i < 16; i++)
-	{
-	  buffer.str("");
-	  buffer<<i;
-	  
-	  name = "JEM " + buffer.str();
-
-	  m_h_TransCheck_JEP_Energy->GetYaxis()->SetBinLabel((i+1), name.c_str());
-	  m_h_TransCheck_JEP_Hits->GetYaxis()->SetBinLabel((i+1), name.c_str());
-	  m_h_TransCheck_JEP_Hits_withoutFix->GetYaxis()->SetBinLabel((i+1), name.c_str());
-	  
-	  m_h_TransCheck_JEP_Energy->GetYaxis()->SetBinLabel((i+1+19), name.c_str());
-	  m_h_TransCheck_JEP_Hits->GetYaxis()->SetBinLabel((i+1+19), name.c_str());
-	  m_h_TransCheck_JEP_Hits_withoutFix->GetYaxis()->SetBinLabel((i+1+19), name.c_str());
-	}
- 
-
-    m_h_TransCheck_JEP_Energy->GetYaxis()->SetBinLabel(17, "CMM");
-    m_h_TransCheck_JEP_Hits->GetYaxis()->SetBinLabel(17, "CMM");
-    m_h_TransCheck_JEP_Hits_withoutFix->GetYaxis()->SetBinLabel(17, "CMM");
-
-    m_h_TransCheck_JEP_Energy->GetYaxis()->SetBinLabel(18, "Crate 0: ");
-    m_h_TransCheck_JEP_Hits->GetYaxis()->SetBinLabel(18, "Crate 0: ");
-    m_h_TransCheck_JEP_Hits_withoutFix->GetYaxis()->SetBinLabel(18, "Crate 0: ");
-
-    m_h_TransCheck_JEP_Energy->GetYaxis()->SetBinLabel(36, "Crate 1: ");
-    m_h_TransCheck_JEP_Hits->GetYaxis()->SetBinLabel(36, "Crate 1: ");
-    m_h_TransCheck_JEP_Hits_withoutFix->GetYaxis()->SetBinLabel(36, "Crate 1: ");
-
-
-
-
-   // ------- remove -------------------
-
-
-
       //m_h_TransCheck_JEP-> SetOption ("text");
       m_h_TransCheck_JEP->GetXaxis()->SetBinLabel(1, "TransErrors JetHits");
       m_h_TransCheck_JEP->GetXaxis()->SetBinLabel(2, "TransErrors E_{x}, E_{y}, E_{t}");
@@ -847,8 +753,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 			}
 		    }
 		  m_h_SimBSMon_JEP->Fill(1,(*it_BS_JEMEtSums).crate()*19 + ((*it_BS_JEMEtSums).module()+1),noMatchfound);
-		  m_h_SimBSMon_JEP_Energy->Fill(1,(*it_BS_JEMEtSums).crate()*19 + ((*it_BS_JEMEtSums).module()+1),noMatchfound);
-		  
+		  	  
 		  vBS_JEMEtSums.erase(it_BS_JEMEtSums);
 		  vSim_JEMEtSums.erase(it_Sim_JEMEtSums);
 		}
@@ -870,7 +775,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums).Et()<<endreq;
 	      
 	      m_h_SimBSMon_JEP->Fill(1,(*it_BS_JEMEtSums).crate()*19 + ((*it_BS_JEMEtSums).module()+1),1);	  
-	      m_h_SimBSMon_JEP->Fill(1,(*it_BS_JEMEtSums).crate()*19 + ((*it_BS_JEMEtSums).module()+1),1);	  
+	      //m_h_SimBSMon_JEP->Fill(1,(*it_BS_JEMEtSums).crate()*19 + ((*it_BS_JEMEtSums).module()+1),1);	  
 	    }
 	}
       
@@ -889,95 +794,6 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      //m_h_SimBSMon_JEP->Fill(1,(*it_Sim_JEMEtSums).crate()*19 + ((*it_Sim_JEMEtSums).module()+1),1);
 	    }
 	}
-
-
-      //===================== remove =====================================
-
-      vBS_JEMEtSums.clear();
-      for( it_JEMEtSums  = BS_JEMEtSums->begin(); it_JEMEtSums < BS_JEMEtSums->end(); ++it_JEMEtSums )
-	{
-	  vBS_JEMEtSums.push_back(**it_JEMEtSums);	       
-	}   
-      vSim_JEMEtSums.clear();
-      for( it_JEMEtSums  = Sim_JEMEtSums->begin(); it_JEMEtSums < Sim_JEMEtSums->end(); ++it_JEMEtSums )
-	{
-	  vSim_JEMEtSums.push_back(**it_JEMEtSums);	       
-	}   
-
-      it_BS_JEMEtSums=vBS_JEMEtSums.begin();
-      
-      //mLog<<MSG::DEBUG<<"JEMEtSums Calculation difference for"<<endreq;  
-      while (it_BS_JEMEtSums<vBS_JEMEtSums.end())
-	{
-	  foundModule = 0;
-	  it_Sim_JEMEtSums=vSim_JEMEtSums.begin();
-	  
-	  while ((foundModule==0)and(it_Sim_JEMEtSums<vSim_JEMEtSums.end()))
-	    {	  	  
-	      if (((*it_BS_JEMEtSums).crate()==(*it_Sim_JEMEtSums).crate())
-		  and((*it_BS_JEMEtSums).module()==(*it_Sim_JEMEtSums).module()))
-		{
-		  foundModule=1;
-		  noMatchfound = 0;
-		  
-		  if (((*it_BS_JEMEtSums).Ex()!=(*it_Sim_JEMEtSums).Ex())
-		      or ((*it_BS_JEMEtSums).Ey()!=(*it_Sim_JEMEtSums).Ey())
-		      or ((*it_BS_JEMEtSums).Et()!=(*it_Sim_JEMEtSums).Et()))
-		    {
-		      /*mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMEtSums).crate()<<" Module "<<(*it_BS_JEMEtSums).module()<<endreq;
-		      mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_JEMEtSums).Ex()<<endreq;
-		      mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_JEMEtSums).Ey()<<endreq;
-		      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums).Et()<<endreq;
-		      
-		      mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_JEMEtSums).Ex()<<endreq;
-		      mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums).Ey()<<endreq;
-		      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums).Et()<<endreq;*/
-		      
-		      noMatchfound = 1;
-		    }
-		  m_h_SimBSMon_JEP_Energy_withoutFix->Fill(1,(*it_BS_JEMEtSums).crate()*19 + ((*it_BS_JEMEtSums).module()+1),noMatchfound);
-		  
-		  vBS_JEMEtSums.erase(it_BS_JEMEtSums);
-		  vSim_JEMEtSums.erase(it_Sim_JEMEtSums);
-		}
-	      else it_Sim_JEMEtSums=it_Sim_JEMEtSums+1;
-	    }
-	  if (foundModule==0)it_BS_JEMEtSums=it_BS_JEMEtSums+1;
-	}
-      
-      if (vBS_JEMEtSums.size()!=0)
-	{
-	  //mLog<<MSG::DEBUG<<"JEMEtSums: additional BS data for"<<endreq;
-	  
-	  //fill errorcounter
-	  for( it_BS_JEMEtSums  = vBS_JEMEtSums.begin(); it_BS_JEMEtSums <  vBS_JEMEtSums. end(); ++it_BS_JEMEtSums )
-	    {
-	      /*mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_JEMEtSums).crate()<<" Module "<<(*it_BS_JEMEtSums).module()<<endreq;
-	      mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_JEMEtSums).Ex()<<endreq;
-	      mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_JEMEtSums).Ey()<<endreq;
-	      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums).Et()<<endreq;*/
-	      
-	      m_h_SimBSMon_JEP_Energy_withoutFix->Fill(1,(*it_BS_JEMEtSums).crate()*19 + ((*it_BS_JEMEtSums).module()+1),1);	  
-	    }
-	}
-      
-      if (vSim_JEMEtSums.size()!=0)
-	{
-	  mLog<<MSG::DEBUG<<"JEMEtSums: additional Sim data for"<<endreq;
-	  
-	  //fill errorcounter
-	  for( it_Sim_JEMEtSums  = vSim_JEMEtSums.begin(); it_Sim_JEMEtSums <  vSim_JEMEtSums. end(); ++it_Sim_JEMEtSums )
-	    {
-	      /*mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_JEMEtSums).crate()<<" Module "<<(*it_Sim_JEMEtSums).module()<<endreq;
-	      mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_JEMEtSums).Ex()<<endreq;
-	      mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums).Ey()<<endreq;
-	      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums).Et()<<endreq;*/
-	      
-	      //m_h_SimBSMon_JEP_Energy_withoutFix->Fill(1,(*it_Sim_JEMEtSums).crate()*19 + ((*it_Sim_JEMEtSums).module()+1),1);
-	    }
-	}
-
-      //========================== remove =============================
     }
   
 
@@ -1085,7 +901,6 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      // if a match is found, a "0" is entered (just to see that the histogram is filled
 	      // since there hopefully are only zeros in there)
 	      m_h_TransCheck_JEP->Fill(1,(*it_vJEMHits).crate()*19+(*it_vJEMHits).module()+1,noMatchfound);
-	      m_h_TransCheck_JEP_Hits->Fill(1,(*it_vJEMHits).crate()*19+(*it_vJEMHits).module()+1,noMatchfound);
 	      
 	      vCMMJEMHits.erase(it_vCMMJEMHits);
 	      vJEMHits.erase(it_vJEMHits);
@@ -1114,8 +929,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  if ((*it_vCMMJEMHits).Hits()>0) 
 	    {
 	      m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits).crate()*19+(*it_vCMMJEMHits).dataID()+1+1,1);
-	      m_h_TransCheck_JEP_Hits->Fill(1,(*it_vCMMJEMHits).crate()*19+(*it_vCMMJEMHits).dataID()+1+1,1);
-	    }
+	          }
 	}
     }
   
@@ -1131,110 +945,10 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  if ((*it_vJEMHits).JetHits()>0) 
 	    {
 	      m_h_TransCheck_JEP->Fill(1,(*it_vJEMHits).crate()*19+(*it_vJEMHits).module()+1,1);
-	      m_h_TransCheck_JEP_Hits->Fill(1,(*it_vJEMHits).crate()*19+(*it_vJEMHits).module()+1,1);
-	    }
+	          }
 	}
     }
 
-  // =============== remove ===================================================
-  // put CMM input data (JEMHits) into CMMJEMHits vector
-  for( it_CMMJetHits  = CMMJetHits ->begin(); it_CMMJetHits < CMMJetHits -> end(); ++it_CMMJetHits )
-    {
-      // JEM information for transmission check JEMs -> CMMs 
-      if ((*it_CMMJetHits)->dataID()<16)
-	{
-	  vCMMJEMHits.push_back(**it_CMMJetHits );
-	}
-      
-      // CMM information for transmission check crate CMM -> system CMM
-      // local main hits of crate CMM
-      if (((*it_CMMJetHits)->dataID()==17)and((*it_CMMJetHits)->crate()==0)) CrateCMMMainHits=(*it_CMMJetHits)->Hits();
-      // local fwd hits of crate CMM
-      if (((*it_CMMJetHits)->dataID()==20)and((*it_CMMJetHits)->crate()==0)) CrateCMMFwdHits=(*it_CMMJetHits)->Hits();
-      // remote main hits of system CMM
-      if (((*it_CMMJetHits)->dataID()==16)and((*it_CMMJetHits)->crate()==1)) SystemRemoteCMMMainHits=(*it_CMMJetHits)->Hits();
-      // remote fwd hits of crate CMM
-      if (((*it_CMMJetHits)->dataID()==19)and((*it_CMMJetHits)->crate()==1)) SystemRemoteCMMFwdHits=(*it_CMMJetHits)->Hits();
-    }
-  for( it_JEMHits  =  JEMHits->begin(); it_JEMHits <  JEMHits-> end(); ++it_JEMHits )
-    {
-      vJEMHits.push_back(**it_JEMHits);
-    }
-  //---------------------------------- backplane transmission JEMs -> CMM -----------------------------
-  it_vCMMJEMHits=vCMMJEMHits.begin();
-  // step through both vectors and compare...
-  //mLog<<MSG::DEBUG<<"JEMHits Transmission error (without Fix) JEM -> CMM"<<endreq;
-  while (it_vCMMJEMHits<vCMMJEMHits.end())
-    {
-      found = 0;
-      noMatchfound=0;
-      it_vJEMHits=vJEMHits.begin();
-      
-      while ((found==0)and(it_vJEMHits<vJEMHits.end()))
-	{
-	  if (((*it_vCMMJEMHits).crate()==(*it_vJEMHits).crate())
-	      and((*it_vCMMJEMHits).dataID()==(*it_vJEMHits).module()))
-	    {
-	      if ((*it_vCMMJEMHits).Hits()!=(*it_vJEMHits).JetHits())
-		{
-		  /*mLog<<MSG::DEBUG<<"JEM Crate "<<(*it_vJEMHits).crate()<<" Module "<<(*it_vJEMHits).module()<<endreq;
-		  mLog<<MSG::VERBOSE<<"JEM Hit "<<Help->Binary((*it_vJEMHits).JetHits(),24)<<endreq;
-		  mLog<<MSG::VERBOSE<<"CMM Hit "<<Help->Binary((*it_vCMMJEMHits).Hits(),24)<<endreq;*/
-		  
-		  noMatchfound=1;
-		}
-	      // if CMMJEMHits and JEMHits didn't match, a "1" is entered at the specific module;
-	      // if a match is found, a "0" is entered (just to see that the histogram is filled
-	      // since there hopefully are only zeros in there)
-	      m_h_TransCheck_JEP_Hits_withoutFix->Fill(1,(*it_vJEMHits).crate()*19+(*it_vJEMHits).module()+1,noMatchfound);
-	      
-	      vCMMJEMHits.erase(it_vCMMJEMHits);
-	      vJEMHits.erase(it_vJEMHits);
-	      found=1;
-	    }
-	  else it_vJEMHits=it_vJEMHits+1;
-	}// end while (not found and not JEMHits.end)
-      
-      // only step further in CMMJEMHits if no corresponding entry has been found in JEMHits
-      if (found==0)it_vCMMJEMHits=it_vCMMJEMHits+1;
-    }  // end while (not CMMJEMHits.end)
-  
-  // if the CMMJEMHits vector isn't empty, fill the error counter!
-  if (vCMMJEMHits.size()!=0)
-    {
-      //mLog<<MSG::DEBUG<<vCMMJEMHits.size()<<"JEMHits Transmission: additional CMM information"<<endreq;
-      for( it_vCMMJEMHits  = vCMMJEMHits.begin(); it_vCMMJEMHits <  vCMMJEMHits. end(); ++it_vCMMJEMHits )
-	{
-	  // changes only for M5 !!!!!!!!!!!!1
-	  //mLog<<MSG::DEBUG<<"Crate "<<(*it_vCMMJEMHits).crate()<<" Module "<<(*it_vCMMJEMHits).dataID()<<endreq;
-	  /*mLog<<MSG::DEBUG<<"Crate "<<(*it_vCMMJEMHits).crate()<<" Module "<<((*it_vCMMJEMHits).dataID()+1)<<endreq;
-	  mLog<<MSG::VERBOSE<<"Hit "<<Help->Binary((*it_vCMMJEMHits).Hits(),24)<<endreq;
-	  */
-	  // changes only for M5 !!!!!!!!!!!!1
-	  //if ((*it_vCMMJEMHits).Hits()>0) m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits).crate()*19+(*it_vCMMJEMHits).dataID()+1,1);
-	  if ((*it_vCMMJEMHits).Hits()>0) 
-	    {
-	      m_h_TransCheck_JEP_Hits_withoutFix->Fill(1,(*it_vCMMJEMHits).crate()*19+(*it_vCMMJEMHits).dataID()+1,1);
-	    }
-	}
-    }
-  
-  // if the JEMHits vector isn't empty, fill the error counter!
-  if (vJEMHits.size()!=0)
-    {
-      mLog<<MSG::DEBUG<<vJEMHits.size()<<" JEMHits Transmission: addtional JEM information"<<endreq;
-      for( it_vJEMHits  =  vJEMHits.begin(); it_vJEMHits <  vJEMHits. end(); ++it_vJEMHits )
-	{
-	  /*mLog<<MSG::DEBUG<<"Crate "<<(*it_vJEMHits).crate()<<" Module "<<(*it_vJEMHits).module()<<endreq;
-	    mLog<<MSG::VERBOSE<<"Hit "<<Help->Binary((*it_vJEMHits).JetHits(),24)<<endreq;*/
-	  
-	  if ((*it_vJEMHits).JetHits()>0) 
-	    {
-	      m_h_TransCheck_JEP_Hits_withoutFix->Fill(1,(*it_vJEMHits).crate()*19+(*it_vJEMHits).module()+1,1);
-	    }
-	}
-    }
-  //============================ remove ===========================================================
 
 
   // ---------------------------------------------------------------------------------------------
@@ -1462,7 +1176,6 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      // since there hopefully are only zeros in there)
 	      
 	      m_h_TransCheck_JEP->Fill(2,((*it_vJEMEtSums).crate()*19+(*it_vJEMEtSums).module() + 1),noMatchfound);
-	      m_h_TransCheck_JEP_Energy->Fill(1,((*it_vJEMEtSums).crate()*19+(*it_vJEMEtSums).module() + 1),noMatchfound);
 	      
 	      vCMMJEMEtSums.erase(it_vCMMJEMEtSums);
 	      vJEMEtSums.erase(it_vJEMEtSums);
@@ -1485,8 +1198,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  mLog<<MSG::VERBOSE<<"CMM Et "<<(*it_vCMMJEMEtSums).Et()<<endreq;
 	  
 	  m_h_TransCheck_JEP->Fill(2,(*it_vCMMJEMEtSums).crate()*19+(*it_vCMMJEMEtSums).dataID() + 1,noMatchfound);
-	  m_h_TransCheck_JEP_Energy->Fill(1,(*it_vCMMJEMEtSums).crate()*19+(*it_vCMMJEMEtSums).dataID() + 1,noMatchfound);
-	}
+	  	}
     }
   
   // if the JEMEtSums vector isn't empty, fill the error counter!
@@ -1501,8 +1213,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  mLog<<MSG::VERBOSE<<"JEM Et "<<(*it_vJEMEtSums).Et()<<endreq;
 	  
 	  m_h_TransCheck_JEP->Fill(2,(*it_vJEMEtSums).crate()*19+(*it_vJEMEtSums).module() + 1,noMatchfound);
-	  m_h_TransCheck_JEP_Energy->Fill(1,(*it_vJEMEtSums).crate()*19+(*it_vJEMEtSums).module() + 1,noMatchfound);
-	}
+	  	}
     }
   
 
@@ -1592,8 +1303,6 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		      noMatchfound=1;    
 		    }
 		  m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums).crate()*19 + 16 + 1,noMatchfound);
-		  m_h_SimBSMon_JEP_Energy->Fill(1,(*it_BS_CMMEtSums).crate()*19 + 16 + 1,noMatchfound);
-		  m_h_SimBSMon_JEP_Energy_withoutFix->Fill(1,(*it_BS_CMMEtSums).crate()*19 + 16 + 1,noMatchfound);
 		  
 		  vBS_CMMEtSums.erase(it_BS_CMMEtSums);
 		  vSim_CMMEtSums.erase(it_Sim_CMMEtSums);
@@ -1616,8 +1325,6 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_CMMEtSums).Et()<<endreq;
 	      
 	      m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums).crate()*19 + 16 + 1,1);
-	      m_h_SimBSMon_JEP_Energy->Fill(1,(*it_BS_CMMEtSums).crate()*19 + 16 + 1,1);
-	      m_h_SimBSMon_JEP_Energy_withoutFix->Fill(1,(*it_BS_CMMEtSums).crate()*19 + 16 + 1,1);
 	      
 	    }
 	}
@@ -1635,9 +1342,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_CMMEtSums).Et()<<endreq;
 	      
 	      m_h_SimBSMon_JEP->Fill(1,(*it_Sim_CMMEtSums).crate()*19 + 16 + 1,1);
-	      m_h_SimBSMon_JEP_Energy->Fill(1,(*it_Sim_CMMEtSums).crate()*19 + 16 + 1,1);
-	      m_h_SimBSMon_JEP_Energy_withoutFix->Fill(1,(*it_Sim_CMMEtSums).crate()*19 + 16 + 1,1);
-	    }
+	        }
 	}
     }
       
@@ -1660,8 +1365,6 @@ StatusCode JEPTransPerfMon::fillHistograms()
       mLog<<MSG::DEBUG<<"CMMJetHits: Transmission error between crate and system CMM"<<endreq;
     }
   m_h_TransCheck_JEP->Fill(1,17,noMatchfound);
-  m_h_TransCheck_JEP_Hits->Fill(1,17,noMatchfound);
-  m_h_TransCheck_JEP_Hits_withoutFix->Fill(1,17,noMatchfound);
 
 
   // ---------------------------------------------------------------------------------------------
@@ -1692,7 +1395,6 @@ StatusCode JEPTransPerfMon::fillHistograms()
       mLog<<MSG::DEBUG<<"CMMEnergySums: Transmission error between crate and system CMM"<<endreq;
     }
   m_h_TransCheck_JEP->Fill(2,17,noMatchfound);
-  m_h_TransCheck_JEP_Energy->Fill(1,17,noMatchfound);
 
 
   // ---------------------------------------------------------------------------------------------

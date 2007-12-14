@@ -142,15 +142,6 @@ protected:
 
    TH2F* m_h_usedModules;
 
-   // ------- remove -------------------
-   TH2F* m_h_SimBSMon_JEP_Energy;
-   TH2F* m_h_SimBSMon_JEP_Energy_withoutFix;
-
-   TH2F* m_h_TransCheck_JEP_Energy;
-   TH2F* m_h_TransCheck_JEP_Hits;
-   TH2F* m_h_TransCheck_JEP_Hits_withoutFix;
-   // ------- remove -------------------
-
 
 };
 
