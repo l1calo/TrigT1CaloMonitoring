@@ -15,6 +15,7 @@
 #include <math.h>
 #include <functional>
 #include <iostream>
+#include "TMath.h"
 
 #include "TrigT1CaloMonitoring/MonHelper.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
