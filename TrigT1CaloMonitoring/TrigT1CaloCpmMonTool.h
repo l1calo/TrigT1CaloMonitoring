@@ -52,6 +52,11 @@ public:
 
 private:
 
+  enum SummaryErrors { NoError, AnyError, PPrCPMTransfer, CoreOverlap,
+                       CPMParity, CPMLink, CPMStatus, RoIParity,
+		       CPMCMMTransfer, CMMParity, CMMStatus, CrateSysTransfer,
+		       NumberOfSummaryBins };
+
   typedef DataVector<LVL1::CPMTower>     CpmTowerCollection;
   typedef DataVector<LVL1::CPMHits>      CpmHitsCollection;
   typedef DataVector<LVL1::CMMCPHits>    CmmCpHitsCollection;
@@ -63,6 +68,11 @@ private:
   typedef std::map<unsigned int, LVL1::CPMHits*>      CpmHitsMap;
   typedef std::map<unsigned int, LVL1::CMMCPHits*>    CmmCpHitsMap;
   
+  static const int s_crates     = 4;
+  static const int s_modules    = 14; // Modules numbered 1-14
+  static const int s_thresholds = 16;
+  static const int s_threshBits = 3;
+  static const int s_threshMask = 0x7;
   
   TH1D* book1D(const std::string& name, const std::string& title,
                                     int nx, double xmin, double xmax);
@@ -74,23 +84,26 @@ private:
   void  setThresholdLabels(TH1* hist);
   void  setStatusLabels(TH1* hist);
   void  setCmmLocLabels(TH2* hist);
+  void  setCmmLocRemLabels(TH1* hist);
 
   ServiceHandle<StoreGateSvc> m_storeGate;
 
   MonGroup* m_monGroup;
 
-  /// CPM tower container StoreGate key
+  /// Core CPM tower container StoreGate key
   std::string m_cpmTowerLocation;
+  /// Overlap CPM tower container StoreGate key
+  std::string m_cpmTowerLocationOverlap;
   /// CPM hits container StoreGate key
   std::string m_cpmHitsLocation;
   /// CMM-CP hits container StoreGate key
   std::string m_cmmCpHitsLocation;
-  /// CPM RoI container StoreGate key
+  /// DAQ CPM RoI container StoreGate key
   std::string m_cpmRoiLocation;
+  /// RoIB CPM RoI container StoreGate key
+  std::string m_cpmRoiLocationRoib;
   /// Trigger Tower container StoreGate key
   std::string m_triggerTowerLocation;
-  int m_MaxEnergyRange;
-  bool m_Offline;
   
   /// Root directory
   std::string m_rootDir;
@@ -103,6 +116,10 @@ private:
   double m_phiMax;
   /// Phi scale to convert from radians to wanted units
   double m_phiScale;
+  /// Noise/signal energy split
+  int m_noiseSignalSplit;
+  /// Maximum energy plotted
+  int m_maxEnergyRange;
 
   //=======================
   //   Timeslice plots
@@ -150,7 +167,7 @@ private:
   TH2D* m_h_CT_Had_link;
   TH1D* m_h_CT_status;
   TH2D* m_h_CT_status_eta_phi;
-  // Mismatch plots
+  // Mismatch plots - TriggerTower/CPMTower
   TH2D* m_h_TTeqCT_Em_eta_phi;
   TH2D* m_h_TTneCT_Em_eta_phi;
   TH2D* m_h_TTnoCT_Em_eta_phi;
@@ -159,6 +176,15 @@ private:
   TH2D* m_h_TTneCT_Had_eta_phi;
   TH2D* m_h_TTnoCT_Had_eta_phi;
   TH2D* m_h_CTnoTT_Had_eta_phi;
+  // Mismatch plots - CPMTower Core/Overlap
+  TH2D* m_h_CTeqCO_Em_eta_phi;
+  TH2D* m_h_CTneCO_Em_eta_phi;
+  TH2D* m_h_CTnoCO_Em_eta_phi;
+  TH2D* m_h_COnoCT_Em_eta_phi;
+  TH2D* m_h_CTeqCO_Had_eta_phi;
+  TH2D* m_h_CTneCO_Had_eta_phi;
+  TH2D* m_h_CTnoCO_Had_eta_phi;
+  TH2D* m_h_COnoCT_Had_eta_phi;
 
   //=============================================
   //  CPM RoIs
@@ -195,6 +221,11 @@ private:
   TH1D* m_h_CPMnoCMM_hits1;
   TH1D* m_h_CMMnoCPM_hits0;
   TH1D* m_h_CMMnoCPM_hits1;
+  // CMM local-system totals mismatch
+  TH1D* m_h_LOCeqREM;
+  TH1D* m_h_LOCneREM;
+  TH1D* m_h_LOCnoREM;
+  TH1D* m_h_REMnoLOC;
 
   //=============================================
   //  Error summary
