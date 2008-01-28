@@ -293,6 +293,10 @@ Helper::Helper()
 Helper::~Helper()
 /*---------------------------------------------------------*/
 {
+  delete[] TTEtaBins;
+  delete[] TTPhiBins;
+  delete[] JEEtaBins;
+  delete[] JEPhiBins;
 }
 
 /*---------------------------------------------------------*/

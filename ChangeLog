@@ -1,3 +1,9 @@
+2008-01-28  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+        * tag TrigT1CaloMonitoring-00-01-19
+        * fix memory leaks
+        * remove unnecessary data duplication
+        * eliminate compiler warning messages
+
 2008-01-24  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
 	* tag TrigT1CaloMonitoring-00-01-18
         * updates to TrigT1CaloCpmMonTool.

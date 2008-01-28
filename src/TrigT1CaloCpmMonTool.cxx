@@ -75,7 +75,8 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
   declareProperty("PhiUnits", m_phiUnits = "channels",
                   "Phi Units: radians, degrees or channels");
   declareProperty("NoiseSignalSplit", m_noiseSignalSplit = 0);
-  declareProperty("MaxEnergyRange", m_maxEnergyRange = 255);
+  declareProperty("MaxEnergyRange", m_maxEnergyRange = 50);
+  declareProperty( "Offline", m_Offline = 1) ;
 
 }
 

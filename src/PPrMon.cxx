@@ -164,37 +164,37 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
   }
 
   MonGroup TT_EmADCPeak( this, (m_PathInRootFile+"_EmFADCPeak").c_str(), expert, run );
-  HistoBooker* EmADCPeak_Booker = new HistoBooker(&TT_EmADCPeak, &log, m_DataType);
+  HistoBooker EmADCPeak_Booker(&TT_EmADCPeak, &log, m_DataType);
 
   MonGroup TT_HadADCPeak( this, (m_PathInRootFile+"_HadFADCPeak").c_str(), expert, run );
-  HistoBooker* HadADCPeak_Booker = new HistoBooker(&TT_HadADCPeak, &log, m_DataType);
+  HistoBooker HadADCPeak_Booker(&TT_HadADCPeak, &log, m_DataType);
 
   MonGroup TT_HadADCTiming( this, (m_PathInRootFile+"_HadFADCTiming").c_str(), expert, run );
-  HistoBooker* HadADCTiming_Booker = new HistoBooker(&TT_HadADCTiming, &log, m_DataType);
+  HistoBooker HadADCTiming_Booker(&TT_HadADCTiming, &log, m_DataType);
 
   MonGroup TT_EmADCTiming( this, (m_PathInRootFile+"_EmFADCTiming").c_str(), expert, run );
-  HistoBooker* EmADCTiming_Booker = new HistoBooker(&TT_EmADCTiming, &log, m_DataType);
+  HistoBooker EmADCTiming_Booker(&TT_EmADCTiming, &log, m_DataType);
 
   MonGroup TT_EmLUTPeak( this, (m_PathInRootFile+"_EmLUTPeak").c_str(), expert, run );
-  HistoBooker* EmLUTPeak_Booker = new HistoBooker(&TT_EmLUTPeak, &log, m_DataType);
+  HistoBooker EmLUTPeak_Booker(&TT_EmLUTPeak, &log, m_DataType);
 
   MonGroup TT_HadLUTPeak( this, (m_PathInRootFile+"_HadLUTPeak").c_str(), expert, run );
-  HistoBooker* HadLUTPeak_Booker = new HistoBooker(&TT_HadLUTPeak, &log, m_DataType);
+  HistoBooker HadLUTPeak_Booker(&TT_HadLUTPeak, &log, m_DataType);
 
   MonGroup TT_HitMaps( this, (m_PathInRootFile+"_LUTHitMaps").c_str(), shift, run );
-  HistoBooker* HitMaps_Booker = new HistoBooker(&TT_HitMaps, &log, m_DataType);
+  HistoBooker HitMaps_Booker(&TT_HitMaps, &log, m_DataType);
 
   MonGroup TT_ADC( this, (m_PathInRootFile+"_FADCHitMaps").c_str(), shift, run );
-  HistoBooker* ADCTimeSlice_Booker = new HistoBooker(&TT_ADC, &log, m_DataType);
+  HistoBooker ADCTimeSlice_Booker(&TT_ADC, &log, m_DataType);
 
   MonGroup TT_LUTPeakDist( this, (m_PathInRootFile+"_LUTPeakDistribution").c_str(), shift, run );
-  HistoBooker* LUTPeakDistribution_Booker = new HistoBooker(&TT_LUTPeakDist, &log, m_DataType);
+  HistoBooker LUTPeakDistribution_Booker(&TT_LUTPeakDist, &log, m_DataType);
 
   MonGroup TT_Error( this, (m_ErrorPathInRootFile).c_str(), shift, run );
-  HistoBooker* Error_Booker = new HistoBooker(&TT_Error, &log, "");
+  HistoBooker Error_Booker(&TT_Error, &log, "");
 
   MonGroup NoEvents( this, (m_EventPathInRootFile).c_str(), expert, run );
-  HistoBooker* NoEvent_Booker = new HistoBooker(&NoEvents, &log, "");
+  HistoBooker NoEvent_Booker(&NoEvents, &log, "");
 
   if ( isNewEventsBlock|| isNewLumiBlock) { }
 
@@ -202,7 +202,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 
     //if( isNewEventsBlock || isNewLumiBlock ) 
     {	
-      Helper* Help = new Helper();
+      Helper Help;
       m_NoEvents=0;
   
 
@@ -229,23 +229,23 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 		{
 		  name = "emFADCTT_" + buffer.str();
 		  title = "TT EM FADC Distribution of Peak for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_EmADCPeak[towerId]=EmADCPeak_Booker->book1F(name,title,256,-0.5,255.5,"em FADC values");
+		  m_h_TT_EmADCPeak[towerId]=EmADCPeak_Booker.book1F(name,title,256,-0.5,255.5,"em FADC values");
 		  
 		  
 		  name = "emLUTTT_" + buffer.str();
 		  title = "TT EM LUT Distribution of Peak for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_EmLUTPeak[towerId]=EmLUTPeak_Booker->book1F(name,title,256,-0.5,255.5,"em LUT [GeV]");
+		  m_h_TT_EmLUTPeak[towerId]=EmLUTPeak_Booker.book1F(name,title,256,-0.5,255.5,"em LUT [GeV]");
 		}
 	      
 	      if (m_lvl1Helper->sampling(towerId)==1) //Had TT
 		{
 		  name = "hadFADCTT_" + buffer.str();
 		  title = "TT HAD FADC Distribution of Peak for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_HadADCPeak[towerId]=HadADCPeak_Booker->book1F(name,title,256,-0.5,255.5,"had FADC values");
+		  m_h_TT_HadADCPeak[towerId]=HadADCPeak_Booker.book1F(name,title,256,-0.5,255.5,"had FADC values");
 		  
 		  name = "hadLUTTT_" + buffer.str();
 		  title = "TT EM LUT Distribution of Peak for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_HadLUTPeak[towerId]=HadLUTPeak_Booker->book1F(name,title,256,-0.5,255.5,"had LUT [GeV]");
+		  m_h_TT_HadLUTPeak[towerId]=HadLUTPeak_Booker.book1F(name,title,256,-0.5,255.5,"had LUT [GeV]");
 		}
 	    }
 	}
@@ -260,13 +260,13 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	  
 	  name = "emFADCHitMap_" + buffer.str();
 	  title = "#eta - #phi Map of EM FADC > " + etabuffer.str() +" for timeslice " + buffer.str();
-	  m_h_TT_HitMap_emADC[i]=ADCTimeSlice_Booker->book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  m_h_TT_HitMap_emADC[i]->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+	  m_h_TT_HitMap_emADC[i]=ADCTimeSlice_Booker.book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  m_h_TT_HitMap_emADC[i]->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 	  
 	  name = "hadFADCHitMap_" + buffer.str();
 	  title = "#eta - #phi Map of HAD FADC > " + etabuffer.str() +" for timeslice " + buffer.str();
-	  m_h_TT_HitMap_hadADC[i]=ADCTimeSlice_Booker->book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  m_h_TT_HitMap_hadADC[i]->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+	  m_h_TT_HitMap_hadADC[i]=ADCTimeSlice_Booker.book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  m_h_TT_HitMap_hadADC[i]->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 	}
 
 
@@ -290,74 +290,74 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 		{
 		  name = "hadFADCTiming_" + buffer.str();
 		  title = "TT had FADC Timing for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_HitMap_hadADCChannel_timing[towerId]= HadADCTiming_Booker -> bookProfile(name, title,5,-0.5,4.5, "TimeSlice No", "had FADC counts");
+		  m_h_TT_HitMap_hadADCChannel_timing[towerId]= HadADCTiming_Booker.bookProfile(name, title,5,-0.5,4.5, "TimeSlice No", "had FADC counts");
 		}
 
 	      if (m_lvl1Helper->sampling(towerId)==0) 
 		{
 		  name = "emFADCTiming_" + buffer.str();
 		  title = "TT em FADC Timing for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_HitMap_emADCChannel_timing[towerId]= EmADCTiming_Booker -> bookProfile(name, title,5,-0.5,4.5, "TimeSlice No", "had FADC counts");
+		  m_h_TT_HitMap_emADCChannel_timing[towerId]= EmADCTiming_Booker.bookProfile(name, title,5,-0.5,4.5, "TimeSlice No", "had FADC counts");
 		}
 	    }
 	}
       
-     m_h_TT_ADC_hadTiming_signal= ADCTimeSlice_Booker->bookProfile2D("ADC_hadTiming_signal","Average Maximum TimeSlice for had Signal (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI,"#eta", "#phi");
-      m_h_TT_ADC_hadTiming_signal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+     m_h_TT_ADC_hadTiming_signal= ADCTimeSlice_Booker.bookProfile2D("ADC_hadTiming_signal","Average Maximum TimeSlice for had Signal (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI,"#eta", "#phi");
+      m_h_TT_ADC_hadTiming_signal->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 
-      m_h_TT_ADC_emTiming_signal=ADCTimeSlice_Booker->bookProfile2D("ADC_emTiming_signal","em Timing",100,-4.9,4.9, 64,0,2*M_PI, "#eta", "#phi");
-      m_h_TT_ADC_emTiming_signal->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+      m_h_TT_ADC_emTiming_signal=ADCTimeSlice_Booker.bookProfile2D("ADC_emTiming_signal","em Timing",100,-4.9,4.9, 64,0,2*M_PI, "#eta", "#phi");
+      m_h_TT_ADC_emTiming_signal->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 
 
       //---------------------------- LUT Hitmaps per threshold -----------------------------
       buffer.str("");
       buffer<<m_TT_HitMap_Thresh0;
-      m_h_TT_HitMap_emLUT_Thresh0=HitMaps_Booker->book2F("TTEmLUT"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_emLUT_Thresh0->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+      m_h_TT_HitMap_emLUT_Thresh0=HitMaps_Booker.book2F("TTEmLUT"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_HitMap_emLUT_Thresh0->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
       
       buffer.str("");
       buffer<<m_TT_HitMap_Thresh1;
-      m_h_TT_HitMap_emLUT_Thresh1=HitMaps_Booker->book2F("TTEmLUT"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_emLUT_Thresh1->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning());  
+      m_h_TT_HitMap_emLUT_Thresh1=HitMaps_Booker.book2F("TTEmLUT"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_HitMap_emLUT_Thresh1->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());  
       
       buffer.str("");
       buffer<<m_TT_HitMap_Thresh2;
-      m_h_TT_HitMap_emLUT_Thresh2=HitMaps_Booker->book2F("TTEmLUT"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_emLUT_Thresh2->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+      m_h_TT_HitMap_emLUT_Thresh2=HitMaps_Booker.book2F("TTEmLUT"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_HitMap_emLUT_Thresh2->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
       
       
       buffer.str("");
       buffer<<m_TT_HitMap_Thresh0;
-      m_h_TT_HitMap_hadLUT_Thresh0=HitMaps_Booker->book2F("TTHadLUT"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_hadLUT_Thresh0->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning());   
+      m_h_TT_HitMap_hadLUT_Thresh0=HitMaps_Booker.book2F("TTHadLUT"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_HitMap_hadLUT_Thresh0->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());   
       
       buffer.str("");
       buffer<<m_TT_HitMap_Thresh1;
-      m_h_TT_HitMap_hadLUT_Thresh1=HitMaps_Booker->book2F("TTHadLUT"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_hadLUT_Thresh1->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning());   
+      m_h_TT_HitMap_hadLUT_Thresh1=HitMaps_Booker.book2F("TTHadLUT"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_HitMap_hadLUT_Thresh1->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());   
       
       buffer.str("");
       buffer<<m_TT_HitMap_Thresh2;
-      m_h_TT_HitMap_hadLUT_Thresh2=HitMaps_Booker->book2F("TTHadLUT"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_hadLUT_Thresh2->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning());  
+      m_h_TT_HitMap_hadLUT_Thresh2=HitMaps_Booker.book2F("TTHadLUT"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_HitMap_hadLUT_Thresh2->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());  
       
       //---------------------------- distribution of LUT peak per detector region -----------------------------
-      m_h_TT_emLUT=LUTPeakDistribution_Booker->book1F("emLUT_peak","EM LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"em LUT Peak [GeV]");
-      m_h_TT_emLUT_eta=LUTPeakDistribution_Booker->book1F("emLUT_eta","EM LUT: Distribution of Peak per #eta",21,-0.5,255.5,"#eta");
-      m_h_TT_emLUT_eta->SetBins(66,Help->TTEtaBinning());
+      m_h_TT_emLUT=LUTPeakDistribution_Booker.book1F("emLUT_peak","EM LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"em LUT Peak [GeV]");
+      m_h_TT_emLUT_eta=LUTPeakDistribution_Booker.book1F("emLUT_eta","EM LUT: Distribution of Peak per #eta",21,-0.5,255.5,"#eta");
+      m_h_TT_emLUT_eta->SetBins(66,Help.TTEtaBinning());
       
-      m_h_TT_emLUT_phi=LUTPeakDistribution_Booker->book1F("emLUT_phi","EM LUT: Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
-      m_h_TT_emLUT_phi->SetBins(64,Help->TTPhiBinning());  
+      m_h_TT_emLUT_phi=LUTPeakDistribution_Booker.book1F("emLUT_phi","EM LUT: Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
+      m_h_TT_emLUT_phi->SetBins(64,Help.TTPhiBinning());  
       
       
-      m_h_TT_hadLUT=LUTPeakDistribution_Booker->book1F("hadLUT_Dist","HAD LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"had LUT Peak [GeV]"); 
-      m_h_TT_hadLUT_eta=LUTPeakDistribution_Booker->book1F("hadLUT_eta","HAD LUT: Distribution of Peak per #eta",256,-0.5,255.5,"#eta");
-      m_h_TT_hadLUT_eta->SetBins(66,Help->TTEtaBinning());
-      m_h_TT_hadLUT_phi=LUTPeakDistribution_Booker->book1F("hadLUT_phi","HAD LUT: Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
-      m_h_TT_hadLUT_phi->SetBins(64,Help->TTPhiBinning());  
+      m_h_TT_hadLUT=LUTPeakDistribution_Booker.book1F("hadLUT_Dist","HAD LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"had LUT Peak [GeV]"); 
+      m_h_TT_hadLUT_eta=LUTPeakDistribution_Booker.book1F("hadLUT_eta","HAD LUT: Distribution of Peak per #eta",256,-0.5,255.5,"#eta");
+      m_h_TT_hadLUT_eta->SetBins(66,Help.TTEtaBinning());
+      m_h_TT_hadLUT_phi=LUTPeakDistribution_Booker.book1F("hadLUT_phi","HAD LUT: Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
+      m_h_TT_hadLUT_phi->SetBins(64,Help.TTPhiBinning());  
       
       //---------------------------- SubStatus Word errors -----------------------------
-      m_h_TT_emerror=Error_Booker->book1F("TT_emerror","EM TT SubStatus Word errors",17,0.5,17.5,"");
+      m_h_TT_emerror=Error_Booker.book1F("TT_emerror","EM TT SubStatus Word errors",17,0.5,17.5,"");
       
       m_h_TT_emerror->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_emerror->GetXaxis()->SetBinLabel(2, "MCMAbsent");
@@ -377,7 +377,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_emerror->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
       m_h_TT_emerror->GetXaxis()->SetBinLabel(17, "FailingBCN");
 
-      m_h_TT_haderror=Error_Booker->book1F("TT_haderror","HAD TT SubStatus Word errors",17,0.5,17.5,"");
+      m_h_TT_haderror=Error_Booker.book1F("TT_haderror","HAD TT SubStatus Word errors",17,0.5,17.5,"");
       
       m_h_TT_haderror->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_haderror->GetXaxis()->SetBinLabel(2, "MCMAbsent");
@@ -397,7 +397,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_haderror->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
       m_h_TT_haderror->GetXaxis()->SetBinLabel(17, "FailingBCN");
       
-      m_h_TT_error_Crate_03=Error_Booker->book2F("TT_error_Crate_0-3","TT SubStatus Word errors in crates 0-3",17,0.5,17.5,71,0.5,71.5,"","");
+      m_h_TT_error_Crate_03=Error_Booker.book2F("TT_error_Crate_0-3","TT SubStatus Word errors in crates 0-3",17,0.5,17.5,71,0.5,71.5,"","");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(2, "MCMAbsent");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(3, "Timeout");
@@ -416,7 +416,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(17, "FailingBCN");
 
-      m_h_TT_error_Crate_47=Error_Booker->book2F("TT_error_Crate_4-7","TT SubStatus Word errors in crates 4-7",17,0.5,17.5,71,0.5,71.5,"","");
+      m_h_TT_error_Crate_47=Error_Booker.book2F("TT_error_Crate_4-7","TT SubStatus Word errors in crates 4-7",17,0.5,17.5,71,0.5,71.5,"","");
       m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(2, "MCMAbsent");
       m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(3, "Timeout");
@@ -466,26 +466,26 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 
 
 
-      m_h_TT_em_GLinkDown=Error_Booker->book2F("TT_em_GLinkDown","EM TT GLink Down per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_em_GLinkDown->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+      m_h_TT_em_GLinkDown=Error_Booker.book2F("TT_em_GLinkDown","EM TT GLink Down per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_em_GLinkDown->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
       
-      m_h_TT_em_GLinkTimeout=Error_Booker->book2F("TT_em_GLinkTimeout","EM TT GLink Timeout per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_em_GLinkTimeout->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+      m_h_TT_em_GLinkTimeout=Error_Booker.book2F("TT_em_GLinkTimeout","EM TT GLink Timeout per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_em_GLinkTimeout->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 
 
-      m_h_TT_had_GLinkDown=Error_Booker->book2F("TT_had_GLinkDown","HAD TT GLink Down per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_had_GLinkDown->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+      m_h_TT_had_GLinkDown=Error_Booker.book2F("TT_had_GLinkDown","HAD TT GLink Down per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_had_GLinkDown->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 
-      m_h_TT_had_GLinkTimeout=Error_Booker->book2F("TT_had_GLinkTimeout","HAD TT GLink Timeout per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_had_GLinkTimeout->SetBins(66,Help->TTEtaBinning(),64,Help->TTPhiBinning()); 
+      m_h_TT_had_GLinkTimeout=Error_Booker.book2F("TT_had_GLinkTimeout","HAD TT GLink Timeout per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+      m_h_TT_had_GLinkTimeout->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 
       //---------------------------- number of triggered slice -----------------------------
-      m_h_TT_triggeredSlice_em=ADCTimeSlice_Booker->book1F("TT_EMTriggeredSlice","Number of the EM Triggered Slice",7,-0.5,6.5,"#Slice");
-      m_h_TT_triggeredSlice_had=ADCTimeSlice_Booker->book1F("TT_HADTriggeredSlice","Number of the HAD Triggered Slice",7,-0.5,6.5,"#Slice");
+      m_h_TT_triggeredSlice_em=ADCTimeSlice_Booker.book1F("TT_EMTriggeredSlice","Number of the EM Triggered Slice",7,-0.5,6.5,"#Slice");
+      m_h_TT_triggeredSlice_had=ADCTimeSlice_Booker.book1F("TT_HADTriggeredSlice","Number of the HAD Triggered Slice",7,-0.5,6.5,"#Slice");
       
    
       //----------------------------- number of events ----------------------------------
-      m_h_NumberEvents= NoEvent_Booker->book1F("NumberEvents","Number of processed events",1,0.5,1.5,"");
+      m_h_NumberEvents= NoEvent_Booker.book1F("NumberEvents","Number of processed events",1,0.5,1.5,"");
       m_h_NumberEvents->GetXaxis()->SetBinLabel(1,"Number of Events");
 
     }
@@ -594,7 +594,7 @@ StatusCode PPrMon::fillHistograms()
        //---------------------------- ADC HitMaps per timeslice -----------------------------
       for (int i=0; i<m_SliceNo;i++)
 	{
-	  if (i<( (*TriggerTowerIterator)->emADC()).size())
+	  if (i<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 	    {
 	      if (( (*TriggerTowerIterator)->emADC())[i] > m_TT_ADC_HitMap_Thresh)
 		{
@@ -602,7 +602,7 @@ StatusCode PPrMon::fillHistograms()
 		}
 	    }
 
-	  if (i<( (*TriggerTowerIterator)->hadADC()).size())
+	  if (i<static_cast<int>(( (*TriggerTowerIterator)->hadADC()).size()))
 	    {
 	      if (( (*TriggerTowerIterator)->hadADC())[i] > m_TT_ADC_HitMap_Thresh)
 		{
@@ -623,7 +623,7 @@ StatusCode PPrMon::fillHistograms()
 	{
 	  for (int i=0; i<m_SliceNo;i++)
 	    {
-	      if (i<( (*TriggerTowerIterator)->emADC()).size())
+	      if (i<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 		{ 
 		  if (emFADCSum>m_EMFADCCut) 
 		    {
@@ -631,7 +631,7 @@ StatusCode PPrMon::fillHistograms()
 		    }
 		}
 	      
-	      if (i<( (*TriggerTowerIterator)->hadADC()).size())
+	      if (i<static_cast<int>(( (*TriggerTowerIterator)->hadADC()).size()))
 		{
 		  if (hadFADCSum>m_HADFADCCut) 
 		    {
@@ -956,7 +956,7 @@ double PPrMon::recTime(const std::vector<int>& vFAdc) {
     double b = ( (y[1]-y[2])*(x[0]*x[0]-x[2]*x[2]) -
 		 (y[0]-y[2])*(x[1]*x[1]-x[2]*x[2]) ) / (
 							(x[1]-x[2])*(x[0]*x[0]-x[2]*x[2]) - (x[0]-x[2])*(x[1]*x[1]-x[2]*x[2]) );
-    double c = y[0] - b*x[0] - a*x[0]*x[0];
+    //double c = y[0] - b*x[0] - a*x[0]*x[0];
     max = -b/(2*a);
     
   }

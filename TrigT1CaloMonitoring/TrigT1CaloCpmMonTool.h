@@ -120,6 +120,7 @@ private:
   int m_noiseSignalSplit;
   /// Maximum energy plotted
   int m_maxEnergyRange;
+  bool m_Offline;
 
   //=======================
   //   Timeslice plots
