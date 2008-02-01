@@ -1302,6 +1302,7 @@ TH2D* TrigT1CaloCpmMonTool::book2D(const std::string& name,
     log << MSG::WARNING << "Could not register histogram : " 
 	<< name << endreq;
   }
+  hist->SetOption("colz");
   
   return hist;
 }
