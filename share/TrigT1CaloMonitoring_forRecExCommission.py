@@ -8,6 +8,7 @@ if not ATLASCosmicFlags.doCTPMon:
     from TrigConfigSvc.TrigConfigSvcConfig import LVL1ConfigSvc
     LVL1ConfigSvc = LVL1ConfigSvc('LVL1ConfigSvc')
     LVL1ConfigSvc.ConfigSource = "XML"
+    LVL1ConfigSvc.XMLFile = "L1MenuM5.xml"
     #LVL1ConfigSvc.XMLFile = "TrigT1CTMonitoring/LVL1ConfigCosmic.xml"
     LVL1ConfigSvc.CreateLegacyObjects = True
     LVL1ConfigSvc.DumpTTVmap = False

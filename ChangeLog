@@ -1,4 +1,8 @@
 2008-01-28  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+        * tag TrigT1CaloMonitoring-00-01-20
+        * add TriggerMenu-File for LVL1ConfigSvc in JO
+	
+2008-01-28  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * tag TrigT1CaloMonitoring-00-01-19
         * fix memory leaks
         * remove unnecessary data duplication
