@@ -17,7 +17,7 @@ if not ATLASCosmicFlags.doCTPMon:
     theApp.CreateSvc += [ "TrigConf::LVL1ConfigSvc/LVL1ConfigSvc" ]
 
 #================================= L1Calo-Simulation =============================
-from TrigT1Calo.TrigT1CaloConf import LVL1__JetElementMaker
+from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__JetElementMaker
 from AthenaCommon.AlgSequence import AlgSequence
 myjob = AlgSequence()
 myjob += LVL1__JetElementMaker( 'JetElementMaker' )

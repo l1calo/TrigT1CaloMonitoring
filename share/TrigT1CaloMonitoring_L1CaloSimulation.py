@@ -4,16 +4,16 @@
 # Import the configurable algorithms for TrigT1Calo
 #from AthenaCommon.GlobalFlags  import globalflags
 
-from TrigT1Calo.TrigT1CaloConf import LVL1__CPMTowerMaker
-from TrigT1Calo.TrigT1CaloConf import LVL1__EmTauTrigger
-from TrigT1Calo.TrigT1CaloConf import LVL1__JetTrigger
-from TrigT1Calo.TrigT1CaloConf import LVL1__EnergyTrigger
-from TrigT1Calo.TrigT1CaloConf import LVL1__ROD
-from TrigT1Calo.TrigT1CaloConf import LVL1__CPCMMMaker
-from TrigT1Calo.TrigT1CaloConf import LVL1__JEPCMMMaker
+from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__CPMTowerMaker
+from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__EmTauTrigger
+from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__JetTrigger
+from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__EnergyTrigger
+from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__ROD
+from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__CPCMMMaker
+from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__JEPCMMMaker
 
-#from TrigT1Calo.TrigT1CaloConf import LVL1__Tester
-#from TrigT1Calo.TrigT1CaloConf import LVL1__DumpTriggerObjects
+#from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__Tester
+#from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__DumpTriggerObjects
 
 # Get the algorithm sequence
 from AthenaCommon.AlgSequence import AlgSequence

@@ -94,7 +94,7 @@ toolSvc.L1PPrPerfMonTool.PathInRootFile = "L1Calo/1_PPrPerfMon"
 #toolSvc.L1PPrPerfMonTool.OutputLevel = DEBUG
 
 if ATLASCosmicFlags.doLAr and  ATLASCosmicFlags.doTile:
-    from TrigT1Calo.TrigT1CaloConf import LVL1__TriggerTowerMaker
+    from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__TriggerTowerMaker
     from AthenaCommon.AlgSequence import AlgSequence
     job = AlgSequence()
     job += LVL1__TriggerTowerMaker( 'TriggerTowerMaker' )
