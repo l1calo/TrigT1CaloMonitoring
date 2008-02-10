@@ -1,3 +1,8 @@
+2008-02-10  Alan Watson <Alan.Watson@cern.ch>
+        * JEPTransPerfMon, JEMMon: correct locations of EnergyTrigger.h,
+          JetElementMaker.h
+        * Tag as TrigT1CaloMonitoring-00-02-01 
+
 2008-02-08  Alan Watson <Alan.Watson@cern.ch>
         * Change jobOptions to load simulation algorithms from 
           TrigT1CaloSim rather than TrigT1Calo

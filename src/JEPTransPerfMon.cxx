@@ -94,7 +94,7 @@
 #include "TrigT1Calo/JEMRoI.h"
 #include "TrigT1Calo/QuadLinear.h"
 #include "TrigT1Calo/DataError.h"
-#include "TrigT1Calo/JetElementMaker.h"
+#include "TrigT1CaloSim/JetElementMaker.h"
 #include "TrigT1Calo/TriggerTowerCollection.h"
 
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"

@@ -21,7 +21,7 @@
 #include "DataModel/DataVector.h"
 #include "TrigT1Calo/JEMHits.h"
 #include "TrigT1Calo/JEMEtSums.h"
-#include "TrigT1Calo/JetElementMaker.h"
+#include "TrigT1CaloSim/JetElementMaker.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"

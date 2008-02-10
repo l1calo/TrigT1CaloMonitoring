@@ -31,13 +31,13 @@
 #include "TrigT1CaloMonitoring/MonHelper.h"
 
 //#include "TrigT1Calo/JEMEtSums.h"
-#include "TrigT1Calo/EnergyTrigger.h"
+#include "TrigT1CaloSim/EnergyTrigger.h"
 #include "TrigT1Calo/JEMRoI.h"
 #include "TrigT1Calo/QuadLinear.h"
 #include "TrigT1Calo/DataError.h"
 #include "TrigT1Calo/CoordToHardware.h"
 #include "TrigT1Interfaces/Coordinate.h"
-#include "TrigT1Calo/JetElementMaker.h"
+#include "TrigT1CaloSim/JetElementMaker.h"
 
 #include "TrigT1Interfaces/JEPRoIDecoder.h"
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
