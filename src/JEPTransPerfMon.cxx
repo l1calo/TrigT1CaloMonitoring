@@ -86,15 +86,11 @@
 #include "TrigT1CaloMonitoring/JEMMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
 
-//#include "TrigT1Calo/EnergyTrigger.h"
 #include "TrigT1Calo/LVL1TriggerMenuDefs.h"
-//#include "TrigT1Calo/LVL1TriggerMenu.h"
-//#include "TrigT1Calo/InternalJetROI.h"
 #include "TrigT1Calo/CMMRoI.h"
 #include "TrigT1Calo/JEMRoI.h"
 #include "TrigT1Calo/QuadLinear.h"
 #include "TrigT1Calo/DataError.h"
-#include "TrigT1CaloSim/JetElementMaker.h"
 #include "TrigT1Calo/TriggerTowerCollection.h"
 
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"

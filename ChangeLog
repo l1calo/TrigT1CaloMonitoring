@@ -1,3 +1,8 @@
+2007-12-14  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
+        * JEPTransPerfMon, JEMMon: remove depedency to TrigT1CaloSim
+        * Tag as TrigT1CaloMonitoring-00-02-02
+
+
 2008-02-10  Alan Watson <Alan.Watson@cern.ch>
         * JEPTransPerfMon, JEMMon: correct locations of EnergyTrigger.h,
           JetElementMaker.h

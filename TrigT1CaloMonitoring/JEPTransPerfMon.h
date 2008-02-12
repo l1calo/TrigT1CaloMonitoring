@@ -23,7 +23,7 @@
 #include "TrigT1Calo/CMMEtSums.h"
 #include "TrigT1Calo/JEMHits.h"
 #include "TrigT1Calo/JEMEtSums.h"
-#include "TrigT1CaloSim/JetElementMaker.h"
+#include "TrigT1Calo/JetElement.h"
 //#include "TrigT1CaloTools/L1JetElementTools.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
