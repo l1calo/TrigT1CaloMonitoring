@@ -1,3 +1,8 @@
+2008-02-20  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+        * new tool for CP data-simulation comparisons
+        * needs TrigT1CaloTools-01-02-00 or later
+        * Tag as TrigT1CaloMonitoring-00-03-00
+
 2007-12-14  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
         * JEPTransPerfMon, JEMMon: remove depedency to TrigT1CaloSim
         * Tag as TrigT1CaloMonitoring-00-02-02
