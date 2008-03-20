@@ -1,3 +1,11 @@
+2008-03-20  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+        * Changes to CP tools: change plots to float instead of double,
+          move all plots except overall summaries from shift to expert,
+          reorganise directories of expert error plots so the directory
+          names correspond with the bin labels on the overall summary
+          plot.
+        * Tag as TrigT1CaloMonitoring-00-03-01
+
 2008-02-20  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * new tool for CP data-simulation comparisons
         * needs TrigT1CaloTools-01-02-00 or later

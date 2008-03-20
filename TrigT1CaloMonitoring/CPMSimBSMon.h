@@ -20,8 +20,8 @@
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "DataModel/DataVector.h"
 
-class TH1D;
-class TH2D;
+class TH1F;
+class TH2F;
 class StoreGateSvc;
 
 namespace LVL1 {
@@ -71,9 +71,9 @@ private:
   typedef std::map<int, LVL1::CPMHits*>      CpmHitsMap;
   typedef std::map<int, LVL1::CMMCPHits*>    CmmCpHitsMap;
   
-  TH1D* book1D(std::string nam, std::string tit,
+  TH1F* book1F(std::string nam, std::string tit,
                                     int nx, double xmin, double xmax);
-  TH2D* book2D(std::string nam, std::string tit,
+  TH2F* book2F(std::string nam, std::string tit,
                                     int nx, double xmin, double xmax,
                                     int ny, double ymin, double ymax);
   void  compare(const TriggerTowerMap& ttMap, const CpmTowerMap& cpMap,
@@ -121,8 +121,8 @@ private:
   //   Match/Mismatch plots
   //=======================
 
-  TH2D* m_h_CPeqSIM;
-  TH2D* m_h_CPneSIM;
+  TH2F* m_h_CPeqSIM;
+  TH2F* m_h_CPneSIM;
 
 };
 

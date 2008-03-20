@@ -12,8 +12,8 @@
 #include <utility>
 #include <cmath>
 
-#include "TH1D.h"
-#include "TH2D.h"
+#include "TH1F.h"
+#include "TH2F.h"
 #include "TString.h"
 
 #include "CLHEP/Units/SystemOfUnits.h"
@@ -123,6 +123,7 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
+  MonGroup monExpert( this, m_rootDir + "/5_CP_Sim", expert, run );
   MonGroup monShift ( this, m_rootDir + "/5_CP_Sim", shift, run );
 
   if ( isNewEventsBlock || isNewLumiBlock ) { }
@@ -131,14 +132,17 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   //  Error checks
 
-  m_monGroup = &monShift;
+  m_monGroup = &monExpert;
 
-  m_h_CPeqSIM = book2D("CPeqSIM",
+  m_h_CPeqSIM = book2F("CPeqSIM",
             "CP Comparison with Simulation - Matches (Events);Crate/Module",
              64, 0, 64, 7, 0, 7);
   m_h_CPeqSIM->SetStats(kFALSE);
   setLabels(m_h_CPeqSIM);
-  m_h_CPneSIM = book2D("CPneSIM",
+
+  m_monGroup = &monShift;
+
+  m_h_CPneSIM = book2F("CPneSIM",
             "CP Comparison with Simulation - Mismatches (Events);Crate/Module",
              64, 0, 64, 7, 0, 7);
   m_h_CPneSIM->SetStats(kFALSE);
@@ -174,9 +178,10 @@ StatusCode CPMSimBSMon::fillHistograms()
   //Retrieve CPM RoIs from SG
   const CpmRoiCollection* cpmRoiTES = 0;
   sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocation);
-  if( sc.isFailure()  ||  !cpmRoiTES ) {
-    log << MSG::DEBUG << "No DAQ CPM RoIs container found, trying RoIB"
+  if( sc.isFailure()  ||  !cpmRoiTES  ||  cpmRoiTES->empty() ) {
+    log << MSG::DEBUG << "No DAQ CPM RoIs found, trying RoIB"
         << endreq; 
+    cpmRoiTES = 0;
     sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocationRoib);
     if( sc.isFailure()  ||  !cpmRoiTES ) {
       log << MSG::DEBUG << "No RoIB CPM RoIs container found"<< endreq;
@@ -209,6 +214,10 @@ StatusCode CPMSimBSMon::fillHistograms()
   setupMap(cpmRoiTES, crMap);
   setupMap(cpmHitsTES, chMap);
   setupMap(cmmCpHitsTES, cmMap);
+
+  // Note - Simulation steps which are simply copies of data from
+  // one container to another are not actually done to save time
+  // and space.  The comparisons are made with the input instead.
 
   // Compare Trigger Towers and CPM Towers from data
 
@@ -340,10 +349,10 @@ StatusCode CPMSimBSMon::procHistograms(bool isEndOfEventsBlock,
   return StatusCode::SUCCESS;
 }
 
-TH1D* CPMSimBSMon::book1D(std::string name, std::string title,
+TH1F* CPMSimBSMon::book1F(std::string name, std::string title,
                                    int nx, double xmin, double xmax)
 {
-  TH1D *hist = new TH1D(TString(name), TString(title), nx, xmin, xmax);
+  TH1F *hist = new TH1F(TString(name), TString(title), nx, xmin, xmax);
   
   if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {
     MsgStream log(msgSvc(), this->name());
@@ -354,11 +363,11 @@ TH1D* CPMSimBSMon::book1D(std::string name, std::string title,
   return hist;
 }
 
-TH2D* CPMSimBSMon::book2D(std::string name, std::string title,
+TH2F* CPMSimBSMon::book2F(std::string name, std::string title,
                                    int nx, double xmin, double xmax,  
 	                           int ny, double ymin, double ymax)
 {		
-  TH2D *hist = new TH2D(TString(name), TString(title), nx, xmin, xmax,
+  TH2F *hist = new TH2F(TString(name), TString(title), nx, xmin, xmax,
                                                        ny, ymin, ymax);
   
   if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {

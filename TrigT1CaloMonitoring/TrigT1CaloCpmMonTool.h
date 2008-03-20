@@ -19,8 +19,8 @@
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "DataModel/DataVector.h"
 
-class TH1D;
-class TH2D;
+class TH1F;
+class TH2F;
 class StoreGateSvc;
 
 namespace LVL1 {
@@ -52,10 +52,9 @@ public:
 
 private:
 
-  enum SummaryErrors { NoError, AnyError, PPrCPMTransfer, CoreOverlap,
-                       CPMParity, CPMLink, CPMStatus, RoIParity,
-		       CPMCMMTransfer, CMMParity, CMMStatus, CrateSysTransfer,
-		       NumberOfSummaryBins };
+  enum SummaryErrors { PPrCPMTransfer, CoreOverlap, CPMParity, CPMLink,
+                       CPMStatus, RoIParity, CPMCMMTransfer, CMMParity,
+		       CMMStatus, CrateSysTransfer, NumberOfSummaryBins };
 
   typedef DataVector<LVL1::CPMTower>     CpmTowerCollection;
   typedef DataVector<LVL1::CPMHits>      CpmHitsCollection;
@@ -74,9 +73,9 @@ private:
   static const int s_threshBits = 3;
   static const int s_threshMask = 0x7;
   
-  TH1D* book1D(const std::string& name, const std::string& title,
+  TH1F* book1F(const std::string& name, const std::string& title,
                                     int nx, double xmin, double xmax);
-  TH2D* book2D(const std::string& name, const std::string& title,
+  TH2F* book2F(const std::string& name, const std::string& title,
                                     int nx, double xmin, double xmax,
                                     int ny, double ymin, double ymax);
   void  newGroup(const std::string& system, LevelOfDetail_t level,
@@ -126,113 +125,113 @@ private:
   //   Timeslice plots
   //=======================
 
-  std::vector<TH2D*> m_v_CPM_slices;
-  std::vector<TH2D*> m_v_PP_CP_slice;
-  std::vector<TH2D*> m_v_CMM_slices;
-  std::vector<TH2D*> m_v_CP_CM_slice;
+  std::vector<TH2F*> m_v_CPM_slices;
+  std::vector<TH2F*> m_v_PP_CP_slice;
+  std::vector<TH2F*> m_v_CMM_slices;
+  std::vector<TH2F*> m_v_CP_CM_slice;
 
   //=============================================
   //   CPM Tower - Trigger Tower comparison plots
   //=============================================
 
   // TriggerTower plots
-  TH1D* m_h_TT_Em_Et;  
-  TH1D* m_h_TT_Had_Et;
-  TH1D* m_h_TT_Em_Et_s;  
-  TH1D* m_h_TT_Had_Et_s;
-  TH1D* m_h_TT_Em_eta;
-  TH1D* m_h_TT_Had_eta;
-  TH1D* m_h_TT_Em_phi;
-  TH1D* m_h_TT_Had_phi;
-  TH2D* m_h_TT_Em_eta_phi;
-  TH2D* m_h_TT_Had_eta_phi;
-  TH2D* m_h_TT_Em_eta_phi_w;
-  TH2D* m_h_TT_Had_eta_phi_w;
+  TH1F* m_h_TT_Em_Et;  
+  TH1F* m_h_TT_Had_Et;
+  TH1F* m_h_TT_Em_Et_s;  
+  TH1F* m_h_TT_Had_Et_s;
+  TH1F* m_h_TT_Em_eta;
+  TH1F* m_h_TT_Had_eta;
+  TH1F* m_h_TT_Em_phi;
+  TH1F* m_h_TT_Had_phi;
+  TH2F* m_h_TT_Em_eta_phi;
+  TH2F* m_h_TT_Had_eta_phi;
+  TH2F* m_h_TT_Em_eta_phi_w;
+  TH2F* m_h_TT_Had_eta_phi_w;
   // CPMTower plots
-  TH1D* m_h_CT_Em_Et;  
-  TH1D* m_h_CT_Had_Et;
-  TH1D* m_h_CT_Em_Et_s;
-  TH1D* m_h_CT_Had_Et_s;
-  TH1D* m_h_CT_Em_eta;
-  TH1D* m_h_CT_Had_eta;
-  TH1D* m_h_CT_Em_phi;
-  TH1D* m_h_CT_Had_phi;
-  TH2D* m_h_CT_Em_eta_phi;
-  TH2D* m_h_CT_Had_eta_phi;
-  TH2D* m_h_CT_Em_eta_phi_w;
-  TH2D* m_h_CT_Had_eta_phi_w;
+  TH1F* m_h_CT_Em_Et;  
+  TH1F* m_h_CT_Had_Et;
+  TH1F* m_h_CT_Em_Et_s;
+  TH1F* m_h_CT_Had_Et_s;
+  TH1F* m_h_CT_Em_eta;
+  TH1F* m_h_CT_Had_eta;
+  TH1F* m_h_CT_Em_phi;
+  TH1F* m_h_CT_Had_phi;
+  TH2F* m_h_CT_Em_eta_phi;
+  TH2F* m_h_CT_Had_eta_phi;
+  TH2F* m_h_CT_Em_eta_phi_w;
+  TH2F* m_h_CT_Had_eta_phi_w;
   // Errors
-  TH2D* m_h_CT_Em_parity;
-  TH2D* m_h_CT_Had_parity;
-  TH2D* m_h_CT_Em_link;
-  TH2D* m_h_CT_Had_link;
-  TH1D* m_h_CT_status;
-  TH2D* m_h_CT_status_eta_phi;
+  TH2F* m_h_CT_Em_parity;
+  TH2F* m_h_CT_Had_parity;
+  TH2F* m_h_CT_Em_link;
+  TH2F* m_h_CT_Had_link;
+  TH1F* m_h_CT_status;
+  TH2F* m_h_CT_status_eta_phi;
   // Mismatch plots - TriggerTower/CPMTower
-  TH2D* m_h_TTeqCT_Em_eta_phi;
-  TH2D* m_h_TTneCT_Em_eta_phi;
-  TH2D* m_h_TTnoCT_Em_eta_phi;
-  TH2D* m_h_CTnoTT_Em_eta_phi;
-  TH2D* m_h_TTeqCT_Had_eta_phi;
-  TH2D* m_h_TTneCT_Had_eta_phi;
-  TH2D* m_h_TTnoCT_Had_eta_phi;
-  TH2D* m_h_CTnoTT_Had_eta_phi;
+  TH2F* m_h_TTeqCT_Em_eta_phi;
+  TH2F* m_h_TTneCT_Em_eta_phi;
+  TH2F* m_h_TTnoCT_Em_eta_phi;
+  TH2F* m_h_CTnoTT_Em_eta_phi;
+  TH2F* m_h_TTeqCT_Had_eta_phi;
+  TH2F* m_h_TTneCT_Had_eta_phi;
+  TH2F* m_h_TTnoCT_Had_eta_phi;
+  TH2F* m_h_CTnoTT_Had_eta_phi;
   // Mismatch plots - CPMTower Core/Overlap
-  TH2D* m_h_CTeqCO_Em_eta_phi;
-  TH2D* m_h_CTneCO_Em_eta_phi;
-  TH2D* m_h_CTnoCO_Em_eta_phi;
-  TH2D* m_h_COnoCT_Em_eta_phi;
-  TH2D* m_h_CTeqCO_Had_eta_phi;
-  TH2D* m_h_CTneCO_Had_eta_phi;
-  TH2D* m_h_CTnoCO_Had_eta_phi;
-  TH2D* m_h_COnoCT_Had_eta_phi;
+  TH2F* m_h_CTeqCO_Em_eta_phi;
+  TH2F* m_h_CTneCO_Em_eta_phi;
+  TH2F* m_h_CTnoCO_Em_eta_phi;
+  TH2F* m_h_COnoCT_Em_eta_phi;
+  TH2F* m_h_CTeqCO_Had_eta_phi;
+  TH2F* m_h_CTneCO_Had_eta_phi;
+  TH2F* m_h_CTnoCO_Had_eta_phi;
+  TH2F* m_h_COnoCT_Had_eta_phi;
 
   //=============================================
   //  CPM RoIs
   //=============================================
 
-  std::vector<TH1D*> m_v_RoI_thresholds;
-  std::vector<TH2D*> m_v_RoI_2D_thresholds;
+  std::vector<TH1F*> m_v_RoI_thresholds;
+  std::vector<TH2F*> m_v_RoI_2D_thresholds;
   // Parity errors
-  TH2D* m_h_RoI_Parity;
+  TH2F* m_h_RoI_Parity;
 
   //=============================================
   //  CPM Hits
   //=============================================
 
-  std::vector<TH1D*> m_v_thresholds;
+  std::vector<TH1F*> m_v_thresholds;
 
   //=============================================
   //  CMM-CP Hits
   //=============================================
 
-  std::vector<TH1D*> m_v_CMM_thresholds;
-  std::vector<TH1D*> m_v_CMM_T_thresholds;
+  std::vector<TH1F*> m_v_CMM_thresholds;
+  std::vector<TH1F*> m_v_CMM_T_thresholds;
   // Errors
-  TH1D* m_h_CMM_R_parity;
-  TH1D* m_h_CMM_L_parity;
-  TH1D* m_h_CMM_status;
-  TH2D* m_h_CMM_status_loc;
+  TH1F* m_h_CMM_R_parity;
+  TH1F* m_h_CMM_L_parity;
+  TH1F* m_h_CMM_status;
+  TH2F* m_h_CMM_status_loc;
   // CPM-CMM mismatch
-  TH1D* m_h_CPMeqCMM_hits0;
-  TH1D* m_h_CPMeqCMM_hits1;
-  TH1D* m_h_CPMneCMM_hits0;
-  TH1D* m_h_CPMneCMM_hits1;
-  TH1D* m_h_CPMnoCMM_hits0;
-  TH1D* m_h_CPMnoCMM_hits1;
-  TH1D* m_h_CMMnoCPM_hits0;
-  TH1D* m_h_CMMnoCPM_hits1;
+  TH1F* m_h_CPMeqCMM_hits0;
+  TH1F* m_h_CPMeqCMM_hits1;
+  TH1F* m_h_CPMneCMM_hits0;
+  TH1F* m_h_CPMneCMM_hits1;
+  TH1F* m_h_CPMnoCMM_hits0;
+  TH1F* m_h_CPMnoCMM_hits1;
+  TH1F* m_h_CMMnoCPM_hits0;
+  TH1F* m_h_CMMnoCPM_hits1;
   // CMM local-system totals mismatch
-  TH1D* m_h_LOCeqREM;
-  TH1D* m_h_LOCneREM;
-  TH1D* m_h_LOCnoREM;
-  TH1D* m_h_REMnoLOC;
+  TH1F* m_h_LOCeqREM;
+  TH1F* m_h_LOCneREM;
+  TH1F* m_h_LOCnoREM;
+  TH1F* m_h_REMnoLOC;
 
   //=============================================
   //  Error summary
   //=============================================
 
-  TH1D* m_h_CP_errors;
+  TH1F* m_h_CP_errors;
 
 };
 
