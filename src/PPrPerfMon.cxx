@@ -43,7 +43,7 @@ PPrPerfMon::PPrPerfMon(const std::string & type, const std::string & name,
 /*---------------------------------------------------------*/
 {
  declareProperty( "PathInRootFile", m_PathInRootFile="Stats/CMM") ;
-  declareProperty( "DataType", m_DataType="") ;
+  declareProperty( "TypeOfData", m_DataType="") ;
 }
 
 /*---------------------------------------------------------*/

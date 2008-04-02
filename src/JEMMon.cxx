@@ -61,7 +61,7 @@ JEMMon::JEMMon( const std::string & type, const std::string & name,
 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/JEM") ;
   declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
-  declareProperty( "DataType", m_DataType="") ;
+  declareProperty( "TypeOfData", m_DataType="") ;
 
 }
 

@@ -53,7 +53,7 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/L1Calo/PPr") ;
   declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
   declareProperty( "EventPathInRootFile", m_EventPathInRootFile="Stats/L1Calo") ;
-  declareProperty( "DataType", m_DataType="") ;
+  declareProperty( "TypeOfData", m_DataType="") ;
 
   m_SliceNo=5;
 }

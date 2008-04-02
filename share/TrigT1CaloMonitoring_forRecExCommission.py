@@ -78,7 +78,7 @@ L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
 from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import JEMMon
 BS_L1JEMMonTool = JEMMon(
     name = "BS_L1JEMMonTool",
-    DataType = "BS",  #BS or Sim data?
+    TypeOfData = "BS",  #BS or Sim data?
     JetElementLocation = "JetElements",
     JEMHitsLocation = "JEMHits",
     JEMEtSumsLocation = "JEMEtSums",
@@ -107,7 +107,7 @@ L1CaloMan.AthenaMonTools += [ BS_L1JEMMonTool ]
 from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import CMMMon
 BS_L1CMMMonTool = CMMMon (
     name = "BS_L1CMMMonTool",
-    DataType = "BS",  #BS or Sim data?
+    TypeOfData = "BS",  #BS or Sim data?
     CMMJetHitsLocation = "CMMJetHits",
     CMMEtSumsLocation = "CMMEtSums",
     CMMRoILocation = "CMMRoIs",

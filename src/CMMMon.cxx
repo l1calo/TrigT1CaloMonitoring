@@ -71,7 +71,7 @@ CMMMon::CMMMon( const std::string & type, const std::string & name,
 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/CMM") ;
   declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
-  declareProperty( "DataType", m_DataType="") ;
+  declareProperty( "TypeOfData", m_DataType="") ;
 }
 
 
