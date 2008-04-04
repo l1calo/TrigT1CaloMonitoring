@@ -21,7 +21,7 @@ from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__JetElementMaker
 from AthenaCommon.AlgSequence import AlgSequence
 myjob = AlgSequence()
 myjob += LVL1__JetElementMaker( 'JetElementMaker' )
-myjob.JetElementMaker.TriggerTowerLocation ="TriggerTowers"  
+#myjob.JetElementMaker.TriggerTowerLocation ="TriggerTowers"  
 myjob.JetElementMaker.JetElementLocation ="Sim_JetElements"
 #job.JetElementMaker.OutputLevel = VERBOSE
 
@@ -183,17 +183,12 @@ L1BSCPMMonTool = TrigT1CaloCpmMonTool (
 ToolSvc += L1BSCPMMonTool
 L1CaloMan.AthenaMonTools += [ L1BSCPMMonTool ]
 
-#if CompareWithSimulation:
-#    L1CaloMan.AthenaMonTools += [ "TrigT1CaloCpmMonTool/L1SimCPMMonTool" ]
-#    toolSvc.L1SimCPMMonTool.TriggerTowerLocation = "TriggerTowers"
-#    toolSvc.L1SimCPMMonTool.CPMTowerLocation = "Sim_CPMTowers"
-#    toolSvc.L1SimCPMMonTool.CPMHitsLocation = "Sim_CPMHits"
-#    toolSvc.L1SimCPMMonTool.CMMCPHitsLocation = "Sim_CMMCPHits"
-#    toolSvc.L1SimCPMMonTool.CPMRoILocation = "Sim_CPMRoIs"
-#    toolSvc.L1SimCPMMonTool.RootDirectory = "L1Calo/Sim"
-#    toolSvc.L1SimCPMMonTool.MaxEnergyRange = MaxEnergyRange
-#    toolSvc.L1SimCPMMonTool.SingleDirectory = False
-#toolSvc.L1SimCPMMonTool.OutputLevel = DEBUG
+if CompareWithSimulation:
+    from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import CPMSimBSMon
+    CPMSimBSMonTool = CPMSimBSMon("CPMSimBSMonTool")
+    ToolSvc += CPMSimBSMonTool
+    L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
+    #ToolSvc.CPMSimBSMonTool.OutputLevel = DEBUG
 
 #=================================================================================
 # FileKey must match that given to THistSvc

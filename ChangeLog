@@ -1,3 +1,8 @@
+2008-04-04  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+        * Update TrigT1CaloMonitoring_forRecExCommission.py 
+          for CPMSimBSMon
+        * Tag as TrigT1CaloMonitoring-00-03-03
+
 2008-04-02 Andrea Neusiedl <andrea.neusiedl@cern.ch>
 	* Change of DataType in src and option files
 	* Tag as TrigT1CaloMonitoring-00-03-02
