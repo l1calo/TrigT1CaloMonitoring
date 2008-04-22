@@ -148,6 +148,8 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   newGroup(cpmDir + "_slices", expert, run );
 
+  m_v_CPM_slices.clear();
+  m_v_PP_CP_slice.clear();
   for (int crate = 0; crate < s_crates; ++crate) {
     std::ostringstream cnum;
     cnum << crate;
@@ -165,6 +167,8 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   newGroup(cmmDir + "_slices", expert, run );
 
+  m_v_CMM_slices.clear();
+  m_v_CP_CM_slice.clear();
   for (int crate = 0; crate < s_crates; ++crate) {
     std::ostringstream cnum;
     cnum << crate;
@@ -324,6 +328,8 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   newGroup(cpmDir + "_RoIs", expert, run );
 
+  m_v_RoI_thresholds.clear();
+  m_v_RoI_2D_thresholds.clear();
   for (int thresh = 0; thresh < s_thresholds; ++thresh) {
     std::ostringstream cnum;
     cnum << thresh;
@@ -352,6 +358,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   
   newGroup(cpmDir + "_Hits", expert, run );
 
+  m_v_thresholds.clear();
   for (int thresh = 0; thresh < s_thresholds; ++thresh) {
     std::ostringstream cnum;
     cnum << thresh;
@@ -370,6 +377,8 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   newGroup(cmmDir + "_Hits", expert, run );
 
+  m_v_CMM_thresholds.clear();
+  m_v_CMM_T_thresholds.clear();
   for (int thresh = 0; thresh < s_thresholds; ++thresh) {
     std::ostringstream cnum;
     cnum << thresh;
