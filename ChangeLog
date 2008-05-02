@@ -1,3 +1,8 @@
+2008-05-02  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+        * Add more expert plots to CPMSimBSMon
+        * Reduce number of plots in TrigT1CaloCpmMonTool
+        * Tag as TrigT1CaloMonitoring-00-03-05
+
 2008-04-22  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * Fix vector initialisation bug at run change in
           TrigT1CaloCpmMonTool

@@ -77,7 +77,7 @@ private:
                                     int nx, double xmin, double xmax,
                                     int ny, double ymin, double ymax);
   void  compare(const TriggerTowerMap& ttMap, const CpmTowerMap& cpMap,
-                                              ErrorVector& errors);
+                      ErrorVector& errors, ErrorVector& errors2);
   void  compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
                                             ErrorVector& errors);
   void  compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
@@ -87,6 +87,16 @@ private:
   void  compare(const CmmCpHitsMap& cmmSimMap, const CmmCpHitsMap& cmmMap,
                                           ErrorVector& errors, int selection);
   void  setLabels(TH2* hist);
+  void  setLabelsCMCC(TH2* hist);
+  void  setLabelsCMT(TH2* hist);
+  void  setLabelsT(TH2* hist);
+  void  setLabelsCPM(TH2* hist);
+  void  setLabelsMC(TH2* hist);
+  void  setLabelsMCLR(TH2* hist);
+  void  setLabelsSLR(TH1* hist);
+  void  setLabelsST(TH2* hist);
+  void  setLabelsSRLR(TH1* hist);
+  void  setLabelsSRT(TH2* hist);
   void  setupMap(const TriggerTowerCollection* coll, TriggerTowerMap& map);
   void  setupMap(const CpmTowerCollection* coll, CpmTowerMap& map);
   void  setupMap(const CpmRoiCollection* coll, CpmRoiMap& map);
@@ -117,12 +127,69 @@ private:
   /// Trigger Tower container StoreGate key
   std::string m_triggerTowerLocation;
 
+  /// Phi Units for eta/phi plots
+  std::string m_phiUnits;
+  /// Phi maximum in wanted units
+  double m_phiMax;
+  /// Phi scale to convert from radians to wanted units
+  double m_phiScale;
+  /// Simulation allowed flag
+  bool m_compareWithSim;
+
   //=======================
   //   Match/Mismatch plots
   //=======================
 
+  // CPM Towers
+  TH2F* m_h_EMTowerSIMeqDAT;
+  TH2F* m_h_EMTowerSIMneDAT;
+  TH2F* m_h_EMTowerSIMnoDAT;
+  TH2F* m_h_EMTowerDATnoSIM;
+  TH2F* m_h_HadTowerSIMeqDAT;
+  TH2F* m_h_HadTowerSIMneDAT;
+  TH2F* m_h_HadTowerSIMnoDAT;
+  TH2F* m_h_HadTowerDATnoSIM;
+
+  // RoI
+  TH2F* m_h_RoISIMeqDAT;
+  TH2F* m_h_RoISIMneDAT;
+  TH2F* m_h_RoISIMnoDAT;
+  TH2F* m_h_RoIDATnoSIM;
+  TH2F* m_h_RoIThreshSIMeqDAT;
+  TH2F* m_h_RoIThreshSIMneDAT;
+  TH2F* m_h_RoIEtaPhiSIMeqDAT;
+  TH2F* m_h_RoIEtaPhiSIMneDAT;
+  TH2F* m_h_RoIEtaPhiSIMnoDAT;
+  TH2F* m_h_RoIEtaPhiDATnoSIM;
+
+  // CPM Hits
+  TH2F* m_h_CPMHitsSIMeqDAT;
+  TH2F* m_h_CPMHitsSIMneDAT;
+  TH2F* m_h_CPMHitsSIMnoDAT;
+  TH2F* m_h_CPMHitsDATnoSIM;
+  TH2F* m_h_CPMHitsThreshSIMeqDAT;
+  TH2F* m_h_CPMHitsThreshSIMneDAT;
+
+  // CMM-CP Hits
+  TH2F* m_h_CMMHitsSIMeqDAT;
+  TH2F* m_h_CMMHitsSIMneDAT;
+  TH2F* m_h_CMMHitsSIMnoDAT;
+  TH2F* m_h_CMMHitsDATnoSIM;
+  TH2F* m_h_CMMHitsThreshSIMeqDAT;
+  TH2F* m_h_CMMHitsThreshSIMneDAT;
+
+  // CMM-CP Hit Sums
+  TH1F* m_h_SumsSIMeqDAT;
+  TH1F* m_h_SumsSIMneDAT;
+  TH1F* m_h_SumsSIMnoDAT;
+  TH1F* m_h_SumsDATnoSIM;
+  TH2F* m_h_SumsThreshSIMeqDAT;
+  TH2F* m_h_SumsThreshSIMneDAT;
+  
+  // Summary
   TH2F* m_h_CPeqSIM;
   TH2F* m_h_CPneSIM;
+  TH1F* m_h_CPneSIMSummary;
 
 };
 

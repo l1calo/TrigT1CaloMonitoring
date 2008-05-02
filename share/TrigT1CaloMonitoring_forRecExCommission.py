@@ -176,19 +176,18 @@ L1BSCPMMonTool = TrigT1CaloCpmMonTool (
     CPMRoILocation = "CPMRoIs",
     RootDirectory = "L1Calo",
     MaxEnergyRange = MaxEnergyRange,
-    SingleDirectory = False,
     Offline = Offline,
     #OutputLevel = DEBUG,
     )
 ToolSvc += L1BSCPMMonTool
 L1CaloMan.AthenaMonTools += [ L1BSCPMMonTool ]
 
-if CompareWithSimulation:
-    from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import CPMSimBSMon
-    CPMSimBSMonTool = CPMSimBSMon("CPMSimBSMonTool")
-    ToolSvc += CPMSimBSMonTool
-    L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
-    #ToolSvc.CPMSimBSMonTool.OutputLevel = DEBUG
+from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import CPMSimBSMon
+CPMSimBSMonTool = CPMSimBSMon("CPMSimBSMonTool",
+                  CompareWithSimulation = CompareWithSimulation)
+ToolSvc += CPMSimBSMonTool
+L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
+#ToolSvc.CPMSimBSMonTool.OutputLevel = DEBUG
 
 #=================================================================================
 # FileKey must match that given to THistSvc

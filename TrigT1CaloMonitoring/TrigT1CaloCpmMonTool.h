@@ -52,9 +52,8 @@ public:
 
 private:
 
-  enum SummaryErrors { PPrCPMTransfer, CoreOverlap, CPMParity, CPMLink,
-                       CPMStatus, RoIParity, CPMCMMTransfer, CMMParity,
-		       CMMStatus, CrateSysTransfer, NumberOfSummaryBins };
+  enum SummaryErrors { CoreOverlap, CPMParity, CPMLink, CPMStatus, RoIParity,
+                       CMMParity, CMMStatus, NumberOfSummaryBins };
 
   typedef DataVector<LVL1::CPMTower>     CpmTowerCollection;
   typedef DataVector<LVL1::CPMHits>      CpmHitsCollection;
@@ -69,6 +68,7 @@ private:
   
   static const int s_crates     = 4;
   static const int s_modules    = 14; // Modules numbered 1-14
+  static const int s_maxSlices  = 5;
   static const int s_thresholds = 16;
   static const int s_threshBits = 3;
   static const int s_threshMask = 0x7;
@@ -78,12 +78,17 @@ private:
   TH2F* book2F(const std::string& name, const std::string& title,
                                     int nx, double xmin, double xmax,
                                     int ny, double ymin, double ymax);
-  void  newGroup(const std::string& system, LevelOfDetail_t level,
-                                            Interval_t interval);
   void  setThresholdLabels(TH1* hist);
   void  setStatusLabels(TH1* hist);
-  void  setCmmLocLabels(TH2* hist);
-  void  setCmmLocRemLabels(TH1* hist);
+  void  setLabelsCNSTS(TH2* hist);
+  void  setLabelsPSCS(TH2* hist);
+  void  setLabelsCMT(TH2* hist);
+  void  setLabelsT(TH2* hist);
+  void  setLabelsCPM(TH2* hist);
+  void  setYLabelsCPM(TH2* hist);
+  void  setLabelsMCLR(TH2* hist);
+  void  setLabelsCLR(TH2* hist);
+  void  setLabelsST(TH2* hist);
 
   ServiceHandle<StoreGateSvc> m_storeGate;
 
@@ -106,8 +111,6 @@ private:
   
   /// Root directory
   std::string m_rootDir;
-  /// Flag to put all plots in one dir
-  bool m_oneDir;
 
   /// Phi Units for eta/phi plots
   std::string m_phiUnits;
@@ -119,15 +122,18 @@ private:
   int m_noiseSignalSplit;
   /// Maximum energy plotted
   int m_maxEnergyRange;
+  /// Number of events
+  int m_events;
+  /// Not used
   bool m_Offline;
 
   //=======================
   //   Timeslice plots
   //=======================
 
-  std::vector<TH2F*> m_v_CPM_slices;
+  TH2F* m_h_CPM_slices;
+  TH2F* m_h_CMM_slices;
   std::vector<TH2F*> m_v_PP_CP_slice;
-  std::vector<TH2F*> m_v_CMM_slices;
   std::vector<TH2F*> m_v_CP_CM_slice;
 
   //=============================================
@@ -165,17 +171,7 @@ private:
   TH2F* m_h_CT_Had_parity;
   TH2F* m_h_CT_Em_link;
   TH2F* m_h_CT_Had_link;
-  TH1F* m_h_CT_status;
-  TH2F* m_h_CT_status_eta_phi;
-  // Mismatch plots - TriggerTower/CPMTower
-  TH2F* m_h_TTeqCT_Em_eta_phi;
-  TH2F* m_h_TTneCT_Em_eta_phi;
-  TH2F* m_h_TTnoCT_Em_eta_phi;
-  TH2F* m_h_CTnoTT_Em_eta_phi;
-  TH2F* m_h_TTeqCT_Had_eta_phi;
-  TH2F* m_h_TTneCT_Had_eta_phi;
-  TH2F* m_h_TTnoCT_Had_eta_phi;
-  TH2F* m_h_CTnoTT_Had_eta_phi;
+  TH2F* m_h_CT_status;
   // Mismatch plots - CPMTower Core/Overlap
   TH2F* m_h_CTeqCO_Em_eta_phi;
   TH2F* m_h_CTneCO_Em_eta_phi;
@@ -192,6 +188,10 @@ private:
 
   std::vector<TH1F*> m_v_RoI_thresholds;
   std::vector<TH2F*> m_v_RoI_2D_thresholds;
+  TH2F* m_h_RoI_thresholds;
+  TH2F* m_h_RoI_eta_phi;
+  // Tower saturation
+  TH2F* m_h_RoI_Saturation;
   // Parity errors
   TH2F* m_h_RoI_Parity;
 
@@ -199,33 +199,17 @@ private:
   //  CPM Hits
   //=============================================
 
-  std::vector<TH1F*> m_v_thresholds;
+  TH2F* m_h_CPM_thresholds;
 
   //=============================================
   //  CMM-CP Hits
   //=============================================
 
-  std::vector<TH1F*> m_v_CMM_thresholds;
-  std::vector<TH1F*> m_v_CMM_T_thresholds;
+  TH2F* m_h_CMM_thresholds;
+  TH2F* m_h_CMM_T_thresholds;
   // Errors
-  TH1F* m_h_CMM_R_parity;
-  TH1F* m_h_CMM_L_parity;
-  TH1F* m_h_CMM_status;
-  TH2F* m_h_CMM_status_loc;
-  // CPM-CMM mismatch
-  TH1F* m_h_CPMeqCMM_hits0;
-  TH1F* m_h_CPMeqCMM_hits1;
-  TH1F* m_h_CPMneCMM_hits0;
-  TH1F* m_h_CPMneCMM_hits1;
-  TH1F* m_h_CPMnoCMM_hits0;
-  TH1F* m_h_CPMnoCMM_hits1;
-  TH1F* m_h_CMMnoCPM_hits0;
-  TH1F* m_h_CMMnoCPM_hits1;
-  // CMM local-system totals mismatch
-  TH1F* m_h_LOCeqREM;
-  TH1F* m_h_LOCneREM;
-  TH1F* m_h_LOCnoREM;
-  TH1F* m_h_REMnoLOC;
+  TH2F* m_h_CMM_parity;
+  TH2F* m_h_CMM_status;
 
   //=============================================
   //  Error summary
