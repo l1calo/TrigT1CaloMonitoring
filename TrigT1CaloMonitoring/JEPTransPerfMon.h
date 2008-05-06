@@ -140,8 +140,7 @@ protected:
    TH2F* m_h_TransCheck_emJetElements;
    TH2F* m_h_TransCheck_hadJetElements;
 
-   TH2F* m_h_usedModules;
-
+  
 
 };
 

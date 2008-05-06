@@ -62,6 +62,9 @@ private:
   bool m_TT_ADCTimingPerChannel;
   int m_HADFADCCut;
   int m_EMFADCCut;
+  
+
+
 
   std::string m_DataType;
   std::string m_PathInRootFile;
@@ -114,18 +117,12 @@ protected:
    TH1F* m_h_TT_emLUT;
    TH1F* m_h_TT_emLUT_eta;
    TH1F* m_h_TT_emLUT_phi;
-   /*TH1F* m_h_TT_emLUT_barrel;
-   TH1F* m_h_TT_emLUT_EC;
-   TH1F* m_h_TT_emLUT_Quadrant[NoQuadrant];
-   TH1F* m_h_TT_emLUT_DetSide[Side];*/
+   
 
    TH1F* m_h_TT_hadLUT; 
    TH1F* m_h_TT_hadLUT_eta;
    TH1F* m_h_TT_hadLUT_phi;
-   /*TH1F* m_h_TT_hadLUT_barrel;
-   TH1F* m_h_TT_hadLUT_EC;
-   TH1F* m_h_TT_hadLUT_Quadrant[NoQuadrant];
-   TH1F* m_h_TT_hadLUT_DetSide[Side];*/
+   
 
    // error
    int m_NoEvents;
@@ -133,15 +130,16 @@ protected:
    TH2F* m_h_TT_error_Crate_03;
    TH2F* m_h_TT_error_Crate_47;
    TH1F* m_h_TT_haderror;
-   TH2F* m_h_TT_em_GLinkDown;
+   /*TH2F* m_h_TT_em_GLinkDown;
    TH2F* m_h_TT_em_GLinkTimeout;
    TH2F* m_h_TT_had_GLinkDown;
-   TH2F* m_h_TT_had_GLinkTimeout;
+   TH2F* m_h_TT_had_GLinkTimeout;*/
 
    // number of triggered slice
    TH1F* m_h_TT_triggeredSlice_em;
    TH1F* m_h_TT_triggeredSlice_had;
    
+ 
    TH1F* m_h_NumberEvents;  
 };
 

@@ -44,16 +44,16 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   declareProperty("ADCHitMap_Thresh",  m_TT_ADC_HitMap_Thresh = 15);
   declareProperty("DistPerChannel", m_TT_DistPerChannel=1);
   declareProperty("DistPerChannelAndTimeSlice", m_TT_DistPerChannelAndTimeSlice=0);
-  declareProperty( "MaxEnergyRange", m_MaxEnergyRange = 50) ;
-  declareProperty( "Offline", m_Offline = 1) ;
-  declareProperty( "ADCTimingPerChannel", m_TT_ADCTimingPerChannel=1);
-  declareProperty( "HADFADCCut",  m_HADFADCCut=80);
-  declareProperty( "EMFADCCut",  m_EMFADCCut=80);
+  declareProperty("MaxEnergyRange", m_MaxEnergyRange = 50) ;
+  declareProperty("Offline", m_Offline = 1) ;
+  declareProperty("ADCTimingPerChannel", m_TT_ADCTimingPerChannel=1);
+  declareProperty("HADFADCCut",  m_HADFADCCut=80);
+  declareProperty("EMFADCCut",  m_EMFADCCut=80);
 
-  declareProperty( "PathInRootFile", m_PathInRootFile="Stats/L1Calo/PPr") ;
-  declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
-  declareProperty( "EventPathInRootFile", m_EventPathInRootFile="Stats/L1Calo") ;
-  declareProperty( "TypeOfData", m_DataType="") ;
+  declareProperty("PathInRootFile", m_PathInRootFile="Stats/L1Calo/PPr") ;
+  declareProperty("ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
+  declareProperty("EventPathInRootFile", m_EventPathInRootFile="Stats/L1Calo") ;
+  declareProperty("TypeOfData", m_DataType="") ;
 
   m_SliceNo=5;
 }
@@ -350,14 +350,14 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_emLUT_phi->SetBins(64,Help.TTPhiBinning());  
       
       
-      m_h_TT_hadLUT=LUTPeakDistribution_Booker.book1F("hadLUT_Dist","HAD LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"had LUT Peak [GeV]"); 
+      m_h_TT_hadLUT=LUTPeakDistribution_Booker.book1F("hadLUT_peak","HAD LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"had LUT Peak [GeV]"); 
       m_h_TT_hadLUT_eta=LUTPeakDistribution_Booker.book1F("hadLUT_eta","HAD LUT: Distribution of Peak per #eta",256,-0.5,255.5,"#eta");
       m_h_TT_hadLUT_eta->SetBins(66,Help.TTEtaBinning());
       m_h_TT_hadLUT_phi=LUTPeakDistribution_Booker.book1F("hadLUT_phi","HAD LUT: Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
       m_h_TT_hadLUT_phi->SetBins(64,Help.TTPhiBinning());  
       
       //---------------------------- SubStatus Word errors -----------------------------
-      m_h_TT_emerror=Error_Booker.book1F("TT_emerror","EM TT SubStatus Word errors",17,0.5,17.5,"");
+      m_h_TT_emerror=Error_Booker.book1F("TT_emerror","Errors from EM TT SubStatus Word",17,0.5,17.5,"");
       
       m_h_TT_emerror->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_emerror->GetXaxis()->SetBinLabel(2, "MCMAbsent");
@@ -377,7 +377,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_emerror->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
       m_h_TT_emerror->GetXaxis()->SetBinLabel(17, "FailingBCN");
 
-      m_h_TT_haderror=Error_Booker.book1F("TT_haderror","HAD TT SubStatus Word errors",17,0.5,17.5,"");
+      m_h_TT_haderror=Error_Booker.book1F("TT_haderror","Errors from HAD TT SubStatus Word",17,0.5,17.5,"");
       
       m_h_TT_haderror->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_haderror->GetXaxis()->SetBinLabel(2, "MCMAbsent");
@@ -397,7 +397,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_haderror->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
       m_h_TT_haderror->GetXaxis()->SetBinLabel(17, "FailingBCN");
       
-      m_h_TT_error_Crate_03=Error_Booker.book2F("TT_error_Crate_0-3","TT SubStatus Word errors in crates 0-3",17,0.5,17.5,71,0.5,71.5,"","");
+      m_h_TT_error_Crate_03=Error_Booker.book2F("TT_error_Crate_0-3","Errors from tT SubStatus Word (crates 0-3)",17,0.5,17.5,71,0.5,71.5,"","");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(2, "MCMAbsent");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(3, "Timeout");
@@ -416,7 +416,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
       m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(17, "FailingBCN");
 
-      m_h_TT_error_Crate_47=Error_Booker.book2F("TT_error_Crate_4-7","TT SubStatus Word errors in crates 4-7",17,0.5,17.5,71,0.5,71.5,"","");
+      m_h_TT_error_Crate_47=Error_Booker.book2F("TT_error_Crate_4-7","Errors from TT SubStatus Word (crates 4-7)",17,0.5,17.5,71,0.5,71.5,"","");
       m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(2, "MCMAbsent");
       m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(3, "Timeout");
@@ -465,8 +465,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel(17+(7-4)*18, "Crate 7");
 
 
-
-      m_h_TT_em_GLinkDown=Error_Booker.book2F("TT_em_GLinkDown","EM TT GLink Down per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  //requested long time ago -- not necessary anymore?
+	  /*m_h_TT_em_GLinkDown=Error_Booker.book2F("TT_em_GLinkDown","EM TT GLink Down per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
       m_h_TT_em_GLinkDown->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
       
       m_h_TT_em_GLinkTimeout=Error_Booker.book2F("TT_em_GLinkTimeout","EM TT GLink Timeout per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
@@ -477,7 +477,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_had_GLinkDown->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 
       m_h_TT_had_GLinkTimeout=Error_Booker.book2F("TT_had_GLinkTimeout","HAD TT GLink Timeout per #eta-#phi",100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_had_GLinkTimeout->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
+      m_h_TT_had_GLinkTimeout->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); */
 
       //---------------------------- number of triggered slice -----------------------------
       m_h_TT_triggeredSlice_em=ADCTimeSlice_Booker.book1F("TT_EMTriggeredSlice","Number of the EM Triggered Slice",7,-0.5,6.5,"#Slice");
@@ -653,7 +653,7 @@ StatusCode PPrMon::fillHistograms()
 	  max = recTime((*TriggerTowerIterator)->hadADC())+1;
 	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
 	  m_h_TT_ADC_hadTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max);
-	}
+        }
 
 
 
@@ -666,18 +666,24 @@ StatusCode PPrMon::fillHistograms()
 
       int crate=0;
       int module=0;
+      int submodule=0;
+      int channel=0;
       try 
 	{
 	  HWIdentifier ttOnlId = m_ttSvc->createTTChannelID(EmTowerId);
 	  crate     = m_l1ttonlineHelper->crate(ttOnlId);
 	  module    = m_l1ttonlineHelper->module(ttOnlId);
-	  //log << MSG::DEBUG << "em PPM crate: " << crate<<"  module: "<<module << endreq ;
+	  submodule = m_l1ttonlineHelper->submodule(ttOnlId);
+	  channel   = m_l1ttonlineHelper->channel(ttOnlId);
+
+	  log << MSG::DEBUG << "em PPM crate: " << crate<<"  module: "<<module << " submodule "<<submodule<<" channel "<< channel<< endreq ;
+
 	} 
       catch(LArID_Exception& except) 
 	{
 	  log << MSG::ERROR << "LArID_Exception " << (std::string) except << endreq ;
 	}
-      if (crate>3) log << MSG::INFO << "Wrong em Crate " << crate << endreq ;
+      if (crate>3) log << MSG::INFO << "Identifying HW: wrong em crate found" << crate << endreq ;
 
 
       // ChannelDisabled
@@ -795,15 +801,20 @@ StatusCode PPrMon::fillHistograms()
 	  HWIdentifier ttOnlId = m_ttSvc->createTTChannelID(HadTowerId);
 	  crate     = m_l1ttonlineHelper->crate(ttOnlId);
 	  module    = m_l1ttonlineHelper->module(ttOnlId);
-	  //log << MSG::DEBUG << "em PPM crate: " << crate<<"  module: "<<module << endreq ;
+	  submodule = m_l1ttonlineHelper->submodule(ttOnlId);
+	  channel   = m_l1ttonlineHelper->channel(ttOnlId);
+
+	  log << MSG::DEBUG << "em PPM crate: " << crate<<"  module: "<<module << " submodule "<<submodule<<" channel "<< channel<< endreq ;
+
 	} 
+
       catch(LArID_Exception& except) 
 	{
 	  log << MSG::ERROR << "LArID_Exception " << (std::string) except << endreq ;
 	}
-      if (crate<4) log << MSG::INFO << "Wrong had Crate " << crate << endreq ;
+      if (crate<4) log << MSG::INFO << "Identifying HW: wrong had crate found " << crate << endreq ;
 
-      //---------------- per crate and module -------------------------  m_h_TT_error_Crate_03
+      //---------------- per crate and module --------------------  m_h_TT_error_Crate_03
       // ChannelDisabled
       m_h_TT_error_Crate_47->Fill(1,(module-4)+((crate-4)*18),haderr.get(4));
       // MCMAbsent
@@ -840,10 +851,11 @@ StatusCode PPrMon::fillHistograms()
       m_h_TT_error_Crate_47->Fill(17,(module-4)+((crate-4)*18),haderr.get(24));
 
 
-      m_h_TT_em_GLinkDown->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), emerr.get(22)); 
+      //comment above
+      /*m_h_TT_em_GLinkDown->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), emerr.get(22)); 
       m_h_TT_em_GLinkTimeout->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), emerr.get(23)); 
       m_h_TT_had_GLinkDown->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), haderr.get(22)); 
-      m_h_TT_had_GLinkTimeout->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), haderr.get(23)); 
+      m_h_TT_had_GLinkTimeout->Fill((*TriggerTowerIterator)->eta(), (*TriggerTowerIterator)->phi(), haderr.get(23)); */
 
 
 
@@ -894,7 +906,7 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBloc
 	  title=title + " | #events: " + buffer.str();
 	  m_h_TT_haderror->SetTitle(title.c_str());
 	  
-	  title = m_h_TT_em_GLinkDown-> GetTitle();
+	  /*	  title = m_h_TT_em_GLinkDown-> GetTitle();
 	  title=title + " | #events: " + buffer.str();
 	  m_h_TT_em_GLinkDown->SetTitle(title.c_str());
 	  
@@ -908,7 +920,7 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBloc
 	  
 	  title = m_h_TT_had_GLinkTimeout-> GetTitle();
 	  title=title + " | #events: " + buffer.str();
-	  m_h_TT_had_GLinkTimeout->SetTitle(title.c_str());
+	  m_h_TT_had_GLinkTimeout->SetTitle(title.c_str());*/
 	}
     }
   return StatusCode( StatusCode::SUCCESS );

@@ -1,6 +1,7 @@
 Offline= not ATLASCosmicFlags.doOnline
 CompareWithSimulation=True
-MaxEnergyRange = 50
+
+#MaxEnergyRange is set individually 
 
 #================================= TriggerMenu ===================================
 if not ATLASCosmicFlags.doCTPMon:
@@ -53,8 +54,8 @@ L1PPrMonTool = PPrMon(
     LUTHitMap_Thresh1 = 3,
     LUTHitMap_Thresh2 = 7,
     ADCHitMap_Thresh = 50,
-    MaxEnergyRange = MaxEnergyRange,
-    ADCTimingPerChannel = True,
+    MaxEnergyRange = 256,
+    ADCTimingPerChannel = False,
     EMFADCCut = 40,
     HADFADCCut = 40,
     ADCPedestal = 35,
@@ -63,7 +64,7 @@ L1PPrMonTool = PPrMon(
     EventPathInRootFile = "L1Calo",
     Offline = Offline,
     #OutputLevel = DEBUG,
-    OutputLevel = ERROR,
+    OutputLevel = INFO,
     )
 ToolSvc += L1PPrMonTool
 L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
@@ -83,11 +84,11 @@ BS_L1JEMMonTool = JEMMon(
     JEMHitsLocation = "JEMHits",
     JEMEtSumsLocation = "JEMEtSums",
     JEMRoILocation = "JEMRoIs",
-    MaxEnergyRange = MaxEnergyRange,
+    MaxEnergyRange = 1024,        
     PathInRootFile = "L1Calo/2_JEP_JEM",
     ErrorPathInRootFile = "L1Calo/02_Errors_JEM",
     Offline = Offline,
-    #OutputLevel = DEBUG,
+    OutputLevel = INFO,
     )
 ToolSvc += BS_L1JEMMonTool
 L1CaloMan.AthenaMonTools += [ BS_L1JEMMonTool ]
@@ -111,11 +112,11 @@ BS_L1CMMMonTool = CMMMon (
     CMMJetHitsLocation = "CMMJetHits",
     CMMEtSumsLocation = "CMMEtSums",
     CMMRoILocation = "CMMRoIs",
-    MaxEnergyRange = MaxEnergyRange,
+    MaxEnergyRange = 32767,             
     PathInRootFile = "L1Calo/3_JEP_CMM",
     ErrorPathInRootFile = "L1Calo/03_Errors_CMM",
     Offline = Offline,
-    #OutputLevel = DEBUG,
+    OutputLevel = INFO,
     )
 ToolSvc += BS_L1CMMMonTool
 L1CaloMan.AthenaMonTools += [ BS_L1CMMMonTool ]
@@ -157,7 +158,7 @@ JEPTransPerfMonTool = JEPTransPerfMon (
     Offline = Offline,
     CompareWithSimulation = CompareWithSimulation,
     
-    #OutputLevel = VERBOSE,
+    OutputLevel = INFO,
     #OutputLevel = WARNING,
     )
 ToolSvc += JEPTransPerfMonTool
@@ -175,7 +176,8 @@ L1BSCPMMonTool = TrigT1CaloCpmMonTool (
     CMMCPHitsLocation = "CMMCPHits",
     CPMRoILocation = "CPMRoIs",
     RootDirectory = "L1Calo",
-    MaxEnergyRange = MaxEnergyRange,
+    MaxEnergyRange = 50,
+    SingleDirectory = False,
     Offline = Offline,
     #OutputLevel = DEBUG,
     )

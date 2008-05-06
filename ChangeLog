@@ -1,3 +1,9 @@
+
+2008-05-06 Andrea Neusiedl <andrea.neusiedl@cern.ch>
+	* minor changes to histograms
+	* default energy range set to maximum
+	* Tag as TrigT1CaloMonitoring-00-03-06
+
 2008-05-02  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * Add more expert plots to CPMSimBSMon
         * Reduce number of plots in TrigT1CaloCpmMonTool

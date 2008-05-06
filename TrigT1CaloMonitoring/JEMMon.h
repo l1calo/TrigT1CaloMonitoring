@@ -86,8 +86,8 @@ protected:
    int m_NoEvents;
    TH2F* m_h_je_error;
 
-   // number of triggered slice
-   TH1F* m_h_je_triggeredSlice;
+   // number of triggered slice -- not clear if still necessary
+   //TH1F* m_h_je_triggeredSlice;
 
    // JEM Hits
    TH1F* m_h_JEMHits_MainHits;
