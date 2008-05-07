@@ -177,7 +177,7 @@ L1BSCPMMonTool = TrigT1CaloCpmMonTool (
     CPMRoILocation = "CPMRoIs",
     RootDirectory = "L1Calo",
     MaxEnergyRange = 50,
-    SingleDirectory = False,
+    #SingleDirectory = False,
     Offline = Offline,
     #OutputLevel = DEBUG,
     )
