@@ -78,7 +78,6 @@ private:
   TH2F* book2F(const std::string& name, const std::string& title,
                                     int nx, double xmin, double xmax,
                                     int ny, double ymin, double ymax);
-  void  setThresholdLabels(TH1* hist);
   void  setStatusLabels(TH1* hist);
   void  setLabelsCNSTS(TH2* hist);
   void  setLabelsPSCS(TH2* hist);
@@ -186,8 +185,6 @@ private:
   //  CPM RoIs
   //=============================================
 
-  std::vector<TH1F*> m_v_RoI_thresholds;
-  std::vector<TH2F*> m_v_RoI_2D_thresholds;
   TH2F* m_h_RoI_thresholds;
   TH2F* m_h_RoI_eta_phi;
   // Tower saturation
@@ -216,6 +213,7 @@ private:
   //=============================================
 
   TH1F* m_h_CP_errors;
+  TH2F* m_h_CP_overview;
 
 };
 

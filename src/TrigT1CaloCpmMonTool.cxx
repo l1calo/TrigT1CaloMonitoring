@@ -147,12 +147,6 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   MonGroup monRoIs2 ( this, dir2 + "/RoIs", expert, run );
   MonGroup monCPM2  ( this, dir2 + "/CPM",  expert, run );
   MonGroup monCMM2  ( this, dir2 + "/CMM",  expert, run );
-  
-  m_events = 0;
-
-  // Vectors for error overview bits;
-  std::vector<int> errorsCPM(s_crates*s_modules);
-  std::vector<int> errorsCMM(s_crates*2); // L/R
 
   //  Timeslice checks
 
@@ -342,7 +336,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_monGroup = &monCMM;
 
   m_h_CMM_parity = book2F("CMM_parity",
-                          "CMM Parity Errors;Module;Crate/Left-Right",
+                          "CMM Parity Errors;Module or Remote;Crate/Left-Right",
 		           15, 1, 16, 8, 0, 8);
   setLabelsMCLR(m_h_CMM_parity);
   m_h_CMM_parity->GetXaxis()->SetBinLabel(15, "REM");
@@ -350,6 +344,31 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
                                          8, 0., 8., 8, 0., 8.);
   setStatusLabels(m_h_CMM_status);
   setLabelsCLR(m_h_CMM_status);
+  
+  //  Error Overview
+
+  m_monGroup = &monExpert;
+
+  m_h_CP_overview = book2F("CP_Error_Overview",
+                           "CP Error Overview;Crate/Module",
+			    64, 0, 64,
+			    NumberOfSummaryBins, 0, NumberOfSummaryBins);
+  m_h_CP_overview->SetStats(kFALSE);
+  setLabelsCPM(m_h_CP_overview);
+  m_h_CP_overview->GetXaxis()->SetBinLabel(1, "CPM");
+  m_h_CP_overview->GetXaxis()->SetBinLabel(57, "CMM");
+  m_h_CP_overview->GetXaxis()->SetBinLabel(59, "1/L");
+  m_h_CP_overview->GetXaxis()->SetBinLabel(61, "2/L");
+  m_h_CP_overview->GetXaxis()->SetBinLabel(63, "3/L");
+  m_h_CP_overview->GetXaxis()->SetTitleOffset(1.25);
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CoreOverlap, "Phi overlap");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMParity,   "CPM parity");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMLink,     "CPM link");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMStatus,   "CPM status");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+RoIParity,   "RoI parity");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CMMParity,   "CMM parity");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CMMStatus,   "CMM status");
+  //m_h_CP_overview->GetYaxis()->SetLabelSize(0.045);
 
   //  Error Summary
 
@@ -358,13 +377,13 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_CP_errors = book1F("CP_Error_Summary",
                          "CP Error Summary for 0 Events;;Events",
                           NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CoreOverlap,      "Phi overlap");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMParity,        "CPM parity");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMLink,          "CPM link");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMStatus,        "CPM status");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+RoIParity,        "RoI parity");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CMMParity,        "CMM parity");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CMMStatus,        "CMM status");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CoreOverlap, "Phi overlap");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMParity,   "CPM parity");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMLink,     "CPM link");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMStatus,   "CPM status");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+RoIParity,   "RoI parity");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CMMParity,   "CMM parity");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CMMStatus,   "CMM status");
   m_h_CP_errors->GetXaxis()->SetLabelSize(0.06);
 
   m_events = 0;
@@ -430,8 +449,9 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
     log << MSG::DEBUG << "No CMM-CP Hits container found"<< endreq; 
   }
 
-  // Error summary plot flags
-  std::vector<int> errorPlot(NumberOfSummaryBins);
+  // Vectors for error overview bits;
+  std::vector<int> errorsCPM(s_crates*s_modules);
+  std::vector<int> errorsCMM(s_crates*2); // L/R
 
   //=============================================
   //   CPM Tower - Trigger Tower comparison plots
@@ -531,10 +551,14 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 
       // Error summary flags
       if (emError.get(LVL1::DataError::Parity) ||
-          hadError.get(LVL1::DataError::Parity)) errorPlot[CPMParity] = 1;
+          hadError.get(LVL1::DataError::Parity)) {
+	errorsCPM[loc] |= (1 << CPMParity);
+      }
       if (emError.get(LVL1::DataError::LinkDown) ||
-          hadError.get(LVL1::DataError::LinkDown)) errorPlot[CPMLink] = 1;
-      if (status) errorPlot[CPMStatus] = 1;
+          hadError.get(LVL1::DataError::LinkDown)) {
+	errorsCPM[loc] |= (1 << CPMLink);
+      }
+      if (status) errorsCPM[loc] |= (1 << CPMStatus);
 
       const unsigned int key = towerKey.ttKey(phi, eta);
       if (key > maxKey) maxKey = key;
@@ -722,7 +746,11 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	  << coEm << "/" << coHad << endreq;
     }
     // Error summary flags
-    if (cpEm != coEm || cpHad != coHad) errorPlot[CoreOverlap] = 1;
+    const int crate = conv.cpCrateOverlap(LVL1::Coordinate(phi, eta));
+    const int cpm   = conv.cpModuleOverlap(LVL1::Coordinate(phi, eta));
+    if (cpEm != coEm || cpHad != coHad) {
+      errorsCPM[crate*s_modules + cpm - 1] |= (1 << CoreOverlap);
+    }
   }
 
   //=============================================
@@ -756,7 +784,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       }
       if (err.get(LVL1::DataError::Parity)) {
         m_h_RoI_Parity->Fill(eta, phiMod, 1.);
-	errorPlot[RoIParity] = 1;
+	errorsCPM[bin] = (1 << RoIParity);
       }
     }
   }
@@ -836,15 +864,15 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         m_h_CMM_parity->Fill(dataId, 2*crate + 1,
 	                     hit0Err.get(LVL1::DataError::Parity));
       } else {
-	int remBin = s_modules + 1;
-	int crate  = -1;
-        if      (dataId == LVL1::CMMCPHits::REMOTE_0) crate = 0;
-        else if (dataId == LVL1::CMMCPHits::REMOTE_1) crate = 1;
-        else if (dataId == LVL1::CMMCPHits::REMOTE_2) crate = 2;
-	if (crate >= 0) {
-	  m_h_CMM_parity->Fill(remBin, 2*crate,
+	int remBin   = s_modules + 1;
+	int remCrate = -1;
+        if      (dataId == LVL1::CMMCPHits::REMOTE_0) remCrate = 0;
+        else if (dataId == LVL1::CMMCPHits::REMOTE_1) remCrate = 1;
+        else if (dataId == LVL1::CMMCPHits::REMOTE_2) remCrate = 2;
+	if (remCrate >= 0) {
+	  m_h_CMM_parity->Fill(remBin, 2*remCrate,
 	                       hit1Err.get(LVL1::DataError::Parity));
-	  m_h_CMM_parity->Fill(remBin, 2*crate + 1,
+	  m_h_CMM_parity->Fill(remBin, 2*remCrate + 1,
 	                       hit0Err.get(LVL1::DataError::Parity));
         }
       }
@@ -857,8 +885,14 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       }
       // Error summary flags
       if (hit0Err.get(LVL1::DataError::Parity) ||
-          hit1Err.get(LVL1::DataError::Parity)) errorPlot[CMMParity] = 1;
-      if (status0 || status1) errorPlot[CMMStatus] = 1;
+          hit1Err.get(LVL1::DataError::Parity)) {
+	if (dataId <= s_modules) errorsCPM[bin] |= (1 << CMMParity);
+	if (hit0Err.get(LVL1::DataError::Parity)) {
+	  errorsCMM[crate*2 + 1] |= (1 << CMMParity);
+        } else errorsCMM[crate*2] |= (1 << CMMParity);
+      }
+      if (status0) errorsCMM[crate*2 + 1] |= (1 << CMMStatus);
+      if (status1) errorsCMM[crate*2]     |= (1 << CMMStatus);
 
       if (dataId <= s_modules) {
         const unsigned int key = crate * s_modules + dataId;
@@ -914,7 +948,20 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
   // Update error summary plot
 
   for (int err = 0; err < NumberOfSummaryBins; ++err) {
-    m_h_CP_errors->Fill(err, errorPlot[err]);
+    int error = 0;
+    for (int loc = 0; loc < s_crates*s_modules; ++loc) {
+      if ((errorsCPM[loc] >> err) & 0x1) {
+        m_h_CP_overview->Fill(loc, err, 1.);
+	error = 1;
+      }
+      if (loc < s_crates*2) {
+        if ((errorsCMM[loc] >> err) & 0x1) {
+          m_h_CP_overview->Fill(loc+s_crates*s_modules, err, 1.);
+	  error = 1;
+        }
+      }
+    }
+    m_h_CP_errors->Fill(err, error);
   }
   ++m_events;
   std::ostringstream cnum;

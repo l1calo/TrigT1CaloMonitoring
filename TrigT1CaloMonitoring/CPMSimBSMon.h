@@ -133,6 +133,8 @@ private:
   double m_phiMax;
   /// Phi scale to convert from radians to wanted units
   double m_phiScale;
+  /// Number of events
+  int m_events;
   /// Simulation allowed flag
   bool m_compareWithSim;
 

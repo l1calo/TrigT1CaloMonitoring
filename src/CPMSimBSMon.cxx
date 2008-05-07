@@ -49,7 +49,7 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
     m_storeGate("StoreGateSvc", name),
     m_emTauTool("LVL1::L1EmTauTools/L1EmTauTools"),
     m_cpHitsTool("LVL1::L1CPHitsTools/L1CPHitsTools"),
-    m_monGroup(0)
+    m_monGroup(0), m_events(0)
 /*---------------------------------------------------------*/
 {
   declareInterface<IMonitorToolBase>(this); 
@@ -144,16 +144,16 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
+  if ( isNewEventsBlock || isNewLumiBlock ) { }
+
+  if( isNewRun ) {
+
   std::string dir(m_rootDir + "/5_CP_Sim_Check");
   MonGroup monShift ( this, dir, shift, run );
   MonGroup monExpert( this, dir, expert, run );
   MonGroup monRoIs  ( this, dir + "/RoIs", expert, run );
   MonGroup monCPM   ( this, dir + "/CPM",  expert, run );
   MonGroup monCMM   ( this, dir + "/CMM",  expert, run );
-
-  if ( isNewEventsBlock || isNewLumiBlock ) { }
-
-  if( isNewRun ) {
 
   // CPMTowers
 
@@ -365,7 +365,8 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_monGroup = &monShift;
 
   m_h_CPneSIMSummary = book1F("CPneSIMSummary",
-   "CP Comparison with Simulation Mismatch Summary;;Events", 7, 0, 7);
+   "CP Comparison with Simulation Mismatch Summary for 0 Events;;Events",
+    7, 0, 7);
   m_h_CPneSIMSummary->GetXaxis()->SetBinLabel(1, "Towers");
   m_h_CPneSIMSummary->GetXaxis()->SetBinLabel(2, "RoIs");
   m_h_CPneSIMSummary->GetXaxis()->SetBinLabel(3, "CPMHits");
@@ -374,6 +375,8 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_h_CPneSIMSummary->GetXaxis()->SetBinLabel(6, "Remote");
   m_h_CPneSIMSummary->GetXaxis()->SetBinLabel(7, "Total");
   m_h_CPneSIMSummary->GetXaxis()->SetLabelSize(0.045);
+
+  m_events = 0;
 
   } // end if (isNewRun ...
   
@@ -438,7 +441,7 @@ StatusCode CPMSimBSMon::fillHistograms()
   CmmCpHitsMap    cmMap;
   setupMap(triggerTowerTES, ttMap);
   setupMap(cpmTowerTES, cpMap);
-  setupMap(cpmRoiTES, crMap);
+  if (m_compareWithSim) setupMap(cpmRoiTES, crMap);
   setupMap(cpmHitsTES, chMap);
   setupMap(cmmCpHitsTES, cmMap);
 
@@ -587,6 +590,12 @@ StatusCode CPMSimBSMon::fillHistograms()
     }
   }
   for (int i = 0; i < 7; ++i) m_h_CPneSIMSummary->Fill(i, summary[i] > 0);
+  ++m_events;
+  std::ostringstream cnum;
+  cnum << m_events;
+  std::string title("CP Comparison with Simulation Mismatch Summary for "
+                    + cnum.str() + " Events");
+  m_h_CPneSIMSummary->SetTitle(TString(title));
 
   return StatusCode::SUCCESS;
 }
@@ -1215,7 +1224,7 @@ void CPMSimBSMon::setLabels(TH2* hist)
   hist->GetYaxis()->SetBinLabel(bin++, "EM tt");
   hist->GetYaxis()->SetBinLabel(bin++, "Had tt");
   if (m_compareWithSim) {
-    hist->GetYaxis()->SetBinLabel(bin++, "RoIs #");
+    hist->GetYaxis()->SetBinLabel(bin++, "RoIs");
     hist->GetYaxis()->SetBinLabel(bin++, "CPMHits");
   } else {
     hist->GetYaxis()->SetBinLabel(bin++, "n/a");
