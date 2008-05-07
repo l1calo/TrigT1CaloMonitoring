@@ -784,7 +784,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       }
       if (err.get(LVL1::DataError::Parity)) {
         m_h_RoI_Parity->Fill(eta, phiMod, 1.);
-	errorsCPM[bin] = (1 << RoIParity);
+	errorsCPM[bin] |= (1 << RoIParity);
       }
     }
   }
