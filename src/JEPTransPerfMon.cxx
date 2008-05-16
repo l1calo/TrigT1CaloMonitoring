@@ -375,7 +375,7 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
 
 	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(1, "CalcErrors E_{x}, E_{y}");
 	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(2, "CalcErrors E_{t}");
-	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(3, "CalcErrors JetHits");
+	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(3, "CalcErrors Hits");
 	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(4, "CalcErrors RoIs");
 	  
 	  for (int i = 0; i < 16; i++)
@@ -480,14 +480,14 @@ StatusCode JEPTransPerfMon::fillHistograms()
     }
      
       int k=1;
-       for (int i=2; i<3;i++)
-     {
-       for (int j=0; j<m_NoLUTSlices; j++)
+      int i=2; //Slice number of TT_JE (normally 2)
+  
+      for (int j=0; j<m_NoLUTSlices; j++)  //Slice number of TT_TS (overwritten by joboptions)
  	{
  	  TimeSliceMatch(k, j, TT_jetElements, i, jetElements, &mLog);
  	  k++;
  	}
-     }
+     
  
   // =============================================================================================
   // ================= JetElements -> JEM Jet Hits ===============================================
@@ -568,7 +568,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		      mLog<<MSG::VERBOSE<<"Sim: Hits "<<Help.Binary((*it_Sim_JEMHits)->JetHits(),24)<<endreq;
 		      noMatchfound=1;
 		    }
-		  m_h_SimBSMon_JEP->Fill(2,((*it_BS_JEMHits)->crate()*19+(*it_BS_JEMHits)->module()+1),noMatchfound);
+		  m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMHits)->crate()*19+(*it_BS_JEMHits)->module()+1),noMatchfound);
 		  
 		  it_BS_JEMHits=vBS_JEMHits.erase(it_BS_JEMHits);
 		  it_Sim_JEMHits=vSim_JEMHits.erase(it_Sim_JEMHits);
@@ -588,21 +588,24 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_JEMHits)->crate()<<" Module "<<(*it_BS_JEMHits)->module()<<endreq;
 	      mLog<<MSG::VERBOSE<<"BS: Hits "<<Help.Binary((*it_BS_JEMHits)->JetHits(),24)<<endreq;
 	      
-	      if ((*it_BS_JEMHits)->JetHits()>0) m_h_SimBSMon_JEP->Fill(2,((*it_BS_JEMHits)->crate()*19+(*it_BS_JEMHits)->module()+1),1);	    
+	      if ((*it_BS_JEMHits)->JetHits()!=0) m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMHits)->crate()*19+(*it_BS_JEMHits)->module()+1),1);	    
 	    }
 	}
       
       if (vSim_JEMHits.size()!=0)
 	{
 	  mLog<<MSG::DEBUG<<"JEMHits: additional Sim data for"<<endreq;
-	  
-	  //fill error counter: zero suppressing!
+	  mLog<<MSG::DEBUG<<"fill error counter but remember simulation is not zero suppressing!"<<endreq;
+
+	  //fill error counter: but remember simulation is not zero suppressing!
 	  for( it_Sim_JEMHits  = vSim_JEMHits.begin(); it_Sim_JEMHits != vSim_JEMHits. end(); ++it_Sim_JEMHits )
 	    {
 	      mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_JEMHits)->crate()<<" Module "<<(*it_Sim_JEMHits)->module()<<endreq;
 	      mLog<<MSG::VERBOSE<<"Sim: Hits "<<Help.Binary((*it_Sim_JEMHits)->JetHits(),24)<<endreq;
 	      
-	      //m_h_SimBSMon_JEP->Fill(2,((*it_Sim_JEMHits)->crate()*19+(*it_Sim_JEMHits)->module()+1),1);	    
+	      if ((*it_Sim_JEMHits)->JetHits()!=0) {
+	      m_h_SimBSMon_JEP->Fill(3,((*it_Sim_JEMHits)->crate()*19+(*it_Sim_JEMHits)->module()+1),1);	    
+	      }
 	    }
 	}
     }
@@ -687,9 +690,11 @@ StatusCode JEPTransPerfMon::fillHistograms()
 			  mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMEtSums)->crate()<<" Module "<<(*it_BS_JEMEtSums)->module()<<endreq;
 			  mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_JEMEtSums)->Ex()<<endreq;
 			  mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_JEMEtSums)->Ey()<<endreq;
+			  mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums)->Et()<<endreq;
 			  			  
 			  mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_JEMEtSums)->Ex()<<endreq;
 			  mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums)->Ey()<<endreq;
+			  mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums)->Et()<<endreq;
 			  			  
 			  noMatchfound1 = 1;
 			}
@@ -729,15 +734,17 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_JEMEtSums)->Ey()<<endreq;
 	      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_JEMEtSums)->Et()<<endreq;
 	      
+	      //fill both error bins as additional data was found for all energies
 	      m_h_SimBSMon_JEP->Fill(1,(*it_BS_JEMEtSums)->crate()*19 + ((*it_BS_JEMEtSums)->module()+1),1);	  
-	      
+	      m_h_SimBSMon_JEP->Fill(2,(*it_BS_JEMEtSums)->crate()*19 + ((*it_BS_JEMEtSums)->module()+1),1); 
 	    }
 	}
       
       if (vSim_JEMEtSums.size()!=0)
 	{
-	  mLog<<MSG::DEBUG<<"JEMEtSums: additional Sim data for"<<endreq;
-	  
+	   mLog<<MSG::DEBUG<<"JEMEtSums: additional Sim data for"<<endreq;
+	   mLog<<MSG::DEBUG<<"fill error counter but remember simulation is not zero suppressing!"<<endreq;
+
 	  //fill errorcounter
 	  for( it_Sim_JEMEtSums  = vSim_JEMEtSums.begin(); it_Sim_JEMEtSums != vSim_JEMEtSums. end(); ++it_Sim_JEMEtSums )
 	    {
@@ -746,8 +753,12 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_JEMEtSums)->Ey()<<endreq;
 	      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_JEMEtSums)->Et()<<endreq;
 
-	      //Excluded from errors because simulation isn't zero-supressing
-	      //m_h_SimBSMon_JEP->Fill(1,(*it_Sim_JEMEtSums)->crate()*19 + ((*it_Sim_JEMEtSums)->module()+1),1);
+	      //fill both error bins as additional data was found for all energies (only if additional data !=0)
+	      if(((*it_Sim_JEMEtSums))->Et()!=0 or ((*it_Sim_JEMEtSums))->Ey()!=0 or ((*it_Sim_JEMEtSums)->Ex())) 
+		{
+	      m_h_SimBSMon_JEP->Fill(1,(*it_Sim_JEMEtSums)->crate()*19 + ((*it_Sim_JEMEtSums)->module()+1),1);
+	      m_h_SimBSMon_JEP->Fill(2,(*it_Sim_JEMEtSums)->crate()*19 + ((*it_Sim_JEMEtSums)->module()+1),1);
+		}
 	    }
 	}
     }
@@ -840,10 +851,9 @@ StatusCode JEPTransPerfMon::fillHistograms()
       while ((found==0)and(it_vJEMHits != vJEMHits.end()))
 	{
 	  if (((*it_vCMMJEMHits)->crate()==(*it_vJEMHits)->crate())
-	      // changes only for M5 !!!!!!!!!!!!1
-	      //and((*it_vCMMJEMHits)->dataID()==(*it_vJEMHits)->module()))
-	      and(((*it_vCMMJEMHits)->dataID()+1)==(*it_vJEMHits)->module()))
-	    {
+	      
+	      and((*it_vCMMJEMHits)->dataID()==(*it_vJEMHits)->module()))
+	      {
 	      if ((*it_vCMMJEMHits)->Hits()!=(*it_vJEMHits)->JetHits())
 		{
 		  mLog<<MSG::DEBUG<<"JEM Crate "<<(*it_vJEMHits)->crate()<<" Module "<<(*it_vJEMHits)->module()<<endreq;
@@ -874,17 +884,13 @@ StatusCode JEPTransPerfMon::fillHistograms()
       mLog<<MSG::DEBUG<<vCMMJEMHits.size()<<"JEMHits Transmission: additional CMM information"<<endreq;
       for( it_vCMMJEMHits  = vCMMJEMHits.begin(); it_vCMMJEMHits != vCMMJEMHits. end(); ++it_vCMMJEMHits )
 	{
-	  // changes only for M5 !!!!!!!!!!!!1
-	  //mLog<<MSG::DEBUG<<"Crate "<<(*it_vCMMJEMHits)->crate()<<" Module "<<(*it_vCMMJEMHits)->dataID()<<endreq;
-	  mLog<<MSG::DEBUG<<"Crate "<<(*it_vCMMJEMHits)->crate()<<" Module "<<((*it_vCMMJEMHits)->dataID()+1)<<endreq;
+	 
+	  mLog<<MSG::DEBUG<<"Crate "<<(*it_vCMMJEMHits)->crate()<<" Module "<<((*it_vCMMJEMHits)->dataID())<<endreq;
 	  mLog<<MSG::VERBOSE<<"Hit "<<Help.Binary((*it_vCMMJEMHits)->Hits(),24)<<endreq;
 	  
-	  // changes only for M5 !!!!!!!!!!!!1
-	  //if ((*it_vCMMJEMHits)->Hits()>0) m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits)->crate()*19+(*it_vCMMJEMHits)->dataID()+1,1);
-	  if ((*it_vCMMJEMHits)->Hits()>0) 
-	    {
-	      m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits)->crate()*19+(*it_vCMMJEMHits)->dataID()+1+1,1);
-	          }
+	  
+	  if ((*it_vCMMJEMHits)->Hits()>0) m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits)->crate()*19+(*it_vCMMJEMHits)->dataID()+1,1);
+	  
 	}
     }
   
@@ -985,7 +991,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		      
 		      noMatchfound=1;
 		    }
-		  m_h_SimBSMon_JEP->Fill(2,((*it_BS_CMMJetHits)->crate()*19+16+1),noMatchfound);
+		  m_h_SimBSMon_JEP->Fill(3,((*it_BS_CMMJetHits)->crate()*19+16+1),noMatchfound);
 		  
 		  it_BS_CMMJetHits=vBS_CMMJetHits.erase(it_BS_CMMJetHits);
 		  it_Sim_CMMJetHits=vSim_CMMJetHits.erase(it_Sim_CMMJetHits);
@@ -1005,21 +1011,25 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_CMMJetHits)->crate()<<" DataId "<<(*it_BS_CMMJetHits)->dataID()<<endreq;
 	      mLog<<MSG::VERBOSE<<"BS: Hits"<<Help.Binary((*it_BS_CMMJetHits)->Hits(),24)<<endreq;
 	      
-	      m_h_SimBSMon_JEP->Fill(2,((*it_BS_CMMJetHits)->crate()*19+16+1),1);
+	      m_h_SimBSMon_JEP->Fill(3,((*it_BS_CMMJetHits)->crate()*19+16+1),1);
 	    }
 	}
       
       if (vSim_CMMJetHits.size()!=0)
 	{
 	  mLog<<MSG::DEBUG<<"CMMJetHits: additional Sim data "<<endreq;
-	  
-	  //fill errorcounter
+	  mLog<<MSG::DEBUG<<"fill error counter but remember simulation is not zero suppressing!"<<endreq;
+
+	  //fill errorcounter: simulation isn't zero suppressing
 	  for( it_Sim_CMMJetHits  = vSim_CMMJetHits.begin(); it_Sim_CMMJetHits != vSim_CMMJetHits. end(); ++it_Sim_CMMJetHits )
 	    {
 	      mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_CMMJetHits)->crate()<<" DataId "<<(*it_Sim_CMMJetHits)->dataID()<<endreq;
 	      mLog<<MSG::VERBOSE<<"Sim: Hits"<<Help.Binary((*it_Sim_CMMJetHits)->Hits(),24)<<endreq;
 	      
-	      m_h_SimBSMon_JEP->Fill(2,((*it_Sim_CMMJetHits)->crate()*19+16+1),1);
+	      if((*it_Sim_CMMJetHits)->Hits()!=0) 
+		{
+		  m_h_SimBSMon_JEP->Fill(3,((*it_Sim_CMMJetHits)->crate()*19+16+1),1);
+		}
 	    }
 	}
     }
@@ -1152,7 +1162,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  mLog<<MSG::VERBOSE<<"CMM Ey "<<(*it_vCMMJEMEtSums)->Ey()<<endreq;
 	  mLog<<MSG::VERBOSE<<"CMM Et "<<(*it_vCMMJEMEtSums)->Et()<<endreq;
 	  
-	  m_h_TransCheck_JEP->Fill(2,(*it_vCMMJEMEtSums)->crate()*19+(*it_vCMMJEMEtSums)->dataID() + 1,noMatchfound);
+	  m_h_TransCheck_JEP->Fill(2,(*it_vCMMJEMEtSums)->crate()*19+(*it_vCMMJEMEtSums)->dataID() + 1,1);
 	  	}
     }
   
@@ -1167,7 +1177,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  mLog<<MSG::VERBOSE<<"JEM Ey "<<(*it_vJEMEtSums)->Ey()<<endreq;
 	  mLog<<MSG::VERBOSE<<"JEM Et "<<(*it_vJEMEtSums)->Et()<<endreq;
 	  
-	  m_h_TransCheck_JEP->Fill(2,(*it_vJEMEtSums)->crate()*19+(*it_vJEMEtSums)->module() + 1,noMatchfound);
+	  m_h_TransCheck_JEP->Fill(2,(*it_vJEMEtSums)->crate()*19+(*it_vJEMEtSums)->module() + 1,1);
 	  	}
     }
   
@@ -1225,6 +1235,8 @@ StatusCode JEPTransPerfMon::fillHistograms()
       std::vector <LVL1::CMMEtSums*>::iterator it_BS_CMMEtSums;
       std::vector <LVL1::CMMEtSums*>::iterator it_Sim_CMMEtSums;
       int  foundModule;
+      int noMatchfound1;
+      int noMatchfound2;
 
       it_BS_CMMEtSums=vBS_CMMEtSums.begin();
       
@@ -1232,7 +1244,9 @@ StatusCode JEPTransPerfMon::fillHistograms()
       while (it_BS_CMMEtSums != vBS_CMMEtSums.end())
 	{
 	  foundModule = 0;
-	  noMatchfound=0;
+	  noMatchfound1=0;
+	  noMatchfound2=0;
+
 	  it_Sim_CMMEtSums=vSim_CMMEtSums.begin();
 	  
 	  while ((foundModule==0)and(it_Sim_CMMEtSums != vSim_CMMEtSums.end()))
@@ -1243,22 +1257,31 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		  foundModule=1;
 		  
 		  if (((*it_BS_CMMEtSums)->Ex()!=(*it_Sim_CMMEtSums)->Ex())
-		      or ((*it_BS_CMMEtSums)->Ey()!=(*it_Sim_CMMEtSums)->Ey())
-		      or ((*it_BS_CMMEtSums)->Et()!=(*it_Sim_CMMEtSums)->Et()))
+		      or ((*it_BS_CMMEtSums)->Ey()!=(*it_Sim_CMMEtSums)->Ey()))
 		    {
 		      mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_CMMEtSums)->crate()<<" DataId "<<(*it_BS_CMMEtSums)->dataID()<<endreq;
 		      mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_CMMEtSums)->Ex()<<endreq;
 		      mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_CMMEtSums)->Ey()<<endreq;
-		      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_CMMEtSums)->Et()<<endreq;
-		      
+		      		      
 		      mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_CMMEtSums)->Ex()<<endreq;
 		      mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_CMMEtSums)->Ey()<<endreq;
-		      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_CMMEtSums)->Et()<<endreq;
 		      
-		      noMatchfound=1;    
+		      
+		      noMatchfound1=1;    
 		    }
-		  m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,noMatchfound);
+		  m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,noMatchfound1);
+
+		  if((*it_BS_CMMEtSums)->Et()!=(*it_Sim_CMMEtSums)->Et())
+		    {
+		      mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_CMMEtSums)->crate()<<" DataId "<<(*it_BS_CMMEtSums)->dataID()<<endreq;
+		      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_CMMEtSums)->Et()<<endreq;
+		      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_CMMEtSums)->Et()<<endreq;
+
+		      noMatchfound2=1;
+		    }    
+		  m_h_SimBSMon_JEP->Fill(2,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,noMatchfound2);
 		  
+
 		  it_BS_CMMEtSums=vBS_CMMEtSums.erase(it_BS_CMMEtSums);
 		  it_Sim_CMMEtSums=vSim_CMMEtSums.erase(it_Sim_CMMEtSums);
 		}
@@ -1278,15 +1301,16 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_CMMEtSums)->Ex()<<endreq;
 	      mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_CMMEtSums)->Ey()<<endreq;
 	      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_CMMEtSums)->Et()<<endreq;
-	      
+	      //fill both error bins for such a case
 	      m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,1);
-	      
+	      m_h_SimBSMon_JEP->Fill(2,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,1);
 	    }
 	}
       
       if (vSim_CMMEtSums.size()!=0)
 	{
 	  mLog<<MSG::DEBUG<<"CMMEtSums: additional Sim data for"<<endreq;
+	  mLog<<MSG::DEBUG<<"fill error counter but remember simulation is not zero suppressing!"<<endreq;
 	  
 	  //fill errorcounter
 	  for( it_Sim_CMMEtSums  = vSim_CMMEtSums.begin(); it_Sim_CMMEtSums != vSim_CMMEtSums. end(); ++it_Sim_CMMEtSums )
@@ -1295,9 +1319,15 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::VERBOSE<<"Sim: Ex (compressed)"<<(*it_Sim_CMMEtSums)->Ex()<<endreq;
 	      mLog<<MSG::VERBOSE<<"Sim: Ey (compressed)"<<(*it_Sim_CMMEtSums)->Ey()<<endreq;
 	      mLog<<MSG::VERBOSE<<"Sim: Et (compressed)"<<(*it_Sim_CMMEtSums)->Et()<<endreq;
+
+	     //fill both error bins for such a case 
+	      if(((*it_Sim_CMMEtSums)->Ex()!=0) or ((*it_Sim_CMMEtSums)->Ey()!=0) or ((*it_Sim_CMMEtSums)->Et()!=0))
+		{
 	      
-	      m_h_SimBSMon_JEP->Fill(1,(*it_Sim_CMMEtSums)->crate()*19 + 16 + 1,1);
-	        }
+		  m_h_SimBSMon_JEP->Fill(1,(*it_Sim_CMMEtSums)->crate()*19 + 16 + 1,1);
+		  m_h_SimBSMon_JEP->Fill(2,(*it_Sim_CMMEtSums)->crate()*19 + 16 + 1,1);
+		}
+	     }
 	}
     }
       
@@ -1447,10 +1477,10 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		      mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMRoI)->crate()<<" Module "<<(*it_BS_JEMRoI)->jem()<<" frame "<<(*it_BS_JEMRoI)->frame() <<" location "<<(*it_BS_JEMRoI)->location() <<endreq;
 		      mLog<<MSG::VERBOSE<<"BS:  RoI "<<Help.Binary((*it_BS_JEMRoI)->hits(),8)<<endreq;
 		      mLog<<MSG::VERBOSE<<"Sim: RoI "<<Help.Binary((*it_Sim_JEMRoI)->hits(),8)<<endreq;
-		      mLog<<MSG::VERBOSE<<"Ich suche 1 "<<endreq; 
+		     
 		      noMatchfound=1;
 		    }
-		  m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMRoI)->crate()*19+(*it_BS_JEMRoI)->jem()+1),1);
+		  m_h_SimBSMon_JEP->Fill(4,((*it_BS_JEMRoI)->crate()*19+(*it_BS_JEMRoI)->jem()+1),noMatchfound);
 		  
 		  it_BS_JEMRoI=vBS_JEMRoI.erase(it_BS_JEMRoI);
 		  it_Sim_JEMRoI=vSim_JEMRoI.erase(it_Sim_JEMRoI);
@@ -1469,22 +1499,26 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	    {
 	      mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_JEMRoI)->crate()<<" Module "<<(*it_BS_JEMRoI)->jem()<<" frame "<<(*it_BS_JEMRoI)->frame() <<" location "<<(*it_BS_JEMRoI)->location() <<endreq;
 	      mLog<<MSG::VERBOSE<<"BS: RoI "<<Help.Binary((*it_BS_JEMRoI)->hits(),8)<<endreq;
-	      mLog<<MSG::VERBOSE<<"Ich suche 2 "<<endreq; 
-	      m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMRoI)->crate()*19+(*it_BS_JEMRoI)->jem()+1),1);
+	      
+	      m_h_SimBSMon_JEP->Fill(4,((*it_BS_JEMRoI)->crate()*19+(*it_BS_JEMRoI)->jem()+1),1);
 	    }
 	}
       
       if (vSim_JEMRoI.size()!=0)
 	{
 	  mLog<<MSG::DEBUG<<"JEMRoI: additional Sim data for"<<endreq;
-	  
-	  //fill error counter
+	  mLog<<MSG::DEBUG<<"fill error counter but remember simulation is not zero suppressing"<<endreq;
+	 
+	  //fill error counter if simulation data is !=0
 	  for( it_Sim_JEMRoI  = vSim_JEMRoI.begin(); it_Sim_JEMRoI != vSim_JEMRoI. end(); ++it_Sim_JEMRoI )
 	    {
 	      mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_JEMRoI)->crate()<<" Module "<<(*it_Sim_JEMRoI)->jem()<<" frame "<<(*it_Sim_JEMRoI)->frame() <<" location "<<(*it_Sim_JEMRoI)->location() <<endreq;
 	      mLog<<MSG::VERBOSE<<"Sim: RoI "<<Help.Binary((*it_Sim_JEMRoI)->hits(),8)<<endreq;
 	      
-	      //m_h_SimBSMon_JEP->Fill(3,((*it_Sim_JEMRoI)->crate()*19+(*it_Sim_JEMRoI)->jem()+1),1);
+	      if( (*it_Sim_JEMRoI)->hits()!=0) 
+		{
+		  m_h_SimBSMon_JEP->Fill(4,((*it_Sim_JEMRoI)->crate()*19+(*it_Sim_JEMRoI)->jem()+1),1);
+		}
 	    }
 	}
     }
@@ -1515,18 +1549,33 @@ StatusCode JEPTransPerfMon::fillHistograms()
       if ( ((*BS_CR).jetEtHits()!=(*Sim_CR).jetEtHits())or((*BS_CR).sumEtHits()!=(*Sim_CR).sumEtHits())or((*BS_CR).missingEtHits()!=(*Sim_CR).missingEtHits()))  
 	{
 	  mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for JetEtHits, SumEtHits or MissingEtHits"<<endreq;
+	  mLog<<MSG::VERBOSE<<"BS: JetEtHits: "<<(*BS_CR).jetEtHits()<<endreq;
+	  mLog<<MSG::VERBOSE<<"BS: SumEtHits: "<<(*BS_CR).sumEtHits()<<endreq;
+	  mLog<<MSG::VERBOSE<<"BS: MissingEtHits: "<<(*BS_CR).missingEtHits()<<endreq;	 
+    
+	  mLog<<MSG::VERBOSE<<"Sim: JetEtHits: "<<(*Sim_CR).jetEtHits()<<endreq;
+	  mLog<<MSG::VERBOSE<<"Sim: SumEtHits: "<<(*Sim_CR).sumEtHits()<<endreq;
+	  mLog<<MSG::VERBOSE<<"Sim: MissingEtHits: "<<(*Sim_CR).missingEtHits()<<endreq;	
+
 	  noMatchfound=1; 
 	}
-      m_h_SimBSMon_JEP->Fill(3,(19+16+1),noMatchfound);
+      m_h_SimBSMon_JEP->Fill(4,(19+16+1),noMatchfound);
       
       
       noMatchfound=0; 
       if ( ((*BS_CR).ex()!=(*Sim_CR).ex())or((*BS_CR).ey()!=(*Sim_CR).ey())or((*BS_CR).et()!=(*Sim_CR).et()))  
 	{
 	  mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for Ex, Ey or Et"<<endreq;
+	  mLog<<MSG::VERBOSE<<"BS: Et: "<<(*BS_CR).et()<<endreq;
+	  mLog<<MSG::VERBOSE<<"BS: Ex: "<<(*BS_CR).ex()<<endreq;
+	  mLog<<MSG::VERBOSE<<"BS: Ey: "<<(*BS_CR).ey()<<endreq;	 
+    
+	  mLog<<MSG::VERBOSE<<"Sim: Et: "<<(*Sim_CR).et()<<endreq;
+	  mLog<<MSG::VERBOSE<<"Sim: Ex: "<<(*Sim_CR).ex()<<endreq;
+	  mLog<<MSG::VERBOSE<<"Sim: Ey: "<<(*Sim_CR).ey()<<endreq;
 	  noMatchfound=1; 
 	}
-      m_h_SimBSMon_JEP->Fill(3,(19+16+1),noMatchfound);
+      m_h_SimBSMon_JEP->Fill(4,(19+16+1),noMatchfound);
     }
   
 
@@ -1655,5 +1704,9 @@ void JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_je
 	}
       m_h_TransCheck_emJetElements->Fill(k,(crate*18+module+1),em_NoJEMatchFound);
       m_h_TransCheck_hadJetElements->Fill(k,(crate*18+module+1),had_NoJEMatchFound);
+
+ 
+ *mLog <<MSG::VERBOSE<<em_NoJEMatchFound<<" und "<<had_NoJEMatchFound<<endreq;
+
     }
 }

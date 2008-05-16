@@ -1,3 +1,7 @@
+2008-05-16 Andrea Neusiedl <andrea.neusiedl@cern.ch>
+	* Bugfix in binning and Ppm crates
+	* Tag as TrigT1CaloMonitoring-00-03-10
+
 2008-05-07  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * Bugfix in TrigT1CaloCpmMonTool.cxx
         * Tag as TrigT1CaloMonitoring-00-03-09

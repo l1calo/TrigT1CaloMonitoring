@@ -9,8 +9,8 @@ if not ATLASCosmicFlags.doCTPMon:
     from TrigConfigSvc.TrigConfigSvcConfig import LVL1ConfigSvc
     LVL1ConfigSvc = LVL1ConfigSvc('LVL1ConfigSvc')
     LVL1ConfigSvc.ConfigSource = "XML"
+    #LVL1ConfigSvc.XMLFile = "/afs/cern.ch/user/n/neusiedl/myLVL1config.xml"
     LVL1ConfigSvc.XMLFile = "L1MenuM5.xml"
-    #LVL1ConfigSvc.XMLFile = "TrigT1CTMonitoring/LVL1ConfigCosmic.xml"
     LVL1ConfigSvc.CreateLegacyObjects = True
     LVL1ConfigSvc.DumpTTVmap = False
     # LVL1ConfigSvc.OutputLevel = VERBOSE
@@ -63,8 +63,8 @@ L1PPrMonTool = PPrMon(
     ErrorPathInRootFile = "L1Calo/01_Errors_PPr",
     EventPathInRootFile = "L1Calo",
     Offline = Offline,
-    #OutputLevel = DEBUG,
-    OutputLevel = INFO,
+    OutputLevel = VERBOSE,
+    #OutputLevel = INFO,
     )
 ToolSvc += L1PPrMonTool
 L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
@@ -88,7 +88,7 @@ BS_L1JEMMonTool = JEMMon(
     PathInRootFile = "L1Calo/2_JEP_JEM",
     ErrorPathInRootFile = "L1Calo/02_Errors_JEM",
     Offline = Offline,
-    OutputLevel = INFO,
+    OutputLevel = VERBOSE,
     )
 ToolSvc += BS_L1JEMMonTool
 L1CaloMan.AthenaMonTools += [ BS_L1JEMMonTool ]
@@ -116,7 +116,7 @@ BS_L1CMMMonTool = CMMMon (
     PathInRootFile = "L1Calo/3_JEP_CMM",
     ErrorPathInRootFile = "L1Calo/03_Errors_CMM",
     Offline = Offline,
-    OutputLevel = INFO,
+    OutputLevel = VERBOSE,
     )
 ToolSvc += BS_L1CMMMonTool
 L1CaloMan.AthenaMonTools += [ BS_L1CMMMonTool ]
@@ -158,7 +158,7 @@ JEPTransPerfMonTool = JEPTransPerfMon (
     Offline = Offline,
     CompareWithSimulation = CompareWithSimulation,
     
-    OutputLevel = INFO,
+    OutputLevel = VERBOSE,
     #OutputLevel = WARNING,
     )
 ToolSvc += JEPTransPerfMonTool

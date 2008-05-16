@@ -130,11 +130,7 @@ protected:
    TH2F* m_h_TT_error_Crate_03;
    TH2F* m_h_TT_error_Crate_47;
    TH1F* m_h_TT_haderror;
-   /*TH2F* m_h_TT_em_GLinkDown;
-   TH2F* m_h_TT_em_GLinkTimeout;
-   TH2F* m_h_TT_had_GLinkDown;
-   TH2F* m_h_TT_had_GLinkTimeout;*/
-
+  
    // number of triggered slice
    TH1F* m_h_TT_triggeredSlice_em;
    TH1F* m_h_TT_triggeredSlice_had;
