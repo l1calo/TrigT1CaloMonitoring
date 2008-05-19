@@ -1,7 +1,7 @@
 Offline= not ATLASCosmicFlags.doOnline
 CompareWithSimulation=True
 
-#MaxEnergyRange is set individually 
+#MaxEnergyRange is set individually
 
 #================================= TriggerMenu ===================================
 if not ATLASCosmicFlags.doCTPMon:
@@ -22,7 +22,7 @@ from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__JetElementMaker
 from AthenaCommon.AlgSequence import AlgSequence
 myjob = AlgSequence()
 myjob += LVL1__JetElementMaker( 'JetElementMaker' )
-#myjob.JetElementMaker.TriggerTowerLocation ="TriggerTowers"  
+#myjob.JetElementMaker.TriggerTowerLocation ="TriggerTowers"
 myjob.JetElementMaker.JetElementLocation ="Sim_JetElements"
 #job.JetElementMaker.OutputLevel = VERBOSE
 
@@ -63,7 +63,7 @@ L1PPrMonTool = PPrMon(
     ErrorPathInRootFile = "L1Calo/01_Errors_PPr",
     EventPathInRootFile = "L1Calo",
     Offline = Offline,
-    OutputLevel = VERBOSE,
+    #OutputLevel = VERBOSE,
     #OutputLevel = INFO,
     )
 ToolSvc += L1PPrMonTool
@@ -84,11 +84,11 @@ BS_L1JEMMonTool = JEMMon(
     JEMHitsLocation = "JEMHits",
     JEMEtSumsLocation = "JEMEtSums",
     JEMRoILocation = "JEMRoIs",
-    MaxEnergyRange = 1024,        
+    MaxEnergyRange = 1024,
     PathInRootFile = "L1Calo/2_JEP_JEM",
     ErrorPathInRootFile = "L1Calo/02_Errors_JEM",
     Offline = Offline,
-    OutputLevel = VERBOSE,
+    #OutputLevel = VERBOSE,
     )
 ToolSvc += BS_L1JEMMonTool
 L1CaloMan.AthenaMonTools += [ BS_L1JEMMonTool ]
@@ -112,11 +112,11 @@ BS_L1CMMMonTool = CMMMon (
     CMMJetHitsLocation = "CMMJetHits",
     CMMEtSumsLocation = "CMMEtSums",
     CMMRoILocation = "CMMRoIs",
-    MaxEnergyRange = 32767,             
+    MaxEnergyRange = 32767,
     PathInRootFile = "L1Calo/3_JEP_CMM",
     ErrorPathInRootFile = "L1Calo/03_Errors_CMM",
     Offline = Offline,
-    OutputLevel = VERBOSE,
+    #OutputLevel = VERBOSE,
     )
 ToolSvc += BS_L1CMMMonTool
 L1CaloMan.AthenaMonTools += [ BS_L1CMMMonTool ]
@@ -139,27 +139,27 @@ JEPTransPerfMonTool = JEPTransPerfMon (
     #BS_TriggerTowerLocation = "TriggerTowers",
     BS_TriggerTowerLocation = "Sim_JetElements",
     NoLUTSlices=1,
-    
+
     BS_JEMHitsLocation = "JEMHits",
     Sim_JEMHitsLocation = "Sim_JEMHits",
     BS_JEMEtSumsLocation = "JEMEtSums",
     Sim_JEMEtSumsLocation = "Sim_JEMEtSums",
     BS_JEMRoILocation = "JEMRoIs",
     Sim_JEMRoILocation = "Sim_JEMRoIs",
-    
+
     BS_CMMJetHitsLocation = "CMMJetHits",
     Sim_CMMJetHitsLocation = "Sim_CMMJetHits",
     BS_CMMEtSumsLocation = "CMMEtSums",
     Sim_CMMEtSumsLocation = "Sim_CMMEtSums",
     BS_CMMRoILocation = "CMMRoIs",
     Sim_CMMRoILocation = "Sim_CMMRoIs",
-    
+
     PathInRootFile = "L1Calo/3_JEP_TransmissionAndPerformance",
     Offline = Offline,
     CompareWithSimulation = CompareWithSimulation,
-    
-    OutputLevel = VERBOSE,
-    #OutputLevel = WARNING,
+
+    #OutputLevel = VERBOSE,
+    OutputLevel = WARNING,
     )
 ToolSvc += JEPTransPerfMonTool
 L1CaloMan.AthenaMonTools += [ JEPTransPerfMonTool ]

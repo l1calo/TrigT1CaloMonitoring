@@ -1,3 +1,8 @@
+2008-05-19 Damien Prieur <damien.prieur@cern.ch>
+	* Tag as TrigT1CaloMonitoring-00-03-11
+	* TrigT1CaloMonitoring_forRecExCommission.py:
+	  commented several xxxxxx.OutputLevel=VERBOSE
+
 2008-05-16 Andrea Neusiedl <andrea.neusiedl@cern.ch>
 	* Bugfix in binning and Ppm crates
 	* Tag as TrigT1CaloMonitoring-00-03-10
@@ -26,7 +31,7 @@
         * Tag as TrigT1CaloMonitoring-00-03-04
 
 2008-04-04  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
-        * Update TrigT1CaloMonitoring_forRecExCommission.py 
+        * Update TrigT1CaloMonitoring_forRecExCommission.py
           for CPMSimBSMon
         * Tag as TrigT1CaloMonitoring-00-03-03
 
@@ -55,14 +60,14 @@
 2008-02-10  Alan Watson <Alan.Watson@cern.ch>
         * JEPTransPerfMon, JEMMon: correct locations of EnergyTrigger.h,
           JetElementMaker.h
-        * Tag as TrigT1CaloMonitoring-00-02-01 
+        * Tag as TrigT1CaloMonitoring-00-02-01
 
 2008-02-08  Alan Watson <Alan.Watson@cern.ch>
-        * Change jobOptions to load simulation algorithms from 
+        * Change jobOptions to load simulation algorithms from
           TrigT1CaloSim rather than TrigT1Calo
         * Will work with TrigT1Calo-03-xx-xx only. Branching will
           be needed for further 13.0.x development
-        * Tag as TrigT1CaloMonitoring-00-02-00 
+        * Tag as TrigT1CaloMonitoring-00-02-00
 
 2008-02-01  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * tag TrigT1CaloMonitoring-00-01-21
@@ -71,7 +76,7 @@
 2008-01-28  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * tag TrigT1CaloMonitoring-00-01-20
         * add TriggerMenu-File for LVL1ConfigSvc in JO
-	
+
 2008-01-28  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * tag TrigT1CaloMonitoring-00-01-19
         * fix memory leaks
@@ -122,7 +127,7 @@
 	* new checks in JEPTransPerfMon
 	* new Tool für PPr Performance Checks: PPrPerfMon
 	* move comparison with calorimeters from CaloTT to PPrPerfMon
-	
+
 2007-10-18 Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * updates to TrigT1CaloCpmMonTool.
 
@@ -130,7 +135,7 @@
 	* tag TrigT1CaloMonitoring-00-01-10
 	* TrigT1CaloMonitoring/TriggerTowerMon.h: Remove redundant ";"
 	* src/components/TrigT1CaloMonitoring_entries.cxx: Remove redundant ";"
-	
+
 2007-08-29  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
 	* tag TrigT1CaloMonitoring-00-01-09
 	* add new TriggerTower Error Histograms: GLink Down and GLink Timeout for em and had
@@ -151,7 +156,7 @@
 	* tag TrigT1CaloMonitoring-00-01-04
 	* add share/TrigT1CaloMonitoring_onlineOptions.py for running (later on) the monitoring online
 	* update PPr, CP and JEP - monioring - (hopefully!) last update for M4 ;)
-	
+
 2007-08-01  Johanna Fleckner  <Johanna.Fleckner@uni-mainz.de>
 	* tag TrigT1CaloMonitoring-00-01-03
 	* add comments in all tools
