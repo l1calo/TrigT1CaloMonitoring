@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/ServiceHandle.h"
 #include "GaudiKernel/ToolHandle.h"
 
@@ -56,6 +57,11 @@ public:
 
 private:
 
+  enum SummaryErrors { EMTowerMismatch, HadTowerMismatch, RoIMismatch,
+                       CPMHitsMismatch, CMMHitsMismatch, LocalSumMismatch,
+		       RemoteSumMismatch, TotalSumMismatch,
+		       NumberOfSummaryBins };
+
   typedef DataVector<LVL1::CPMTower>     CpmTowerCollection;
   typedef DataVector<LVL1::CPMHits>      CpmHitsCollection;
   typedef DataVector<LVL1::CMMCPHits>    CmmCpHitsCollection;
@@ -77,19 +83,21 @@ private:
                                     int nx, double xmin, double xmax,
                                     int ny, double ymin, double ymax);
   void  compare(const TriggerTowerMap& ttMap, const CpmTowerMap& cpMap,
-                      ErrorVector& errors, ErrorVector& errors2);
+                      ErrorVector& errors, bool overlap);
   void  compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
                                             ErrorVector& errors);
   void  compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
                                              ErrorVector& errors);
   void  compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
-                      ErrorVector& errors, ErrorVector& errors2);
+                      ErrorVector& errorsCPM, ErrorVector& errorsCMM);
   void  compare(const CmmCpHitsMap& cmmSimMap, const CmmCpHitsMap& cmmMap,
                                           ErrorVector& errors, int selection);
   void  setLabels(TH2* hist);
   void  setLabelsCMCC(TH2* hist);
   void  setLabelsCMT(TH2* hist);
-  void  setLabelsT(TH2* hist);
+  void  setLabelsCPMFP(TH2* hist);
+  void  setLabelsYNUM(TH2* hist, int beg, int end);
+  void  setLabelsXNUM(TH2* hist, int beg, int end);
   void  setLabelsCPM(TH2* hist);
   void  setLabelsMC(TH2* hist);
   void  setLabelsMCLR(TH2* hist);
@@ -106,16 +114,20 @@ private:
   void  simulate(const CpmRoiCollection* rois, CpmHitsCollection* hits);
   void  simulate(const CmmCpHitsCollection* hitsIn,
                        CmmCpHitsCollection* hitsOut, int selection);
+  int   fpga(int crate, double phi);
 
   ServiceHandle<StoreGateSvc> m_storeGate;
   ToolHandle<LVL1::IL1EmTauTools> m_emTauTool;
   ToolHandle<LVL1::IL1CPHitsTools> m_cpHitsTool;
+  mutable MsgStream m_log;
 
   MonGroup* m_monGroup;
   std::string m_rootDir;
 
-  /// CPM tower container StoreGate key
+  /// CPM core tower container StoreGate key
   std::string m_cpmTowerLocation;
+  /// CPM overlap tower container StoreGate key
+  std::string m_cpmTowerLocationOverlap;
   /// CPM hits container StoreGate key
   std::string m_cpmHitsLocation;
   /// CMM-CP hits container StoreGate key
@@ -151,6 +163,18 @@ private:
   TH2F* m_h_HadTowerSIMneDAT;
   TH2F* m_h_HadTowerSIMnoDAT;
   TH2F* m_h_HadTowerDATnoSIM;
+  TH2F* m_h_EMTowerOvSIMeqDAT;
+  TH2F* m_h_EMTowerOvSIMneDAT;
+  TH2F* m_h_EMTowerOvSIMnoDAT;
+  TH2F* m_h_EMTowerOvDATnoSIM;
+  TH2F* m_h_HadTowerOvSIMeqDAT;
+  TH2F* m_h_HadTowerOvSIMneDAT;
+  TH2F* m_h_HadTowerOvSIMnoDAT;
+  TH2F* m_h_HadTowerOvDATnoSIM;
+  TH2F* m_h_FpgaTowerSIMeqDAT;
+  TH2F* m_h_FpgaTowerSIMneDAT;
+  TH2F* m_h_FpgaTowerSIMnoDAT;
+  TH2F* m_h_FpgaTowerDATnoSIM;
 
   // RoI
   TH2F* m_h_RoISIMeqDAT;

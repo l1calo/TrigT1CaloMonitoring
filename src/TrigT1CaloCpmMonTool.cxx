@@ -17,7 +17,6 @@
 
 #include "CLHEP/Units/SystemOfUnits.h"
 #include "GaudiKernel/ITHistSvc.h"
-#include "GaudiKernel/MsgStream.h"
 #include "StoreGate/StoreGateSvc.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
@@ -48,7 +47,8 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
 				           const std::string & name,
 				           const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
-    m_storeGate("StoreGateSvc", name), m_monGroup(0), m_events(0)
+    m_storeGate("StoreGateSvc", name),
+    m_log(msgSvc(), name), m_monGroup(0), m_events(0)
 /*---------------------------------------------------------*/
 {
   declareInterface<IMonitorToolBase>(this); 
@@ -90,16 +90,16 @@ TrigT1CaloCpmMonTool::~TrigT1CaloCpmMonTool()
 StatusCode TrigT1CaloCpmMonTool:: initialize()
 /*---------------------------------------------------------*/
 {
+  m_log.setLevel(outputLevel());
+
   StatusCode sc;
 
   sc = ManagedMonitorToolBase::initialize();
   if (sc.isFailure()) return sc;
-
-  MsgStream log(msgSvc(), name());
   
   sc = m_storeGate.retrieve();
   if( sc.isFailure() ) {
-    log << MSG::ERROR << "Unable to locate Service StoreGateSvc" << endreq;
+    m_log << MSG::ERROR << "Unable to locate Service StoreGateSvc" << endreq;
     return sc;
   }
 
@@ -109,11 +109,13 @@ StatusCode TrigT1CaloCpmMonTool:: initialize()
   else if (m_phiUnits == "degrees")  m_phiMax = 360.;
   else if (m_phiUnits == "channels") m_phiMax = 64.;
   else {
-    log << MSG::ERROR << "Invalid PhiUnits: " << m_phiUnits
-        << ", using radians" << endreq;
+    m_log << MSG::ERROR << "Invalid PhiUnits: " << m_phiUnits
+          << ", using radians" << endreq;
     m_phiMax = twoPi;
   }
   m_phiScale = m_phiMax/twoPi;
+
+  m_log << MSG::INFO << "TrigT1CaloCpmMonTool initialised" << endreq;
 
   return StatusCode::SUCCESS;
 }
@@ -123,7 +125,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
                                            bool isNewLumiBlock, bool isNewRun)
 /*---------------------------------------------------------*/
 {
-  MsgStream log(msgSvc(), name());
+  m_log << MSG::DEBUG << "bookHistograms entered" << endreq;
 
   if( m_environment == AthenaMonManager::online ) {
     // book histograms that are only made in the online environment...
@@ -265,29 +267,6 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   setStatusLabels(m_h_CT_status);
   setYLabelsCPM(m_h_CT_status);
 
-  //  CPM Tower Core/Overlap event by event comparison plots
-
-  m_h_CTeqCO_Em_eta_phi = book2F("CTeqCO_EM_eta_phi",
-    "Core/Overlap non-zero match EM eta/phi;eta;phi",
-                                                50,-2.5,2.5,64,0,m_phiMax);
-  m_h_CTneCO_Em_eta_phi = book2F("CTneCO_EM_eta_phi",
-    "Core/Overlap non-zero mismatch EM eta/phi;eta;phi",
-                                                50,-2.5,2.5,64,0,m_phiMax);
-  m_h_CTnoCO_Em_eta_phi = book2F("CTnoCO_EM_eta_phi",
-    "Core/no Overlap EM eta/phi;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_COnoCT_Em_eta_phi = book2F("COnoCT_EM_eta_phi",
-    "Overlap/no Core EM eta/phi;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_CTeqCO_Had_eta_phi = book2F("CTeqCO_HAD_eta_phi",
-    "Core/Overlap non-zero match HAD eta/phi;eta;phi",
-                                                50,-2.5,2.5,64,0,m_phiMax);
-  m_h_CTneCO_Had_eta_phi = book2F("CTneCO_HAD_eta_phi",
-    "Core/Overlap non-zero mismatch HAD eta/phi;eta;phi",
-                                                50,-2.5,2.5,64,0,m_phiMax);
-  m_h_CTnoCO_Had_eta_phi = book2F("CTnoCO_HAD_eta_phi",
-    "Core/no Overlap HAD eta/phi;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_COnoCT_Had_eta_phi = book2F("COnoCT_HAD_eta_phi",
-    "Overlap/no Core HAD eta/phi;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-
   //  CPM RoIs
 
   m_monGroup = &monRoIs2;
@@ -327,7 +306,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
                         56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CMM_thresholds);
   m_h_CMM_T_thresholds = book2F("CMM_T_Thresholds",
-                         "CMM-CP Hit Sums Thresholds Weighted;Sum;Threshold",
+       "CMM-CP Hit Sums Thresholds Weighted;Sum (Local/Remote/Total);Threshold",
   		          8, 0, 8, 16, 0, 16);
   setLabelsST(m_h_CMM_T_thresholds);
 
@@ -355,19 +334,18 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 			    NumberOfSummaryBins, 0, NumberOfSummaryBins);
   m_h_CP_overview->SetStats(kFALSE);
   setLabelsCPM(m_h_CP_overview);
-  m_h_CP_overview->GetXaxis()->SetBinLabel(1, "CPM");
+  m_h_CP_overview->GetXaxis()->SetBinLabel(1,  "CPM");
   m_h_CP_overview->GetXaxis()->SetBinLabel(57, "CMM");
   m_h_CP_overview->GetXaxis()->SetBinLabel(59, "1/L");
   m_h_CP_overview->GetXaxis()->SetBinLabel(61, "2/L");
   m_h_CP_overview->GetXaxis()->SetBinLabel(63, "3/L");
   m_h_CP_overview->GetXaxis()->SetTitleOffset(1.25);
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CoreOverlap, "Phi overlap");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMParity,   "CPM parity");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMLink,     "CPM link");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMStatus,   "CPM status");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+RoIParity,   "RoI parity");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CMMParity,   "CMM parity");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CMMStatus,   "CMM status");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMParity, "CPM parity");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMLink,   "CPM link");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMStatus, "CPM status");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+RoIParity, "RoI parity");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CMMParity, "CMM parity");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CMMStatus, "CMM status");
   //m_h_CP_overview->GetYaxis()->SetLabelSize(0.045);
 
   //  Error Summary
@@ -377,18 +355,19 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_CP_errors = book1F("CP_Error_Summary",
                          "CP Error Summary for 0 Events;;Events",
                           NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CoreOverlap, "Phi overlap");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMParity,   "CPM parity");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMLink,     "CPM link");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMStatus,   "CPM status");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+RoIParity,   "RoI parity");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CMMParity,   "CMM parity");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CMMStatus,   "CMM status");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMParity, "CPM parity");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMLink,   "CPM link");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMStatus, "CPM status");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+RoIParity, "RoI parity");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CMMParity, "CMM parity");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CMMStatus, "CMM status");
   m_h_CP_errors->GetXaxis()->SetLabelSize(0.06);
 
   m_events = 0;
 
   } // end if (isNewRun ...
+
+  m_log << MSG::DEBUG << "Leaving bookHistograms" << endreq;
 
   return StatusCode::SUCCESS;
 }
@@ -397,41 +376,40 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  MsgStream log(msgSvc(), name());
-  
+  m_log << MSG::DEBUG << "fillHistograms entered" << endreq;
 
   //Retrieve Trigger Towers from SG
   const TriggerTowerCollection* triggerTowerTES = 0; 
   StatusCode sc = m_storeGate->retrieve(triggerTowerTES,
                                                      m_triggerTowerLocation); 
   if( sc.isFailure()  ||  !triggerTowerTES ) {
-    log << MSG::DEBUG<< "No Trigger Tower container found"<< endreq; 
+    m_log << MSG::DEBUG<< "No Trigger Tower container found"<< endreq; 
   }
 
   //Retrieve Core CPM Towers from SG
   const CpmTowerCollection* cpmTowerTES = 0; 
   sc = m_storeGate->retrieve(cpmTowerTES, m_cpmTowerLocation); 
   if( sc.isFailure()  ||  !cpmTowerTES ) {
-    log << MSG::DEBUG<< "No Core CPM Tower container found"<< endreq; 
+    m_log << MSG::DEBUG<< "No Core CPM Tower container found"<< endreq; 
   }
 
   //Retrieve Overlap CPM Towers from SG
   const CpmTowerCollection* cpmTowerOverlapTES = 0; 
   sc = m_storeGate->retrieve(cpmTowerOverlapTES, m_cpmTowerLocationOverlap); 
   if( sc.isFailure()  ||  !cpmTowerOverlapTES ) {
-    log << MSG::DEBUG<< "No Overlap CPM Tower container found"<< endreq; 
+    m_log << MSG::DEBUG<< "No Overlap CPM Tower container found"<< endreq; 
   }
   
   //Retrieve CPM RoIs from SG
   const CpmRoiCollection* cpmRoiTES = 0;
   sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocation);
   if( sc.isFailure()  ||  !cpmRoiTES  ||  cpmRoiTES->empty() ) {
-    log << MSG::DEBUG << "No DAQ CPM RoIs found, trying RoIB"
-        << endreq; 
+    m_log << MSG::DEBUG << "No DAQ CPM RoIs found, trying RoIB"
+          << endreq; 
     cpmRoiTES = 0;
     sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocationRoib);
     if( sc.isFailure()  ||  !cpmRoiTES ) {
-      log << MSG::DEBUG << "No RoIB CPM RoIs container found"<< endreq;
+      m_log << MSG::DEBUG << "No RoIB CPM RoIs container found"<< endreq;
     }
   }
   
@@ -439,14 +417,14 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
   const CpmHitsCollection* cpmHitsTES = 0;
   sc = m_storeGate->retrieve( cpmHitsTES, m_cpmHitsLocation);
   if( sc.isFailure()  ||  !cpmHitsTES ) {
-    log << MSG::DEBUG << "No CPM Hits container found"<< endreq; 
+    m_log << MSG::DEBUG << "No CPM Hits container found"<< endreq; 
   }
   
   //Retrieve CMM-CP Hits from SG
   const CmmCpHitsCollection* cmmCpHitsTES = 0;
   sc = m_storeGate->retrieve( cmmCpHitsTES, m_cmmCpHitsLocation);
   if( sc.isFailure()  ||  !cmmCpHitsTES ) {
-    log << MSG::DEBUG << "No CMM-CP Hits container found"<< endreq; 
+    m_log << MSG::DEBUG << "No CMM-CP Hits container found"<< endreq; 
   }
 
   // Vectors for error overview bits;
@@ -500,69 +478,80 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
     }
   }
 
-  if (cpmTowerTES) {
-    CpmTowerCollection::const_iterator ctIterator    = cpmTowerTES->begin(); 
-    CpmTowerCollection::const_iterator ctIteratorEnd = cpmTowerTES->end(); 
+  for (int i = 0; i < 2; ++i) {
+    const bool core = (i == 0);
+    const CpmTowerCollection* cpmTwrTES = (core) ? cpmTowerTES
+                                                 : cpmTowerOverlapTES;
+    if (cpmTwrTES) {
+      CpmTowerCollection::const_iterator ctIterator    = cpmTwrTES->begin(); 
+      CpmTowerCollection::const_iterator ctIteratorEnd = cpmTwrTES->end(); 
 
-    for (; ctIterator != ctIteratorEnd; ++ctIterator) {
-      const int    em  = (*ctIterator)->emEnergy();
-      const int    had = (*ctIterator)->hadEnergy();
-      const double eta = (*ctIterator)->eta();
-      const double phi = (*ctIterator)->phi();
-      const double phiMod = phi * m_phiScale;
-      const LVL1::Coordinate coord(phi, eta);
-      LVL1::CoordToHardware converter;
-      const int crate  = converter.cpCrate(coord);
-      const int cpm    = converter.cpModule(coord);
-      const int loc    = crate * s_modules + cpm - 1;
-      const int peak   = (*ctIterator)->peak();
-      const int slices = ((*ctIterator)->emEnergyVec()).size();
-      m_h_CPM_slices->Fill(crate*s_maxSlices + slices - 1, peak, 1.);
-      if (em) {
-        m_h_CT_Em_Et->Fill(em, 1.);
-        if (m_noiseSignalSplit) m_h_CT_Em_Et_s->Fill(em, 1.);
-        m_h_CT_Em_eta->Fill(eta, 1.);
-        m_h_CT_Em_phi->Fill(phiMod, 1.);
-        m_h_CT_Em_eta_phi->Fill(eta, phiMod, 1.);
-        m_h_CT_Em_eta_phi_w->Fill(eta, phiMod, em);
-      }
-      if (had) {
-        m_h_CT_Had_Et->Fill(had, 1.);
-        if (m_noiseSignalSplit) m_h_CT_Had_Et_s->Fill(had, 1.);
-        m_h_CT_Had_eta->Fill(eta, 1.);
-        m_h_CT_Had_phi->Fill(phiMod, 1.);
-        m_h_CT_Had_eta_phi->Fill(eta, phiMod, 1.);
-        m_h_CT_Had_eta_phi_w->Fill(eta, phiMod, had);
-      }
-      // Errors
-      const LVL1::DataError emError((*ctIterator)->emError());
-      const LVL1::DataError hadError((*ctIterator)->hadError());
-      m_h_CT_Em_parity->Fill(eta, phiMod, emError.get(LVL1::DataError::Parity));
-      m_h_CT_Had_parity->Fill(eta, phiMod,
-                                   hadError.get(LVL1::DataError::Parity));
-      m_h_CT_Em_link->Fill(eta, phiMod, emError.get(LVL1::DataError::LinkDown));
-      m_h_CT_Had_link->Fill(eta, phiMod,
-                                 hadError.get(LVL1::DataError::LinkDown));
-      // Sub-status errors
-      const int status = emError.error() >> LVL1::DataError::GLinkParity;
-      for (int bit = 0; bit < 8; ++bit) {
-        m_h_CT_status->Fill(bit, loc, (status >> bit) & 0x1);
-      }
+      for (; ctIterator != ctIteratorEnd; ++ctIterator) {
+        const int    em  = (*ctIterator)->emEnergy();
+        const int    had = (*ctIterator)->hadEnergy();
+        const double eta = (*ctIterator)->eta();
+        const double phi = (*ctIterator)->phi();
+        const double phiMod = phi * m_phiScale;
+        const LVL1::Coordinate coord(phi, eta);
+        LVL1::CoordToHardware converter;
+        const int crate  = (core) ? converter.cpCrate(coord)
+	                          : converter.cpCrateOverlap(coord);
+        const int cpm    = (core) ? converter.cpModule(coord)
+	                          : converter.cpModuleOverlap(coord);
+        const int loc    = crate * s_modules + cpm - 1;
+        const int peak   = (*ctIterator)->peak();
+        const int slices = ((*ctIterator)->emEnergyVec()).size();
+        m_h_CPM_slices->Fill(crate*s_maxSlices + slices - 1, peak, 1.);
+        if (em && core) {
+          m_h_CT_Em_Et->Fill(em, 1.);
+          if (m_noiseSignalSplit) m_h_CT_Em_Et_s->Fill(em, 1.);
+          m_h_CT_Em_eta->Fill(eta, 1.);
+          m_h_CT_Em_phi->Fill(phiMod, 1.);
+          m_h_CT_Em_eta_phi->Fill(eta, phiMod, 1.);
+          m_h_CT_Em_eta_phi_w->Fill(eta, phiMod, em);
+        }
+        if (had && core) {
+          m_h_CT_Had_Et->Fill(had, 1.);
+          if (m_noiseSignalSplit) m_h_CT_Had_Et_s->Fill(had, 1.);
+          m_h_CT_Had_eta->Fill(eta, 1.);
+          m_h_CT_Had_phi->Fill(phiMod, 1.);
+          m_h_CT_Had_eta_phi->Fill(eta, phiMod, 1.);
+          m_h_CT_Had_eta_phi_w->Fill(eta, phiMod, had);
+        }
+        // Errors
+        const LVL1::DataError emError((*ctIterator)->emError());
+        const LVL1::DataError hadError((*ctIterator)->hadError());
+        m_h_CT_Em_parity->Fill(eta, phiMod,
+	                            emError.get(LVL1::DataError::Parity));
+        m_h_CT_Had_parity->Fill(eta, phiMod,
+                                     hadError.get(LVL1::DataError::Parity));
+        m_h_CT_Em_link->Fill(eta, phiMod,
+	                          emError.get(LVL1::DataError::LinkDown));
+        m_h_CT_Had_link->Fill(eta, phiMod,
+                                   hadError.get(LVL1::DataError::LinkDown));
+        // Sub-status errors
+        const int status = emError.error() >> LVL1::DataError::GLinkParity;
+        for (int bit = 0; bit < 8; ++bit) {
+          m_h_CT_status->Fill(bit, loc, (status >> bit) & 0x1);
+        }
 
-      // Error summary flags
-      if (emError.get(LVL1::DataError::Parity) ||
-          hadError.get(LVL1::DataError::Parity)) {
-	errorsCPM[loc] |= (1 << CPMParity);
-      }
-      if (emError.get(LVL1::DataError::LinkDown) ||
-          hadError.get(LVL1::DataError::LinkDown)) {
-	errorsCPM[loc] |= (1 << CPMLink);
-      }
-      if (status) errorsCPM[loc] |= (1 << CPMStatus);
+        // Error summary flags
+        if (emError.get(LVL1::DataError::Parity) ||
+            hadError.get(LVL1::DataError::Parity)) {
+	  errorsCPM[loc] |= (1 << CPMParity);
+        }
+        if (emError.get(LVL1::DataError::LinkDown) ||
+            hadError.get(LVL1::DataError::LinkDown)) {
+	  errorsCPM[loc] |= (1 << CPMLink);
+        }
+        if (status) errorsCPM[loc] |= (1 << CPMStatus);
 
-      const unsigned int key = towerKey.ttKey(phi, eta);
-      if (key > maxKey) maxKey = key;
-      cpMap.insert(std::make_pair(key, *ctIterator));
+        if (core) {
+          const unsigned int key = towerKey.ttKey(phi, eta);
+          if (key > maxKey) maxKey = key;
+          cpMap.insert(std::make_pair(key, *ctIterator));
+        }
+      }
     }
   }
 
@@ -613,143 +602,6 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       }
       ++ttMapIter;
       ++cpMapIter;
-    }
-  }
-
-  // Core/Overlap Tower comparison
-
-  CpmTowerMap coMap;
-  if (cpmTowerOverlapTES) {
-    CpmTowerCollection::const_iterator ctIterator =
-                                                  cpmTowerOverlapTES->begin(); 
-    CpmTowerCollection::const_iterator ctIteratorEnd =
-                                                  cpmTowerOverlapTES->end(); 
-    for (; ctIterator != ctIteratorEnd; ++ctIterator) {
-      double phi = (*ctIterator)->phi();
-      if (phi >= 2.*M_PI) phi -= 2.*M_PI;//bug TrigT1CaloByteStream-00-03-14/15
-      const unsigned int key = towerKey.ttKey( phi, (*ctIterator)->eta() );
-      if (key > maxKey) maxKey = key;
-      coMap.insert(std::make_pair(key, *ctIterator));
-    }
-  }
-  ++maxKey;
-
-  LVL1::CoordToHardware conv;
-  cpMapIter    = cpMap.begin();
-  cpMapIterEnd = cpMap.end();
-  CpmTowerMap::const_iterator coMapIter    = coMap.begin();
-  CpmTowerMap::const_iterator coMapIterEnd = coMap.end();
-
-  while (cpMapIter != cpMapIterEnd || coMapIter != coMapIterEnd) {
-
-    unsigned int cpKey = maxKey;
-    unsigned int coKey = maxKey;
-    int cpEm  = 0;
-    int cpHad = 0;
-    int coEm  = 0;
-    int coHad = 0;
-    int cpEmErr  = 0;
-    int cpHadErr = 0;
-    int coEmErr  = 0;
-    int coHadErr = 0;
-    double eta = 0.;
-    double phi = 0.;
-
-    if (cpMapIter != cpMapIterEnd) cpKey = cpMapIter->first;
-    if (coMapIter != coMapIterEnd) coKey = coMapIter->first;
-
-    if ((coMapIter == coMapIterEnd) || (coKey > cpKey)) {
-
-      // Core CPMTower but no Overlap CPMTower
-
-      const LVL1::CPMTower* cp = cpMapIter->second;
-      ++cpMapIter;
-      eta = cp->eta();
-      phi = cp->phi();
-      // Does it correspond to overlap channel?
-      const int crate = conv.cpCrateOverlap(LVL1::Coordinate(phi, eta));
-      if (crate >= s_crates) continue;
-      cpEm  = cp->emEnergy();
-      cpHad = cp->hadEnergy();
-      cpEmErr  = cp->emError();
-      cpHadErr = cp->hadError();
-
-    } else if ((cpMapIter == cpMapIterEnd) || (cpKey > coKey)) {
-
-      // Overlap CPMTower but no Core CPMTower
-
-      const LVL1::CPMTower* co = coMapIter->second;
-      ++coMapIter;
-      eta = co->eta();
-      phi = co->phi();
-      if (phi >= 2.*M_PI) phi -= 2.*M_PI;//bug TrigT1CaloByteStream-00-03-14/15
-      const int crate = conv.cpCrateOverlap(LVL1::Coordinate(phi, eta));
-      if (crate >= s_crates) {
-        log << MSG::DEBUG << "Overlap mapping error, eta/phi: "
-                          << eta << "/" << phi << endreq;
-        continue;
-      }
-      coEm  = co->emEnergy();
-      coHad = co->hadEnergy();
-      coEmErr  = co->emError();
-      coHadErr = co->hadError();
-
-    } else {
-
-      // Have both
-
-      const LVL1::CPMTower* cp = cpMapIter->second;
-      const LVL1::CPMTower* co = coMapIter->second;
-      ++cpMapIter;
-      ++coMapIter;
-      eta = cp->eta();
-      phi = cp->phi();
-      const int crate = conv.cpCrateOverlap(LVL1::Coordinate(phi, eta));
-      if (crate >= s_crates) {
-        log << MSG::DEBUG << "Overlap mapping error, eta/phi: "
-                          << eta << "/" << phi << endreq;
-        continue;
-      }
-      cpEm  = cp->emEnergy();
-      cpHad = cp->hadEnergy();
-      coEm  = co->emEnergy();
-      coHad = co->hadEnergy();
-      cpEmErr  = cp->emError();
-      cpHadErr = cp->hadError();
-      coEmErr  = co->emError();
-      coHadErr = co->hadError();
-
-    }
-
-    const double phiMod = phi * m_phiScale;
-    // Ignore data with known errors
-    //if ( !cpEmErr && !coEmErr ) {
-      m_h_CTeqCO_Em_eta_phi->Fill(eta, phiMod, cpEm && coEm && cpEm == coEm);
-      m_h_CTneCO_Em_eta_phi->Fill(eta, phiMod, cpEm && coEm && cpEm != coEm);
-      m_h_CTnoCO_Em_eta_phi->Fill(eta, phiMod, cpEm  && !coEm);
-      m_h_COnoCT_Em_eta_phi->Fill(eta, phiMod, !cpEm && coEm);
-    //}
-    //if ( !cpHadErr && !coHadErr ) {
-      m_h_CTeqCO_Had_eta_phi->Fill(eta, phiMod,
-                                        cpHad && coHad && cpHad == coHad);
-      m_h_CTneCO_Had_eta_phi->Fill(eta, phiMod,
-                                        cpHad && coHad && cpHad != coHad);
-      m_h_CTnoCO_Had_eta_phi->Fill(eta, phiMod, cpHad && !coHad);
-      m_h_COnoCT_Had_eta_phi->Fill(eta, phiMod, !cpHad && coHad);
-    //}
-    //if ((!cpEmErr && !coEmErr && cpEm && coEm && cpEm != coEm) ||
-    //    (!cpHadErr && !coHadErr && cpHad && coHad && cpHad != coHad)) {
-    if ((cpEm && coEm && cpEm != coEm) || (cpHad && coHad && cpHad != coHad)) {
-      log << MSG::DEBUG
-          << "Core/Overlap CPM Tower mismatch, eta/phi/cpEm/cpHad/coEm/coHad: "
-	  << eta << "/" << phi << "/" << cpEm << "/" << cpHad << "/"
-	  << coEm << "/" << coHad << endreq;
-    }
-    // Error summary flags
-    const int crate = conv.cpCrateOverlap(LVL1::Coordinate(phi, eta));
-    const int cpm   = conv.cpModuleOverlap(LVL1::Coordinate(phi, eta));
-    if (cpEm != coEm || cpHad != coHad) {
-      errorsCPM[crate*s_modules + cpm - 1] |= (1 << CoreOverlap);
     }
   }
 
@@ -969,6 +821,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
   std::string title("CP Error Summary for " + cnum.str() + " Events");
   m_h_CP_errors->SetTitle(TString(title));
 
+  m_log << MSG::DEBUG << "Leaving fillHistograms" << endreq;
+
   return StatusCode::SUCCESS;
 
 }
@@ -978,7 +832,7 @@ StatusCode TrigT1CaloCpmMonTool::procHistograms(bool isEndOfEventsBlock,
                                   bool isEndOfLumiBlock, bool isEndOfRun)
 /*---------------------------------------------------------*/
 {
-  MsgStream log(msgSvc(), name());
+  m_log << MSG::DEBUG << "procHistograms entered" << endreq;
 
   if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
   }
@@ -993,9 +847,8 @@ TH1F* TrigT1CaloCpmMonTool::book1F(const std::string& name,
   TH1F *hist = new TH1F(TString(name), TString(title), nx, xmin, xmax);
   
   if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {
-    MsgStream log(msgSvc(), this->name());
-    log << MSG::WARNING << "Could not register histogram : " 
-	<< name << endreq;
+    m_log << MSG::WARNING << "Could not register histogram : " 
+	  << name << endreq;
   }
   
   return hist;
@@ -1010,11 +863,11 @@ TH2F* TrigT1CaloCpmMonTool::book2F(const std::string& name,
                                                        ny, ymin, ymax);
   
   if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {
-    MsgStream log(msgSvc(), this->name());
-    log << MSG::WARNING << "Could not register histogram : " 
-	<< name << endreq;
+    m_log << MSG::WARNING << "Could not register histogram : " 
+	  << name << endreq;
   }
   hist->SetOption("colz");
+  hist->SetStats(kFALSE);
   
   return hist;
 }

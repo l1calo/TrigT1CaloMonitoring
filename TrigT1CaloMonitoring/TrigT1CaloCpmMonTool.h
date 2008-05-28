@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/ServiceHandle.h"
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
@@ -52,7 +53,7 @@ public:
 
 private:
 
-  enum SummaryErrors { CoreOverlap, CPMParity, CPMLink, CPMStatus, RoIParity,
+  enum SummaryErrors { CPMParity, CPMLink, CPMStatus, RoIParity,
                        CMMParity, CMMStatus, NumberOfSummaryBins };
 
   typedef DataVector<LVL1::CPMTower>     CpmTowerCollection;
@@ -90,6 +91,7 @@ private:
   void  setLabelsST(TH2* hist);
 
   ServiceHandle<StoreGateSvc> m_storeGate;
+  mutable MsgStream m_log;
 
   MonGroup* m_monGroup;
 
@@ -171,15 +173,6 @@ private:
   TH2F* m_h_CT_Em_link;
   TH2F* m_h_CT_Had_link;
   TH2F* m_h_CT_status;
-  // Mismatch plots - CPMTower Core/Overlap
-  TH2F* m_h_CTeqCO_Em_eta_phi;
-  TH2F* m_h_CTneCO_Em_eta_phi;
-  TH2F* m_h_CTnoCO_Em_eta_phi;
-  TH2F* m_h_COnoCT_Em_eta_phi;
-  TH2F* m_h_CTeqCO_Had_eta_phi;
-  TH2F* m_h_CTneCO_Had_eta_phi;
-  TH2F* m_h_CTnoCO_Had_eta_phi;
-  TH2F* m_h_COnoCT_Had_eta_phi;
 
   //=============================================
   //  CPM RoIs

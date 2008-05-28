@@ -1,3 +1,7 @@
+2008-05-07  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+        * Add CPM Tower mismatch plots by serialiser FPGA
+        * Tag as TrigT1CaloMonitoring-00-03-12
+
 2008-05-19 Damien Prieur <damien.prieur@cern.ch>
 	* Tag as TrigT1CaloMonitoring-00-03-11
 	* TrigT1CaloMonitoring_forRecExCommission.py:
