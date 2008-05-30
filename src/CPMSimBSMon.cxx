@@ -526,9 +526,9 @@ StatusCode CPMSimBSMon::fillHistograms()
   // Compare RoIs simulated from CPM Towers with CPM RoIs from data
 
   CpmRoiCollection* cpmRoiSIM = 0;
-  if (cpmTowerTES) {
+  if (cpmTowerTES || cpmTowerOvTES) {
     cpmRoiSIM = new CpmRoiCollection;
-    simulate(cpMap, cpmRoiSIM);
+    simulate(cpMap, ovMap, cpmRoiSIM);
   }
   CpmRoiMap crSimMap;
   setupMap(cpmRoiSIM, crSimMap);
@@ -888,13 +888,13 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
 
     m_log << MSG::DEBUG << "DataHits/SimHits: ";
     for (int i = 15; i >= 0; --i) {
-      int bit = (datHits >> i) & 0x1;
-      m_log << MSG::DEBUG << bit;
+      int hit = (datHits >> i) & 0x1;
+      m_log << MSG::DEBUG << hit;
     }
     m_log << MSG::DEBUG << "/";
     for (int i = 15; i >= 0; --i) {
-      int bit = (simHits >> i) & 0x1;
-      m_log << MSG::DEBUG << bit;
+      int hit = (simHits >> i) & 0x1;
+      m_log << MSG::DEBUG << hit;
     }
     m_log << MSG::DEBUG << endreq;
   }
@@ -1531,15 +1531,45 @@ void CPMSimBSMon::setupMap(const CmmCpHitsCollection* coll, CmmCpHitsMap& map)
   }
 }
 
-void CPMSimBSMon::simulate(const CpmTowerMap towers,
+void CPMSimBSMon::simulate(const CpmTowerMap towers, const CpmTowerMap towersOv,
                                  CpmRoiCollection* rois)
 {
   m_log << MSG::DEBUG << "Simulate CPM RoIs from CPM Towers" << endreq;
 
-  InternalRoiCollection* intRois = new InternalRoiCollection;
-  m_emTauTool->findRoIs(&towers, intRois);
-  m_cpHitsTool->formCPMRoI(intRois, rois);
-  delete intRois;
+  // Process a crate at a time to use overlap data
+  const int ncrates = 4;
+  std::vector<CpmTowerMap> crateMaps(ncrates);
+  LVL1::CoordToHardware converter;
+  CpmTowerMap::const_iterator iter  = towers.begin();
+  CpmTowerMap::const_iterator iterE = towers.end();
+  for (; iter != iterE; ++iter) {
+    LVL1::CPMTower* tt = iter->second;
+    const LVL1::Coordinate coord(tt->phi(), tt->eta());
+    const int crate = converter.cpCrate(coord);
+    if (crate >= ncrates) continue;
+    crateMaps[crate].insert(std::make_pair(iter->first, tt));
+  }
+  iter  = towersOv.begin();
+  iterE = towersOv.end();
+  for (; iter != iterE; ++iter) {
+    LVL1::CPMTower* tt = iter->second;
+    const LVL1::Coordinate coord(tt->phi(), tt->eta());
+    const int crate = converter.cpCrateOverlap(coord);
+    if (crate >= ncrates) continue;
+    crateMaps[crate].insert(std::make_pair(iter->first, tt));
+  }
+  for (int crate = 0; crate < ncrates; ++crate) {
+    InternalRoiCollection* intRois = new InternalRoiCollection;
+    m_emTauTool->findRoIs(&crateMaps[crate], intRois);
+    InternalRoiCollection::iterator roiIter  = intRois->begin();
+    InternalRoiCollection::iterator roiIterE = intRois->end();
+    for (; roiIter != roiIterE; ++roiIter) {
+      LVL1::CPMRoI* roi = new LVL1::CPMRoI((*roiIter)->RoIWord());
+      if (roi->crate() == crate) rois->push_back(roi);
+      else delete roi;
+    }
+    delete intRois;
+  }
 }
 
 void CPMSimBSMon::simulate(const CpmRoiCollection* rois,

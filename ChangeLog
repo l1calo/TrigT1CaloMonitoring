@@ -1,4 +1,8 @@
-2008-05-07  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+2008-05-30  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+        * Use overlap data in RoI simulation check
+        * Tag as TrigT1CaloMonitoring-00-03-13
+
+2008-05-28  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * Add CPM Tower mismatch plots by serialiser FPGA
         * Tag as TrigT1CaloMonitoring-00-03-12
 

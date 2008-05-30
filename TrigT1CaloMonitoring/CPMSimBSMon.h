@@ -110,7 +110,8 @@ private:
   void  setupMap(const CpmRoiCollection* coll, CpmRoiMap& map);
   void  setupMap(const CpmHitsCollection* coll, CpmHitsMap& map);
   void  setupMap(const CmmCpHitsCollection* coll, CmmCpHitsMap& map);
-  void  simulate(const CpmTowerMap towers, CpmRoiCollection* rois);
+  void  simulate(const CpmTowerMap towers, const CpmTowerMap towersOv,
+                       CpmRoiCollection* rois);
   void  simulate(const CpmRoiCollection* rois, CpmHitsCollection* hits);
   void  simulate(const CmmCpHitsCollection* hitsIn,
                        CmmCpHitsCollection* hitsOut, int selection);
