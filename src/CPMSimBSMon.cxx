@@ -1298,10 +1298,11 @@ void CPMSimBSMon::setLabels(TH2* hist)
   hist->GetXaxis()->SetBinLabel(61, "2/L");
   hist->GetXaxis()->SetBinLabel(63, "3/L");
   hist->GetXaxis()->SetTitleOffset(1.25);
+  // Simulation steps in red (#color[2]) depend on Trigger Menu
   hist->GetYaxis()->SetBinLabel(1+EMTowerMismatch,  "EM tt");
   hist->GetYaxis()->SetBinLabel(1+HadTowerMismatch, "Had tt");
   if (m_compareWithSim) {
-    hist->GetYaxis()->SetBinLabel(1+RoIMismatch,     "RoIs");
+    hist->GetYaxis()->SetBinLabel(1+RoIMismatch,     "#color[2]{RoIs}");
     hist->GetYaxis()->SetBinLabel(1+CPMHitsMismatch, "CPMHits");
   } else {
     hist->GetYaxis()->SetBinLabel(1+RoIMismatch,     "n/a");

@@ -1,3 +1,8 @@
+2008-06-02  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+        * In CP simulation check overview plots flag steps needing
+          Trigger Menu in red.
+        * Tag as TrigT1CaloMonitoring-00-03-14
+
 2008-05-30  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * Use overlap data in RoI simulation check
         * Tag as TrigT1CaloMonitoring-00-03-13
