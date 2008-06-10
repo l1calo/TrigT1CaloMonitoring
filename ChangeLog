@@ -1,3 +1,7 @@
+2008-06-10 Andrea Neusiedl <andrea.neusiedl@cern.ch>
+	* Rearrangement of Error Histograms 
+	* Tag as TrigT1CaloMonitoring-00-03-15
+
 2008-06-02  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * In CP simulation check overview plots flag steps needing
           Trigger Menu in red.

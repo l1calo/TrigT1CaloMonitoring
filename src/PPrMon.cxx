@@ -204,17 +204,18 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
     {	
       Helper Help;
       m_NoEvents=0;
-  
+	
 
       //---------------------------- Energy distributions (ADC and LUT) per Channel -----------------------------
       std::vector<Identifier>::const_iterator tower_it = m_lvl1Helper->tower_begin();
       std::string name,title;
       std::stringstream buffer, etabuffer,phibuffer;
-      
+	
       log << MSG::DEBUG << "before book::energy dists" << endreq;
+
       if (m_TT_DistPerChannel==1)
 	{
-	  for(;tower_it!=m_lvl1Helper->tower_end();++tower_it) 
+	  for (;tower_it!=m_lvl1Helper->tower_end();++tower_it) 
 	    {
 	      Identifier towerId = (*tower_it);
 
@@ -236,6 +237,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 		  title = "TT EM LUT Distribution of Peak for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
 		  m_h_TT_EmLUTPeak[towerId]=EmLUTPeak_Booker.book1F(name,title,256,-0.5,255.5,"em LUT [GeV]");
 		}
+	    
+		
 	      
 	      if (m_lvl1Helper->sampling(towerId)==1) //Had TT
 		{
@@ -248,7 +251,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 		  m_h_TT_HadLUTPeak[towerId]=HadLUTPeak_Booker.book1F(name,title,256,-0.5,255.5,"had LUT [GeV]");
 		}
 	    }
-	}
+	  }
+	  
 
       //---------------------------- ADC Hitmaps per TimeSlice -----------------------------
       for(int i=0;i<m_SliceNo;i++) 
@@ -356,84 +360,72 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       m_h_TT_hadLUT_phi=LUTPeakDistribution_Booker.book1F("hadLUT_phi","HAD LUT: Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
       m_h_TT_hadLUT_phi->SetBins(64,Help.TTPhiBinning());  
       
+
+      //-------------------------Summary of Errors-----------------------------------------------
+
+      m_h_TT_Error=Error_Booker.book1F("TT_errorSummary","Summary of Errors",7,0.5,7.5,""); //without Ppm fw errors
+
+      m_h_TT_Error->GetXaxis()->SetBinLabel(1, "GLinkParity");
+      m_h_TT_Error->GetXaxis()->SetBinLabel(2, "GLinkProtocol");
+      m_h_TT_Error->GetXaxis()->SetBinLabel(3, "FIFOOverflow");
+      m_h_TT_Error->GetXaxis()->SetBinLabel(4, "ModuleError");
+      m_h_TT_Error->GetXaxis()->SetBinLabel(5, "GLinkDown");
+      m_h_TT_Error->GetXaxis()->SetBinLabel(6, "GLinkTimeout");
+      m_h_TT_Error->GetXaxis()->SetBinLabel(7, "BCNMismatch");
+
       //---------------------------- SubStatus Word errors -----------------------------
-      m_h_TT_emerror=Error_Booker.book1F("TT_emerror","Errors from EM TT SubStatus Word",17,0.5,17.5,"");
-      
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(2, "MCMAbsent");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(3, "Timeout");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(4, "ASICFull");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(5, "EventMismatch");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(6, "BunchMismatch");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(7, "FIFOCorrupt");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(8, "PinParity");
-      
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(10, "GLinkParity");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(11, "GLinkProtocol");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(12, "BCNMismatch");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(13, "FIFOOverflow");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(14, "ModuleError");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(15, "GLinkDown");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
-      m_h_TT_emerror->GetXaxis()->SetBinLabel(17, "FailingBCN");
+      // divided in: crate, ROD status and PPm fw errors, BCN mismatch
 
-      m_h_TT_haderror=Error_Booker.book1F("TT_haderror","Errors from HAD TT SubStatus Word",17,0.5,17.5,"");
-      
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(2, "MCMAbsent");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(3, "Timeout");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(4, "ASICFull");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(5, "EventMismatch");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(6, "BunchMismatch");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(7, "FIFOCorrupt");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(8, "PinParity");
-      
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(10, "GLinkParity");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(11, "GLinkProtocol");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(12, "BCNMismatch");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(13, "FIFOOverflow");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(14, "ModuleError");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(15, "GLinkDown");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
-      m_h_TT_haderror->GetXaxis()->SetBinLabel(17, "FailingBCN");
-      
-      m_h_TT_error_Crate_03=Error_Booker.book2F("TT_error_Crate_0-3","Errors from TT SubStatus Word (crates 0-3)",17,0.5,17.5,71,0.5,71.5,"","");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(2, "MCMAbsent");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(3, "Timeout");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(4, "ASICFull");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(5, "EventMismatch");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(6, "BunchMismatch");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(7, "FIFOCorrupt");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(8, "PinParity");
-      
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(10, "GLinkParity");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(11, "GLinkProtocol");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(12, "BCNMismatch");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(13, "FIFOOverflow");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(14, "ModuleError");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(15, "GLinkDown");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
-      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(17, "FailingBCN");
+      //BCN mismatch
+      m_h_BCNmis_Crate_03=Error_Booker.book2F("TT_BCNmis_Crate_0-3","BCN Mismatch (crates 0-3)",1,0.5,1.5,71,0.5,71.5,"","");
+       m_h_BCNmis_Crate_03->GetXaxis()->SetBinLabel(1, "BCNMismatch");
 
-      m_h_TT_error_Crate_47=Error_Booker.book2F("TT_error_Crate_4-7","Errors from TT SubStatus Word (crates 4-7)",17,0.5,17.5,71,0.5,71.5,"","");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(2, "MCMAbsent");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(3, "Timeout");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(4, "ASICFull");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(5, "EventMismatch");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(6, "BunchMismatch");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(7, "FIFOCorrupt");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(8, "PinParity");
+      m_h_BCNmis_Crate_47=Error_Booker.book2F("TT_BCNmis_Crate_4-7","BCN Mismatch (crates 4-7)",1,0.5,1.5,71,0.5,71.5,"","");
+       m_h_BCNmis_Crate_47->GetXaxis()->SetBinLabel(1, "BCNMismatch");
       
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(10, "GLinkParity");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(11, "GLinkProtocol");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(12, "BCNMismatch");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(13, "FIFOOverflow");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(14, "ModuleError");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(15, "GLinkDown");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(16, "GLinkTimeout");
-      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(17, "FailingBCN");
+       //L1Calo Substatus word
+      m_h_TT_error_Crate_03=Error_Booker.book2F("TT_error_Crate_0-3","Errors from TT SubStatus Word (crates 0-3)",6,0.5,6.5,71,0.5,71.5,"","");
+            
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(1, "GLinkParity");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(2, "GLinkProtocol");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(3, "FIFOOverflow");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(4, "ModuleError");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(5, "GLinkDown");
+      m_h_TT_error_Crate_03->GetXaxis()->SetBinLabel(6, "GLinkTimeout");
+      
+
+      m_h_TT_error_Crate_47=Error_Booker.book2F("TT_error_Crate_4-7","Errors from TT SubStatus Word (crates 4-7)",6,0.5,6.5,71,0.5,71.5,"","");
+            
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(1, "GLinkParity");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(2, "GLinkProtocol");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(3, "FIFOOverflow");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(4, "ModuleError");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(5, "GLinkDown");
+      m_h_TT_error_Crate_47->GetXaxis()->SetBinLabel(6, "GLinkTimeout");
+      
+
+      //error bit field from ASIC data
+     m_h_fwPpmError_Crate_03=Error_Booker.book2F("TT_fwError_Crate_0-3","Errors from ASIC error field (crates 4-7)",8,0.5,8.5,71,0.5,71.5,"","");
+     
+      m_h_fwPpmError_Crate_03->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
+      m_h_fwPpmError_Crate_03->GetXaxis()->SetBinLabel(2, "MCMAbsent");
+      m_h_fwPpmError_Crate_03->GetXaxis()->SetBinLabel(3, "Timeout");
+      m_h_fwPpmError_Crate_03->GetXaxis()->SetBinLabel(4, "ASICFull");
+      m_h_fwPpmError_Crate_03->GetXaxis()->SetBinLabel(5, "EventMismatch");
+      m_h_fwPpmError_Crate_03->GetXaxis()->SetBinLabel(6, "BunchMismatch");
+      m_h_fwPpmError_Crate_03->GetXaxis()->SetBinLabel(7, "FIFOCorrupt");
+      m_h_fwPpmError_Crate_03->GetXaxis()->SetBinLabel(8, "PinParity");
+ 
+     m_h_fwPpmError_Crate_47=Error_Booker.book2F("TT_fwError_Crate_4-7","Errors from ASIC error field (crates 4-7)",8,0.5,8.5,71,0.5,71.5,"","");
+
+      m_h_fwPpmError_Crate_47->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
+      m_h_fwPpmError_Crate_47->GetXaxis()->SetBinLabel(2, "MCMAbsent");
+      m_h_fwPpmError_Crate_47->GetXaxis()->SetBinLabel(3, "Timeout");
+      m_h_fwPpmError_Crate_47->GetXaxis()->SetBinLabel(4, "ASICFull");
+      m_h_fwPpmError_Crate_47->GetXaxis()->SetBinLabel(5, "EventMismatch");
+      m_h_fwPpmError_Crate_47->GetXaxis()->SetBinLabel(6, "BunchMismatch");
+      m_h_fwPpmError_Crate_47->GetXaxis()->SetBinLabel(7, "FIFOCorrupt");
+      m_h_fwPpmError_Crate_47->GetXaxis()->SetBinLabel(8, "PinParity");
 
     
       for (int i=5; i<21; i++)
@@ -446,14 +438,37 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel((i-4)+1*18, name.c_str());
 	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel((i-4)+2*18, name.c_str());
 	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel((i-4)+3*18, name.c_str());
+          
+	  m_h_fwPpmError_Crate_03->GetYaxis()->SetBinLabel((i-4)+0*18, name.c_str());
+	  m_h_fwPpmError_Crate_03->GetYaxis()->SetBinLabel((i-4)+1*18, name.c_str());
+	  m_h_fwPpmError_Crate_03->GetYaxis()->SetBinLabel((i-4)+2*18, name.c_str());
+	  m_h_fwPpmError_Crate_03->GetYaxis()->SetBinLabel((i-4)+3*18, name.c_str());
 
+	  
+	  m_h_BCNmis_Crate_03->GetYaxis()->SetBinLabel((i-4)+0*18, name.c_str());
+	  m_h_BCNmis_Crate_03->GetYaxis()->SetBinLabel((i-4)+1*18, name.c_str());
+	  m_h_BCNmis_Crate_03->GetYaxis()->SetBinLabel((i-4)+2*18, name.c_str());
+	  m_h_BCNmis_Crate_03->GetYaxis()->SetBinLabel((i-4)+3*18, name.c_str());
 
 	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel((i-4)+(4-4)*18, name.c_str());
 	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel((i-4)+(5-4)*18, name.c_str());
 	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel((i-4)+(6-4)*18, name.c_str());
 	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel((i-4)+(7-4)*18, name.c_str());
+
+	  m_h_fwPpmError_Crate_47->GetYaxis()->SetBinLabel((i-4)+(4-4)*18, name.c_str());
+	  m_h_fwPpmError_Crate_47->GetYaxis()->SetBinLabel((i-4)+(5-4)*18, name.c_str());
+	  m_h_fwPpmError_Crate_47->GetYaxis()->SetBinLabel((i-4)+(6-4)*18, name.c_str());
+	  m_h_fwPpmError_Crate_47->GetYaxis()->SetBinLabel((i-4)+(7-4)*18, name.c_str());
+
+	  m_h_BCNmis_Crate_47->GetYaxis()->SetBinLabel((i-4)+(4-4)*18, name.c_str());
+	  m_h_BCNmis_Crate_47->GetYaxis()->SetBinLabel((i-4)+(5-4)*18, name.c_str());
+	  m_h_BCNmis_Crate_47->GetYaxis()->SetBinLabel((i-4)+(6-4)*18, name.c_str());
+	  m_h_BCNmis_Crate_47->GetYaxis()->SetBinLabel((i-4)+(7-4)*18, name.c_str());
+
+
 	  i++;
-	}
+	    }
+
 	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel(17+0*18, "Crate 0");
 	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel(17+1*18, "Crate 1");
 	  m_h_TT_error_Crate_03->GetYaxis()->SetBinLabel(17+2*18, "Crate 2");
@@ -465,6 +480,27 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	  m_h_TT_error_Crate_47->GetYaxis()->SetBinLabel(17+(7-4)*18, "Crate 7");
 
 
+	  m_h_fwPpmError_Crate_03->GetYaxis()->SetBinLabel(17+0*18, "Crate 0");
+	  m_h_fwPpmError_Crate_03->GetYaxis()->SetBinLabel(17+1*18, "Crate 1");
+	  m_h_fwPpmError_Crate_03->GetYaxis()->SetBinLabel(17+2*18, "Crate 2");
+	  m_h_fwPpmError_Crate_03->GetYaxis()->SetBinLabel(17+3*18, "Crate 3");
+
+	  m_h_fwPpmError_Crate_47->GetYaxis()->SetBinLabel(17+(4-4)*18, "Crate 4");
+	  m_h_fwPpmError_Crate_47->GetYaxis()->SetBinLabel(17+(5-4)*18, "Crate 5");
+	  m_h_fwPpmError_Crate_47->GetYaxis()->SetBinLabel(17+(6-4)*18, "Crate 6");
+	  m_h_fwPpmError_Crate_47->GetYaxis()->SetBinLabel(17+(7-4)*18, "Crate 7");
+
+	  m_h_BCNmis_Crate_03->GetYaxis()->SetBinLabel(17+0*18, "Crate 0");
+	  m_h_BCNmis_Crate_03->GetYaxis()->SetBinLabel(17+1*18, "Crate 1");
+	  m_h_BCNmis_Crate_03->GetYaxis()->SetBinLabel(17+2*18, "Crate 2");
+	  m_h_BCNmis_Crate_03->GetYaxis()->SetBinLabel(17+3*18, "Crate 3");
+
+	  m_h_BCNmis_Crate_47->GetYaxis()->SetBinLabel(17+(4-4)*18, "Crate 4");
+	  m_h_BCNmis_Crate_47->GetYaxis()->SetBinLabel(17+(5-4)*18, "Crate 5");
+	  m_h_BCNmis_Crate_47->GetYaxis()->SetBinLabel(17+(6-4)*18, "Crate 6");
+	  m_h_BCNmis_Crate_47->GetYaxis()->SetBinLabel(17+(7-4)*18, "Crate 7");
+
+
 	  
       //---------------------------- number of triggered slice -----------------------------
       m_h_TT_triggeredSlice_em=ADCTimeSlice_Booker.book1F("TT_EMTriggeredSlice","Number of the EM Triggered Slice",7,-0.5,6.5,"#Slice");
@@ -474,11 +510,11 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       //----------------------------- number of events ----------------------------------
       m_h_NumberEvents= NoEvent_Booker.book1F("NumberEvents","Number of processed events",1,0.5,1.5,"");
       m_h_NumberEvents->GetXaxis()->SetBinLabel(1,"Number of Events");
-
-    }
+	     
+	}	
 
   return StatusCode::SUCCESS;
-}
+	}
 
 /*---------------------------------------------------------*/
 StatusCode PPrMon::fillHistograms()
@@ -498,16 +534,19 @@ StatusCode PPrMon::fillHistograms()
       return StatusCode::SUCCESS;
     }
 
-  m_h_NumberEvents->Fill(1,1);
+  m_h_NumberEvents->Fill(1,1);  
+    
   // =============================================================================================
   // ================= Container: TriggerTower ===================================================
   // =============================================================================================
+
   TriggerTowerCollection::const_iterator TriggerTowerIterator    = TriggerTowerTES->begin(); 
   TriggerTowerCollection::const_iterator TriggerTowerIteratorEnd = TriggerTowerTES->end(); 
-  
+ 
   for (; TriggerTowerIterator != TriggerTowerIteratorEnd; ++TriggerTowerIterator) 
     {
-
+    
+	  
       Identifier EmTowerId,HadTowerId;
 
       int detside= m_l1CaloTTIdTools->pos_neg_z((*TriggerTowerIterator)->eta());
@@ -531,7 +570,10 @@ StatusCode PPrMon::fillHistograms()
 	  m_h_TT_emLUT_phi-> Fill((*TriggerTowerIterator)->phi(),1);
 	  m_h_TT_emLUT->Fill(EmEnergy,1);
 	}
-	
+    
+	 
+	 
+	 
        //---------------------------- EM LUT HitMaps -----------------------------
       if (EmEnergy>m_TT_HitMap_Thresh0)
 	{
@@ -545,7 +587,7 @@ StatusCode PPrMon::fillHistograms()
 	{
 	  m_h_TT_HitMap_emLUT_Thresh2->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
 	}
-      
+    
        //---------------------------- HAD Energy -----------------------------
       HadTowerId = m_lvl1Helper->tower_id(detside, 1, detregion,eta,phi );  
       // HAD ADC Peak per channel      
@@ -555,7 +597,7 @@ StatusCode PPrMon::fillHistograms()
       HadEnergy = (*TriggerTowerIterator)->hadLUT()[(*TriggerTowerIterator)->hadPeak()];
       //if (m_TT_DistPerChannel==1) m_h_TT_HadLUTPeak[HadTowerId]->Fill(HadEnergy,1);
 
-
+	
       // had energy distribution per detector region
       if (HadEnergy>0) 
 	{
@@ -563,7 +605,7 @@ StatusCode PPrMon::fillHistograms()
 	  m_h_TT_hadLUT_phi-> Fill((*TriggerTowerIterator)->phi(),1);
 	  m_h_TT_hadLUT->Fill(HadEnergy,1);
 	}
-     
+    
        //---------------------------- had LUT HitMaps -----------------------------
       if (HadEnergy>m_TT_HitMap_Thresh0)
 	{
@@ -577,7 +619,7 @@ StatusCode PPrMon::fillHistograms()
 	{
 	  m_h_TT_HitMap_hadLUT_Thresh2->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
 	}
-
+    
        //---------------------------- ADC HitMaps per timeslice -----------------------------
       for (int i=0; i<m_SliceNo;i++)
 	{
@@ -588,7 +630,7 @@ StatusCode PPrMon::fillHistograms()
 		  m_h_TT_HitMap_emADC[i] ->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
 		}
 	    }
-
+	
 	  if (i<static_cast<int>(( (*TriggerTowerIterator)->hadADC()).size()))
 	    {
 	      if (( (*TriggerTowerIterator)->hadADC())[i] > m_TT_ADC_HitMap_Thresh)
@@ -597,7 +639,7 @@ StatusCode PPrMon::fillHistograms()
 		}
 	    }
 	}    
-
+	             
         //---------------------------- Timing of FADC Signal -----------------------------
       int hadFADCSum=0;     
       int emFADCSum=0;     
@@ -643,7 +685,7 @@ StatusCode PPrMon::fillHistograms()
         }
 
 
-
+    
       
 
       //---------------------------- SubStatus Word errors -----------------------------
@@ -663,50 +705,33 @@ StatusCode PPrMon::fillHistograms()
 	  submodule = m_l1ttonlineHelper->submodule(ttOnlId);
 	  channel   = m_l1ttonlineHelper->channel(ttOnlId);
 
-	  log << MSG::DEBUG << "em PPM crate: " << crate<<"  module: "<<module << " submodule "<<submodule<<" channel "<< channel<< endreq ;
+	  //log << MSG::DEBUG << "em PPM crate: " << crate<<"  module: "<<module << " submodule "<<submodule<<" channel "<< channel<< endreq ;
 
-	} 
+	 }
+ 
       catch(LArID_Exception& except) 
 	{
 	  log << MSG::ERROR << "LArID_Exception " << (std::string) except << endreq ;
 	}
    
-    
-      
-	// ChannelDisabled
-      m_h_TT_emerror->Fill(1,emerr.get(4));
-      // MCMAbsent
-      m_h_TT_emerror->Fill(2,emerr.get(5));
-      // Timeout
-      m_h_TT_emerror->Fill(3,emerr.get(6));
-      // ASICFull
-      m_h_TT_emerror->Fill(4,emerr.get(7));
-      // EventMismatch
-      m_h_TT_emerror->Fill(5,emerr.get(8));
-      // BunchMismatch
-      m_h_TT_emerror->Fill(6,emerr.get(9));
-      // FIFOCorrupt
-      m_h_TT_emerror->Fill(7,emerr.get(10));
-      // PinParity
-      m_h_TT_emerror->Fill(8,emerr.get(11));
-      		  
+      //Summary
+
       // GLinkParity
-      m_h_TT_emerror->Fill(10,emerr.get(16));
+      m_h_TT_Error->Fill(1,emerr.get(16));
       // GLinkProtocol
-      m_h_TT_emerror->Fill(11,emerr.get(17));
+      m_h_TT_Error->Fill(2,emerr.get(17));
       // BCNMismatch
-      m_h_TT_emerror->Fill(12,emerr.get(18));
+      m_h_TT_Error->Fill(7,emerr.get(18));
       // FIFOOverflow
-      m_h_TT_emerror->Fill(13,emerr.get(19));
+      m_h_TT_Error->Fill(3,emerr.get(19));
       // ModuleError
-      m_h_TT_emerror->Fill(14,emerr.get(20));
+      m_h_TT_Error->Fill(4,emerr.get(20));
       
       // GLinkDown
-      m_h_TT_emerror->Fill(15,emerr.get(22));
+      m_h_TT_Error->Fill(5,emerr.get(22));
       // GLinkTimeout
-      m_h_TT_emerror->Fill(16,emerr.get(23));
-      // FailingBCN
-      m_h_TT_emerror->Fill(17,emerr.get(24));
+      m_h_TT_Error->Fill(6,emerr.get(23));
+      
 
 
       //em+had FCAL signals get processed in one crate
@@ -714,117 +739,94 @@ StatusCode PPrMon::fillHistograms()
       if (crate>3) {
 	//---------------- per crate and module --------------------  m_h_TT_error_Crate_47
       // ChannelDisabled
-      m_h_TT_error_Crate_47->Fill(1,(module-4)+((crate-4)*18),emerr.get(4));
+      m_h_fwPpmError_Crate_47->Fill(1,(module-4)+((crate-4)*18),emerr.get(4));
       // MCMAbsent
-      m_h_TT_error_Crate_47->Fill(2,(module-4)+((crate-4)*18),emerr.get(5));
+      m_h_fwPpmError_Crate_47->Fill(2,(module-4)+((crate-4)*18),emerr.get(5));
       // Timeout
-      m_h_TT_error_Crate_47->Fill(3,(module-4)+((crate-4)*18),emerr.get(6));
+      m_h_fwPpmError_Crate_47->Fill(3,(module-4)+((crate-4)*18),emerr.get(6));
       // ASICFull
-      m_h_TT_error_Crate_47->Fill(4,(module-4)+((crate-4)*18),emerr.get(7));
+      m_h_fwPpmError_Crate_47->Fill(4,(module-4)+((crate-4)*18),emerr.get(7));
       // EventMismatch
-      m_h_TT_error_Crate_47->Fill(5,(module-4)+((crate-4)*18),emerr.get(8));
+      m_h_fwPpmError_Crate_47->Fill(5,(module-4)+((crate-4)*18),emerr.get(8));
       // BunchMismatch
-      m_h_TT_error_Crate_47->Fill(6,(module-4)+((crate-4)*18),emerr.get(9));
+      m_h_fwPpmError_Crate_47->Fill(6,(module-4)+((crate-4)*18),emerr.get(9));
       // FIFOCorrupt
-      m_h_TT_error_Crate_47->Fill(7,(module-4)+((crate-4)*18),emerr.get(10));
+      m_h_fwPpmError_Crate_47->Fill(7,(module-4)+((crate-4)*18),emerr.get(10));
       // PinParity
-      m_h_TT_error_Crate_47->Fill(8,(module-4)+((crate-4)*18),emerr.get(11));
+      m_h_fwPpmError_Crate_47->Fill(8,(module-4)+((crate-4)*18),emerr.get(11));
       		  
       // GLinkParity
-      m_h_TT_error_Crate_47->Fill(10,(module-4)+((crate-4)*18),emerr.get(16));
+      m_h_TT_error_Crate_47->Fill(1,(module-4)+((crate-4)*18),emerr.get(16));
       // GLinkProtocol
-      m_h_TT_error_Crate_47->Fill(11,(module-4)+((crate-4)*18),emerr.get(17));
-      // BCNMismatch
-      m_h_TT_error_Crate_47->Fill(12,(module-4)+((crate-4)*18),emerr.get(18));
+      m_h_TT_error_Crate_47->Fill(2,(module-4)+((crate-4)*18),emerr.get(17));
       // FIFOOverflow
-      m_h_TT_error_Crate_47->Fill(13,(module-4)+((crate-4)*18),emerr.get(19));
+      m_h_TT_error_Crate_47->Fill(3,(module-4)+((crate-4)*18),emerr.get(19));
       // ModuleError
-      m_h_TT_error_Crate_47->Fill(14,(module-4)+((crate-4)*18),emerr.get(20));
+      m_h_TT_error_Crate_47->Fill(4,(module-4)+((crate-4)*18),emerr.get(20));
       
       // GLinkDown
-      m_h_TT_error_Crate_47->Fill(15,(module-4)+((crate-4)*18),emerr.get(22));
+      m_h_TT_error_Crate_47->Fill(5,(module-4)+((crate-4)*18),emerr.get(22));
       // GLinkTimeout
-      m_h_TT_error_Crate_47->Fill(16,(module-4)+((crate-4)*18),emerr.get(23));
-      // FailingBCN
-      m_h_TT_error_Crate_47->Fill(17,(module-4)+((crate-4)*18),emerr.get(24));
-      } 
+      m_h_TT_error_Crate_47->Fill(6,(module-4)+((crate-4)*18),emerr.get(23));
+      
+	}
 
       else {
 	//---------------- per crate and module -------------------------  
       // ChannelDisabled
-      m_h_TT_error_Crate_03->Fill(1,(module-4)+(crate*18),emerr.get(4));
+      m_h_fwPpmError_Crate_03->Fill(1,(module-4)+(crate*18),emerr.get(4));
       // MCMAbsent
-      m_h_TT_error_Crate_03->Fill(2,(module-4)+(crate*18),emerr.get(5));
+      m_h_fwPpmError_Crate_03->Fill(2,(module-4)+(crate*18),emerr.get(5));
       // Timeout
-      m_h_TT_error_Crate_03->Fill(3,(module-4)+(crate*18),emerr.get(6));
+      m_h_fwPpmError_Crate_03->Fill(3,(module-4)+(crate*18),emerr.get(6));
       // ASICFull
-      m_h_TT_error_Crate_03->Fill(4,(module-4)+(crate*18),emerr.get(7));
+      m_h_fwPpmError_Crate_03->Fill(4,(module-4)+(crate*18),emerr.get(7));
       // EventMismatch
-      m_h_TT_error_Crate_03->Fill(5,(module-4)+(crate*18),emerr.get(8));
+      m_h_fwPpmError_Crate_03->Fill(5,(module-4)+(crate*18),emerr.get(8));
       // BunchMismatch
-      m_h_TT_error_Crate_03->Fill(6,(module-4)+(crate*18),emerr.get(9));
+      m_h_fwPpmError_Crate_03->Fill(6,(module-4)+(crate*18),emerr.get(9));
       // FIFOCorrupt
-      m_h_TT_error_Crate_03->Fill(7,(module-4)+(crate*18),emerr.get(10));
+      m_h_fwPpmError_Crate_03->Fill(7,(module-4)+(crate*18),emerr.get(10));
       // PinParity
-      m_h_TT_error_Crate_03->Fill(8,(module-4)+(crate*18),emerr.get(11));
+      m_h_fwPpmError_Crate_03->Fill(8,(module-4)+(crate*18),emerr.get(11));
       		  
       // GLinkParity
-      m_h_TT_error_Crate_03->Fill(10,(module-4)+(crate*18),emerr.get(16));
+      m_h_TT_error_Crate_03->Fill(1,(module-4)+(crate*18),emerr.get(16));
       // GLinkProtocol
-      m_h_TT_error_Crate_03->Fill(11,(module-4)+(crate*18),emerr.get(17));
-      // BCNMismatch
-      m_h_TT_error_Crate_03->Fill(12,(module-4)+(crate*18),emerr.get(18));
+      m_h_TT_error_Crate_03->Fill(2,(module-4)+(crate*18),emerr.get(17));
       // FIFOOverflow
-      m_h_TT_error_Crate_03->Fill(13,(module-4)+(crate*18),emerr.get(19));
+      m_h_TT_error_Crate_03->Fill(3,(module-4)+(crate*18),emerr.get(19));
       // ModuleError
-      m_h_TT_error_Crate_03->Fill(14,(module-4)+(crate*18),emerr.get(20));
+      m_h_TT_error_Crate_03->Fill(4,(module-4)+(crate*18),emerr.get(20));
       
       // GLinkDown
-      m_h_TT_error_Crate_03->Fill(15,(module-4)+(crate*18),emerr.get(22));
+      m_h_TT_error_Crate_03->Fill(5,(module-4)+(crate*18),emerr.get(22));
       // GLinkTimeout
-      m_h_TT_error_Crate_03->Fill(16,(module-4)+(crate*18),emerr.get(23));
-      // FailingBCN
-      m_h_TT_error_Crate_03->Fill(17,(module-4)+(crate*18),emerr.get(24));
-      }
+      m_h_TT_error_Crate_03->Fill(6,(module-4)+(crate*18),emerr.get(23));
+      
+	}
 
 
     
      LVL1::DataError haderr((*TriggerTowerIterator)-> hadError());
 
-      // ChannelDisabled
-      m_h_TT_haderror->Fill(1,haderr.get(4));
-      // MCMAbsent
-      m_h_TT_haderror->Fill(2,haderr.get(5));
-      // Timeout
-      m_h_TT_haderror->Fill(3,haderr.get(6));
-      // ASICFull
-      m_h_TT_haderror->Fill(4,haderr.get(7));
-      // EventMismatch
-      m_h_TT_haderror->Fill(5,haderr.get(8));
-      // BunchMismatch
-      m_h_TT_haderror->Fill(6,haderr.get(9));
-      // FIFOCorrupt
-      m_h_TT_haderror->Fill(7,haderr.get(10));
-      // PinParity
-      m_h_TT_haderror->Fill(8,haderr.get(11));
-      		  
+            		  
       // GLinkParity
-      m_h_TT_haderror->Fill(10,haderr.get(16));
+      m_h_TT_Error->Fill(1,haderr.get(16));
       // GLinkProtocol
-      m_h_TT_haderror->Fill(11,haderr.get(17));
+      m_h_TT_Error->Fill(2,haderr.get(17));
       // BCNMismatch
-      m_h_TT_haderror->Fill(12,haderr.get(18));
+      m_h_TT_Error->Fill(7,haderr.get(18));
       // FIFOOverflow
-      m_h_TT_haderror->Fill(13,haderr.get(19));
+      m_h_TT_Error->Fill(3,haderr.get(19));
       // ModuleError
-      m_h_TT_haderror->Fill(14,haderr.get(20));
+      m_h_TT_Error->Fill(4,haderr.get(20));
       
       // GLinkDown
-      m_h_TT_haderror->Fill(15,haderr.get(22));
+      m_h_TT_Error->Fill(5,haderr.get(22));
       // GLinkTimeout
-      m_h_TT_haderror->Fill(16,haderr.get(23));
-      // FailingBCN
-      if (haderr.get(24)!=0) m_h_TT_haderror->Fill(17,1);
+      m_h_TT_Error->Fill(6,haderr.get(23));
+      
 
       try 
 	{
@@ -834,7 +836,7 @@ StatusCode PPrMon::fillHistograms()
 	  submodule = m_l1ttonlineHelper->submodule(ttOnlId);
 	  channel   = m_l1ttonlineHelper->channel(ttOnlId);
 
-	  log << MSG::DEBUG << "em PPM crate: " << crate<<"  module: "<<module << " submodule "<<submodule<<" channel "<< channel<< endreq ;
+	  //log << MSG::DEBUG << "em PPM crate: " << crate<<"  module: "<<module << " submodule "<<submodule<<" channel "<< channel<< endreq ;
 
 	} 
 
@@ -846,52 +848,49 @@ StatusCode PPrMon::fillHistograms()
 
       //---------------- per crate and module --------------------  m_h_TT_error_Crate_03
       // ChannelDisabled
-      m_h_TT_error_Crate_47->Fill(1,(module-4)+((crate-4)*18),haderr.get(4));
+      m_h_fwPpmError_Crate_47->Fill(1,(module-4)+((crate-4)*18),haderr.get(4));
       // MCMAbsent
-      m_h_TT_error_Crate_47->Fill(2,(module-4)+((crate-4)*18),haderr.get(5));
+      m_h_fwPpmError_Crate_47->Fill(2,(module-4)+((crate-4)*18),haderr.get(5));
       // Timeout
-      m_h_TT_error_Crate_47->Fill(3,(module-4)+((crate-4)*18),haderr.get(6));
+      m_h_fwPpmError_Crate_47->Fill(3,(module-4)+((crate-4)*18),haderr.get(6));
       // ASICFull
-      m_h_TT_error_Crate_47->Fill(4,(module-4)+((crate-4)*18),haderr.get(7));
+      m_h_fwPpmError_Crate_47->Fill(4,(module-4)+((crate-4)*18),haderr.get(7));
       // EventMismatch
-      m_h_TT_error_Crate_47->Fill(5,(module-4)+((crate-4)*18),haderr.get(8));
+      m_h_fwPpmError_Crate_47->Fill(5,(module-4)+((crate-4)*18),haderr.get(8));
       // BunchMismatch
-      m_h_TT_error_Crate_47->Fill(6,(module-4)+((crate-4)*18),haderr.get(9));
+      m_h_fwPpmError_Crate_47->Fill(6,(module-4)+((crate-4)*18),haderr.get(9));
       // FIFOCorrupt
-      m_h_TT_error_Crate_47->Fill(7,(module-4)+((crate-4)*18),haderr.get(10));
+      m_h_fwPpmError_Crate_47->Fill(7,(module-4)+((crate-4)*18),haderr.get(10));
       // PinParity
-      m_h_TT_error_Crate_47->Fill(8,(module-4)+((crate-4)*18),haderr.get(11));
+      m_h_fwPpmError_Crate_47->Fill(8,(module-4)+((crate-4)*18),haderr.get(11));
       		  
       // GLinkParity
-      m_h_TT_error_Crate_47->Fill(10,(module-4)+((crate-4)*18),haderr.get(16));
+      m_h_TT_error_Crate_47->Fill(1,(module-4)+((crate-4)*18),haderr.get(16));
       // GLinkProtocol
-      m_h_TT_error_Crate_47->Fill(11,(module-4)+((crate-4)*18),haderr.get(17));
-      // BCNMismatch
-      m_h_TT_error_Crate_47->Fill(12,(module-4)+((crate-4)*18),haderr.get(18));
+      m_h_TT_error_Crate_47->Fill(2,(module-4)+((crate-4)*18),haderr.get(17));
       // FIFOOverflow
-      m_h_TT_error_Crate_47->Fill(13,(module-4)+((crate-4)*18),haderr.get(19));
+      m_h_TT_error_Crate_47->Fill(3,(module-4)+((crate-4)*18),haderr.get(19));
       // ModuleError
-      m_h_TT_error_Crate_47->Fill(14,(module-4)+((crate-4)*18),haderr.get(20));
+      m_h_TT_error_Crate_47->Fill(4,(module-4)+((crate-4)*18),haderr.get(20));
       
       // GLinkDown
-      m_h_TT_error_Crate_47->Fill(15,(module-4)+((crate-4)*18),haderr.get(22));
+      m_h_TT_error_Crate_47->Fill(5,(module-4)+((crate-4)*18),haderr.get(22));
       // GLinkTimeout
-      m_h_TT_error_Crate_47->Fill(16,(module-4)+((crate-4)*18),haderr.get(23));
-      // FailingBCN
-      m_h_TT_error_Crate_47->Fill(17,(module-4)+((crate-4)*18),haderr.get(24));
-
-
+      m_h_TT_error_Crate_47->Fill(6,(module-4)+((crate-4)*18),haderr.get(23));
+      
      
       // number of triggered slice
       m_h_TT_triggeredSlice_em->Fill((*TriggerTowerIterator)->emADCPeak(),1);
       m_h_TT_triggeredSlice_had->Fill((*TriggerTowerIterator)->hadADCPeak(),1);
 
-
-    }
-
+	}	     
+	     
+  
   return StatusCode( StatusCode::SUCCESS );
-
 }
+
+
+   
 /*---------------------------------------------------------*/
 StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun )
 /*---------------------------------------------------------*/
@@ -913,9 +912,9 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBloc
 	  buffer<<m_NoEvents;
 	  std::string title;
 	  
-	  title = m_h_TT_emerror-> GetTitle();
+	  title = m_h_TT_Error-> GetTitle();
 	  title=title + " | #events: " + buffer.str();
-	  m_h_TT_emerror->SetTitle(title.c_str());
+	  m_h_TT_Error->SetTitle(title.c_str());
 	  
 	  title = m_h_TT_error_Crate_03-> GetTitle();
 	  title=title + " | #events: " + buffer.str();
@@ -925,9 +924,21 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBloc
 	  title=title + " | #events: " + buffer.str();
 	  m_h_TT_error_Crate_47->SetTitle(title.c_str());
 	  
-	  title = m_h_TT_haderror-> GetTitle();
+	  title = m_h_fwPpmError_Crate_03-> GetTitle();
 	  title=title + " | #events: " + buffer.str();
-	  m_h_TT_haderror->SetTitle(title.c_str());
+	  m_h_fwPpmError_Crate_03->SetTitle(title.c_str());
+
+	  title = m_h_fwPpmError_Crate_47-> GetTitle();
+	  title=title + " | #events: " + buffer.str();
+	  m_h_fwPpmError_Crate_47->SetTitle(title.c_str());
+
+	  title = m_h_BCNmis_Crate_47-> GetTitle();
+	  title=title + " | #events: " + buffer.str();
+	  m_h_BCNmis_Crate_47->SetTitle(title.c_str());
+
+	  title = m_h_BCNmis_Crate_03-> GetTitle();
+	  title=title + " | #events: " + buffer.str();
+	  m_h_BCNmis_Crate_03->SetTitle(title.c_str());
 	  
 	}
     }
@@ -965,7 +976,7 @@ double PPrMon::recTime(const std::vector<int>& vFAdc) {
     //x[1] = 3     + binshift; y[1] = vFAdc[3];
     //x[2] = 4 + 1 +binshift; y[2] = vFAdc[4];
   } else {
-    //if(indmax!=0 && indmax!=4) {
+    //if(indmax!=0 && indmax!=4) 
     
     x[0] = indmax - 1 + binshift;  y[0] = vFAdc[indmax-1];
     x[1] = indmax     + binshift; y[1] = vFAdc[indmax];
@@ -979,10 +990,11 @@ double PPrMon::recTime(const std::vector<int>& vFAdc) {
     //double c = y[0] - b*x[0] - a*x[0]*x[0];
     max = -b/(2*a);
     
-  }
+      }
   
   return max;
 }
+  
 
 
 

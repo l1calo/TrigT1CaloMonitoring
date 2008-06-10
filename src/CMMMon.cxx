@@ -164,7 +164,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       if (m_DataType=="BS")
 	{
 	  //---------------------------------- S-Link errors -----------------------------
-	  m_h_CMMJet_error=transmission_Booker.book2F("CMMJet_errors", "Errors from CMM Jet SubStatus Word",10,0.5,10.5,37,0.5,37.5,"","");
+	  m_h_CMMJet_error=transmission_Booker.book2F("CMMJet_errors", "Errors from CMM Jet SubStatus Word",9,0.5,9.5,37,0.5,37.5,"","");
 	  m_h_CMMJet_error->SetStats(kFALSE);
 
 	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(1, "Parity");
@@ -175,9 +175,9 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(7, "ModuleError");
 	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(8, "GLinkDown");
 	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(9, "GLinkTimeout");
-	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(10, "FailingBCN");
+	  
 
-	  m_h_CMMEnergy_error=transmission_Booker.book2F("CMMEnergy_errors", "Errors from CMM Energy SubStatus Word",10,0.5,10.5,37,0.5,37.5,"","");
+	  m_h_CMMEnergy_error=transmission_Booker.book2F("CMMEnergy_errors", "Errors from CMM Energy SubStatus Word",9,0.5,9.5,37,0.5,37.5,"","");
 	  m_h_CMMEnergy_error->SetStats(kFALSE);
 
 	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(1, "Parity");
@@ -188,7 +188,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(7, "ModuleError");
 	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(8, "GLinkDown");
 	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(9, "GLinkTimeout");
-	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(10, "FailingBCN");
+	  
 
  	  std::string name;
 	  std::stringstream buffer;

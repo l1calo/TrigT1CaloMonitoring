@@ -180,7 +180,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	    }
 
 	  // ----------------------------------- Error Histos ------------------------------------------------------
-	  m_h_je_error = Error_Booker.book2F("JEM_Error","Error reports from JEM SubStatus Word",12,0.5,12.5,35,0.5,35.5,"","");
+	  m_h_je_error = Error_Booker.book2F("JEM_Error","Error reports from JEM SubStatus Word",11,0.5,11.5,35,0.5,35.5,"","");
 	 
 	  m_h_je_error->GetXaxis()->SetBinLabel(1, "EM Parity");
 	  m_h_je_error->GetXaxis()->SetBinLabel(2, "HAD Parity");
@@ -193,7 +193,6 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_je_error->GetXaxis()->SetBinLabel(9, "ModuleError");
 	  m_h_je_error->GetXaxis()->SetBinLabel(10, "GLinkDown");
 	  m_h_je_error->GetXaxis()->SetBinLabel(11, "GLinkTimeout");
-	  m_h_je_error->GetXaxis()->SetBinLabel(12, "FailingBCN");
 	  m_h_je_error->SetStats(kFALSE);
 
 	  for (int i = 0; i < 16; i++)
@@ -321,9 +320,7 @@ StatusCode JEMMon::fillHistograms()
       mLog << MSG::VERBOSE<<m_DataType <<" JE has coords ("<<(*it_je)->phi()<<", "<<(*it_je)->eta()
 	   << " and energies : "<<(*it_je)->emEnergy()<<", "<<(*it_je)->hadEnergy()<<" (Em,Had)"<<endreq;
 
-         mLog << MSG::VERBOSE<<m_DataType <<" comparison of energy 2. time slice: em.: "<< (*it_je)->emEnergyVec()[2]<<" and had.: "<<(*it_je)->hadEnergyVec()[2]<<endreq;
-
-
+         
       if ((*it_je)->emEnergy()!=0) 
 	{ 
 	  m_h_je_emeta -> Fill( (*it_je)-> eta(), 1.);
@@ -396,8 +393,7 @@ StatusCode JEMMon::fillHistograms()
 	  m_h_je_error->Fill(10,(crate*18 + module+1),err.get(22));
 	  // GLinkTimeout
 	  m_h_je_error->Fill(11,(crate*18 + module+1),err.get(23));
-	  // FailingBCN
-	  if (err.get(24)!=0) m_h_je_error->Fill(12,(crate*18 + module+1),1);
+	  
 	}   
     }
   

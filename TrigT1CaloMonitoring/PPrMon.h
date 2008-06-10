@@ -126,11 +126,15 @@ protected:
 
    // error
    int m_NoEvents;
-   TH1F* m_h_TT_emerror;
-   TH2F* m_h_TT_error_Crate_03;
-   TH2F* m_h_TT_error_Crate_47;
-   TH1F* m_h_TT_haderror;
-  
+   TH1F* m_h_TT_Error; // Error summary
+   TH2F* m_h_TT_error_Crate_03; // just ROD sub-status word
+   TH2F* m_h_TT_error_Crate_47; //just ROD sub-status word
+   TH2F* m_h_BCNmis_Crate_03; //expert: BCN mismatch
+   TH2F* m_h_BCNmis_Crate_47; //expert: BCN mismatch
+   TH2F* m_h_fwPpmError_Crate_03; //not implemented yet
+   TH2F* m_h_fwPpmError_Crate_47; //      "  
+
+
    // number of triggered slice
    TH1F* m_h_TT_triggeredSlice_em;
    TH1F* m_h_TT_triggeredSlice_had;
