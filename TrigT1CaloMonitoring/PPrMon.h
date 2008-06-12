@@ -97,12 +97,24 @@ protected:
   std::map <int,TProfile*> m_h_TT_HitMap_hadADCChannel_timing;
 
   //ADC Hitmaps per TimeSlice
+  
+  /* reducing time slices, only time slice 00100
   std::map <int,TH2F*> m_h_TT_HitMap_emADC;
   std::map <int,TH2F*> m_h_TT_HitMap_hadADC;
+  */
+
+  TH2F* m_h_TT_HitMap_emADC_00100;
+  TH2F* m_h_TT_HitMap_hadADC_00100;
+  TH1F* m_h_dist_had_max;
+  TH1F* m_h_dist_em_max;
+
+  TProfile2D* m_p_TT_HitMap_emADC_00100;
+  TProfile2D* m_p_TT_HitMap_hadADC_00100;
 
   //timing HitMaps
   TProfile2D* m_h_TT_ADC_emTiming_signal;
   TProfile2D* m_h_TT_ADC_hadTiming_signal;
+  
 
   //LUT Hitmaps per threshold
    TH2F* m_h_TT_HitMap_emLUT_Thresh0;

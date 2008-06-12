@@ -1411,7 +1411,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
   if (m_CompareWithSimulation ==1)
     {
 
-      mLog << MSG::DEBUG << "==== JEM RoI: Funktionality ===="<< endreq ;
+      mLog << MSG::DEBUG << "==== JEM RoI: Functionality ===="<< endreq ;
       
       const JemRoiCollection* BS_JEMRoI;
       sc = m_storeGate->retrieve(BS_JEMRoI, m_BS_JEMRoILocation);
@@ -1526,7 +1526,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
   
     if (m_CompareWithSimulation ==1)
     {
-      mLog << MSG::DEBUG << "==== CMM RoI: Funktionality ===="<< endreq ;
+      mLog << MSG::DEBUG << "==== CMM RoI: Functionality ===="<< endreq ;
       
       // retrieve RoI information from Storegate
       const LVL1::CMMRoI* BS_CR = 0;

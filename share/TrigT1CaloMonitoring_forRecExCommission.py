@@ -88,7 +88,7 @@ BS_L1JEMMonTool = JEMMon(
     PathInRootFile = "L1Calo/2_JEP_JEM",
     ErrorPathInRootFile = "L1Calo/02_Errors_JEM",
     Offline = Offline,
-    #OutputLevel = VERBOSE,
+    OutputLevel = VERBOSE,
     )
 ToolSvc += BS_L1JEMMonTool
 L1CaloMan.AthenaMonTools += [ BS_L1JEMMonTool ]
@@ -116,7 +116,7 @@ BS_L1CMMMonTool = CMMMon (
     PathInRootFile = "L1Calo/3_JEP_CMM",
     ErrorPathInRootFile = "L1Calo/03_Errors_CMM",
     Offline = Offline,
-    #OutputLevel = VERBOSE,
+    OutputLevel = VERBOSE,
     )
 ToolSvc += BS_L1CMMMonTool
 L1CaloMan.AthenaMonTools += [ BS_L1CMMMonTool ]
@@ -158,8 +158,8 @@ JEPTransPerfMonTool = JEPTransPerfMon (
     Offline = Offline,
     CompareWithSimulation = CompareWithSimulation,
 
-    #OutputLevel = VERBOSE,
-    OutputLevel = WARNING,
+    OutputLevel = VERBOSE,
+    #OutputLevel = WARNING,
     )
 ToolSvc += JEPTransPerfMonTool
 L1CaloMan.AthenaMonTools += [ JEPTransPerfMonTool ]

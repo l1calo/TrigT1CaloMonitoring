@@ -209,7 +209,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       //---------------------------- Energy distributions (ADC and LUT) per Channel -----------------------------
       std::vector<Identifier>::const_iterator tower_it = m_lvl1Helper->tower_begin();
       std::string name,title;
-      std::stringstream buffer, etabuffer,phibuffer;
+      std::stringstream buffer, etabuffer,phibuffer, thresbuffer;
 	
       log << MSG::DEBUG << "before book::energy dists" << endreq;
 
@@ -254,28 +254,31 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	  }
 	  
 
-      //---------------------------- ADC Hitmaps per TimeSlice -----------------------------
-      for(int i=0;i<m_SliceNo;i++) 
-	{
-	  buffer.str("");
-	  buffer<<i;
-	  etabuffer.str("");
-	  etabuffer<<m_TT_ADC_HitMap_Thresh;
+      //---------------------------- ADC Hitmaps for Timeslice 2 -----------------------------
+    
+
+          thresbuffer.str("");
+	  thresbuffer<<m_TT_ADC_HitMap_Thresh;
+
+	  title="#eta - #phi Map of EM FADC > "+ thresbuffer.str() + " for timeslice 2";
+	  m_h_TT_HitMap_emADC_00100=ADCTimeSlice_Booker.book2F("emFADCHitMap2",title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  m_h_TT_HitMap_emADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
+	  title="#eta - #phi Profile Map of EM FADC > "+ thresbuffer.str() + " for timeslice 2";
+	  m_p_TT_HitMap_emADC_00100=ADCTimeSlice_Booker.bookProfile2D("emFADCHitMap2_Profile",title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  m_p_TT_HitMap_emADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
+
+          title="#eta - #phi Map of HAD FADC > "+ thresbuffer.str() + " for timeslice 2";
+	  m_h_TT_HitMap_hadADC_00100=ADCTimeSlice_Booker.book2F("hadFADCHitMap2",title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  m_h_TT_HitMap_hadADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
+	  title="#eta - #phi Profile Map of HAD FADC > "+ thresbuffer.str() + " for timeslice 2";
+	  m_p_TT_HitMap_hadADC_00100=ADCTimeSlice_Booker.bookProfile2D("hadFADCHitMap2_Profile",title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  m_p_TT_HitMap_hadADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
+
+
+	  m_h_dist_had_max=ADCTimeSlice_Booker.book1F("haddist_maximum"," had. Distribution of Average Maximum Timeslice",5,0.5,5.5,"time slice (1-5)");
+	  m_h_dist_em_max=ADCTimeSlice_Booker.book1F("emdist_maximum"," em. Distribution of Average Maximum Timeslice",5,0.5,5.5,"time slice (1-5)");
 	  
-	  name = "emFADCHitMap_" + buffer.str();
-	  title = "#eta - #phi Map of EM FADC > " + etabuffer.str() +" for timeslice " + buffer.str();
-	  m_h_TT_HitMap_emADC[i]=ADCTimeSlice_Booker.book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  m_h_TT_HitMap_emADC[i]->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
-	  
-	  name = "hadFADCHitMap_" + buffer.str();
-	  title = "#eta - #phi Map of HAD FADC > " + etabuffer.str() +" for timeslice " + buffer.str();
-	  m_h_TT_HitMap_hadADC[i]=ADCTimeSlice_Booker.book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  m_h_TT_HitMap_hadADC[i]->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
-	}
-
-
-
-
+  
       //---------------------------- Timing of FADC Signal -----------------------------
      if (m_TT_ADCTimingPerChannel==1)
 	{
@@ -305,11 +308,14 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 		}
 	    }
 	}
+
+
+     //-----------------------------Average Maximum Timeslice-------------------------------------------------
       
      m_h_TT_ADC_hadTiming_signal= ADCTimeSlice_Booker.bookProfile2D("ADC_hadTiming_signal","Average Maximum TimeSlice for had Signal (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI,"#eta", "#phi");
       m_h_TT_ADC_hadTiming_signal->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 
-      m_h_TT_ADC_emTiming_signal=ADCTimeSlice_Booker.bookProfile2D("ADC_emTiming_signal","em Timing",100,-4.9,4.9, 64,0,2*M_PI, "#eta", "#phi");
+      m_h_TT_ADC_emTiming_signal=ADCTimeSlice_Booker.bookProfile2D("ADC_emTiming_signal","Average Maximum TimeSlice for had Signal (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI, "#eta", "#phi");
       m_h_TT_ADC_emTiming_signal->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 
 
@@ -620,25 +626,34 @@ StatusCode PPrMon::fillHistograms()
 	  m_h_TT_HitMap_hadLUT_Thresh2->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
 	}
     
-       //---------------------------- ADC HitMaps per timeslice -----------------------------
-      for (int i=0; i<m_SliceNo;i++)
-	{
-	  if (i<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
+
+
+     //---------------------------- ADC HitMaps per timeslice -----------------------------
+
+
+      int tslice=2;
+    
+if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 	    {
-	      if (( (*TriggerTowerIterator)->emADC())[i] > m_TT_ADC_HitMap_Thresh)
+	      if (( (*TriggerTowerIterator)->emADC())[2] > m_TT_ADC_HitMap_Thresh)
 		{
-		  m_h_TT_HitMap_emADC[i] ->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+		  m_h_TT_HitMap_emADC_00100 ->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+		  m_p_TT_HitMap_emADC_00100 ->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),( (*TriggerTowerIterator)->emADC())[2]);
 		}
 	    }
-	
-	  if (i<static_cast<int>(( (*TriggerTowerIterator)->hadADC()).size()))
+
+
+
+ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->hadADC()).size()))
 	    {
-	      if (( (*TriggerTowerIterator)->hadADC())[i] > m_TT_ADC_HitMap_Thresh)
+	      if (( (*TriggerTowerIterator)->hadADC())[2] > m_TT_ADC_HitMap_Thresh)
 		{
-		  m_h_TT_HitMap_hadADC[i] ->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);	  
+		  m_h_TT_HitMap_hadADC_00100 ->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+		  m_p_TT_HitMap_hadADC_00100 ->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),( (*TriggerTowerIterator)->hadADC())[2]); 
 		}
+
 	    }
-	}    
+
 	             
         //---------------------------- Timing of FADC Signal -----------------------------
       int hadFADCSum=0;     
@@ -675,6 +690,7 @@ StatusCode PPrMon::fillHistograms()
 	  max = recTime((*TriggerTowerIterator)->emADC())+1;
 	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
 	  m_h_TT_ADC_emTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max);
+	  m_h_dist_em_max->Fill(max);
 	}
 
       if (hadFADCSum>m_HADFADCCut)
@@ -682,6 +698,7 @@ StatusCode PPrMon::fillHistograms()
 	  max = recTime((*TriggerTowerIterator)->hadADC())+1;
 	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
 	  m_h_TT_ADC_hadTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max);
+	  m_h_dist_had_max->Fill(max);
         }
 
 
@@ -732,9 +749,8 @@ StatusCode PPrMon::fillHistograms()
       // GLinkTimeout
       m_h_TT_Error->Fill(6,emerr.get(23));
       
-
-
-      //em+had FCAL signals get processed in one crate
+      // em signals Crate 0-3
+      //em+had FCAL signals get processed in one crate (Crates 4-7)
 
       if (crate>3) {
 	//---------------- per crate and module --------------------  m_h_TT_error_Crate_47
@@ -769,6 +785,10 @@ StatusCode PPrMon::fillHistograms()
       // GLinkTimeout
       m_h_TT_error_Crate_47->Fill(6,(module-4)+((crate-4)*18),emerr.get(23));
       
+       // BCNMismatch
+      m_h_BCNmis_Crate_47->Fill(1,(module-4)+((crate-4)*18),emerr.get(18));
+
+
 	}
 
       else {
@@ -804,13 +824,17 @@ StatusCode PPrMon::fillHistograms()
       // GLinkTimeout
       m_h_TT_error_Crate_03->Fill(6,(module-4)+(crate*18),emerr.get(23));
       
+       // BCNMismatch
+      m_h_BCNmis_Crate_03->Fill(1,(module-4)+(crate*18),emerr.get(18));
+
 	}
 
 
     
      LVL1::DataError haderr((*TriggerTowerIterator)-> hadError());
 
-            		  
+     //had signals in Crates 4-7
+      		  
       // GLinkParity
       m_h_TT_Error->Fill(1,haderr.get(16));
       // GLinkProtocol
@@ -882,6 +906,10 @@ StatusCode PPrMon::fillHistograms()
       // number of triggered slice
       m_h_TT_triggeredSlice_em->Fill((*TriggerTowerIterator)->emADCPeak(),1);
       m_h_TT_triggeredSlice_had->Fill((*TriggerTowerIterator)->hadADCPeak(),1);
+
+       // BCNMismatch
+      m_h_BCNmis_Crate_47->Fill(1,(module-4)+((crate-4)*18),emerr.get(18));
+
 
 	}	     
 	     
@@ -967,21 +995,22 @@ double PPrMon::recTime(const std::vector<int>& vFAdc) {
   
   if(indmax==0) {
     max=0.+binshift;
-    //x[0] = 0 + binshift;  y[0] = vFAdc[0];
-    //x[1] = 1     + binshift; y[1] = vFAdc[1];
-    //x[2] = 2 + 1 +binshift; y[2] = vFAdc[2];
-  } else if(indmax==4) {
+  } 
+  
+  else if(indmax==4) {
     max=4.+binshift;
-    //x[0] = 2 + binshift;  y[0] = vFAdc[2];
-    //x[1] = 3     + binshift; y[1] = vFAdc[3];
-    //x[2] = 4 + 1 +binshift; y[2] = vFAdc[4];
-  } else {
-    //if(indmax!=0 && indmax!=4) 
-    
+  }
+  
+  else {
+       
     x[0] = indmax - 1 + binshift;  y[0] = vFAdc[indmax-1];
     x[1] = indmax     + binshift; y[1] = vFAdc[indmax];
     x[2] = indmax + 1 +binshift; y[2] = vFAdc[indmax+1];
     
+
+    //This is a parabola fit function to find the maximum in ADC counts (asymmetric distribution) 
+    //Simplified: max = indmax+(y[0]-y[2])/(2*(y[0]+y[2]-2*y[1]))
+ 
     double a = ( (x[0]-x[2])*(y[1]-y[2]) - (x[1]-x[2])*(y[0]-y[2]) ) / (
 									(x[0]-x[2])*(x[1]*x[1]-x[2]*x[2]) - (x[1]-x[2])*(x[0]*x[0]-x[2]*x[2]) );
     double b = ( (y[1]-y[2])*(x[0]*x[0]-x[2]*x[2]) -
@@ -990,7 +1019,7 @@ double PPrMon::recTime(const std::vector<int>& vFAdc) {
     //double c = y[0] - b*x[0] - a*x[0]*x[0];
     max = -b/(2*a);
     
-      }
+  }
   
   return max;
 }
