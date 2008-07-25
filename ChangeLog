@@ -1,3 +1,7 @@
+2008-07-25 Andrea Neusiedl <andrea.neusiedl@cern.ch>
+	* ATLASCosmicFlags -> rec, update AthenaPT
+	* Tag as TrigT1CaloMonitoring-00-03-17
+
 2008-06-12 Andrea Neusiedl <andrea.neusiedl@cern.ch>
 	* Timing issues of Ppms changed
 	* Tag as TrigT1CaloMonitoring-00-03-16

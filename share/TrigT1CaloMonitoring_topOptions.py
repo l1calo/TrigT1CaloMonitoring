@@ -93,7 +93,7 @@ toolSvc.L1PPrPerfMonTool.CompWithCalorimeter=False
 toolSvc.L1PPrPerfMonTool.PathInRootFile = "L1Calo/1_PPrPerfMon"
 #toolSvc.L1PPrPerfMonTool.OutputLevel = DEBUG
 
-if ATLASCosmicFlags.doLAr and  ATLASCosmicFlags.doTile:
+if rec.doLArg and  rec.doTile:
     from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__TriggerTowerMaker
     from AthenaCommon.AlgSequence import AlgSequence
     job = AlgSequence()
