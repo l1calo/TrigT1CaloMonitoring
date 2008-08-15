@@ -29,7 +29,6 @@ if not testRun:
     ATLASCosmicFlags.OnlineJiveXML=False
     
 ATLASCosmicFlags.OnlineJiveXML=False
-#ATLASCosmicFlags.OnlineJiveXML=False
 #athenaCommonFlags.isOnline=True
 CBNTAthenaAware = False
 ATLASCosmicFlags.doESD=False

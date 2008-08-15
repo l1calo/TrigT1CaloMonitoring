@@ -93,7 +93,7 @@ protected:
    TH1F* m_h_JEMHits_MainHits;
    TH1F* m_h_JEMHits_FwdHitsRight;
    TH1F* m_h_JEMHits_FwdHitsLeft;
-
+   TH2F* m_h_JEMDAQ_Hits_Map;
    // JEM Et Sums
    TH1F*  m_h_JEMEtSums_Ex;
    TH1F*  m_h_JEMEtSums_Ey;
@@ -103,7 +103,7 @@ protected:
    TH1F* m_h_JEMRoI_MainHits;
    TH1F* m_h_JEMRoI_FwdHitsRight;
    TH1F* m_h_JEMRoI_FwdHitsLeft;
-
+  
    std::map <int, TH2F*> m_h_JEMRoI_MainThreshPerEtaPhi;
    std::map <int, TH2F*> m_h_JEMRoI_FwdThreshPerEtaPhi;
  

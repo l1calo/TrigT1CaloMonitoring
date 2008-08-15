@@ -229,6 +229,31 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       m_h_JEMRoI_FwdHitsRight = RoI_Booker.book1F("FwdHitsRight_JEM_RoI", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
       m_h_JEMRoI_FwdHitsLeft = RoI_Booker.book1F("FwdHitsLeft_JEM_RoI", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
       
+      m_h_JEMDAQ_Hits_Map= DAQ_Booker.book2F("Hits_Map_JEM","HitMap of Hits per JEM",12,-0.5,11.5,35,0.5,35.5,"","");
+     
+	  for (int i = 0; i < 16; i++)
+	    {
+
+	      std::string name,title,xbin_name;
+	      std::stringstream buffer;
+	      //order of the thresholds: main thresholds bins 1-8 + fwd thresholds bins 9-12
+              buffer.str("");
+	      buffer<<i;
+	      name = "JEM " + buffer.str();
+              if (i<12) {
+	      xbin_name = "Thrh" + buffer.str();
+	      m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel((i+1),xbin_name.c_str());
+              
+	      }
+               
+	      m_h_JEMDAQ_Hits_Map->GetYaxis()->SetBinLabel((i+1), name.c_str());
+	         
+	      m_h_JEMDAQ_Hits_Map->GetYaxis()->SetBinLabel((i+1+18), name.c_str());
+
+	    }
+	m_h_JEMDAQ_Hits_Map->GetYaxis()->SetBinLabel(17, "Crate 0: ");
+	m_h_JEMDAQ_Hits_Map->GetYaxis()->SetBinLabel(35, "Crate 1: ");
+
       //---------------------------- HitThreshold per Eta-Phi -----------------------------
       for (int i=0;i<8;i++)
 	{
@@ -449,7 +474,70 @@ StatusCode JEMMon::fillHistograms()
 	// main hits
 	Help.FillHitsHisto(m_h_JEMHits_MainHits , JEMHit, 0, 8, 0, 2, &mLog);
       }
+   
+      //m_h_JEMDAQ_Hit_Map:
+
+      if ((*it_JEMHits)-> JetHits() !=0) {
+
+	if ((*it_JEMHits)->forward()==0) {
+	  if ((*it_JEMHits)->crate() == 0) {
+
+	    for(int i=0; i<8;i++)
+	    {
+	      if ((Help.Multiplicity(JEMHit,3*i,1))!=0){
+		m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+1,1);
+	      }
+	    }
+	  }
+	   if ((*it_JEMHits)->crate() == 1) {
+	    
+	     for(int i=0; i<8;i++) {
+	       if ((Help.Multiplicity(JEMHit,3*i,1))!=0){
+	       m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+2+18,1);
+	       }
+	     }
+	   }
+	}
+
+
+        if ((*it_JEMHits)->forward()==1) {
+	  if ((*it_JEMHits)->crate() == 0) {
+	    for(int i=0; i<8;i++)
+	      {
+		if ((Help.Multiplicity(JEMHit,2*i,1))!=0){
+		  m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+1,1);
+		}
+	      }
+	    	  
+	    for(int i=8; i<12;i++)
+	      {
+		if ((Help.Multiplicity(JEMHit,2*i,1))!=0){
+		  m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+1,1);
+		}
+	      }
+	  }
+
+	  if ((*it_JEMHits)->crate() == 1) {
+	    for(int i=0; i<8;i++)
+	      {
+		if ((Help.Multiplicity(JEMHit,2*i,1))!=0){
+		  m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+2+18,1);
+		}
+	      }
+	    	  
+	    for(int i=8; i<12;i++)
+	      {
+		if ((Help.Multiplicity(JEMHit,2*i,1))!=0){
+		  m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+2+18,1);
+		}
+	      }
+	  }
+	}
+      }
     }
+	     
+
+ 
   
   // =============================================================================================
   // ================= Container: JEM Et Sums ====================================================

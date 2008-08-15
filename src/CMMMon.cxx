@@ -160,6 +160,8 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       m_h_CMMRoI_Ey = RoI_Booker.book1F("Ey_CMM_RoI", "E_{y}^{CMM}  --  CMM RoI", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "N");
       m_h_CMMRoI_Et = RoI_Booker.book1F("Et_CMM_RoI", "SumE_{t}^{CMM}  --  CMM RoI", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "N");
 
+       
+
 
       if (m_DataType=="BS")
 	{

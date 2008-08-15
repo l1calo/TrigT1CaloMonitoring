@@ -1,3 +1,7 @@
+2008-08-15 Andrea Neusiedl <andrea.neusiedl@cern.ch>
+	* Tag as TrigT1CaloMonitoring-00-03-20
+	* Inserting HitMaps
+
 2008-08-15 Damien Prieur <damien.prieur@cern.ch>
 	* Tag as TrigT1CaloMonitoring-00-03-19
 	* TrigT1CaloMonitoring_AthenaPT_topOptions.py & TrigT1CaloMonitoring_forRecExCommission.py:
