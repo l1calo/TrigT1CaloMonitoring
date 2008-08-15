@@ -30,7 +30,7 @@ if not testRun:
     
 ATLASCosmicFlags.OnlineJiveXML=False
 #ATLASCosmicFlags.OnlineJiveXML=False
-ATLASCosmicFlags.doOnline=True
+#athenaCommonFlags.isOnline=True
 CBNTAthenaAware = False
 ATLASCosmicFlags.doESD=False
 ATLASCosmicFlags.doNtuple=False
@@ -90,7 +90,7 @@ InDetCosmicFlags.maskTRT=False
 LArCoolChannelSelection="3:238,306,313,319,325,331,338,344,350,1001:1012,1021,1022"
 
 #
-if ATLASCosmicFlags.doOnline:
+if athenaCommonFlags.isOnline:
     include.block("ByteStreamCnvSvc/BSEventStorageEventSelector_jobOptions.py")
 
 # 

@@ -1,3 +1,8 @@
+2008-08-15 Damien Prieur <damien.prieur@cern.ch>
+	* Tag as TrigT1CaloMonitoring-00-03-19
+	* TrigT1CaloMonitoring_AthenaPT_topOptions.py & TrigT1CaloMonitoring_forRecExCommission.py:
+	  replace ATLASCosmicFlags.doOnline with athenaCommonFlags.isOnline 
+	  
 2008-07-25 Andrea Neusiedl <andrea.neusiedl@cern.ch>
 	* ATLASCosmicFlags -> rec, update AthenaPT
 	* Tag as TrigT1CaloMonitoring-00-03-17

@@ -1,4 +1,4 @@
-Offline= not ATLASCosmicFlags.doOnline
+Offline= not athenaCommonFlags.isOnline
 CompareWithSimulation=True
 
 #MaxEnergyRange is set individually
