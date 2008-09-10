@@ -7,7 +7,7 @@ use AtlasCLHEP          	AtlasCLHEP-00-*       	External
 use GaudiInterface      	GaudiInterface-*      	External
 #use DataCollection       	DataCollection-*       	External
 use StoreGate           	StoreGate-*           	Control
-use AthenaMonitoring    	AthenaMonitoring-00-* 	Control
+use AthenaMonitoring    	AthenaMonitoring-* 	Control
 use DataModel 			DataModel-*		Control 
 use Identifier 			Identifier-*		DetectorDescription
 
