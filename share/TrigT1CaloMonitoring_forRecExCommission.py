@@ -193,4 +193,10 @@ L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
 
 #=================================================================================
 # FileKey must match that given to THistSvc
-L1CaloMan.FileKey = "GLOBAL"
+if not 'DQMonFlags' in dir():
+   print "TrigT1CaloMonitoring_forRecExCommission.py: DQMonFlags not yet imported - I import them now"
+   from AthenaMonitoring.DQMonFlags import DQMonFlags
+L1CaloMan.FileKey             = DQMonFlags.monManFileKey()
+L1CaloMan.Environment         = DQMonFlags.monManEnvironment()
+L1CaloMan.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+L1CaloMan.DataType            = DQMonFlags.monManDataType()
