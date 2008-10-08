@@ -1,7 +1,12 @@
+2008-10-08  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+	* Tag as TrigT1CaloMonitoring-00-04-00
+        * Add new tool for ROD monitoring.
+        * Needs TrigT1Calo-03-04-00 and TrigT1CaloByteStream-00-06-05
+
 2008-09-24 Andrea Neusiedl <andrea.neusiedl@cern.ch>
 	* Tag as TrigT1CaloMonitoring-00-03-22
 	* new requirements for RecExCommon
-	
+
 2008-09-10  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-03-21
         * Fix to requirements for checkreq warning

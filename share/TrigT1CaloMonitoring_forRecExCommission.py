@@ -192,6 +192,17 @@ L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
 #ToolSvc.CPMSimBSMonTool.OutputLevel = DEBUG
 
 #=================================================================================
+#===================================== ROD =======================================
+#=================================================================================
+from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import TrigT1CaloRodMonTool
+L1BSRODMonTool = TrigT1CaloRodMonTool (
+    name = "L1BSRODMonTool",
+    #OutputLevel = DEBUG,
+    )
+ToolSvc += L1BSRODMonTool
+L1CaloMan.AthenaMonTools += [ L1BSRODMonTool ]
+
+#=================================================================================
 # FileKey must match that given to THistSvc
 if not 'DQMonFlags' in dir():
    print "TrigT1CaloMonitoring_forRecExCommission.py: DQMonFlags not yet imported - I import them now"
