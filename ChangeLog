@@ -1,3 +1,8 @@
+2008-10-13  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
+	* Tag as TrigT1CaloMonitoring-00-04-01
+        * Add options to ignore bad TriggerTowers in comparison with
+          simulation plots.
+
 2008-10-08  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
 	* Tag as TrigT1CaloMonitoring-00-04-00
         * Add new tool for ROD monitoring.

@@ -176,7 +176,7 @@ L1BSCPMMonTool = TrigT1CaloCpmMonTool (
     CMMCPHitsLocation = "CMMCPHits",
     CPMRoILocation = "CPMRoIs",
     RootDirectory = "L1Calo",
-    MaxEnergyRange = 50,
+    MaxEnergyRange = 256,
     #SingleDirectory = False,
     Offline = Offline,
     #OutputLevel = DEBUG,
@@ -189,6 +189,8 @@ CPMSimBSMonTool = CPMSimBSMon("CPMSimBSMonTool",
                   CompareWithSimulation = CompareWithSimulation)
 ToolSvc += CPMSimBSMonTool
 L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
+ToolSvc.CPMSimBSMonTool.IgnoreTowersEM = [ 1890, 4082 ]
+ToolSvc.CPMSimBSMonTool.IgnoreTowersHad = [ 3473, 3643, 4824 ]
 #ToolSvc.CPMSimBSMonTool.OutputLevel = DEBUG
 
 #=================================================================================

@@ -21,6 +21,8 @@
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "DataModel/DataVector.h"
 
+class TH1;
+class TH2;
 class TH1F;
 class TH2F;
 class StoreGateSvc;
@@ -94,7 +96,7 @@ private:
                                           ErrorVector& errors, int selection);
   void  setLabels(TH2* hist);
   void  setLabelsCMCC(TH2* hist);
-  void  setLabelsCMT(TH2* hist);
+  void  setLabelsCMT(TH2* hist, bool isRoi = false);
   void  setLabelsCPMFP(TH2* hist);
   void  setLabelsYNUM(TH2* hist, int beg, int end);
   void  setLabelsXNUM(TH2* hist, int beg, int end);
@@ -116,6 +118,7 @@ private:
   void  simulate(const CmmCpHitsCollection* hitsIn,
                        CmmCpHitsCollection* hitsOut, int selection);
   int   fpga(int crate, double phi);
+  bool  ignoreTower(int layer, int key);
 
   ServiceHandle<StoreGateSvc> m_storeGate;
   ToolHandle<LVL1::IL1EmTauTools> m_emTauTool;
@@ -150,6 +153,13 @@ private:
   int m_events;
   /// Simulation allowed flag
   bool m_compareWithSim;
+  /// RoI thresholds to compare
+  std::vector<int> m_roiThresh;
+  /// RoI thresholds mask for comparisons
+  unsigned int m_roiMask;
+  /// TriggerTowers to be ignored in simulation comparisons
+  std::vector<int> m_ignoreTowersEm;
+  std::vector<int> m_ignoreTowersHad;
 
   //=======================
   //   Match/Mismatch plots
@@ -176,6 +186,8 @@ private:
   TH2F* m_h_FpgaTowerSIMneDAT;
   TH2F* m_h_FpgaTowerSIMnoDAT;
   TH2F* m_h_FpgaTowerDATnoSIM;
+  TH2F* m_h_IgnoreTowersEM;
+  TH2F* m_h_IgnoreTowersHad;
 
   // RoI
   TH2F* m_h_RoISIMeqDAT;

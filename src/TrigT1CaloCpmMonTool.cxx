@@ -75,7 +75,7 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
   declareProperty("PhiUnits", m_phiUnits = "channels",
                   "Phi Units: radians, degrees or channels");
   declareProperty("NoiseSignalSplit", m_noiseSignalSplit = 0);
-  declareProperty("MaxEnergyRange", m_maxEnergyRange = 50);
+  declareProperty("MaxEnergyRange", m_maxEnergyRange = 256);
   declareProperty( "Offline", m_Offline = 1) ;
 
 }
@@ -352,8 +352,10 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monShift;
 
-  m_h_CP_errors = book1F("CP_Error_Summary",
-                         "CP Error Summary for 0 Events;;Events",
+  //m_h_CP_errors = book1F("CP_Error_Summary",
+  //                       "CP Error Summary for 0 Events;;Events",
+  //                        NumberOfSummaryBins, 0, NumberOfSummaryBins);
+  m_h_CP_errors = book1F("CP_Error_Summary","CP Error Summary;;Events",
                           NumberOfSummaryBins, 0, NumberOfSummaryBins);
   m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMParity, "CPM parity");
   m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMLink,   "CPM link");
@@ -816,10 +818,10 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
     m_h_CP_errors->Fill(err, error);
   }
   ++m_events;
-  std::ostringstream cnum;
-  cnum << m_events;
-  std::string title("CP Error Summary for " + cnum.str() + " Events");
-  m_h_CP_errors->SetTitle(TString(title));
+  //std::ostringstream cnum;
+  //cnum << m_events;
+  //std::string title("CP Error Summary for " + cnum.str() + " Events");
+  //m_h_CP_errors->SetTitle(TString(title));
 
   m_log << MSG::DEBUG << "Leaving fillHistograms" << endreq;
 
@@ -850,6 +852,7 @@ TH1F* TrigT1CaloCpmMonTool::book1F(const std::string& name,
     m_log << MSG::WARNING << "Could not register histogram : " 
 	  << name << endreq;
   }
+  hist->SetStats(kFALSE);
   
   return hist;
 }
