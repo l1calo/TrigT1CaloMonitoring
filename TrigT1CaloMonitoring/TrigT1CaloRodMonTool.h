@@ -50,7 +50,7 @@ public:
 private:
 
   enum StatusBits { GLink, CMMParity, LVDSLink, FIFOOverflow, DataTransport,
-                    Timeout, BCNMismatch, TriggerType, LimitedRoI,
+                    Timeout, BCNMismatch, TriggerType, LimitedRoI, NoFragment,
                     NumberOfStatusBins, NoPayload = LimitedRoI };
 
   typedef DataVector<LVL1::RODHeader>    RodHeaderCollection;

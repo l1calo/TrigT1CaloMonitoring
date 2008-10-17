@@ -211,10 +211,11 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   //=============================================
 
   std::vector<int> errors(NumberOfStatusBins);
+  std::vector<int> noFragmentFlags(80, 1);
   std::vector<int> noPayloadFlags(56, 1);
   std::vector<const RodHeaderCollection*> cols;
-  if (rodTES) cols.push_back(rodTES);
-  if (cpRoibTES) cols.push_back(cpRoibTES);
+  if (rodTES)     cols.push_back(rodTES);
+  if (cpRoibTES)  cols.push_back(cpRoibTES);
   if (jepRoibTES) cols.push_back(jepRoibTES);
   std::vector<const RodHeaderCollection*>::const_iterator colIter =
                                                                  cols.begin();
@@ -231,6 +232,7 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
       const int rod = crate + dataType*6;
       const int nData = header->payloadSize();
       const int pos = rod*4 + slink;
+      noFragmentFlags[pos] = 0;
       if (pos < 56 && nData > 0) noPayloadFlags[pos] = 0;
       m_sumPayloads1[pos] += nData;
       m_sumPayloads2[pos] += nData;
@@ -328,13 +330,21 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
     }
   }
 
-  // Update missing payloads
+  // Update missing ROD fragments and payloads
 
-  for (int pos = 0; pos < 56; ++pos) {
-    if (noPayloadFlags[pos]) {
+  for (int pos = 0; pos < 80; ++pos) {
+    if (noFragmentFlags[pos] || (pos < 56 && noPayloadFlags[pos])) {
       TH2F* hist = m_h_ROD_PP_stat;
       int val = pos;
-      if (pos >= 48) {
+      if (pos >= 72) {
+        if (pos%2) continue;
+	hist = m_h_ROD_RoI_stat;
+	val = (pos-72)/2 + 8;
+      } else if (pos >= 56) {
+        if (pos%2) continue;
+        hist = m_h_ROD_RoI_stat;
+	val = (pos-56)/2;
+      } else if (pos >= 48) {
         hist = m_h_ROD_CPJEP_stat;
         val = pos-48 + 8;
       } else if (pos >= 32) {
@@ -342,8 +352,13 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
         hist = m_h_ROD_CPJEP_stat;
         val = (pos-32)/2;
       }
-      hist->Fill(NoPayload, val);
-      errors[NoPayload] = 1;
+      if (noFragmentFlags[pos]) {
+        hist->Fill(NoFragment, val);
+	errors[NoFragment] = 1;
+      } else {
+        hist->Fill(NoPayload, val);
+        errors[NoPayload] = 1;
+      }
     }
   }
 
@@ -416,6 +431,7 @@ void TrigT1CaloRodMonTool::setLabelsStatus(TH1* hist)
   hist->GetXaxis()->SetBinLabel(1+BCNMismatch,   "BCNMismatch");
   hist->GetXaxis()->SetBinLabel(1+TriggerType,   "TriggerTypeTimeout");
   hist->GetXaxis()->SetBinLabel(1+LimitedRoI,    "LimitedRoISet");
+  hist->GetXaxis()->SetBinLabel(1+NoFragment,    "No ROD Fragment");
 }
 
 void TrigT1CaloRodMonTool::setLabelsCSL(TH1* hist, bool xAxis, int firstBin,
