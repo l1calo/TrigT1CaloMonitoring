@@ -8,6 +8,7 @@
 //
 // ********************************************************************
 
+#include <numeric>
 #include <sstream>
 #include <utility>
 
@@ -451,12 +452,18 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
     TriggerTowerCollection::const_iterator ttIteratorEnd =
                                                       triggerTowerTES->end(); 
     for (; ttIterator != ttIteratorEnd; ++ttIterator) {
-      const int    em  = (*ttIterator)->emEnergy();
-      const int    had = (*ttIterator)->hadEnergy();
-      const double eta = (*ttIterator)->eta();
-      const double phi = (*ttIterator)->phi();
+      LVL1::TriggerTower* tt = *ttIterator;
+      const double eta = tt->eta();
+      if (eta < -2.5 || eta > 2.5) continue;
+      const std::vector<int>& emLut(tt->emLUT());
+      const std::vector<int>& hadLut(tt->hadLUT());
+      if (std::accumulate(emLut.begin(), emLut.end(), 0) == 0 &&
+          std::accumulate(hadLut.begin(), hadLut.end(), 0) == 0) continue;
+      const int    em  = tt->emEnergy();
+      const int    had = tt->hadEnergy();
+      const double phi = tt->phi();
       const double phiMod = phi * m_phiScale;
-      if (em && eta > -2.5 && eta < 2.5) {
+      if (em) {
         m_h_TT_Em_Et->Fill(em, 1.);
         if (m_noiseSignalSplit) m_h_TT_Em_Et_s->Fill(em, 1.);
         m_h_TT_Em_eta->Fill(eta, 1.);
@@ -464,7 +471,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         m_h_TT_Em_eta_phi->Fill(eta, phiMod, 1.);
         m_h_TT_Em_eta_phi_w->Fill(eta, phiMod, em);
       }
-      if (had && eta > -2.5 && eta < 2.5) {
+      if (had) {
         m_h_TT_Had_Et->Fill(had, 1.);
         if (m_noiseSignalSplit) m_h_TT_Had_Et_s->Fill(had, 1.);
         m_h_TT_Had_eta->Fill(eta, 1.);
@@ -472,11 +479,9 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         m_h_TT_Had_eta_phi->Fill(eta, phiMod, 1.);
         m_h_TT_Had_eta_phi_w->Fill(eta, phiMod, had);
       }
-      if (eta > -2.5 && eta < 2.5) {
-	const unsigned int key = towerKey.ttKey(phi, eta);
-	if (key > maxKey) maxKey = key;
-        ttMap.insert(std::make_pair(key, *ttIterator));
-      }
+      const unsigned int key = towerKey.ttKey(phi, eta);
+      if (key > maxKey) maxKey = key;
+      ttMap.insert(std::make_pair(key, tt));
     }
   }
 
@@ -489,10 +494,11 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       CpmTowerCollection::const_iterator ctIteratorEnd = cpmTwrTES->end(); 
 
       for (; ctIterator != ctIteratorEnd; ++ctIterator) {
-        const int    em  = (*ctIterator)->emEnergy();
-        const int    had = (*ctIterator)->hadEnergy();
-        const double eta = (*ctIterator)->eta();
-        const double phi = (*ctIterator)->phi();
+	LVL1::CPMTower* ct = *ctIterator;
+        const int    em  = ct->emEnergy();
+        const int    had = ct->hadEnergy();
+        const double eta = ct->eta();
+        const double phi = ct->phi();
         const double phiMod = phi * m_phiScale;
         const LVL1::Coordinate coord(phi, eta);
         LVL1::CoordToHardware converter;
@@ -501,8 +507,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         const int cpm    = (core) ? converter.cpModule(coord)
 	                          : converter.cpModuleOverlap(coord);
         const int loc    = crate * s_modules + cpm - 1;
-        const int peak   = (*ctIterator)->peak();
-        const int slices = ((*ctIterator)->emEnergyVec()).size();
+        const int peak   = ct->peak();
+        const int slices = (ct->emEnergyVec()).size();
         m_h_CPM_slices->Fill(crate*s_maxSlices + slices - 1, peak, 1.);
         if (em && core) {
           m_h_CT_Em_Et->Fill(em, 1.);
@@ -521,37 +527,42 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
           m_h_CT_Had_eta_phi_w->Fill(eta, phiMod, had);
         }
         // Errors
-        const LVL1::DataError emError((*ctIterator)->emError());
-        const LVL1::DataError hadError((*ctIterator)->hadError());
-        m_h_CT_Em_parity->Fill(eta, phiMod,
-	                            emError.get(LVL1::DataError::Parity));
-        m_h_CT_Had_parity->Fill(eta, phiMod,
-                                     hadError.get(LVL1::DataError::Parity));
-        m_h_CT_Em_link->Fill(eta, phiMod,
-	                          emError.get(LVL1::DataError::LinkDown));
-        m_h_CT_Had_link->Fill(eta, phiMod,
-                                   hadError.get(LVL1::DataError::LinkDown));
-        // Sub-status errors
-        const int status = emError.error() >> LVL1::DataError::GLinkParity;
-        for (int bit = 0; bit < 8; ++bit) {
-          m_h_CT_status->Fill(bit, loc, (status >> bit) & 0x1);
+	int error = ct->emError();
+	if (error) {
+	  const LVL1::DataError emError(error);
+	  if (emError.get(LVL1::DataError::Parity)) {
+	    m_h_CT_Em_parity->Fill(eta, phiMod);
+	    errorsCPM[loc] |= (1 << CPMParity);
+	  }
+          if (emError.get(LVL1::DataError::LinkDown)) {
+	    m_h_CT_Em_link->Fill(eta, phiMod);
+	    errorsCPM[loc] |= (1 << CPMLink);
+          }
+	  const int status = error >> LVL1::DataError::GLinkParity;
+	  if (status) {
+	    for (int bit = 0; bit < 8; ++bit) {
+	      if ((status >> bit) & 0x1) m_h_CT_status->Fill(bit, loc);
+            }
+	    errorsCPM[loc] |= (1 << CPMStatus);
+          }
         }
-
-        // Error summary flags
-        if (emError.get(LVL1::DataError::Parity) ||
-            hadError.get(LVL1::DataError::Parity)) {
-	  errorsCPM[loc] |= (1 << CPMParity);
+	error = ct->hadError();
+	if (error) {
+	  const LVL1::DataError hadError(error);
+	  if (hadError.get(LVL1::DataError::Parity)) {
+	    m_h_CT_Had_parity->Fill(eta, phiMod);
+	    errorsCPM[loc] |= (1 << CPMParity);
+	  }
+          if (hadError.get(LVL1::DataError::LinkDown)) {
+	    m_h_CT_Had_link->Fill(eta, phiMod);
+	    errorsCPM[loc] |= (1 << CPMLink);
+          }
         }
-        if (emError.get(LVL1::DataError::LinkDown) ||
-            hadError.get(LVL1::DataError::LinkDown)) {
-	  errorsCPM[loc] |= (1 << CPMLink);
-        }
-        if (status) errorsCPM[loc] |= (1 << CPMStatus);
 
         if (core) {
           const unsigned int key = towerKey.ttKey(phi, eta);
           if (key > maxKey) maxKey = key;
-          cpMap.insert(std::make_pair(key, *ctIterator));
+          cpMap.insert(std::make_pair(key, ct));
         }
       }
     }
@@ -710,43 +721,44 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         }
       }
       // Errors
-      const LVL1::DataError hit0Err((*cmIterator)->Error0());
-      const LVL1::DataError hit1Err((*cmIterator)->Error1());
-      if (dataId <= s_modules) {
-        m_h_CMM_parity->Fill(dataId, 2*crate,
-	                     hit1Err.get(LVL1::DataError::Parity));
-        m_h_CMM_parity->Fill(dataId, 2*crate + 1,
-	                     hit0Err.get(LVL1::DataError::Parity));
-      } else {
-	int remBin   = s_modules + 1;
-	int remCrate = -1;
-        if      (dataId == LVL1::CMMCPHits::REMOTE_0) remCrate = 0;
-        else if (dataId == LVL1::CMMCPHits::REMOTE_1) remCrate = 1;
-        else if (dataId == LVL1::CMMCPHits::REMOTE_2) remCrate = 2;
-	if (remCrate >= 0) {
-	  m_h_CMM_parity->Fill(remBin, 2*remCrate,
-	                       hit1Err.get(LVL1::DataError::Parity));
-	  m_h_CMM_parity->Fill(remBin, 2*remCrate + 1,
-	                       hit0Err.get(LVL1::DataError::Parity));
+      int error0 = (*cmIterator)->Error0();
+      int error1 = (*cmIterator)->Error1();
+      if (error0 || error1) {
+        const LVL1::DataError hit0Err(error0);
+        const LVL1::DataError hit1Err(error1);
+	const int parity0 = hit0Err.get(LVL1::DataError::Parity);
+	const int parity1 = hit1Err.get(LVL1::DataError::Parity);
+	if (parity0 || parity1) {
+          if (dataId <= s_modules) {
+	    if (parity1) m_h_CMM_parity->Fill(dataId, 2*crate);
+	    if (parity0) m_h_CMM_parity->Fill(dataId, 2*crate + 1);
+	    errorsCPM[bin] |= (1 << CMMParity);
+          } else {
+  	    int remBin   = s_modules + 1;
+	    int remCrate = -1;
+            if      (dataId == LVL1::CMMCPHits::REMOTE_0) remCrate = 0;
+            else if (dataId == LVL1::CMMCPHits::REMOTE_1) remCrate = 1;
+            else if (dataId == LVL1::CMMCPHits::REMOTE_2) remCrate = 2;
+	    if (remCrate >= 0) {
+	      if (parity1) m_h_CMM_parity->Fill(remBin, 2*remCrate);
+	      if (parity0) m_h_CMM_parity->Fill(remBin, 2*remCrate + 1);
+	    }
+          }
+	  if (parity1) errorsCMM[crate*2]     |= (1 << CMMParity);
+	  if (parity0) errorsCMM[crate*2 + 1] |= (1 << CMMParity);
+        }
+        // Sub-status errors
+        const int status0 = error0 >> LVL1::DataError::GLinkParity;
+        const int status1 = error1 >> LVL1::DataError::GLinkParity;
+	if (status0 || status1) {
+          for (int bit = 0; bit < 8; ++bit) {
+	    if ((status1 >> bit) & 0x1) m_h_CMM_status->Fill(bit, 2*crate);
+	    if ((status0 >> bit) & 0x1) m_h_CMM_status->Fill(bit, 2*crate + 1);
+	  }
+	  if (status1) errorsCMM[crate*2]     |= (1 << CMMStatus);
+	  if (status0) errorsCMM[crate*2 + 1] |= (1 << CMMStatus);
         }
       }
-      // Sub-status errors
-      const int status0 = hit0Err.error() >> LVL1::DataError::GLinkParity;
-      const int status1 = hit1Err.error() >> LVL1::DataError::GLinkParity;
-      for (int bit = 0; bit < 8; ++bit) {
-	m_h_CMM_status->Fill(bit, 2*crate,     (status1 >> bit) & 0x1);
-	m_h_CMM_status->Fill(bit, 2*crate + 1, (status0 >> bit) & 0x1);
-      }
-      // Error summary flags
-      if (hit0Err.get(LVL1::DataError::Parity) ||
-          hit1Err.get(LVL1::DataError::Parity)) {
-	if (dataId <= s_modules) errorsCPM[bin] |= (1 << CMMParity);
-	if (hit0Err.get(LVL1::DataError::Parity)) {
-	  errorsCMM[crate*2 + 1] |= (1 << CMMParity);
-        } else errorsCMM[crate*2] |= (1 << CMMParity);
-      }
-      if (status0) errorsCMM[crate*2 + 1] |= (1 << CMMStatus);
-      if (status1) errorsCMM[crate*2]     |= (1 << CMMStatus);
 
       if (dataId <= s_modules) {
         const unsigned int key = crate * s_modules + dataId;

@@ -124,6 +124,7 @@ private:
   ToolHandle<LVL1::IL1EmTauTools> m_emTauTool;
   ToolHandle<LVL1::IL1CPHitsTools> m_cpHitsTool;
   mutable MsgStream m_log;
+  bool m_debug;
 
   MonGroup* m_monGroup;
   std::string m_rootDir;

@@ -189,7 +189,7 @@ CPMSimBSMonTool = CPMSimBSMon("CPMSimBSMonTool",
                   CompareWithSimulation = CompareWithSimulation)
 ToolSvc += CPMSimBSMonTool
 L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
-ToolSvc.CPMSimBSMonTool.IgnoreTowersEM = [ 1890, 4082 ]
+ToolSvc.CPMSimBSMonTool.IgnoreTowersEM = [ 1890 ]
 ToolSvc.CPMSimBSMonTool.IgnoreTowersHad = [ 3473, 3643, 4824 ]
 #ToolSvc.CPMSimBSMonTool.OutputLevel = DEBUG
 

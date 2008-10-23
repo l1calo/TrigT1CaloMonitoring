@@ -48,7 +48,7 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
     m_storeGate("StoreGateSvc", name),
     m_emTauTool("LVL1::L1EmTauTools/L1EmTauTools"),
     m_cpHitsTool("LVL1::L1CPHitsTools/L1CPHitsTools"),
-    m_log(msgSvc(), name),
+    m_log(msgSvc(), name), m_debug(false),
     m_monGroup(0), m_events(0)
 /*---------------------------------------------------------*/
 {
@@ -96,6 +96,7 @@ StatusCode CPMSimBSMon:: initialize()
 /*---------------------------------------------------------*/
 {
   m_log.setLevel(outputLevel());
+  m_debug = outputLevel() <= MSG::DEBUG;
 
   StatusCode sc;
 
@@ -721,7 +722,10 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
 {
   m_log << MSG::DEBUG << "Compare Trigger Towers and CPM Towers" << endreq;
 
+  const int nCrates = 4;
+  const int nCPMs   = 14;
   const int maxKey = 0x7fffffff;
+  LVL1::CoordToHardware converter;
   TriggerTowerMap::const_iterator ttMapIter    = ttMap.begin();
   TriggerTowerMap::const_iterator ttMapIterEnd = ttMap.end();
   CpmTowerMap::const_iterator     cpMapIter    = cpMap.begin();
@@ -747,24 +751,29 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
       // TriggerTower but no CPMTower
 
       const LVL1::TriggerTower* tt = ttMapIter->second;
+      ++ttMapIter;
+      eta = tt->eta();
+      phi = tt->phi();
+      if (overlap) { // skip non-overlap TTs
+        const LVL1::Coordinate coord(phi, eta);
+	const int crate = converter.cpCrateOverlap(coord);
+        if (crate >= nCrates) continue;
+      }
       ttEm  = tt->emEnergy();
       ttHad = tt->hadEnergy();
       key = ttKey;
-      eta = tt->eta();
-      phi = tt->phi();
-      ++ttMapIter;
 
     } else if ((ttMapIter == ttMapIterEnd) || (ttKey > cpKey)) {
 
       // CPMTower but no TriggerTower
 
       const LVL1::CPMTower* cp = cpMapIter->second;
+      ++cpMapIter;
+      eta = cp->eta();
+      phi = cp->phi();
       cpEm  = cp->emEnergy();
       cpHad = cp->hadEnergy();
       key = cpKey;
-      eta = cp->eta();
-      phi = cp->phi();
-      ++cpMapIter;
 
     } else {
 
@@ -772,15 +781,15 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
 
       const LVL1::TriggerTower* tt = ttMapIter->second;
       const LVL1::CPMTower*     cp = cpMapIter->second;
+      ++ttMapIter;
+      ++cpMapIter;
+      eta = tt->eta();
+      phi = tt->phi();
       ttEm  = tt->emEnergy();
       ttHad = tt->hadEnergy();
       cpEm  = cp->emEnergy();
       cpHad = cp->hadEnergy();
       key = ttKey;
-      eta = tt->eta();
-      phi = tt->phi();
-      ++ttMapIter;
-      ++cpMapIter;
     }
     
     // Check for known errors
@@ -802,65 +811,77 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
     //  Fill in error plots
 
     const LVL1::Coordinate coord(phi, eta);
-    LVL1::CoordToHardware converter;
     const int crate = (overlap) ? converter.cpCrateOverlap(coord)
                                 : converter.cpCrate(coord);
     const int cpm   = (overlap) ? converter.cpModuleOverlap(coord)
                                 : converter.cpModule(coord);
-    if (crate > 3 || cpm > 14) continue;
-    const int loc = crate * 14 + cpm - 1;
-    const int cpmBins = 4 * 14;
+    if (crate >= nCrates || cpm > nCPMs) continue;
+    const int loc = crate * nCPMs + cpm - 1;
+    const int cpmBins = nCrates * nCPMs;
     const int bitEm  = (1 << EMTowerMismatch);
     const int bitHad = (1 << HadTowerMismatch);
-    if (ttEm && ttEm == cpEm)    errors[loc] |= bitEm;
-    if (ttHad && ttHad == cpHad) errors[loc] |= bitHad;
-    if (ttEm != cpEm)   errors[loc+cpmBins]  |= bitEm;
-    if (ttHad != cpHad) errors[loc+cpmBins]  |= bitHad;
-    if (ttEm != cpEm) {
-      m_log << MSG::DEBUG << " EMTowerMismatch key/eta/phi/crate/cpm/tt/cp: "
-            << key << "/" << eta << "/" << phi << "/" << crate << "/"
-	    << cpm << "/" << ttEm << "/" << cpEm << endreq;
-    }
-    if (ttHad != cpHad) {
-      m_log << MSG::DEBUG << "HadTowerMismatch key/eta/phi/crate/cpm/tt/cp: "
-            << key << "/" << eta << "/" << phi << "/" << crate << "/"
-	    << cpm << "/" << ttHad << "/" << cpHad << endreq;
-    }
-    if (overlap) {
-      m_h_EMTowerOvSIMeqDAT->Fill(eta, phiMod, ttEm && ttEm == cpEm);
-      m_h_EMTowerOvSIMneDAT->Fill(eta, phiMod, ttEm && cpEm && ttEm != cpEm);
-      m_h_EMTowerOvSIMnoDAT->Fill(eta, phiMod, ttEm && !cpEm);
-      m_h_EMTowerOvDATnoSIM->Fill(eta, phiMod, cpEm && !ttEm);
-      m_h_HadTowerOvSIMeqDAT->Fill(eta, phiMod, ttHad && ttHad == cpHad);
-      m_h_HadTowerOvSIMneDAT->Fill(eta, phiMod, ttHad && cpHad
-                                                      && ttHad != cpHad);
-      m_h_HadTowerOvSIMnoDAT->Fill(eta, phiMod, ttHad && !cpHad);
-      m_h_HadTowerOvDATnoSIM->Fill(eta, phiMod, cpHad && !ttHad);
-    } else {
-      m_h_EMTowerSIMeqDAT->Fill(eta, phiMod, ttEm && ttEm == cpEm);
-      m_h_EMTowerSIMneDAT->Fill(eta, phiMod, ttEm && cpEm && ttEm != cpEm);
-      m_h_EMTowerSIMnoDAT->Fill(eta, phiMod, ttEm && !cpEm);
-      m_h_EMTowerDATnoSIM->Fill(eta, phiMod, cpEm && !ttEm);
-      m_h_HadTowerSIMeqDAT->Fill(eta, phiMod, ttHad && ttHad == cpHad);
-      m_h_HadTowerSIMneDAT->Fill(eta, phiMod, ttHad && cpHad && ttHad != cpHad);
-      m_h_HadTowerSIMnoDAT->Fill(eta, phiMod, ttHad && !cpHad);
-      m_h_HadTowerDATnoSIM->Fill(eta, phiMod, cpHad && !ttHad);
-    }
+    double phiFPGA = phi;
     if (overlap) {
       const double twoPi    = 2.*M_PI;
       const double piByFour = M_PI/4.;
-      if (phi > 7.*piByFour)   phi -= twoPi;
-      else if (phi < piByFour) phi += twoPi;
+      if (phi > 7.*piByFour)   phiFPGA -= twoPi;
+      else if (phi < piByFour) phiFPGA += twoPi;
     }
-    const int loc2 = fpga(crate, phi);
-    m_h_FpgaTowerSIMeqDAT->Fill(loc, loc2,   ttEm && ttEm == cpEm);
-    m_h_FpgaTowerSIMeqDAT->Fill(loc, loc2+1, ttHad && ttHad == cpHad);
-    m_h_FpgaTowerSIMneDAT->Fill(loc, loc2,   ttEm && cpEm && ttEm != cpEm);
-    m_h_FpgaTowerSIMneDAT->Fill(loc, loc2+1, ttHad && cpHad && ttHad != cpHad);
-    m_h_FpgaTowerSIMnoDAT->Fill(loc, loc2,   ttEm && !cpEm);
-    m_h_FpgaTowerSIMnoDAT->Fill(loc, loc2+1, ttHad && !cpHad);
-    m_h_FpgaTowerDATnoSIM->Fill(loc, loc2,   cpEm && !ttEm);
-    m_h_FpgaTowerDATnoSIM->Fill(loc, loc2+1, cpHad && !ttHad);
+    const int loc2 = fpga(crate, phiFPGA);
+
+    TH2F* hist1 = 0;
+    TH2F* hist2 = 0;
+    if (ttEm && ttEm == cpEm) { // non-zero match
+      errors[loc] |= bitEm;
+      hist1 = (overlap) ? m_h_EMTowerOvSIMeqDAT : m_h_EMTowerSIMeqDAT;
+      hist2 = m_h_FpgaTowerSIMeqDAT;
+    } else if (ttEm != cpEm) {  // mis-match
+      errors[loc+cpmBins] |= bitEm;
+      if (ttEm && cpEm) {       // non-zero mis-match
+        hist1 = (overlap) ? m_h_EMTowerOvSIMneDAT : m_h_EMTowerSIMneDAT;
+        hist2 = m_h_FpgaTowerSIMneDAT;
+      } else if (!cpEm) {       // no cp
+	hist1 = (overlap) ? m_h_EMTowerOvSIMnoDAT : m_h_EMTowerSIMnoDAT;
+	hist2 = m_h_FpgaTowerSIMnoDAT;
+      } else {                  // no tt
+	hist1 = (overlap) ? m_h_EMTowerOvDATnoSIM : m_h_EMTowerDATnoSIM;
+	hist2 = m_h_FpgaTowerDATnoSIM;
+      }
+      if (m_debug) {
+        m_log << MSG::DEBUG << " EMTowerMismatch key/eta/phi/crate/cpm/tt/cp: "
+              << key << "/" << eta << "/" << phi << "/" << crate << "/"
+	      << cpm << "/" << ttEm << "/" << cpEm << endreq;
+      }
+    }
+    if (hist1) hist1->Fill(eta, phiMod);
+    if (hist2) hist2->Fill(loc, loc2);
+
+    hist1 = 0;
+    hist2 = 0;
+    if (ttHad && ttHad == cpHad) { // non-zero match
+      errors[loc] |= bitHad;
+      hist1 = (overlap) ? m_h_HadTowerOvSIMeqDAT : m_h_HadTowerSIMeqDAT;
+      hist2 = m_h_FpgaTowerSIMeqDAT;
+    } else if (ttHad != cpHad) {   // mis-match
+      errors[loc+cpmBins] |= bitHad;
+      if (ttHad && cpHad) {        // non-zero mis-match
+        hist1 = (overlap) ? m_h_HadTowerOvSIMneDAT : m_h_HadTowerSIMneDAT;
+        hist2 = m_h_FpgaTowerSIMneDAT;
+      } else if (!cpHad) {         // no cp
+	hist1 = (overlap) ? m_h_HadTowerOvSIMnoDAT : m_h_HadTowerSIMnoDAT;
+	hist2 = m_h_FpgaTowerSIMnoDAT;
+      } else {                     // no tt
+	hist1 = (overlap) ? m_h_HadTowerOvDATnoSIM : m_h_HadTowerDATnoSIM;
+	hist2 = m_h_FpgaTowerDATnoSIM;
+      }
+      if (m_debug) {
+        m_log << MSG::DEBUG << " HadTowerMismatch key/eta/phi/crate/cpm/tt/cp: "
+              << key << "/" << eta << "/" << phi << "/" << crate << "/"
+	      << cpm << "/" << ttHad << "/" << cpHad << endreq;
+      }
+    }
+    if (hist1) hist1->Fill(eta, phiMod);
+    if (hist2) hist2->Fill(loc, loc2+1);
   }
 }
 
@@ -923,49 +944,64 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
     
     //  Fill in error plots
 
+    const int nCrates = 4;
+    const int nCPMs = 14;
     const int crate = roi->crate();
     const int cpm   = roi->cpm();
     const int chip  = roi->chip();
     const int local = roi->location();
-    const int locX  = crate * 14 + cpm - 1;
+    const int locX  = crate * nCPMs + cpm - 1;
     const int locY  = chip * 8 + local;
-    const int cpmBins = 4 * 14;
+    const int cpmBins = nCrates * nCPMs;
     const int bit = (1 << RoIMismatch);
-    if (simHits && simHits == datHits) errors[locX] |= bit;
-    if (simHits != datHits) errors[locX+cpmBins]    |= bit;
-
-    m_h_RoISIMeqDAT->Fill(locX, locY, simHits && simHits == datHits);
-    m_h_RoISIMneDAT->Fill(locX, locY, simHits && datHits && simHits != datHits);
-    m_h_RoISIMnoDAT->Fill(locX, locY, simHits && !datHits);
-    m_h_RoIDATnoSIM->Fill(locX, locY, datHits && !simHits);
-    for (int thr = 0; thr < 16; ++thr) {
-      if ( !((m_roiMask >> thr) & 0x1) ) continue;
-      m_h_RoIThreshSIMeqDAT->Fill(locX, thr, ((datHits >> thr) & 0x1) ==
-                                             ((simHits >> thr) & 0x1));
-      m_h_RoIThreshSIMneDAT->Fill(locX, thr, ((datHits >> thr) & 0x1) !=
-                                             ((simHits >> thr) & 0x1));
-    }
-
     const LVL1::CoordinateRange coord(decoder.coordinate(roi->roiWord()));
     const double eta = coord.eta();
     const double phi = coord.phi() * m_phiScale;
-    m_h_RoIEtaPhiSIMeqDAT->Fill(eta, phi, simHits && simHits == datHits);
-    m_h_RoIEtaPhiSIMneDAT->Fill(eta, phi, simHits && datHits
-                                                  && simHits != datHits);
-    m_h_RoIEtaPhiSIMnoDAT->Fill(eta, phi, simHits && !datHits);
-    m_h_RoIEtaPhiDATnoSIM->Fill(eta, phi, datHits && !simHits);
 
-    m_log << MSG::DEBUG << "DataHits/SimHits: ";
-    for (int i = 15; i >= 0; --i) {
-      int hit = (datHits >> i) & 0x1;
-      m_log << MSG::DEBUG << hit;
+    TH2F* hist1 = 0;
+    TH2F* hist2 = 0;
+    if (simHits == datHits) {
+      errors[locX] |= bit;
+      hist1 = m_h_RoISIMeqDAT;
+      hist2 = m_h_RoIEtaPhiSIMeqDAT;
+    } else {
+      errors[locX+cpmBins] |= bit;
+      if (simHits && datHits) {
+        hist1 = m_h_RoISIMneDAT;
+	hist2 = m_h_RoIEtaPhiSIMneDAT;
+      } else if (!datHits) {
+        hist1 = m_h_RoISIMnoDAT;
+	hist2 = m_h_RoIEtaPhiSIMnoDAT;
+      } else {
+        hist1 = m_h_RoIDATnoSIM;
+	hist2 = m_h_RoIEtaPhiDATnoSIM;
+      }
     }
-    m_log << MSG::DEBUG << "/";
-    for (int i = 15; i >= 0; --i) {
-      int hit = (simHits >> i) & 0x1;
-      m_log << MSG::DEBUG << hit;
+    if (hist1) hist1->Fill(locX, locY);
+    if (hist2) hist2->Fill(eta, phi);
+
+    for (int thr = 0; thr < 16; ++thr) {
+      if ( !((m_roiMask >> thr) & 0x1) ) continue;
+      if (((datHits >> thr) & 0x1) == ((simHits >> thr) & 0x1)) {
+        m_h_RoIThreshSIMeqDAT->Fill(locX, thr);
+      } else {
+        m_h_RoIThreshSIMneDAT->Fill(locX, thr);
+      }
     }
-    m_log << MSG::DEBUG << endreq;
+
+    if (m_debug) {
+      m_log << MSG::DEBUG << "DataHits/SimHits: ";
+      for (int i = 15; i >= 0; --i) {
+        int hit = (datHits >> i) & 0x1;
+        m_log << MSG::DEBUG << hit;
+      }
+      m_log << MSG::DEBUG << "/";
+      for (int i = 15; i >= 0; --i) {
+        int hit = (simHits >> i) & 0x1;
+        m_log << MSG::DEBUG << hit;
+      }
+      m_log << MSG::DEBUG << endreq;
+    }
   }
 }
 
@@ -1038,32 +1074,46 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
     
     //  Fill in error plots
 
-    const int loc = crate * 14 + cpm - 1;
-    const int cpmBins = 4 * 14;
+    const int nCrates = 4;
+    const int nCPMs = 14;
+    const int loc = crate * nCPMs + cpm - 1;
+    const int cpmBins = nCrates * nCPMs;
     const int bit = (1 << CPMHitsMismatch);
+
     if ((simHits0 && simHits0 == datHits0) ||
         (simHits1 && simHits1 == datHits1)) errors[loc] |= bit;
     if (simHits0 != datHits0 || simHits1 != datHits1)
                                             errors[loc+cpmBins] |= bit;
 
-    m_h_CPMHitsSIMeqDAT->Fill(cpm, crate, (simHits0 || simHits1) &&
-                              simHits0 == datHits0 && simHits1 == datHits1);
-    m_h_CPMHitsSIMneDAT->Fill(cpm, crate, (simHits0 || simHits1) &&
-      (datHits0 || datHits1) && (simHits0 != datHits0 || simHits1 != datHits1));
-    m_h_CPMHitsSIMnoDAT->Fill(cpm, crate, (simHits0 || simHits1) &&
-                                          !datHits0 && !datHits1);
-    m_h_CPMHitsDATnoSIM->Fill(cpm, crate, (datHits0 || datHits1) &&
-                                          !simHits0 && !simHits1);
+    if ((simHits0 || simHits1) && simHits0 == datHits0
+                               && simHits1 == datHits1) {
+      m_h_CPMHitsSIMeqDAT->Fill(cpm, crate);
+    }
+    if ((simHits0 || simHits1) && (datHits0 || datHits1) &&
+        (simHits0 != datHits0 || simHits1 != datHits1)) {
+      m_h_CPMHitsSIMneDAT->Fill(cpm, crate);
+    }
+    if ((simHits0 || simHits1) && !datHits0 && !datHits1) {
+      m_h_CPMHitsSIMnoDAT->Fill(cpm, crate);
+    }
+    if ((datHits0 || datHits1) && !simHits0 && !simHits1) {
+      m_h_CPMHitsDATnoSIM->Fill(cpm, crate);
+    }
 
-    for (int thr = 0; thr < 8; ++thr) {
-      m_h_CPMHitsThreshSIMeqDAT->Fill(loc, thr,
-	           ((datHits0 >> 3*thr) & 0x7) == ((simHits0 >> 3*thr) & 0x7));
-      m_h_CPMHitsThreshSIMeqDAT->Fill(loc, thr + 8,
-	           ((datHits1 >> 3*thr) & 0x7) == ((simHits1 >> 3*thr) & 0x7));
-      m_h_CPMHitsThreshSIMneDAT->Fill(loc, thr,
-	           ((datHits0 >> 3*thr) & 0x7) != ((simHits0 >> 3*thr) & 0x7));
-      m_h_CPMHitsThreshSIMneDAT->Fill(loc, thr + 8,
-	           ((datHits1 >> 3*thr) & 0x7) != ((simHits1 >> 3*thr) & 0x7));
+    const int nThresh = 8;
+    for (int thr = 0; thr < nThresh; ++thr) {
+      const int thr2 = thr + nThresh;
+      const int thrLen = 3;
+      const int shift = thrLen*thr;
+      const unsigned int thrMask = 0x7;
+      const unsigned int d0 = (datHits0 >> shift) & thrMask;
+      const unsigned int d1 = (datHits1 >> shift) & thrMask;
+      const unsigned int s0 = (simHits0 >> shift) & thrMask;
+      const unsigned int s1 = (simHits1 >> shift) & thrMask;
+      if (d0 == s0) m_h_CPMHitsThreshSIMeqDAT->Fill(loc, thr);
+      else          m_h_CPMHitsThreshSIMneDAT->Fill(loc, thr);
+      if (d1 == s1) m_h_CPMHitsThreshSIMeqDAT->Fill(loc, thr2);
+      else          m_h_CPMHitsThreshSIMneDAT->Fill(loc, thr2);
     }
   }
 }
@@ -1075,6 +1125,9 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
 {
   m_log << MSG::DEBUG << "Compare CPM Hits and CMM Hits" << endreq;
 
+  const int nCrates = 4;
+  const int nCPMs = 14;
+  const int nCMMs = 2;
   const int maxKey = 0x7fffffff;
   CpmHitsMap::const_iterator   cpmMapIter    = cpmMap.begin();
   CpmHitsMap::const_iterator   cpmMapIterEnd = cpmMap.end();
@@ -1116,7 +1169,7 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
       crate    = cmmh->crate();
       cpm      = cmmh->dataID();
       ++cmmMapIter;
-      if (cpm > 14) continue;
+      if (cpm > nCPMs) continue;
 
     } else {
 
@@ -1138,41 +1191,55 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
     
     //  Fill in error plots
 
-    int loc  = crate * 14 + cpm - 1;
-    const int loc2 = crate * 2;
-    const int cpmBins = 4 * 14;
-    const int cmmBins = 4 * 2;
+    int loc  = crate * nCPMs + cpm - 1;
+    const int loc2 = crate * nCMMs;
+    const int cpmBins = nCrates * nCPMs;
+    const int cmmBins = nCrates * nCMMs;
     const int bit = (1 << CMMHitsMismatch);
+    
     if ((cpmHits0 && cpmHits0 == cmmHits0) ||
         (cpmHits1 && cpmHits1 == cmmHits1)) errorsCPM[loc] |= bit;
     if (cpmHits0 != cmmHits0 || cpmHits1 != cmmHits1)
                                             errorsCPM[loc+cpmBins] |= bit;
-    if (cpmHits1 && cpmHits1 == cmmHits1) errorsCMM[loc2]   |= bit;
-    if (cpmHits0 && cpmHits0 == cmmHits0) errorsCMM[loc2+1] |= bit;
-    if (cpmHits1 != cmmHits1) errorsCMM[loc2+cmmBins] |= bit; // hits1==>cmm 0
-    if (cpmHits0 != cmmHits0)
-                            errorsCMM[loc2+cmmBins+1] |= bit; // hits0==>cmm 1
 
-    m_h_CMMHitsSIMeqDAT->Fill(cpm, 2*crate,   cpmHits1 && cpmHits1 == cmmHits1);
-    m_h_CMMHitsSIMeqDAT->Fill(cpm, 2*crate+1, cpmHits0 && cpmHits0 == cmmHits0);
-    m_h_CMMHitsSIMneDAT->Fill(cpm, 2*crate,   cpmHits1 && cmmHits1 &&
-                                              cpmHits1 != cmmHits1);
-    m_h_CMMHitsSIMneDAT->Fill(cpm, 2*crate+1, cpmHits0 && cmmHits0 &&
-                                              cpmHits0 != cmmHits0);
-    m_h_CMMHitsSIMnoDAT->Fill(cpm, 2*crate,   cpmHits1 && !cmmHits1);
-    m_h_CMMHitsSIMnoDAT->Fill(cpm, 2*crate+1, cpmHits0 && !cmmHits0);
-    m_h_CMMHitsDATnoSIM->Fill(cpm, 2*crate,   cmmHits1 && !cpmHits1);
-    m_h_CMMHitsDATnoSIM->Fill(cpm, 2*crate+1, cmmHits0 && !cpmHits0);
+    TH2F* hist = 0;
+    if (cpmHits1 && cpmHits1 == cmmHits1) { // hits1==>cmm 0
+      errorsCMM[loc2] |= bit;
+      hist = m_h_CMMHitsSIMeqDAT;
+    } else if (cpmHits1 != cmmHits1) {
+      errorsCMM[loc2+cmmBins] |= bit;
+      if (cpmHits1 && cmmHits1) hist = m_h_CMMHitsSIMneDAT;
+      else if (!cmmHits1)       hist = m_h_CMMHitsSIMnoDAT;
+      else                      hist = m_h_CMMHitsDATnoSIM;
+    }
+    if (hist) hist->Fill(cpm, loc2);
 
-    for (int thr = 0; thr < 8; ++thr) {
-      m_h_CMMHitsThreshSIMeqDAT->Fill(loc, thr,
-	           ((cmmHits0 >> 3*thr) & 0x7) == ((cpmHits0 >> 3*thr) & 0x7));
-      m_h_CMMHitsThreshSIMeqDAT->Fill(loc, thr + 8,
-	           ((cmmHits1 >> 3*thr) & 0x7) == ((cpmHits1 >> 3*thr) & 0x7));
-      m_h_CMMHitsThreshSIMneDAT->Fill(loc, thr,
-	           ((cmmHits0 >> 3*thr) & 0x7) != ((cpmHits0 >> 3*thr) & 0x7));
-      m_h_CMMHitsThreshSIMneDAT->Fill(loc, thr + 8,
-	           ((cmmHits1 >> 3*thr) & 0x7) != ((cpmHits1 >> 3*thr) & 0x7));
+    hist = 0;
+    if (cpmHits0 && cpmHits0 == cmmHits0) { // hits0==>cmm 1
+      errorsCMM[loc2+1] |= bit;
+      hist = m_h_CMMHitsSIMeqDAT;
+    } else if (cpmHits0 != cmmHits0) {
+      errorsCMM[loc2+cmmBins+1] |= bit;
+      if (cpmHits0 && cmmHits0) hist = m_h_CMMHitsSIMneDAT;
+      else if (!cmmHits0)       hist = m_h_CMMHitsSIMnoDAT;
+      else                      hist = m_h_CMMHitsDATnoSIM;
+    }
+    if (hist) hist->Fill(cpm, loc2+1);
+
+    const int nThresh = 8;
+    for (int thr = 0; thr < nThresh; ++thr) {
+      const int thr2 = thr + nThresh;
+      const int thrLen = 3;
+      const int shift = thrLen*thr;
+      const unsigned int thrMask = 0x7;
+      const unsigned int d0 = (cmmHits0 >> shift) & thrMask;
+      const unsigned int d1 = (cmmHits1 >> shift) & thrMask;
+      const unsigned int s0 = (cpmHits0 >> shift) & thrMask;
+      const unsigned int s1 = (cpmHits1 >> shift) & thrMask;
+      if (d0 == s0) m_h_CMMHitsThreshSIMeqDAT->Fill(loc, thr);
+      else          m_h_CMMHitsThreshSIMneDAT->Fill(loc, thr);
+      if (d1 == s1) m_h_CMMHitsThreshSIMeqDAT->Fill(loc, thr2);
+      else          m_h_CMMHitsThreshSIMneDAT->Fill(loc, thr2);
     }
   }
 }
@@ -1194,6 +1261,8 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
   std::vector<unsigned int> hits1Sim(3);
   std::vector<unsigned int> hits0(3);
   std::vector<unsigned int> hits1(3);
+  const int nCrates = 4;
+  const int nCMMs = 2;
   const int maxKey = 0x7fffffff;
   CmmCpHitsMap::const_iterator cmmSimMapIter    = cmmSimMap.begin();
   CmmCpHitsMap::const_iterator cmmSimMapIterEnd = cmmSimMap.end();
@@ -1271,39 +1340,53 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
     //  Fill in error plots
 
     if (local || total) {
-      int loc = crate * 2;
-      const int cmmBins = 4 * 2;
+      int loc = crate * nCMMs;
+      const int cmmBins = nCrates * nCMMs;
       const int bit = (local) ? (1 << LocalSumMismatch)
                               : (1 << TotalSumMismatch);
-      if (cmmSimHits1 && cmmSimHits1 == cmmHits1) errors[loc]   |= bit;
-      if (cmmSimHits0 && cmmSimHits0 == cmmHits0) errors[loc+1] |= bit;
-      if (cmmSimHits1 != cmmHits1) errors[loc+cmmBins]   |= bit; // cmm 0
-      if (cmmSimHits0 != cmmHits0) errors[loc+cmmBins+1] |= bit; // cmm 1
+      TH1F* hist1 = 0;
+      if (cmmSimHits1 && cmmSimHits1 == cmmHits1) {
+        errors[loc] |= bit;
+	hist1 = m_h_SumsSIMeqDAT;
+      } else if (cmmSimHits1 != cmmHits1) {
+        errors[loc+cmmBins] |= bit;
+	if (cmmSimHits1 && cmmHits1) hist1 = m_h_SumsSIMneDAT;
+	else if (!cmmHits1)          hist1 = m_h_SumsSIMnoDAT;
+	else                         hist1 = m_h_SumsDATnoSIM;
+      }
+      TH1F* hist0 = 0;
+      if (cmmSimHits0 && cmmSimHits0 == cmmHits0) {
+        errors[loc+1] |= bit;
+	hist0 = m_h_SumsSIMeqDAT;
+      } else if (cmmSimHits0 != cmmHits0) {
+        errors[loc+cmmBins+1] |= bit;
+	if (cmmSimHits0 && cmmHits0) hist0 = m_h_SumsSIMneDAT;
+	else if (!cmmHits0)          hist0 = m_h_SumsSIMnoDAT;
+	else                         hist0 = m_h_SumsDATnoSIM;
+      }
       loc = (local) ? loc : 14;
-      m_h_SumsSIMeqDAT->Fill(loc,   cmmSimHits1 && cmmSimHits1 == cmmHits1);
-      m_h_SumsSIMeqDAT->Fill(loc+1, cmmSimHits0 && cmmSimHits0 == cmmHits0);
-      m_h_SumsSIMneDAT->Fill(loc,   cmmSimHits1 && cmmHits1 &&
-                                                    cmmSimHits1 != cmmHits1);
-      m_h_SumsSIMneDAT->Fill(loc+1, cmmSimHits0 && cmmHits0 &&
-                                                    cmmSimHits0 != cmmHits0);
-      m_h_SumsSIMnoDAT->Fill(loc,   cmmSimHits1 && !cmmHits1);
-      m_h_SumsSIMnoDAT->Fill(loc+1, cmmSimHits0 && !cmmHits0);
-      m_h_SumsDATnoSIM->Fill(loc,   cmmHits1 && !cmmSimHits1);
-      m_h_SumsDATnoSIM->Fill(loc+1, cmmHits0 && !cmmSimHits0);
+      if (hist1) hist1->Fill(loc);
+      if (hist0) hist0->Fill(loc+1);
+
       loc /= 2;
-      for (int thr = 0; thr < 8; ++thr) {
-        m_h_SumsThreshSIMeqDAT->Fill(loc, thr,
-	        ((cmmSimHits0 >> 3*thr) & 0x7) == ((cmmHits0 >> 3*thr) & 0x7));
-        m_h_SumsThreshSIMeqDAT->Fill(loc, thr + 8,
-	        ((cmmSimHits1 >> 3*thr) & 0x7) == ((cmmHits1 >> 3*thr) & 0x7));
-        m_h_SumsThreshSIMneDAT->Fill(loc, thr,
-	        ((cmmSimHits0 >> 3*thr) & 0x7) != ((cmmHits0 >> 3*thr) & 0x7));
-        m_h_SumsThreshSIMneDAT->Fill(loc, thr + 8,
-	        ((cmmSimHits1 >> 3*thr) & 0x7) != ((cmmHits1 >> 3*thr) & 0x7));
+      const int nThresh = 8;
+      for (int thr = 0; thr < nThresh; ++thr) {
+        const int thr2 = thr + nThresh;
+        const int thrLen = 3;
+        const int shift = thrLen*thr;
+        const unsigned int thrMask = 0x7;
+        const unsigned int d0 = (cmmHits0 >> shift) & thrMask;
+        const unsigned int d1 = (cmmHits1 >> shift) & thrMask;
+        const unsigned int s0 = (cmmSimHits0 >> shift) & thrMask;
+        const unsigned int s1 = (cmmSimHits1 >> shift) & thrMask;
+        if (d0 == s0) m_h_SumsThreshSIMeqDAT->Fill(loc, thr);
+        else          m_h_SumsThreshSIMneDAT->Fill(loc, thr);
+        if (d1 == s1) m_h_SumsThreshSIMeqDAT->Fill(loc, thr2);
+        else          m_h_SumsThreshSIMneDAT->Fill(loc, thr2);
       }
     } else {
       if (dataId == LVL1::CMMCPHits::LOCAL) {
-        if (crate != 3) {
+        if (crate != nCrates-1) {
 	  hits0Sim[crate] = cmmSimHits0;
 	  hits1Sim[crate] = cmmSimHits1;
         }
@@ -1320,39 +1403,56 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
     }
   }
   if (remote) {
-    for (int crate = 0; crate < 3; ++crate) {
-      int loc = crate * 2;
-      const int cmmBins = 4 * 2;
+    for (int crate = 0; crate < nCrates-1; ++crate) {
+      int loc = crate * nCMMs;
+      const int cmmBins = nCrates * nCMMs;
       const int bit = (1 << RemoteSumMismatch);
-      if (hits1Sim[crate] && hits1Sim[crate] == hits1[crate])
-                                                         errors[loc] |= bit;
-      if (hits0Sim[crate] && hits0Sim[crate] == hits0[crate])
-                                                         errors[loc+1] |= bit;
-      if (hits1Sim[crate] != hits1[crate]) errors[loc+cmmBins]   |= bit;
-      if (hits0Sim[crate] != hits0[crate]) errors[loc+cmmBins+1] |= bit;
+      const unsigned int hd0 = hits0[crate];
+      const unsigned int hd1 = hits1[crate];
+      const unsigned int hs0 = hits0Sim[crate];
+      const unsigned int hs1 = hits1Sim[crate];
+
+      if (!hd0 && !hd1 && !hs0 && !hs1) continue;
+
+      TH1F* hist1 = 0;
+      if (hs1 && hs1 == hd1) {
+        errors[loc] |= bit;
+	hist1 = m_h_SumsSIMeqDAT;
+      } else if (hs1 != hd1) {
+        errors[loc+cmmBins] |= bit;
+	if (hs1 && hd1) hist1 = m_h_SumsSIMneDAT;
+	else if (!hd1)  hist1 = m_h_SumsSIMnoDAT;
+	else            hist1 = m_h_SumsDATnoSIM;
+      }
+      TH1F* hist0 = 0;
+      if (hs0 && hs0 == hd0) {
+        errors[loc+1] |= bit;
+	hist0 = m_h_SumsSIMeqDAT;
+      } else if (hs0 != hd0) {
+        errors[loc+cmmBins+1] |= bit;
+	if (hs0 && hd0) hist0 = m_h_SumsSIMneDAT;
+	else if (!hd0)  hist0 = m_h_SumsSIMnoDAT;
+	else            hist0 = m_h_SumsDATnoSIM;
+      }
       loc = (m_compareWithSim) ? loc + 8 : loc;
-      m_h_SumsSIMeqDAT->Fill(loc,   hits1Sim[crate] &&
-                                    hits1Sim[crate] == hits1[crate]);
-      m_h_SumsSIMeqDAT->Fill(loc+1, hits0Sim[crate] &&
-                                    hits0Sim[crate] == hits0[crate]);
-      m_h_SumsSIMneDAT->Fill(loc,   hits1Sim[crate] && hits1[crate] &&
-                                    hits1Sim[crate] != hits1[crate]);
-      m_h_SumsSIMneDAT->Fill(loc+1, hits0Sim[crate] && hits0[crate] &&
-                                    hits0Sim[crate] != hits0[crate]);
-      m_h_SumsSIMnoDAT->Fill(loc,   hits1Sim[crate] && !hits1[crate]);
-      m_h_SumsSIMnoDAT->Fill(loc+1, hits0Sim[crate] && !hits0[crate]);
-      m_h_SumsDATnoSIM->Fill(loc,   hits1[crate] && !hits1Sim[crate]);
-      m_h_SumsDATnoSIM->Fill(loc+1, hits0[crate] && !hits0Sim[crate]);
+      if (hist1) hist1->Fill(loc);
+      if (hist0) hist0->Fill(loc+1);
+
       loc /= 2;
-      for (int thr = 0; thr < 8; ++thr) {
-        m_h_SumsThreshSIMeqDAT->Fill(loc, thr,
-	 ((hits0Sim[crate] >> 3*thr) & 0x7) == ((hits0[crate] >> 3*thr) & 0x7));
-        m_h_SumsThreshSIMeqDAT->Fill(loc, thr + 8,
-	 ((hits1Sim[crate] >> 3*thr) & 0x7) == ((hits1[crate] >> 3*thr) & 0x7));
-        m_h_SumsThreshSIMneDAT->Fill(loc, thr,
-	 ((hits0Sim[crate] >> 3*thr) & 0x7) != ((hits0[crate] >> 3*thr) & 0x7));
-        m_h_SumsThreshSIMneDAT->Fill(loc, thr + 8,
-	 ((hits1Sim[crate] >> 3*thr) & 0x7) != ((hits1[crate] >> 3*thr) & 0x7));
+      const int nThresh = 8;
+      for (int thr = 0; thr < nThresh; ++thr) {
+        const int thr2 = thr + nThresh;
+        const int thrLen = 3;
+        const int shift = thrLen*thr;
+        const unsigned int thrMask = 0x7;
+	const unsigned int d0 = (hd0 >> shift) & thrMask;
+	const unsigned int s0 = (hs0 >> shift) & thrMask;
+	const unsigned int d1 = (hd1 >> shift) & thrMask;
+	const unsigned int s1 = (hs1 >> shift) & thrMask;
+        if (d0 == s0) m_h_SumsThreshSIMeqDAT->Fill(loc, thr);
+        else          m_h_SumsThreshSIMneDAT->Fill(loc, thr);
+        if (d1 == s1) m_h_SumsThreshSIMeqDAT->Fill(loc, thr2);
+        else          m_h_SumsThreshSIMneDAT->Fill(loc, thr2);
       }
     }
   }
@@ -1538,7 +1638,8 @@ void CPMSimBSMon::setupMap(const TriggerTowerCollection* coll,
     TriggerTowerCollection::const_iterator posE = coll->end();
     for (; pos != posE; ++pos) {
       const double eta = (*pos)->eta();
-      if (eta > -2.5 && eta < 2.5) {
+      if (eta > -2.5 && eta < 2.5 &&
+                     ((*pos)->emEnergy() > 0 || (*pos)->hadEnergy() > 0)) {
         const double phi = (*pos)->phi();
         const int key = towerKey.ttKey(phi, eta);
         map.insert(std::make_pair(key, *pos));
