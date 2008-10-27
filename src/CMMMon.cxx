@@ -31,10 +31,7 @@
 #include "TrigT1CaloMonitoring/CMMMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
 
-//#include "TrigT1Calo/EnergyTrigger.h"
 #include "TrigT1Calo/LVL1TriggerMenuDefs.h"
-//#include "TrigT1Calo/LVL1TriggerMenu.h"
-//#include "TrigT1Calo/InternalJetROI.h"
 #include "TrigT1Calo/CMMRoI.h"
 #include "TrigT1Calo/QuadLinear.h"
 #include "TrigT1Calo/DataError.h"
@@ -168,7 +165,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	  //---------------------------------- S-Link errors -----------------------------
 	  m_h_CMMJet_error=transmission_Booker.book2F("CMMJet_errors", "Errors from CMM Jet SubStatus Word",9,0.5,9.5,37,0.5,37.5,"","");
 	  m_h_CMMJet_error->SetStats(kFALSE);
-
+	  
 	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(1, "Parity");
 	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(3, "GLinkParity");
 	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(4, "GLinkProtocol");
@@ -181,7 +178,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 
 	  m_h_CMMEnergy_error=transmission_Booker.book2F("CMMEnergy_errors", "Errors from CMM Energy SubStatus Word",9,0.5,9.5,37,0.5,37.5,"","");
 	  m_h_CMMEnergy_error->SetStats(kFALSE);
-
+	 
 	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(1, "Parity");
 	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(3, "GLinkParity");
 	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(4, "GLinkProtocol");
@@ -231,11 +228,16 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(6, "Overflow (Ex)");
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(7, "Overflow (Ey)");
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(8, "Overflow (Et)");
-
-	  // m_h_TriggeredSlice_Energy=transmission_Booker.book1F("Energy_TriggeredSlice", "No. of the triggered Slice for Energy CMMs",5,-0.5,4.5,"","");
-	  //m_h_TriggeredSlice_Jet=transmission_Booker.book1F("Jet_TriggeredSlice", "No. of the triggered Slice for Jet CMMs",5,-0.5,4.5,"","");
-
-	  m_h_TriggeredSlice=transmission_Booker.book1F("TriggeredSlice", "Comparison of the triggered slice number",5,-0.5,4.5,"Difference","N");
+	  
+	  m_h_TriggeredSlice=transmission_Booker.book1F("TriggeredSlice", "Comparison of the triggered slice number",3,-0.5,3.5,"Difference","N");
+  
+	 //Error Summary for all CMMs in system
+	  m_h_CMM_ErrorSummary = transmission_Booker.book1F("CMM_ErrorSummary", "Error Summary of CMM Jet, Energy and RoI path",
+	  5,-0.5,4.5,"","Entries");	 
+	  m_h_CMM_ErrorSummary->SetStats(kFALSE);
+	  m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(1,"CMM Status");
+	  m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(2,"Parity flags");
+	  m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(3,"Other");
 	}
     }
   
@@ -315,6 +317,16 @@ StatusCode CMMMon::fillHistograms()
 	  
 	  int crate = (*it_CMMJetHits)->crate();
 	  int module = (*it_CMMJetHits)-> dataID();
+	  
+	  
+	  //Error summary plots
+	  //substatus word
+	  if (err.get(16)!=0 or err.get(17)!=0 or err.get(18)!=0 or err.get(19)!=0 or err.get(20)!=0 or err.get(22)!=0 or err.get(23)!=0 )
+	     {
+	     m_h_CMM_ErrorSummary->Fill(1,1);
+	     }
+	     //parity
+	  m_h_CMM_ErrorSummary->Fill(2,err.get(1));   
 	  
 	  if (module<16)
 	    {
@@ -477,7 +489,7 @@ StatusCode CMMMon::fillHistograms()
       if (m_DataType=="BS")
 	{
 	   e_num_slice = (*it_CMMEtSums)-> peak();
-	   m_h_TriggeredSlice->Fill(e_num_slice - j_num_slice);
+	   m_h_TriggeredSlice->Fill(fabs(e_num_slice - j_num_slice));
 
 	  // ------------------------------------------------------------------------------------------
 	  // ----------------- Histos with SubStatus Word errors -----------------------------
@@ -489,6 +501,28 @@ StatusCode CMMMon::fillHistograms()
 	  
 	  int crate = (*it_CMMEtSums)->crate();
 	  int module = (*it_CMMEtSums)-> dataID();
+	  
+	  
+	  //Error summary plots
+	  //substatus word
+	  if (exerr.get(16)!=0 or exerr.get(17)!=0 or exerr.get(18)!=0 or exerr.get(19)!=0 or exerr.get(20)!=0 or exerr.get(22)!=0 or exerr.get(23)!=0 )
+	     {
+	     m_h_CMM_ErrorSummary->Fill(1,1);
+	     }
+	  if (eyerr.get(16)!=0 or eyerr.get(17)!=0 or eyerr.get(18)!=0 or eyerr.get(19)!=0 or eyerr.get(20)!=0 or eyerr.get(22)!=0 or eyerr.get(23)!=0 )
+	     {
+	     m_h_CMM_ErrorSummary->Fill(1,1);
+	     }
+	  if (eterr.get(16)!=0 or eterr.get(17)!=0 or eterr.get(18)!=0 or eterr.get(19)!=0 or eterr.get(20)!=0 or eterr.get(22)!=0 or eterr.get(23)!=0 )
+	     {
+	     m_h_CMM_ErrorSummary->Fill(1,1);
+	     }
+	     
+	     //parity
+	    error=0;
+	    if ((exerr.get(1)==1)or(eyerr.get(1)==1)or(eterr.get(1)==1)) error=1; 
+	    m_h_CMM_ErrorSummary->Fill(2,error);   
+	  
 
 	  //input data from JEMs have dataID 0..15   ---  fill only parity errors
 	  if (module<16)
@@ -601,6 +635,7 @@ StatusCode CMMMon::fillHistograms()
  
   mLog<<MSG::DEBUG<<"CMM Slice numbers: "<<"Jet: "<<j_num_slice<<" Energy: "<<e_num_slice<<endreq;
 
+  
   // errors
   if (m_DataType=="BS")
     {
@@ -619,7 +654,7 @@ StatusCode CMMMon::fillHistograms()
       m_h_CMMRoI_error->Fill(4,jetEterr.get(1));
       
       //----------------Comparison on slice number-----------
-      m_h_CMMRoI_error->Fill(5,j_num_slice - e_num_slice);
+      if ((j_num_slice - e_num_slice)!=0) m_h_CMMRoI_error->Fill(5,1);
       //-----------------------------------------------------
       // Overflow (Ex)
       m_h_CMMRoI_error->Fill(6,exerr.get(0));
@@ -627,6 +662,14 @@ StatusCode CMMMon::fillHistograms()
        m_h_CMMRoI_error->Fill(7,eyerr.get(0));
      // Overflow (Et)
       m_h_CMMRoI_error->Fill(8,eterr.get(0)); 
+      
+      //Error summary plots
+     //substatus word
+     if (exerr.get(1)!=0 or eyerr.get(1)!=0 or eterr.get(1)!=0 ) //would need also to check jetEterr.get(1) but this is still buggy
+     {
+       m_h_CMM_ErrorSummary->Fill(2,1);
+     }
+           
     }
 
   return StatusCode( StatusCode::SUCCESS );

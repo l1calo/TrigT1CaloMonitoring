@@ -85,7 +85,7 @@ protected:
    // error maps
    int m_NoEvents;
    TH2F* m_h_je_error;
-
+   
    // number of triggered slice -- not clear if still necessary
    //TH1F* m_h_je_triggeredSlice;
 
@@ -109,6 +109,9 @@ protected:
  
    // errors and saturation
    TH2F* m_h_JEMRoI_error;
+   
+   // Error Summary
+   TH1F* m_h_JEM_ErrorSummary;
 };
 
 

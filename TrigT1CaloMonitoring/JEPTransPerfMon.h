@@ -39,14 +39,33 @@
 
 
 
+class StoreGateSvc;
 
 namespace LVL1 {
+  class CMMEtSums;
+  class CMMJetHits;
+  class CMMRoI;
+  class JEMEtSums;
+  class JEMHits;
   class JEMRoI;
+  class JetAlgorithm;
+  class JetElement;
+  class TriggerTower;
+  class IL1JEPHitsTools;
+  class IL1JetElementTools;
+  class IL1JetTools;
+  class IL1JEPEtSumsTools;
+  class EventInfo;
+
 }
+
 class JEPTransPerfMon : public ManagedMonitorToolBase
 {
 public:
-        typedef DataVector<LVL1::JetElement> JECollection;
+
+ 	JEPTransPerfMon( const std::string & type, const std::string & name,
+	                 const IInterface* parent ); 
+	typedef DataVector<LVL1::JetElement> JECollection;
 /*         typedef DataVector<const LVL1::CMMJetHits*> pCMMJetHitsCollection; */
         typedef DataVector<LVL1::CMMJetHits> CMMJetHitsCollection;
         typedef DataVector<const LVL1::CMMJetHits> cCMMJetHitsCollection;
@@ -54,13 +73,12 @@ public:
         typedef DataVector<LVL1::JEMHits> JEMHitsCollection;
 	typedef DataVector<LVL1::JEMEtSums> JEMEtSumsCollection;
 	typedef DataVector<LVL1::JEMRoI> JemRoiCollection;
-
-
-	JEPTransPerfMon( const std::string & type, const std::string & name,
-	                 const IInterface* parent ); 
+	typedef DataVector<LVL1::JetAlgorithm> InternalJemRoi;
+	
+	
 
 	virtual ~JEPTransPerfMon();
-
+	virtual StatusCode initialize();
 	virtual StatusCode bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun );
 	virtual StatusCode fillHistograms();
 	virtual StatusCode procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun );
@@ -68,13 +86,12 @@ public:
 
 protected:
 
-	void TimeSliceMatch(int k, int TT_TS, const JECollection* TT_jetElements, int JE_TS, const JECollection* jetElements, MsgStream::MsgStream* mLog);
+ void  TimeSliceMatch(int k, int TT_TS, const JECollection* TT_jetElements, int JE_TS, const JECollection* jetElements, MsgStream::MsgStream* mLog);
 
+	
    /** a handle on Store Gate for access to the Event Store */
    StoreGateSvc* m_storeGate;
-
-
-
+   StoreGateSvc* m_eventStore;
 
    // StoreGate service
    StoreGateSvc* m_detStore;
@@ -89,14 +106,15 @@ protected:
    const TTOnlineID* m_l1ttonlineHelper;
    
 
-
    int m_NoEvents;
-
-
    
-   //ToolHandle<LVL1::IL1JetElementTools> m_JetElementTool;
-
-
+  ToolHandle<LVL1::IL1JEPHitsTools>    m_jepHitsTool;
+  ToolHandle<LVL1::IL1JetTools>        m_jetTool;
+  ToolHandle<LVL1::IL1JetElementTools> m_jetElementTool;
+  ToolHandle<LVL1::IL1JEPEtSumsTools>  m_etSumsTool;
+  mutable MsgStream mLog;
+  
+  
    /** location of data */
    std::string m_BS_JetElementLocation;
    std::string m_BS_TriggerTowerLocation;
@@ -139,8 +157,14 @@ protected:
    TH2F* m_h_TransCheck_JEP;
    TH2F* m_h_TransCheck_emJetElements;
    TH2F* m_h_TransCheck_hadJetElements;
-
   
+  std::stringstream runNumStr;
+  
+  int m_evtNum;
+  int m_lumiBlock;
+  int m_evtBCID;
+  int m_runNum;
+
 
 };
 

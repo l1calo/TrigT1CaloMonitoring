@@ -142,17 +142,20 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 
       m_h_je_emenergy = expert_Booker.book1F("EmEnergy_JEM_input", "TowerSum EM energy distribution  --  JEM input", m_MaxEnergyRange, 0, m_MaxEnergyRange, "em energy [GeV]" , "N");
       m_h_je_hadenergy  = expert_Booker.book1F("HadEnergy_JEM_input", "TowerSum HAD energy distribution  --  JEM input", m_MaxEnergyRange, 0, m_MaxEnergyRange, "had energy [GeV]" , "N");
-      //m_h_je_emenergy->SetStats(kFALSE);
-      //m_h_je_hadenergy->SetStats(kFALSE);
+      m_h_je_emenergy->SetStats(kFALSE);
+      m_h_je_hadenergy->SetStats(kFALSE);
 
       m_h_je_energy_emHitMap = shift_Booker.book2F("JE_EM_HitMap_energy_JEM_input", "#eta - #phi map of EM TowerSum weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4 , "#eta", "#phi");
       m_h_je_energy_emHitMap->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
       m_h_je_energy_emHitMap->SetStats(kFALSE);
+     
 
       m_h_je_energy_hadHitMap = shift_Booker.book2F("JE_HAD_HitMap_energy_JEM_input", "#eta - #phi map of HAD TowerSum weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
       m_h_je_energy_hadHitMap->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
       m_h_je_energy_hadHitMap->SetStats(kFALSE);
+      
 
+      
       if (m_DataType=="BS")
 	{
 	  std::string name,title;
@@ -168,6 +171,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	      m_h_je_emHitMap[i]=shift_Booker.book2F(name,title,50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
 	      m_h_je_emHitMap[i]->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
 	      m_h_je_emHitMap[i]->SetStats(kFALSE);
+	      
 
 	      buffer.str("");
 	      buffer<<i;
@@ -177,6 +181,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	      m_h_je_hadHitMap[i]=shift_Booker.book2F(name,title,50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
 	      m_h_je_hadHitMap[i]->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
 	      m_h_je_hadHitMap[i]->SetStats(kFALSE);
+	      
 	    }
 
 	  // ----------------------------------- Error Histos ------------------------------------------------------
@@ -194,7 +199,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_je_error->GetXaxis()->SetBinLabel(10, "GLinkDown");
 	  m_h_je_error->GetXaxis()->SetBinLabel(11, "GLinkTimeout");
 	  m_h_je_error->SetStats(kFALSE);
-
+         
+	  
 	  for (int i = 0; i < 16; i++)
 	    {
 	      buffer.str("");
@@ -230,7 +236,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       m_h_JEMRoI_FwdHitsLeft = RoI_Booker.book1F("FwdHitsLeft_JEM_RoI", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
       
       m_h_JEMDAQ_Hits_Map= DAQ_Booker.book2F("Hits_Map_JEM","HitMap of Hits per JEM",12,-0.5,11.5,35,0.5,35.5,"","");
-     
+      m_h_JEMDAQ_Hits_Map->SetStats(kFALSE);
+      
 	  for (int i = 0; i < 16; i++)
 	    {
 
@@ -267,6 +274,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 
 	  m_h_JEMRoI_MainThreshPerEtaPhi[i] = RoI_Booker.book2F(name.c_str(), title.c_str(), 50, -5, 5, 32,0,6.4, "#eta", "#phi");
 	  m_h_JEMRoI_MainThreshPerEtaPhi[i]->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
+	  m_h_JEMRoI_MainThreshPerEtaPhi[i]->SetStats(kFALSE);
+	
 	}
       for (int i=0;i<4;i++)
 	{
@@ -280,6 +289,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 
 	  m_h_JEMRoI_FwdThreshPerEtaPhi[i] = RoI_Booker.book2F(name.c_str(), title.c_str(), 50, -5, 5, 32,0,6.4, "#eta", "#phi");
 	  m_h_JEMRoI_FwdThreshPerEtaPhi[i]->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
+	  m_h_JEMRoI_FwdThreshPerEtaPhi[i]->SetStats(kFALSE);
 	}
 
       //-------------------------------- Error Histos ------------------------------------------------------
@@ -294,6 +304,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	  
 	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(4, "Saturation (Main Jets)");
 	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(5, "Saturation (Fwd Jets)");
+	  m_h_JEMRoI_error->SetStats(kFALSE);	   
 	  	  
 	  for (int i = 0; i < 16; i++)
 	    {
@@ -309,7 +320,14 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	    }
 	  m_h_JEMRoI_error->GetYaxis()->SetBinLabel(17, "Crate 0: ");
 	  m_h_JEMRoI_error->GetYaxis()->SetBinLabel(35, "Crate 1: ");
+	
+	m_h_JEM_ErrorSummary = Error_Booker.book1F("JEM Error Summary","Summary of Data Errors", 3,-0.5,2.5,"","Entries");
+	m_h_JEM_ErrorSummary ->GetXaxis()->SetBinLabel(1, "Jet element errors");
+	m_h_JEM_ErrorSummary ->GetXaxis()->SetBinLabel(2, "Status error");
+	m_h_JEM_ErrorSummary ->GetXaxis()->SetBinLabel(3, "Jet Hit errors");
+	
 	}
+       
     }
     
   return StatusCode( StatusCode::SUCCESS );
@@ -337,13 +355,20 @@ StatusCode JEMMon::fillHistograms()
       mLog << MSG::INFO << "No JetElements found in TES at " << m_JetElementLocation << endreq ;
       return StatusCode::SUCCESS;
     }
-
+         
   // Step over all cells 
   JECollection::const_iterator it_je ;
   for( it_je = jetElements ->begin(); it_je < jetElements->end(); ++it_je )
     {	  
+    
+          LVL1::Coordinate coord((*it_je)->phi(),(*it_je)->eta());
+	  LVL1::CoordToHardware ToHW;
+	  int crate = ToHW.jepCrate(coord);
+	  int module=ToHW.jepModule(coord);
+	  int cord=ToHW.jepCoordinateWord(coord);
+	  
       mLog << MSG::VERBOSE<<m_DataType <<" JE has coords ("<<(*it_je)->phi()<<", "<<(*it_je)->eta()
-	   << " and energies : "<<(*it_je)->emEnergy()<<", "<<(*it_je)->hadEnergy()<<" (Em,Had)"<<endreq;
+	   << " and energies : "<<(*it_je)->emEnergy()<<", "<<(*it_je)->hadEnergy()<<" (Em,Had)"<<" HW Crate:"<<crate<<"Module: "<<module<<" "<<cord<<endreq;
 
          
       if ((*it_je)->emEnergy()!=0) 
@@ -419,6 +444,20 @@ StatusCode JEMMon::fillHistograms()
 	  // GLinkTimeout
 	  m_h_je_error->Fill(11,(crate*18 + module+1),err.get(23));
 	  
+	  
+	  
+	  //Filling the Error Summary histogram
+	 //Jet element errors 
+	  m_h_JEM_ErrorSummary->Fill(1,err.get(1));
+	  m_h_JEM_ErrorSummary->Fill(1,haderr.get(1));
+	  m_h_JEM_ErrorSummary->Fill(1,err.get(2));
+	  m_h_JEM_ErrorSummary->Fill(1,haderr.get(2));
+	 //Errors from substatus word from ROD: JEM
+	  if (err.get(16)!=0 or err.get(17)!=0 or err.get(18)!=0 or err.get(19)!=0 or err.get(20)!=0 or err.get(22)!=0 or err.get(23)!=0 ) {
+	  m_h_JEM_ErrorSummary->Fill(2, 1);
+	  }
+	 
+	  
 	}   
     }
   
@@ -493,7 +532,7 @@ StatusCode JEMMon::fillHistograms()
 	    
 	     for(int i=0; i<8;i++) {
 	       if ((Help.Multiplicity(JEMHit,3*i,1))!=0){
-	       m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+2+18,1);
+	       m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+19,1);
 	       }
 	     }
 	   }
@@ -521,14 +560,14 @@ StatusCode JEMMon::fillHistograms()
 	    for(int i=0; i<8;i++)
 	      {
 		if ((Help.Multiplicity(JEMHit,2*i,1))!=0){
-		  m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+2+18,1);
+		  m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+19,1);
 		}
 	      }
 	    	  
 	    for(int i=8; i<12;i++)
 	      {
 		if ((Help.Multiplicity(JEMHit,2*i,1))!=0){
-		  m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+2+18,1);
+		  m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+19,1);
 		}
 	      }
 	  }
@@ -666,9 +705,16 @@ StatusCode JEMMon::fillHistograms()
 	  if ((*it_JEMRoIs)->forward()==1) m_h_JEMRoI_error->Fill(2,(crate*18 +module +1 ),err.get(1));
 	  
 	// Saturation (Main Jets)
-	  if ((*it_JEMRoIs)->forward()==0) m_h_JEMRoI_error->Fill(1,(crate*18 +module +1 ),err.get(0));
+	  if ((*it_JEMRoIs)->forward()==0) m_h_JEMRoI_error->Fill(4,(crate*18 +module +1 ),err.get(0));
 	// Saturation (Fwd Jets)
-	  if ((*it_JEMRoIs)->forward()==1) m_h_JEMRoI_error->Fill(2,(crate*18 +module +1 ),err.get(0));	 
+	  if ((*it_JEMRoIs)->forward()==1) m_h_JEMRoI_error->Fill(5,(crate*18 +module +1 ),err.get(0));
+	  
+	 
+	
+	//Filling the Error Summary histogram
+	 //Jet errors 
+	  m_h_JEM_ErrorSummary->Fill(3,err.get(1));
+	
 	}     	
  
 

@@ -102,8 +102,7 @@ protected:
    TH2F* m_h_CMMJet_error;
    TH2F* m_h_CMMEnergy_error;
    TH1F* m_h_CMMRoI_error;
-   //TH1F* m_h_TriggeredSlice_Energy;
-   //TH1F* m_h_TriggeredSlice_Jet;
+   TH1F* m_h_CMM_ErrorSummary;
    TH1F* m_h_TriggeredSlice;	  
 };
 

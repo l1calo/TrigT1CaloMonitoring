@@ -84,38 +84,42 @@
 #include <functional>
 #include <iostream>
 #include <cstdlib>
+#include <utility>
+
+#include "TrigT1Calo/JetAlgorithm.h"
+#include "TrigT1Calo/CMMJetHits.h"
+#include "TrigT1Calo/JEMHits.h"
+#include "TrigT1Calo/JetElement.h"
+#include "TrigT1Calo/JEMRoI.h"
+#include "TrigT1Calo/CMMRoI.h"
+#include "TrigT1Calo/JEMEtSums.h"
+#include "TrigT1Calo/CMMEtSums.h"
+#include "TrigT1Calo/CoordToHardware.h"
+#include "TrigT1Calo/TriggerTower.h"
+#include "TrigT1CaloTools/IL1JEPHitsTools.h"
+#include "TrigT1CaloTools/IL1JetTools.h"
+#include "TrigT1CaloTools/IL1JetElementTools.h"
+#include "TrigT1CaloTools/IL1JEPEtSumsTools.h"
+#include "TrigT1Interfaces/Coordinate.h"
+#include "TrigT1Interfaces/TrigT1CaloDefs.h"
 
 #include "TrigT1CaloMonitoring/JEPTransPerfMon.h"
-#include "TrigT1CaloMonitoring/JEMMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
-
-#include "TrigT1Calo/LVL1TriggerMenuDefs.h"
-#include "TrigT1Calo/CMMRoI.h"
-#include "TrigT1Calo/JEMRoI.h"
-#include "TrigT1Calo/QuadLinear.h"
-#include "TrigT1Calo/DataError.h"
-#include "TrigT1Calo/TriggerTowerCollection.h"
-
-#include "TrigT1Interfaces/TrigT1CaloDefs.h"
-#include "TrigT1Interfaces/Coordinate.h"
-#include "TrigT1Calo/CoordToHardware.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
-
-
-
 #include "Identifier/HWIdentifier.h"
-
+#include "EventInfo/EventInfo.h"
+#include "EventInfo/EventID.h"
 
 
 
 namespace LVL1 {
-  class CMMRoI;
+ class CMMRoI;
 }
 
 namespace LVL1 {
-  class JEMRoI;
+ class JEMRoI;
 }
 
 // *********************************************************************
@@ -125,12 +129,18 @@ namespace LVL1 {
 /*---------------------------------------------------------*/
 JEPTransPerfMon::JEPTransPerfMon( const std::string & type, const std::string & name,
 		const IInterface* parent )
-  : ManagedMonitorToolBase( type, name, parent )//,
-    //m_JetElementTool("LVL1::L1JetElementTools/L1JetElementTools")
+   : ManagedMonitorToolBase( type, name, parent ),
+    m_jepHitsTool("LVL1::L1JEPHitsTools/L1JEPHitsTools"),
+    m_jetTool("LVL1::L1JetTools/L1JetTools"),
+    m_jetElementTool("LVL1::L1JetElementTools/L1JetElementTools"),
+    m_etSumsTool("LVL1::L1JEPEtSumsTools/L1JEPEtSumsTools"),
+    mLog(msgSvc(),name)
 /*---------------------------------------------------------*/
-{
+{  
+  
   // This is how you declare the parameters to Gaudi so that
   // they can be over-written via the job options file
+  
   declareProperty( "BS_JetElementLocation", m_BS_JetElementLocation = LVL1::TrigT1CaloDefs::JetElementLocation); 
   declareProperty( "BS_TriggerTowerLocation", m_BS_TriggerTowerLocation = LVL1::TrigT1CaloDefs::TriggerTowerLocation); 
   declareProperty( "NoLUTSlices", m_NoLUTSlices = 5); 
@@ -159,28 +169,6 @@ JEPTransPerfMon::JEPTransPerfMon( const std::string & type, const std::string & 
 
   declareProperty( "PathInRootFile", m_PathInRootFile="Stats/TransAndPerf") ;
   
-
-/*
-  IToolSvc* toolSvc;
-  StatusCode status = service( "ToolSvc",toolSvc  );
-
-  if(status.isSuccess()) 
-    {
-      IAlgTool *algtool;
-      sc = toolSvc->retrieveTool("L1CaloTTIdTools", algtool);
-      mLog<<MSG::DEBUG<<"L1CaloTTIdTools retrieved"<<endreq;
-      if (sc!=StatusCode::SUCCESS) 
-	{
-	  mLog << MSG::ERROR << " Cannot get L1CaloTTIdTools !" << endreq;
-	  return sc;
-	}
-      m_l1CaloTTIdTools = dynamic_cast<L1CaloTTIdTools*> (algtool);
-    } 
-  else 
-    {
-      return StatusCode::FAILURE;
-    }
-  */
 }
 
 
@@ -191,13 +179,12 @@ JEPTransPerfMon::~JEPTransPerfMon()
 }
 
 /*---------------------------------------------------------*/
-StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock, 
-				   bool isNewLumiBlock, bool isNewRun )
+StatusCode JEPTransPerfMon:: initialize()
 /*---------------------------------------------------------*/
 {
+    
   MsgStream mLog( msgSvc(), name() );
-  mLog << MSG::DEBUG << "in JEPTransPerfMon::bookHistograms" << endreq;
-  
+   
   /** get a handle of StoreGate for access to the Event Store */
   StatusCode sc = service("StoreGateSvc", m_storeGate);
   
@@ -208,11 +195,6 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
 	   << endreq;
       return sc;
     }
-
-
-
-
-
 
   // Get a pointer to DetectorStore services
   sc = service("DetectorStore", m_detStore);
@@ -286,20 +268,53 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
       return StatusCode::FAILURE;
     }
   
+  sc = m_jetElementTool.retrieve();
+  if( sc.isFailure() ) {
+    mLog << MSG::ERROR << "Unable to locate Tool L1JetElementTools" << endreq;
+    return sc;
+  }
+
+  sc = m_jetTool.retrieve();
+  if( sc.isFailure() ) {
+    mLog << MSG::ERROR << "Unable to locate Tool L1JetTools" << endreq;
+    return sc;
+  }
+
+  sc = m_jepHitsTool.retrieve();
+  if( sc.isFailure() ) {
+    mLog << MSG::ERROR << "Unable to locate Tool L1JEPHitsTools" << endreq;
+    return sc;
+  }
+
+  sc = m_etSumsTool.retrieve();
+  if( sc.isFailure() ) {
+    mLog << MSG::ERROR << "Unable to locate Tool L1JEPEtSumsTools" << endreq;
+    return sc;
+  }
+
+   
+  
+  sc = service( "StoreGateSvc", m_eventStore);
+  if( sc.isFailure() ) {
+    mLog << MSG::FATAL << name() << ": Unable to locate Service EventStore" << endreq;
+    return sc;
+  }
+
+  mLog << MSG::INFO << "JEPTransPerfMon initialised" << endreq;
+
+  return StatusCode::SUCCESS;
+}
+
+/*---------------------------------------------------------*/
+StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock, 
+				   bool isNewLumiBlock, bool isNewRun )
+/*---------------------------------------------------------*/
+{
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+  MsgStream mLog( msgSvc(), name() );
+  mLog << MSG::DEBUG << "in JEPTransPerfMon::bookHistograms" << endreq;
+ 
   ManagedMonitorToolBase::LevelOfDetail_t LevelOfDetail=shift;
   if (m_DataType=="Sim") LevelOfDetail = expert;
 
@@ -320,15 +335,51 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
   if ( isNewEventsBlock|| isNewLumiBlock) { }
   
   if( isNewRun ) 
-    {	
+    {
+    
+      const EventInfo* ByteStreamEventInfo;  
+      StatusCode sc = m_eventStore->retrieve(ByteStreamEventInfo);
+      if (sc.isFailure())  { 
+        mLog << MSG::ERROR << "no event info" << endreq ;
+        m_evtNum    = 0;
+        m_lumiBlock = 0;
+        m_evtBCID   = 0;   
+        m_runNum    = 0;
+      }
+
+      else {
+      EventID* eventID = ByteStreamEventInfo->event_ID();
+      if (eventID) {
+        m_evtNum    = eventID->event_number();
+        m_lumiBlock = eventID->lumi_block();
+        m_evtBCID   = eventID->bunch_crossing_id();
+        m_runNum    = eventID->run_number();
+      }
+      else {	
+        m_evtNum    =0;
+        m_lumiBlock =0;
+        m_evtBCID   =0;
+        m_runNum    =0;
+      }
+
+
+      } 
+      
+    	
       m_NoEvents=0;
 
       std::string name;
       std::stringstream buffer,buffer2;
-
       
-      m_h_TransCheck_emJetElements=transmission_Booker.book2F("emJE_TransPerfCheck", "em JE Transmission and Performance Check for (TT|JE)", (1*m_NoLUTSlices),0.5,(1*m_NoLUTSlices+.5), 35,0.5,35.5, "", "");
+      
+     
+      m_h_TransCheck_emJetElements=transmission_Booker.book2F("emJE_TransPerfCheck","em JE Transmission and Performance Check for (TT|JE)", (1*m_NoLUTSlices),0.5,(1*m_NoLUTSlices+.5), 35,0.5,35.5, "", "");
+
+      m_h_TransCheck_emJetElements->SetStats(kFALSE);
+      //      m_h_TransCheck_emJetElements->SetOption(colz);
       m_h_TransCheck_hadJetElements=transmission_Booker.book2F("hadJE_TransPerfCheck", "had JE Transmission and Performance Check for (TT|JE)",(1*m_NoLUTSlices),0.5,(1*m_NoLUTSlices+.5), 35,0.5,35.5, "", "");
+      m_h_TransCheck_hadJetElements->SetStats(kFALSE);
+      //      m_h_TransCheck_hadJetElements->SetOption(colz);
 
       for (int i = 0; i < 16; i++)
 	{
@@ -371,7 +422,8 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
       if (m_CompareWithSimulation ==1)
 	{
 	  m_h_SimBSMon_JEP=JEM_Booker.book2F("JEP_Calc_Error", "JEP Hardware Output compared to Simulation: Differences", 4,0.5,4.5,37,0.5,37.5, "", "");
-	  
+	  m_h_SimBSMon_JEP->SetStats(kFALSE);
+	  //m_h_SimBSMon_JEP->SetOption(colz);
 
 	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(1, "CalcErrors E_{x}, E_{y}");
 	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(2, "CalcErrors E_{t}");
@@ -407,7 +459,8 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
       
       m_h_TransCheck_JEP->GetXaxis()->SetBinLabel(1, "TransErrors JetHits");
       m_h_TransCheck_JEP->GetXaxis()->SetBinLabel(2, "TransErrors E_{x}, E_{y}, E_{t}");
-      
+      m_h_TransCheck_JEP->SetStats(kFALSE);
+      //m_h_TransCheck_JEP->SetOption(colz);
       for (int i = 0; i < 16; i++)
 	{
 	  buffer.str("");
@@ -488,7 +541,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
  	  k++;
  	}
      
- 
+
   // =============================================================================================
   // ================= JetElements -> JEM Jet Hits ===============================================
   // =============================================================================================
@@ -497,61 +550,75 @@ StatusCode JEPTransPerfMon::fillHistograms()
   // Check	Functionality
   //            JEMJetHits(JEMDAQ.JetElements) = JEMDAQ.JEMJetHits
   // ---------------------------------------------------------------------------------------------
-  if (m_CompareWithSimulation ==1)
-    {
+  
+  const JemRoiCollection* BS_JEMRoI;
+  sc = m_storeGate->retrieve(BS_JEMRoI, m_BS_JEMRoILocation);
+  if( (sc==StatusCode::FAILURE) ) {
+    mLog << MSG::INFO << "No JEMRoI found in TES at "<< m_BS_JEMRoILocation << endreq ;
+    return StatusCode::SUCCESS;
+  }
+  
+      
+  const JEMHitsCollection* BS_JEMHits;
+  sc = m_storeGate->retrieve(BS_JEMHits, m_BS_JEMHitsLocation);
+  if( (sc==StatusCode::FAILURE) ) {
+    mLog << MSG::INFO << "No JEMHits found in TES at "<< m_BS_JEMHitsLocation << endreq ;
+    return StatusCode::SUCCESS;
+    }
+	
+  
+  if (m_CompareWithSimulation ==1){
 
-      mLog << MSG::DEBUG << "==== JetElements -> JEM Jet Hits: Functionality ===="<< endreq ;
+    mLog << MSG::DEBUG << "==== JetElements -> JEM Jet Hits: Functionality ===="<< endreq ;
       
+    const JEMHitsCollection* BS_JEMHits;
+    sc = m_storeGate->retrieve(BS_JEMHits, m_BS_JEMHitsLocation);
+    if( (sc==StatusCode::FAILURE) ) {
+      mLog << MSG::INFO << "No JEMHits found in TES at "<< m_BS_JEMHitsLocation << endreq ;
+      return StatusCode::SUCCESS;
+    }
       
-      const JEMHitsCollection* BS_JEMHits;
-      sc = m_storeGate->retrieve(BS_JEMHits, m_BS_JEMHitsLocation);
-      if( (sc==StatusCode::FAILURE) ) 
-	{
-	  mLog << MSG::INFO << "No JEMHits found in TES at "<< m_BS_JEMHitsLocation << endreq ;
-	  return StatusCode::SUCCESS;
-	}
+    JEMHitsCollection* Sim_JEMHits = 0;
+    if (BS_JEMRoI) {
+      Sim_JEMHits = new JEMHitsCollection;
+      mLog<<MSG::DEBUG<<"Simulate JEM Hits from JEM RoIs"<<endreq;
+      m_jepHitsTool->formJEMHits(BS_JEMRoI, Sim_JEMHits);
+    }
+     
       
-      const JEMHitsCollection* Sim_JEMHits;
-      sc = m_storeGate->retrieve(Sim_JEMHits, m_Sim_JEMHitsLocation);
-      if( (sc==StatusCode::FAILURE) ) 
-	{
-	  mLog << MSG::INFO << "No JEMHits found in TES at "<< m_Sim_JEMHitsLocation << endreq ;
-	  return StatusCode::SUCCESS;
-	}
-      
-      std::vector <LVL1::JEMHits*>  vBS_JEMHits;
-      std::vector <LVL1::JEMHits*>  vSim_JEMHits;
-      //use standard vector instead of datavector for transmissioncheck:
+    std::vector <LVL1::JEMHits*>  vBS_JEMHits;
+    std::vector <LVL1::JEMHits*>  vSim_JEMHits;
+    
+       //use standard vector instead of datavector for transmissioncheck:
       //datavector erases not only the pointer in the vector, but also the referenced object
       //-> segmentation fault!
       
       //fill vectors
-      JEMHitsCollection::const_iterator it_JEMHits ;
-      int  foundModule;
-      int noMatchfound;
+    JEMHitsCollection::const_iterator it_JEMHits ;
+    int  foundModule;
+    int noMatchfound;
       
-      for( it_JEMHits  = BS_JEMHits->begin(); it_JEMHits != BS_JEMHits->end(); ++it_JEMHits )
-	{
-	  vBS_JEMHits.push_back(*it_JEMHits);	       
-	}   
-      for( it_JEMHits  = Sim_JEMHits->begin(); it_JEMHits != Sim_JEMHits->end(); ++it_JEMHits )
-	{
-	  vSim_JEMHits.push_back(*it_JEMHits);	       
-	}   
+    for( it_JEMHits  = BS_JEMHits->begin(); it_JEMHits != BS_JEMHits->end(); ++it_JEMHits )
+    {
+      vBS_JEMHits.push_back(*it_JEMHits);	       
+    }   
+    for( it_JEMHits  = Sim_JEMHits->begin(); it_JEMHits != Sim_JEMHits->end(); ++it_JEMHits )
+    {
+      vSim_JEMHits.push_back(*it_JEMHits);	       
+    }   
       
       // Step over all cells and compare
-      std::vector <LVL1::JEMHits*>::iterator it_BS_JEMHits;
-      std::vector <LVL1::JEMHits*>::iterator it_Sim_JEMHits;
+    std::vector <LVL1::JEMHits*>::iterator it_BS_JEMHits;
+    std::vector <LVL1::JEMHits*>::iterator it_Sim_JEMHits;
       
       
-      it_BS_JEMHits=vBS_JEMHits.begin();
+    it_BS_JEMHits=vBS_JEMHits.begin();
       
-      mLog<<MSG::DEBUG<<"JEMHits Calculation difference for"<<endreq;
-      while (it_BS_JEMHits != vBS_JEMHits.end())
-	{
-	  foundModule = 0;
-	  noMatchfound=0;
-	  it_Sim_JEMHits=vSim_JEMHits.begin();
+    mLog<<MSG::DEBUG<<"JEMHits Calculation difference for"<<endreq;
+    while (it_BS_JEMHits != vBS_JEMHits.end()) {
+      foundModule = 0;
+      noMatchfound=0;
+      it_Sim_JEMHits=vSim_JEMHits.begin();
 	  
 	  while ((foundModule==0)and(it_Sim_JEMHits != vSim_JEMHits.end()))
 	    {
@@ -608,7 +675,9 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      }
 	    }
 	}
+     delete Sim_JEMHits;	
     }
+
 
   // =============================================================================================
   // ================= JetElements -> JEM Energy Sums ============================================
@@ -618,26 +687,31 @@ StatusCode JEPTransPerfMon::fillHistograms()
   // Check	Functionality
   //            JEMEnergySums(JEMDAQ.JetElements) = JEMDAQ.JEMEnergySums
   // ---------------------------------------------------------------------------------------------
+  // retrieve JEMEtSums information from simulation and bytestream... 
+
+      const JEMEtSumsCollection* BS_JEMEtSums;
+      sc = m_storeGate->retrieve(BS_JEMEtSums, m_BS_JEMEtSumsLocation);
+      if( (sc==StatusCode::FAILURE) ) {
+	  mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_BS_JEMEtSumsLocation << endreq ;
+	  return StatusCode::SUCCESS;
+      }
+	
+     
+  
   if (m_CompareWithSimulation ==1)
     {
       
       mLog << MSG::DEBUG << "==== JetElements -> JEM Energy Sums: Functionality ===="<< endreq ;
       
-      // retrieve JEMEtSums information from simulation and bytestream... 
-      const JEMEtSumsCollection* BS_JEMEtSums;
-      sc = m_storeGate->retrieve(BS_JEMEtSums, m_BS_JEMEtSumsLocation);
-      if( (sc==StatusCode::FAILURE) ) 
-	{
-	  mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_BS_JEMEtSumsLocation << endreq ;
-	  return StatusCode::SUCCESS;
-	}
-      const JEMEtSumsCollection* Sim_JEMEtSums;
-      sc = m_storeGate->retrieve(Sim_JEMEtSums, m_Sim_JEMEtSumsLocation);
-      if( (sc==StatusCode::FAILURE) ) 
-	{
-	  mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_Sim_JEMEtSumsLocation << endreq ;
-	  return StatusCode::SUCCESS;
-	}
+      
+      JEMEtSumsCollection* Sim_JEMEtSums = 0;
+      if (BS_JEMEtSums) {
+        Sim_JEMEtSums = new JEMEtSumsCollection;
+	mLog<<MSG::DEBUG<<"Simulate JEMEtSum from JetElements"<<endreq;
+	m_etSumsTool->formJEMEtSums(jetElements, Sim_JEMEtSums);
+	
+      }
+      
       
       // compare simulation-vector with bytestream-vector, erase corresponding entries
       // -> the remaining vectors contain faulty transmissions! 
@@ -762,7 +836,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	    }
 	}
     }
-  
+
 
   // =============================================================================================
   // ================= JEM Jet Hits -> (Crate/System) CMM Jet Hits ===============================
@@ -783,7 +857,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
       mLog << MSG::INFO << "No CMM JetHits found in TES at "  << m_BS_CMMJetHitsLocation << endreq ;
       return StatusCode::SUCCESS;
     }  
-  CMMJetHitsCollection::const_iterator it_CMMJetHits ;
+  CMMJetHitsCollection::const_iterator it_CMMJetHits;
           
   //retrieve JEMHits from storegate for comparison with transmitted data stored in CMMJetHits
   const JEMHitsCollection* JEMHits;
@@ -916,29 +990,27 @@ StatusCode JEPTransPerfMon::fillHistograms()
   // Check	Functionality
   //            CMMJetHits(JEMDAQ.JEMJetHits) = (Crate/System)CMMJetDAQ.CrateCMMJetHits
   // ---------------------------------------------------------------------------------------------
+  const CMMJetHitsCollection* BS_CMMJetHits;
+  sc = m_storeGate->retrieve(BS_CMMJetHits, m_BS_CMMJetHitsLocation);
+  if( (sc==StatusCode::FAILURE) ) {
+    mLog << MSG::INFO << "No CMMJetHits found in TES at "<< m_BS_CMMJetHitsLocation << endreq ;
+    return StatusCode::SUCCESS;
+  }
+  
   if (m_CompareWithSimulation ==1)
     {
       
       mLog << MSG::DEBUG << "==== JEM Jet Hits -> (Crate/System) CMM Jet Hits: Functionality ===="<< endreq ;
       
-      const CMMJetHitsCollection* BS_CMMJetHits;
-      sc = m_storeGate->retrieve(BS_CMMJetHits, m_BS_CMMJetHitsLocation);
-      if( (sc==StatusCode::FAILURE) ) 
-	{
-	  mLog << MSG::INFO << "No CMMJetHits found in TES at "<< m_BS_CMMJetHitsLocation << endreq ;
-	  return StatusCode::SUCCESS;
-	}
-      
-      const CMMJetHitsCollection* Sim_CMMJetHits;
-      sc = m_storeGate->retrieve(Sim_CMMJetHits, m_Sim_CMMJetHitsLocation);
-      if( (sc==StatusCode::FAILURE) ) 
-	{
-	  mLog << MSG::INFO << "No CMMJetHits found in TES at "<< m_Sim_CMMJetHitsLocation << endreq ;
-	  return StatusCode::SUCCESS;
-	}
-      
-      std::vector <LVL1::CMMJetHits*>  vBS_CMMJetHits;
-      std::vector <LVL1::CMMJetHits*>  vSim_CMMJetHits;
+      CMMJetHitsCollection* Sim_CMMJetHits = 0;
+      if (BS_JEMHits) {
+        Sim_CMMJetHits = new CMMJetHitsCollection;
+	mLog<<MSG::DEBUG<<"Simulate CMMJetHits from JEMHits"<<endreq;
+	m_jepHitsTool->formCMMJetHits(BS_JEMHits, Sim_CMMJetHits);
+      }
+	
+    std::vector <LVL1::CMMJetHits*>  vBS_CMMJetHits;
+    std::vector <LVL1::CMMJetHits*>  vSim_CMMJetHits;
       //use standard vector instead of datavector for transmissioncheck:
       //datavector erases not only the pointer  in the vector, but also the referenced object
       //-> segmentation fault!
@@ -1033,6 +1105,9 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	    }
 	}
     }
+	
+    
+
   
   // =============================================================================================
   // ================= JEMEnergySums -> (Crate/System) CMM Energy Sums ===========================
@@ -1064,8 +1139,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
       mLog << MSG::INFO << "No JEMEtSums found in TES at "<< m_BS_JEMEtSumsLocation << endreq ;
       return StatusCode::SUCCESS;
     }
-  //int  foundModule;
-  //int noMatchfound;
+ 
   
   // compare JEMHits-vector with CMMJEMHits-vector, erase corresponding entries
   // -> the remaining vectors contain faulty transmissions! 
@@ -1162,7 +1236,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  mLog<<MSG::VERBOSE<<"CMM Ey "<<(*it_vCMMJEMEtSums)->Ey()<<endreq;
 	  mLog<<MSG::VERBOSE<<"CMM Et "<<(*it_vCMMJEMEtSums)->Et()<<endreq;
 	  
-	  m_h_TransCheck_JEP->Fill(2,(*it_vCMMJEMEtSums)->crate()*19+(*it_vCMMJEMEtSums)->dataID() + 1,1);
+	  if ((*it_vCMMJEMEtSums)->Ex()!=0 or (*it_vCMMJEMEtSums)->Ey()!=0 or (*it_vCMMJEMEtSums)->Et()!=0) m_h_TransCheck_JEP->Fill(2,(*it_vCMMJEMEtSums)->crate()*19+(*it_vCMMJEMEtSums)->dataID() + 1,1);
 	  	}
     }
   
@@ -1186,26 +1260,27 @@ StatusCode JEPTransPerfMon::fillHistograms()
   // Check	Functionality
   //            CMMEnergySums(JEMDAQ.JEMEnergySums) = (Crate/System)CMMEnergyDAQ.CrateCMMEnergySums
   // ---------------------------------------------------------------------------------------------
-    if (m_CompareWithSimulation ==1)
-    {
-
-      mLog << MSG::DEBUG << "==== JEMEnergySums -> (Crate/System) CMM Energy Sums: Functionality ===="<< endreq ;
-      
-      const CMMEtSumsCollection* BS_CMMEtSums;
+    
+    const CMMEtSumsCollection* BS_CMMEtSums;
       sc = m_storeGate->retrieve(BS_CMMEtSums, m_BS_CMMEtSumsLocation);
       if( (sc==StatusCode::FAILURE) ) 
 	{
 	  mLog << MSG::INFO << "No CMMEtSums found in TES at "<< m_BS_CMMEtSumsLocation << endreq ;
 	  return StatusCode::SUCCESS;
 	}
+    
+    if (m_CompareWithSimulation ==1)
+    {
+
+      mLog << MSG::DEBUG << "==== JEMEnergySums -> (Crate/System) CMM Energy Sums: Functionality ===="<< endreq ;
+        
       
-      const CMMEtSumsCollection* Sim_CMMEtSums;
-      sc = m_storeGate->retrieve(Sim_CMMEtSums, m_Sim_CMMEtSumsLocation);
-      if( (sc==StatusCode::FAILURE) ) 
-	{
-	  mLog << MSG::INFO << "No CMMEtSums found in TES at "<< m_Sim_CMMEtSumsLocation << endreq ;
-	  return StatusCode::SUCCESS;
-	}
+      CMMEtSumsCollection* Sim_CMMEtSums = 0;
+      if (BS_JEMEtSums) {
+        Sim_CMMEtSums = new CMMEtSumsCollection;
+	mLog<<MSG::DEBUG<<"Simulate CMMEtSums from JEMEtSum"<<endreq;
+	m_etSumsTool->formCMMEtSums(BS_JEMEtSums, Sim_CMMEtSums);
+      }        
       
       std::vector <LVL1::CMMEtSums*>  vBS_CMMEtSums;
       std::vector <LVL1::CMMEtSums*>  vSim_CMMEtSums;
@@ -1379,6 +1454,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
       noMatchfound=1;
       mLog<<MSG::DEBUG<<"CMMEnergySums: Transmission error between crate and system CMM"<<endreq;
     }
+
   m_h_TransCheck_JEP->Fill(2,17,noMatchfound);
 
 
@@ -1413,22 +1489,25 @@ StatusCode JEPTransPerfMon::fillHistograms()
 
       mLog << MSG::DEBUG << "==== JEM RoI: Functionality ===="<< endreq ;
       
-      const JemRoiCollection* BS_JEMRoI;
-      sc = m_storeGate->retrieve(BS_JEMRoI, m_BS_JEMRoILocation);
-      if( (sc==StatusCode::FAILURE) ) 
-	{
-	  mLog << MSG::INFO << "No JEMRoI found in TES at "<< m_BS_JEMRoILocation << endreq ;
-	  return StatusCode::SUCCESS;
-	}
       
-      const JemRoiCollection* Sim_JEMRoI;
-      sc = m_storeGate->retrieve(Sim_JEMRoI, m_Sim_JEMRoILocation);
-      if( (sc==StatusCode::FAILURE) ) 
-	{
-	  mLog << MSG::INFO << "No JEMRoI found in TES at "<< m_Sim_JEMRoILocation << endreq ;
-	  return StatusCode::SUCCESS;
-	}
-      
+      JemRoiCollection* Sim_JEMRoI = 0;
+      if (jetElements) {
+        Sim_JEMRoI = new JemRoiCollection;
+	mLog<<MSG::DEBUG<<"Simulate RoIs from JetElements"<<endreq;
+	
+	InternalJemRoi* intRois = new InternalJemRoi;
+	
+	m_jetTool->findRoIs(jetElements, intRois, 2);
+	
+	InternalJemRoi::iterator roiIter  = intRois->begin();
+        InternalJemRoi::iterator roiIterE = intRois->end();
+        for (; roiIter != roiIterE; ++roiIter) {
+          LVL1::JEMRoI* roi = new LVL1::JEMRoI((*roiIter)->RoIWord());
+          Sim_JEMRoI->push_back(roi);
+        }
+      }	       
+       
+            
       std::vector <LVL1::JEMRoI*>  vBS_JEMRoI;
       std::vector <LVL1::JEMRoI*>  vSim_JEMRoI;
       //use standard vector instead of datavector for transmissioncheck:
@@ -1439,6 +1518,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
       //fill vectors
       JemRoiCollection::const_iterator it_JEMRoI ;
       
+           
       for( it_JEMRoI  = BS_JEMRoI->begin(); it_JEMRoI != BS_JEMRoI->end(); ++it_JEMRoI )
 	{
 	  vBS_JEMRoI.push_back(*it_JEMRoI);	       
@@ -1475,8 +1555,8 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		  if ((*it_BS_JEMRoI)->hits()!=(*it_Sim_JEMRoI)->hits())
 		    {
 		      mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMRoI)->crate()<<" Module "<<(*it_BS_JEMRoI)->jem()<<" frame "<<(*it_BS_JEMRoI)->frame() <<" location "<<(*it_BS_JEMRoI)->location() <<endreq;
-		      mLog<<MSG::VERBOSE<<"BS:  RoI "<<Help.Binary((*it_BS_JEMRoI)->hits(),8)<<endreq;
-		      mLog<<MSG::VERBOSE<<"Sim: RoI "<<Help.Binary((*it_Sim_JEMRoI)->hits(),8)<<endreq;
+		      mLog<<MSG::VERBOSE<<"BS:  RoI "<<Help.Binary((*it_BS_JEMRoI)->hits(),8)<<", word "<<Help.Binary((*it_BS_JEMRoI)->roiWord(),32)<<endreq;
+		      mLog<<MSG::VERBOSE<<"Sim: RoI "<<Help.Binary((*it_Sim_JEMRoI)->hits(),8)<<", word "<<Help.Binary((*it_Sim_JEMRoI)->roiWord(),32)<<endreq;
 		     
 		      noMatchfound=1;
 		    }
@@ -1498,7 +1578,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  for( it_BS_JEMRoI  = vBS_JEMRoI.begin(); it_BS_JEMRoI != vBS_JEMRoI. end(); ++it_BS_JEMRoI )
 	    {
 	      mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_JEMRoI)->crate()<<" Module "<<(*it_BS_JEMRoI)->jem()<<" frame "<<(*it_BS_JEMRoI)->frame() <<" location "<<(*it_BS_JEMRoI)->location() <<endreq;
-	      mLog<<MSG::VERBOSE<<"BS: RoI "<<Help.Binary((*it_BS_JEMRoI)->hits(),8)<<endreq;
+	      mLog<<MSG::VERBOSE<<"BS: RoI "<<Help.Binary((*it_BS_JEMRoI)->hits(),24)<<endreq;
 	      
 	      m_h_SimBSMon_JEP->Fill(4,((*it_BS_JEMRoI)->crate()*19+(*it_BS_JEMRoI)->jem()+1),1);
 	    }
@@ -1513,7 +1593,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  for( it_Sim_JEMRoI  = vSim_JEMRoI.begin(); it_Sim_JEMRoI != vSim_JEMRoI. end(); ++it_Sim_JEMRoI )
 	    {
 	      mLog<<MSG::DEBUG<<"Sim: Crate "<<(*it_Sim_JEMRoI)->crate()<<" Module "<<(*it_Sim_JEMRoI)->jem()<<" frame "<<(*it_Sim_JEMRoI)->frame() <<" location "<<(*it_Sim_JEMRoI)->location() <<endreq;
-	      mLog<<MSG::VERBOSE<<"Sim: RoI "<<Help.Binary((*it_Sim_JEMRoI)->hits(),8)<<endreq;
+	      mLog<<MSG::VERBOSE<<"Sim: RoI "<<Help.Binary((*it_Sim_JEMRoI)->hits(),24)<<endreq;
 	      
 	      if( (*it_Sim_JEMRoI)->hits()!=0) 
 		{
@@ -1522,74 +1602,128 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	    }
 	}
     }
+  
   // ================= CMM RoI ========================================================
   
-    if (m_CompareWithSimulation ==1)
-    {
-      mLog << MSG::DEBUG << "==== CMM RoI: Functionality ===="<< endreq ;
-      
-      // retrieve RoI information from Storegate
+  // retrieve RoI information from Storegate
       const LVL1::CMMRoI* BS_CR = 0;
       sc = m_storeGate->retrieve (BS_CR, m_BS_CMMRoILocation);
-      if (sc==StatusCode::FAILURE)
-	{
+      if (sc==StatusCode::FAILURE) {
 	  mLog <<MSG::INFO<<"No BS CMM RoI found in TES at "<< m_BS_CMMRoILocation<<endreq;
 	  return StatusCode::SUCCESS;    
-	}
-      
-      const LVL1::CMMRoI* Sim_CR = 0;
-      sc = m_storeGate->retrieve (Sim_CR, m_Sim_CMMRoILocation);
-      if (sc==StatusCode::FAILURE)
-	{
-	  mLog <<MSG::INFO<<"No Sim CMM RoI found in TES at "<< m_Sim_CMMRoILocation<<endreq;
-	  return StatusCode::SUCCESS;    
-	}
-      
-      noMatchfound=0;  
-      if ( ((*BS_CR).jetEtHits()!=(*Sim_CR).jetEtHits())or((*BS_CR).sumEtHits()!=(*Sim_CR).sumEtHits())or((*BS_CR).missingEtHits()!=(*Sim_CR).missingEtHits()))  
-	{
-	  mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for JetEtHits, SumEtHits or MissingEtHits"<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: JetEtHits: "<<(*BS_CR).jetEtHits()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: SumEtHits: "<<(*BS_CR).sumEtHits()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: MissingEtHits: "<<(*BS_CR).missingEtHits()<<endreq;	 
-    
-	  mLog<<MSG::VERBOSE<<"Sim: JetEtHits: "<<(*Sim_CR).jetEtHits()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: SumEtHits: "<<(*Sim_CR).sumEtHits()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: MissingEtHits: "<<(*Sim_CR).missingEtHits()<<endreq;	
-
-	  noMatchfound=1; 
-	}
-      m_h_SimBSMon_JEP->Fill(4,(19+16+1),noMatchfound);
-      
-      
-      noMatchfound=0; 
-      if ( ((*BS_CR).ex()!=(*Sim_CR).ex())or((*BS_CR).ey()!=(*Sim_CR).ey())or((*BS_CR).et()!=(*Sim_CR).et()))  
-	{
-	  mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for Ex, Ey or Et"<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: Et: "<<(*BS_CR).et()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: Ex: "<<(*BS_CR).ex()<<endreq;
-	  mLog<<MSG::VERBOSE<<"BS: Ey: "<<(*BS_CR).ey()<<endreq;	 
-    
-	  mLog<<MSG::VERBOSE<<"Sim: Et: "<<(*Sim_CR).et()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: Ex: "<<(*Sim_CR).ex()<<endreq;
-	  mLog<<MSG::VERBOSE<<"Sim: Ey: "<<(*Sim_CR).ey()<<endreq;
-	  noMatchfound=1; 
-	}
-      m_h_SimBSMon_JEP->Fill(4,(19+16+1),noMatchfound);
-    }
+      }
   
+    if (m_CompareWithSimulation ==1) {
 
+      mLog << MSG::DEBUG << "==== CMM RoI: Functionality ===="<< endreq ;
+      
+      CMMJetHitsCollection* Sim_JetEt = 0;
+      if(CMMJetHits) {
+      Sim_JetEt = new CMMJetHitsCollection;
+      mLog<<MSG::DEBUG<<"Simulate JetEt HitMap from CMMJetHits"<<endreq;
+      m_jepHitsTool->formCMMJetHitsEtMap(CMMJetHits, Sim_JetEt);
+      }
+      
+    bool empty = false;
+      
+    
+     for( it_CMMJetHits  = Sim_JetEt ->begin(); it_CMMJetHits < Sim_JetEt -> end(); ++it_CMMJetHits ) {
+       empty = true;
+       mLog<<MSG::DEBUG<<"Sim JetHits found"<<endreq;
+     }
+    	
+    it_CMMJetHits = Sim_JetEt -> begin();
+    
+    if (empty) {
+      
+      mLog<<MSG::DEBUG<<(*BS_CR).jetEtHits()<<endreq;
+      mLog<<MSG::DEBUG<<(*it_CMMJetHits)->Hits()<<endreq;
+	           
+      noMatchfound=0;  
+      if ( (*BS_CR).jetEtHits()!= (*it_CMMJetHits)->Hits() )  //signed int compare to unsigned int
+	{
+	  mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for JetEtHits"<<endreq;
+	  mLog<<MSG::VERBOSE<<"BS: JetEtHits: "<<(*BS_CR).jetEtHits()<<endreq;
+	      
+	  mLog<<MSG::VERBOSE<<"Sim: JetEtHits: "<<(*it_CMMJetHits)->Hits()<<endreq;
+	  
+	  noMatchfound=1; 
+	}
+    }
+      
+    if (!empty and (*BS_CR).jetEtHits()!=0) {
+      noMatchfound=1;
+      mLog<<MSG::DEBUG<<"no sim but... "<<(*BS_CR).jetEtHits()<<endreq;
+    }
+     
+      
+      CMMEtSumsCollection* Sim_Et = 0;
+      if(CMMEtSums) {
+      Sim_Et = new CMMEtSumsCollection;
+      mLog<<MSG::DEBUG<<"Simulate SumEt/MissingEt HitMap from CMMEtSums"<<endreq;
+      m_etSumsTool->formCMMEtSumsEtMaps(CMMEtSums, Sim_Et);      
+      }
+      
+      CMMEtSumsCollection::const_iterator it_CMMEtSum;	
+	  	     
+      
+      empty = false;
+      
+      for( it_CMMEtSum  = Sim_Et ->begin(); it_CMMEtSum < Sim_Et -> end(); ++it_CMMEtSum )
+      {  
+        empty = true;
+        mLog<<MSG::DEBUG<<"Sim SumEtHits found"<<endreq;
+      }
+      
+      it_CMMEtSum = Sim_Et->begin();
+      
+      if (empty) {
+        if ((*it_CMMEtSum)-> dataID() == 19 and (*it_CMMEtSum)->crate()==1) {
+          if ( ((BS_CR)->missingEtHits()) != (*it_CMMEtSum)->Et()) {
+	    mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for MissingEtHits"<<endreq;
+	    mLog<<MSG::VERBOSE<<"BS: MissingEtHits: "<<(BS_CR)->missingEtHits()<<endreq;	 
+    	    mLog<<MSG::VERBOSE<<"Sim: MissingEtHits: "<<(*it_CMMEtSum)->Et()<<endreq;	
 
-  // =============================================================================================
-  // ================= JEP -> CTP ================= ==============================================
-  // =============================================================================================
+	    noMatchfound=1; 
+	  }
+        }
+	
+        if ((*it_CMMEtSum)-> dataID() == 20 and (*it_CMMEtSum)->crate()==1) {
+          if ( (BS_CR)->sumEtHits()!=(*it_CMMEtSum)->Et()) {
+	    mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for SumEtHits"<<endreq;
+	    mLog<<MSG::VERBOSE<<"BS: SumEtHits: "<<(*BS_CR).sumEtHits()<<endreq;	 
+            mLog<<MSG::VERBOSE<<"Sim: SumEtHits: "<<(*it_CMMEtSum)->Et()<<endreq;	
 
-  // ---------------------------------------------------------------------------------------------
-  // Check	Transmission
-  //              SystemCMMJetDAQ.SystemCMMJetHits = JEPCTP.SystemCMMJetHits
-  //              SystemCMMEnergyDAQ.TotalEtMissHits. = JEPCTP.TotalEtMissHits
-  //              SystemCMMEnergyDAQ.TotalEtSumHits. = JEPCTP.TotalEtSumHits
-  // ---------------------------------------------------------------------------------------------
+	    noMatchfound=1; 
+	  }
+        }
+       
+        if ((*it_CMMEtSum)-> dataID() == 18 and (*it_CMMEtSum)->crate()==1) {      
+          if ( ((BS_CR)->ex()!=(*it_CMMEtSum)->Ex())or((BS_CR)->ey()!=(*it_CMMEtSum)->Ey())or((BS_CR)->et()!=(*it_CMMEtSum)->Et())) {
+	    mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for Ex, Ey or Et"<<endreq;
+	    mLog<<MSG::VERBOSE<<"BS: Et: "<<(*BS_CR).et()<<endreq;
+	    mLog<<MSG::VERBOSE<<"BS: Ex: "<<(*BS_CR).ex()<<endreq;
+	    mLog<<MSG::VERBOSE<<"BS: Ey: "<<(*BS_CR).ey()<<endreq;	 
+    
+	    mLog<<MSG::VERBOSE<<"Sim: Et: "<<(*it_CMMEtSum)->Et()<<endreq;
+	    mLog<<MSG::VERBOSE<<"Sim: Ex: "<<(*it_CMMEtSum)->Ex()<<endreq;
+	    mLog<<MSG::VERBOSE<<"Sim: Ey: "<<(*it_CMMEtSum)->Ey()<<endreq;
+	  
+	    noMatchfound=1; 
+	  }
+        }
+      }
+     
+      if ((!empty) and (((BS_CR)->missingEtHits()!=0) or ((BS_CR)->sumEtHits()!=0))) {
+        noMatchfound=1;
+        mLog<<MSG::VERBOSE<<"no sim but additional data for XE"<<(BS_CR)->missingEtHits()<<endreq;
+        mLog<<MSG::VERBOSE<<"no sim but additional data for TE"<<(*BS_CR).sumEtHits()<<endreq;
+      }
+     
+     
+      m_h_SimBSMon_JEP->Fill(4,(19+16+1),noMatchfound);
+    
+    }
 
   return StatusCode( StatusCode::SUCCESS );
 }
@@ -1599,9 +1733,10 @@ StatusCode JEPTransPerfMon::procHistograms( bool isEndOfEventsBlock,
 				  bool isEndOfLumiBlock, bool isEndOfRun )
 /*---------------------------------------------------------*/
 {
-  MsgStream mLog( msgSvc(), name() );
+  
   mLog << MSG::DEBUG << "in procHistograms" << endreq ;
-
+  
+  
   if( isEndOfEventsBlock || isEndOfLumiBlock ) 
     {  
     }
@@ -1614,24 +1749,27 @@ StatusCode JEPTransPerfMon::procHistograms( bool isEndOfEventsBlock,
 	  buffer.str("");
 	  buffer<<m_NoEvents;
 	  std::string title;
-	  
+	  std::stringstream runNumStr;
+	  runNumStr.str("");
+	  runNumStr<<m_runNum;
+	  	  
 	  if (m_CompareWithSimulation ==1)
 	    {
 	      title = m_h_SimBSMon_JEP-> GetTitle();
-	      title=title + " | #events: " + buffer.str();
+	      title="Run "+runNumStr.str()+": "+title+ " | #events: " + buffer.str();
 	      m_h_SimBSMon_JEP->SetTitle(title.c_str());
 	    }
 
 	  title = m_h_TransCheck_JEP-> GetTitle();
-	  title=title + " | #events: " + buffer.str();
+	  title="Run "+runNumStr.str()+": "+title + " | #events: " + buffer.str();
 	  m_h_TransCheck_JEP->SetTitle(title.c_str());
 	  
 	  title = m_h_TransCheck_emJetElements-> GetTitle();
-	  title=title + " | #events: " + buffer.str();
+	  title="Run "+runNumStr.str()+": "+title + " | #events: " + buffer.str();
 	  m_h_TransCheck_emJetElements->SetTitle(title.c_str());
 	  
 	  title = m_h_TransCheck_hadJetElements-> GetTitle();
-	  title=title + " | #events: " + buffer.str();
+	  title="Run "+runNumStr.str()+": "+title + " | #events: " + buffer.str();
 	  m_h_TransCheck_hadJetElements->SetTitle(title.c_str());
 	}
   }
@@ -1656,7 +1794,8 @@ void JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_je
 
   JECollection::const_iterator it_je ;
   JECollection::const_iterator it_TT_je ;
-
+  
+    
   for( it_je = jetElements ->begin(); it_je < jetElements->end(); ++it_je )
     {	  
       it_TT_je = TT_jetElements ->begin();
@@ -1670,13 +1809,17 @@ void JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_je
       
       int crate = ToHW.jepCrate(coord);
       int module=ToHW.jepModule(coord);
-
+      
            
       while ((JEFound==0)and(it_TT_je < TT_jetElements->end()))
-	{
-	  if (((*it_TT_je)->phi()==(*it_je)->phi())and((*it_TT_je)->eta()==(*it_je)->eta()))
+	{   
+	      
+	  if (((*it_TT_je)->phi()==(*it_je)->phi())and(fabs(((*it_TT_je)->eta())-((*it_je)->eta()))<0.00001))
 	    {
 	      JEFound=1;
+	      *mLog << MSG::VERBOSE << " HW: Module: " << module<<" crate: "<<crate <<" eta "<<(*it_je)->eta()<<" phi "<< (*it_je)->phi()<<endreq ;
+              *mLog << MSG::VERBOSE << " Simulation: Module: " << module<<" crate: "<<crate <<" eta "<<(*it_TT_je)->eta()<<" phi "<< (*it_TT_je)->phi()<<endreq ;
+	      
 	      
 	      if ((*it_TT_je)->emEnergyVec()[TT_TS]==(*it_je)->emEnergyVec()[JE_TS]) em_NoJEMatchFound=0; 	      
 	      if ((*it_TT_je)->hadEnergyVec()[TT_TS]==(*it_je)->hadEnergyVec()[JE_TS]) had_NoJEMatchFound=0;     
@@ -1695,13 +1838,17 @@ void JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_je
       if (had_NoJEMatchFound==1 and JEFound==1)
 	{
 	  *mLog << MSG::VERBOSE << "no had Match Found eta: "<<(*it_TT_je)->eta()<<" phi: " <<(*it_TT_je)->phi()<<" energy HW: " << (*it_je)->hadEnergyVec()[JE_TS]<<" SW: " << (*it_TT_je)->hadEnergyVec()[TT_TS]<< endreq ;
+	  *mLog << MSG::VERBOSE << "PPM data from Crate: "<<crate<<" Module: " <<module<< endreq ;
 	}
 
       if (JEFound==0)
 	{
 	  *mLog <<MSG::VERBOSE<<"JEFound=0"<<endreq;
 	  *mLog << MSG::VERBOSE << " Module: " << module<<" crate: "<<crate <<" eta "<<(*it_je)->eta()<<" phi "<< (*it_je)->phi()<<endreq ;
+	  
 	}
+		
+	
       m_h_TransCheck_emJetElements->Fill(k,(crate*18+module+1),em_NoJEMatchFound);
       m_h_TransCheck_hadJetElements->Fill(k,(crate*18+module+1),had_NoJEMatchFound);
 

@@ -9,7 +9,6 @@ if not ATLASCosmicFlags.doCTPMon:
     from TrigConfigSvc.TrigConfigSvcConfig import LVL1ConfigSvc
     LVL1ConfigSvc = LVL1ConfigSvc('LVL1ConfigSvc')
     LVL1ConfigSvc.ConfigSource = "XML"
-    #LVL1ConfigSvc.XMLFile = "/afs/cern.ch/user/n/neusiedl/myLVL1config.xml"
     LVL1ConfigSvc.XMLFile = "L1MenuM5.xml"
     LVL1ConfigSvc.CreateLegacyObjects = True
     LVL1ConfigSvc.DumpTTVmap = False
@@ -22,12 +21,8 @@ from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__JetElementMaker
 from AthenaCommon.AlgSequence import AlgSequence
 myjob = AlgSequence()
 myjob += LVL1__JetElementMaker( 'JetElementMaker' )
-#myjob.JetElementMaker.TriggerTowerLocation ="TriggerTowers"
 myjob.JetElementMaker.JetElementLocation ="Sim_JetElements"
-#job.JetElementMaker.OutputLevel = VERBOSE
 
-if CompareWithSimulation:
-    include ("TrigT1CaloMonitoring/TrigT1CaloMonitoring_L1CaloSimulation.py")
 
 #================================= Monitoring configuration ======================
 topSequence += AthenaMonManager( "L1CaloMonManager" )
@@ -159,7 +154,7 @@ JEPTransPerfMonTool = JEPTransPerfMon (
     CompareWithSimulation = CompareWithSimulation,
 
     #OutputLevel = VERBOSE,
-    OutputLevel = WARNING,
+    OutputLevel = INFO,
     )
 ToolSvc += JEPTransPerfMonTool
 L1CaloMan.AthenaMonTools += [ JEPTransPerfMonTool ]

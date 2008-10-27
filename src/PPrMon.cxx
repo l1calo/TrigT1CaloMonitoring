@@ -263,18 +263,25 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	  title="#eta - #phi Map of EM FADC > "+ thresbuffer.str() + " for timeslice 2";
 	  m_h_TT_HitMap_emADC_00100=ADCTimeSlice_Booker.book2F("emFADCHitMap2",title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
 	  m_h_TT_HitMap_emADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
+	  m_h_TT_HitMap_emADC_00100->SetStats(kFALSE);
+	  //m_h_TT_HitMap_emADC_00100->SetOption(colz);
 	  title="#eta - #phi Profile Map of EM FADC > "+ thresbuffer.str() + " for timeslice 2";
 	  m_p_TT_HitMap_emADC_00100=ADCTimeSlice_Booker.bookProfile2D("emFADCHitMap2_Profile",title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
 	  m_p_TT_HitMap_emADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
+	  m_p_TT_HitMap_emADC_00100->SetStats(kFALSE);
+	  //m_p_TT_HitMap_emADC_00100->SetOption(colz);
+
 
           title="#eta - #phi Map of HAD FADC > "+ thresbuffer.str() + " for timeslice 2";
 	  m_h_TT_HitMap_hadADC_00100=ADCTimeSlice_Booker.book2F("hadFADCHitMap2",title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
 	  m_h_TT_HitMap_hadADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
+	  m_h_TT_HitMap_hadADC_00100->SetStats(kFALSE);
+	  //m_h_TT_HitMap_hadADC_00100->SetOption(colz);
 	  title="#eta - #phi Profile Map of HAD FADC > "+ thresbuffer.str() + " for timeslice 2";
 	  m_p_TT_HitMap_hadADC_00100=ADCTimeSlice_Booker.bookProfile2D("hadFADCHitMap2_Profile",title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
 	  m_p_TT_HitMap_hadADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
-
-
+	  m_p_TT_HitMap_hadADC_00100->SetStats(kFALSE);
+	  //m_p_TT_HitMap_hadADC_00100->SetOption(colz);
 	  m_h_dist_had_max=ADCTimeSlice_Booker.book1F("haddist_maximum"," had. Distribution of Average Maximum Timeslice",5,0.5,5.5,"time slice (1-5)");
 	  m_h_dist_em_max=ADCTimeSlice_Booker.book1F("emdist_maximum"," em. Distribution of Average Maximum Timeslice",5,0.5,5.5,"time slice (1-5)");
 	  
@@ -411,7 +418,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       
 
       //error bit field from ASIC data
-     m_h_fwPpmError_Crate_03=Error_Booker.book2F("TT_fwError_Crate_0-3","Errors from ASIC error field (crates 4-7)",8,0.5,8.5,71,0.5,71.5,"","");
+     m_h_fwPpmError_Crate_03=Error_Booker.book2F("TT_fwError_Crate_0-3","Errors from ASIC error field (crates 0-3)",8,0.5,8.5,71,0.5,71.5,"","");
      
       m_h_fwPpmError_Crate_03->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
       m_h_fwPpmError_Crate_03->GetXaxis()->SetBinLabel(2, "MCMAbsent");
