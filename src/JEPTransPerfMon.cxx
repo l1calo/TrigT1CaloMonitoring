@@ -1376,10 +1376,12 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::VERBOSE<<"BS: Ex (compressed)"<<(*it_BS_CMMEtSums)->Ex()<<endreq;
 	      mLog<<MSG::VERBOSE<<"BS: Ey (compressed)"<<(*it_BS_CMMEtSums)->Ey()<<endreq;
 	      mLog<<MSG::VERBOSE<<"BS: Et (compressed)"<<(*it_BS_CMMEtSums)->Et()<<endreq;
-	      //fill both error bins for such a case
-	      m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,1);
-	      m_h_SimBSMon_JEP->Fill(2,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,1);
-	    }
+	      //fill both error bins for such a case, surpress zero data
+	      if(((*it_BS_CMMEtSums)->Ex()!=0) or ((*it_BS_CMMEtSums)->Ey()!=0) or ((*it_BS_CMMEtSums)->Et()!=0))
+		{
+		 m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,1);
+	         m_h_SimBSMon_JEP->Fill(2,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,1);
+	    	}
 	}
       
       if (vSim_CMMEtSums.size()!=0)
@@ -1403,7 +1405,8 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		  m_h_SimBSMon_JEP->Fill(2,(*it_Sim_CMMEtSums)->crate()*19 + 16 + 1,1);
 		}
 	     }
-	}
+         }
+      }
     }
       
   // =============================================================================================
@@ -1814,15 +1817,16 @@ void JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_je
       while ((JEFound==0)and(it_TT_je < TT_jetElements->end()))
 	{   
 	      
-	  if (((*it_TT_je)->phi()==(*it_je)->phi())and(fabs(((*it_TT_je)->eta())-((*it_je)->eta()))<0.00001))
+	  if ((*it_TT_je)->key()==(*it_je)->key())
 	    {
 	      JEFound=1;
 	      *mLog << MSG::VERBOSE << " HW: Module: " << module<<" crate: "<<crate <<" eta "<<(*it_je)->eta()<<" phi "<< (*it_je)->phi()<<endreq ;
               *mLog << MSG::VERBOSE << " Simulation: Module: " << module<<" crate: "<<crate <<" eta "<<(*it_TT_je)->eta()<<" phi "<< (*it_TT_je)->phi()<<endreq ;
 	      
-	      
-	      if ((*it_TT_je)->emEnergyVec()[TT_TS]==(*it_je)->emEnergyVec()[JE_TS]) em_NoJEMatchFound=0; 	      
-	      if ((*it_TT_je)->hadEnergyVec()[TT_TS]==(*it_je)->hadEnergyVec()[JE_TS]) had_NoJEMatchFound=0;     
+	       // Simulation may have energy vector values greater than saturation
+       	      const int sat = 511; // layer saturation
+	      if ((*it_TT_je)->emEnergyVec()[TT_TS]==(*it_je)->emEnergyVec()[JE_TS] ||((*it_TT_je)->emEnergyVec()[TT_TS]>=sat && (*it_je)->emEnergyVec()[JE_TS]>=sat)) em_NoJEMatchFound=0;        
+              if ((*it_TT_je)->hadEnergyVec()[TT_TS]==(*it_je)->hadEnergyVec()[JE_TS] ||((*it_TT_je)->hadEnergyVec()[TT_TS]>=sat && (*it_je)->hadEnergyVec()[JE_TS]>=sat)) had_NoJEMatchFound=0;  
 	      
 	     
 	    }
@@ -1842,18 +1846,21 @@ void JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_je
 	}
 
       if (JEFound==0)
-	{
-	  *mLog <<MSG::VERBOSE<<"JEFound=0"<<endreq;
-	  *mLog << MSG::VERBOSE << " Module: " << module<<" crate: "<<crate <<" eta "<<(*it_je)->eta()<<" phi "<< (*it_je)->phi()<<endreq ;
-	  
-	}
-		
+      {
+   	// Not a mismatch if energy zero
+   	if ((*it_je)->emEnergyVec()[JE_TS] == 0) em_NoJEMatchFound=0;
+   	if ((*it_je)->hadEnergyVec()[JE_TS] == 0) had_NoJEMatchFound=0;
+   	if (em_NoJEMatchFound || had_NoJEMatchFound) {
+     	  *mLog <<MSG::INFO   <<"JEFound=0"<<endreq;
+     	  *mLog << MSG::INFO    << " Module: " << module<<" crate: "<<crate <<" eta "<<(*it_je)->eta()<<" phi "<< (*it_je)->phi()<<endreq ;
+   	  }
+      }
 	
       m_h_TransCheck_emJetElements->Fill(k,(crate*18+module+1),em_NoJEMatchFound);
       m_h_TransCheck_hadJetElements->Fill(k,(crate*18+module+1),had_NoJEMatchFound);
 
  
- *mLog <<MSG::VERBOSE<<em_NoJEMatchFound<<" und "<<had_NoJEMatchFound<<endreq;
+ *mLog <<MSG::VERBOSE<<em_NoJEMatchFound<<" and "<<had_NoJEMatchFound<<endreq;
 
     }
 }

@@ -1,3 +1,7 @@
+2008-11-05 Andrea Neusiedl <andrea.neusiedl@cern.ch>
+	* Tag as TrigT1CaloMonitoring-00-04-05
+	* bugfix and new error summaries
+
 2008-10-27 Andrea Neusiedl <andrea.neusiedl@cern.ch>
 	* Tag as TrigT1CaloMonitoring-00-04-04
 	* new simulation scheme and bugfixes

@@ -229,11 +229,11 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(7, "Overflow (Ey)");
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(8, "Overflow (Et)");
 	  
-	  m_h_TriggeredSlice=transmission_Booker.book1F("TriggeredSlice", "Comparison of the triggered slice number",3,-0.5,3.5,"Difference","N");
+	  m_h_TriggeredSlice=transmission_Booker.book1F("TriggeredSlice", "Comparison of the triggered slice number",3,0.5,3.5,"Difference","N");
   
 	 //Error Summary for all CMMs in system
 	  m_h_CMM_ErrorSummary = transmission_Booker.book1F("CMM_ErrorSummary", "Error Summary of CMM Jet, Energy and RoI path",
-	  5,-0.5,4.5,"","Entries");	 
+	  3,0.5,3.5,"","Entries");	 
 	  m_h_CMM_ErrorSummary->SetStats(kFALSE);
 	  m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(1,"CMM Status");
 	  m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(2,"Parity flags");
@@ -321,17 +321,18 @@ StatusCode CMMMon::fillHistograms()
 	  
 	  //Error summary plots
 	  //substatus word
-	  if (err.get(16)!=0 or err.get(17)!=0 or err.get(18)!=0 or err.get(19)!=0 or err.get(20)!=0 or err.get(22)!=0 or err.get(23)!=0 )
+	  if ((err.get(16)==1) or (err.get(17)==1) or (err.get(18)==1) or (err.get(19)==1) or (err.get(20)==1) or (err.get(22)==1) or
+	  (err.get(23)==1))
 	     {
 	     m_h_CMM_ErrorSummary->Fill(1,1);
 	     }
-	     //parity
-	  m_h_CMM_ErrorSummary->Fill(2,err.get(1));   
-	  
+	  	  
 	  if (module<16)
 	    {
 	      // Parity
 	      m_h_CMMJet_error->Fill(1,(crate*19 + 1 + module),err.get(1));
+	      m_h_CMM_ErrorSummary->Fill(2,err.get(1));
+	     
 	    }
 	  
 	  // errors from crate CMM
@@ -339,8 +340,12 @@ StatusCode CMMMon::fillHistograms()
 	  if (module==16)
 	    {
 	      // Parity; set only for crate CMM -> system CMM 
-	      if (crate==1) m_h_CMMJet_error->Fill(1,(1 + 16),err.get(1));
-	      
+	      if (crate==1) {
+	        m_h_CMM_ErrorSummary->Fill(2,err.get(1));
+		m_h_CMMJet_error->Fill(1,(1 + 16),err.get(1));
+		mLog<<MSG::DEBUG<<"parity jet =16"<<err.get(1)<<endreq;
+	      }
+			      
 	      // set L1CaloSubStatus for both Crate and System CMM
 	      // GLinkParity
 	      m_h_CMMJet_error->Fill(3,(crate*19 + 1 + 16),err.get(16));
@@ -357,15 +362,15 @@ StatusCode CMMMon::fillHistograms()
 	      m_h_CMMJet_error->Fill(8,(crate*19 + 1 + 16),err.get(22));
 	      // GLinkTimeout
 	      m_h_CMMJet_error->Fill(9,(crate*19 + 1 + 16),err.get(23));
-	      // FailingBCN
-	      mLog<<MSG::DEBUG<<"BCN error " << err.get(24) <<endreq;
-	      if (err.get(24)!=0) m_h_CMMJet_error->Fill(10,(crate*19 + 1 + 16),1);
+	      	      
 	    }
 	  // fill parity for remote fwd hits
 	  if ((module==19)and (crate==1))
 	    {
 	      // Parity
-	      m_h_CMMJet_error->Fill(1,( 1 + 16),err.get(1));
+	      m_h_CMMJet_error->Fill(1,(1 + 16),err.get(1));
+	      m_h_CMM_ErrorSummary->Fill(2,err.get(1));
+	      
 	    }
 	}
       
@@ -497,33 +502,12 @@ StatusCode CMMMon::fillHistograms()
 	  LVL1::DataError exerr((*it_CMMEtSums)-> ExError());
 	  LVL1::DataError eyerr((*it_CMMEtSums)-> EyError());
 	  LVL1::DataError eterr((*it_CMMEtSums)-> EtError());
-	  int error=0;
+	  int error;
 	  
 	  int crate = (*it_CMMEtSums)->crate();
 	  int module = (*it_CMMEtSums)-> dataID();
 	  
-	  
-	  //Error summary plots
-	  //substatus word
-	  if (exerr.get(16)!=0 or exerr.get(17)!=0 or exerr.get(18)!=0 or exerr.get(19)!=0 or exerr.get(20)!=0 or exerr.get(22)!=0 or exerr.get(23)!=0 )
-	     {
-	     m_h_CMM_ErrorSummary->Fill(1,1);
-	     }
-	  if (eyerr.get(16)!=0 or eyerr.get(17)!=0 or eyerr.get(18)!=0 or eyerr.get(19)!=0 or eyerr.get(20)!=0 or eyerr.get(22)!=0 or eyerr.get(23)!=0 )
-	     {
-	     m_h_CMM_ErrorSummary->Fill(1,1);
-	     }
-	  if (eterr.get(16)!=0 or eterr.get(17)!=0 or eterr.get(18)!=0 or eterr.get(19)!=0 or eterr.get(20)!=0 or eterr.get(22)!=0 or eterr.get(23)!=0 )
-	     {
-	     m_h_CMM_ErrorSummary->Fill(1,1);
-	     }
 	     
-	     //parity
-	    error=0;
-	    if ((exerr.get(1)==1)or(eyerr.get(1)==1)or(eterr.get(1)==1)) error=1; 
-	    m_h_CMM_ErrorSummary->Fill(2,error);   
-	  
-
 	  //input data from JEMs have dataID 0..15   ---  fill only parity errors
 	  if (module<16)
 	    {
@@ -531,16 +515,25 @@ StatusCode CMMMon::fillHistograms()
 	      error=0;
 	      if ((exerr.get(1)==1)or(eyerr.get(1)==1)or(eterr.get(1)==1)) error=1;
 	      m_h_CMMEnergy_error->Fill(1,(crate*19 + 1 + module),error);
+	      m_h_CMM_ErrorSummary->Fill(2,error);
 	    }
 	  
 	  // errors from crate CMM
 	  // fill parity and L1CaloSubStatus
 	  if (module==16)
 	    {
+	      //Error summary plots
+	      //substatus word
+	      if((eterr.get(16)==1)or(eterr.get(17)==1)or(eterr.get(18)==1)or(eterr.get(19)==1)or(eterr.get(20)==1)or(eterr.get(22)==1)or(eterr.get(23)==1)or(eyerr.get(16)==1)or(eyerr.get(17)==1)or(eyerr.get(18)==1)or(eyerr.get(19)==1)or(eyerr.get(20)==1)or(eyerr.get(22)==1)or(eyerr.get(23)==1)or(exerr.get(16)==1)or(exerr.get(17)==1)or(exerr.get(18)==1)or(exerr.get(19)==1)or(exerr.get(20)==1)or(exerr.get(22)==1)or(exerr.get(23)==1))
+	      {
+	      m_h_CMM_ErrorSummary->Fill(1,1);
+	      }
+	      
 	      // Parity
 	      error=0;
 	      if ((exerr.get(1)==1)or(eyerr.get(1)==1)or(eterr.get(1)==1)) error=1;
 	      m_h_CMMEnergy_error->Fill(1,(crate*19 + 1 + 16),error);
+	      m_h_CMM_ErrorSummary->Fill(2,error);
 	      	      
 	      // GLinkParity
 	      error=0;
@@ -562,7 +555,6 @@ StatusCode CMMMon::fillHistograms()
 	      error=0;
 	      if ((exerr.get(20)==1)or(eyerr.get(20)==1)or(eterr.get(20)==1)) error=1;
 	      m_h_CMMEnergy_error->Fill(7,(crate*19 + 1 + 16),error);
-	      
 	      // GLinkDown
 	      error=0;
 	      if ((exerr.get(22)==1)or(eyerr.get(22)==1)or(eterr.get(22)==1)) error=1;
@@ -571,11 +563,8 @@ StatusCode CMMMon::fillHistograms()
 	      error=0;
 	      if ((exerr.get(23)==1)or(eyerr.get(23)==1)or(eterr.get(23)==1)) error=1;
 	      m_h_CMMEnergy_error->Fill(9,(crate*19 + 1 + 16),error);
-	      // FailingBCN
-	      error=0;
-	      if ((exerr.get(24)!=0)or(eyerr.get(24)!=0)or(eterr.get(24)!=0)) error=1;
-	      m_h_CMMEnergy_error->Fill(10,(crate*19 + 1 + 16),error);
-	    }
+	     
+	   }
 	}
     }
 
@@ -654,7 +643,7 @@ StatusCode CMMMon::fillHistograms()
       m_h_CMMRoI_error->Fill(4,jetEterr.get(1));
       
       //----------------Comparison on slice number-----------
-      if ((j_num_slice - e_num_slice)!=0) m_h_CMMRoI_error->Fill(5,1);
+      if ((j_num_slice - e_num_slice)==1) m_h_CMMRoI_error->Fill(5,1);
       //-----------------------------------------------------
       // Overflow (Ex)
       m_h_CMMRoI_error->Fill(6,exerr.get(0));
@@ -665,9 +654,10 @@ StatusCode CMMMon::fillHistograms()
       
       //Error summary plots
      //substatus word
-     if (exerr.get(1)!=0 or eyerr.get(1)!=0 or eterr.get(1)!=0 ) //would need also to check jetEterr.get(1) but this is still buggy
+     if ((exerr.get(1)==1)or(eyerr.get(1)==1)or(eterr.get(1)==1)) //would need also to check jetEterr.get(1) but this is still buggy
      {
        m_h_CMM_ErrorSummary->Fill(2,1);
+       
      }
            
     }
