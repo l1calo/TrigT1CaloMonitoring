@@ -279,6 +279,12 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   const double halfPhiBin = m_phiMax/128.;
   m_h_RoI_eta_phi = book2F("RoI_eta_phi", "CPM RoIs Eta-Phi Hit Map;eta;phi",
              51, -2.55, 2.55, 65, -halfPhiBin, m_phiMax+halfPhiBin);
+  m_h_RoI_Em_eta_phi = book2F("RoI_Em_eta_phi",
+            "CPM RoIs EM Eta-Phi Hit Map;eta;phi",
+             51, -2.55, 2.55, 65, -halfPhiBin, m_phiMax+halfPhiBin);
+  m_h_RoI_Tau_eta_phi = book2F("RoI_Tau_eta_phi",
+            "CPM RoIs Tau Eta-Phi Hit Map;eta;phi",
+             51, -2.55, 2.55, 65, -halfPhiBin, m_phiMax+halfPhiBin);
 
   m_monGroup = &monRoIs;
 
@@ -398,7 +404,9 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 
   //Retrieve Overlap CPM Towers from SG
   const CpmTowerCollection* cpmTowerOverlapTES = 0; 
-  sc = m_storeGate->retrieve(cpmTowerOverlapTES, m_cpmTowerLocationOverlap); 
+  if (m_storeGate->contains<CpmTowerCollection>(m_cpmTowerLocationOverlap)) {
+    sc = m_storeGate->retrieve(cpmTowerOverlapTES, m_cpmTowerLocationOverlap); 
+  } else sc = StatusCode::FAILURE;
   if( sc.isFailure()  ||  !cpmTowerOverlapTES ) {
     m_log << MSG::DEBUG<< "No Overlap CPM Tower container found"<< endreq; 
   }
@@ -410,7 +418,9 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
     m_log << MSG::DEBUG << "No DAQ CPM RoIs found, trying RoIB"
           << endreq; 
     cpmRoiTES = 0;
-    sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocationRoib);
+    if (m_storeGate->contains<CpmRoiCollection>(m_cpmRoiLocationRoib)) {
+      sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocationRoib);
+    } else sc = StatusCode::FAILURE;
     if( sc.isFailure()  ||  !cpmRoiTES ) {
       m_log << MSG::DEBUG << "No RoIB CPM RoIs container found"<< endreq;
     }
@@ -641,6 +651,11 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         if (hit) {
           m_h_RoI_thresholds->Fill(bin, thresh, 1.);
 	  m_h_RoI_eta_phi->Fill(eta, phiMod, 1.);
+	  if (thresh < s_thresholds/2) {
+	    m_h_RoI_Em_eta_phi->Fill(eta, phiMod, 1.);
+	  } else {
+	    m_h_RoI_Tau_eta_phi->Fill(eta, phiMod, 1.);
+          }
         }
       }
       const LVL1::DataError err((*crIterator)->error());

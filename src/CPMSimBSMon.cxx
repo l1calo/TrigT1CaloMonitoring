@@ -28,6 +28,7 @@
 #include "TrigT1Calo/CPMTower.h"
 #include "TrigT1Calo/CPMRoI.h"
 #include "TrigT1Calo/CoordToHardware.h"
+#include "TrigT1Calo/RODHeader.h"
 #include "TrigT1Calo/TriggerTower.h"
 #include "TrigT1Calo/TriggerTowerKey.h"
 #include "TrigT1CaloTools/IL1EmTauTools.h"
@@ -71,6 +72,10 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
   declareProperty("TriggerTowerLocation",
                  m_triggerTowerLocation =
 		                 LVL1::TrigT1CaloDefs::TriggerTowerLocation);
+  declareProperty("RodHeaderLocation",
+                 m_rodHeaderLocation = "RODHeaders");
+  declareProperty("RodHeaderLocationRoIB",
+                 m_rodHeaderLocationRoib = "RODHeadersCPRoIB");
 
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
   declareProperty("PhiUnits", m_phiUnits = "channels",
@@ -490,22 +495,42 @@ StatusCode CPMSimBSMon::fillHistograms()
 
   //Retrieve Overlap CPM Towers from SG
   const CpmTowerCollection* cpmTowerOvTES = 0; 
-  sc = m_storeGate->retrieve(cpmTowerOvTES, m_cpmTowerLocationOverlap); 
+  if (m_storeGate->contains<CpmTowerCollection>(m_cpmTowerLocationOverlap)) {
+    sc = m_storeGate->retrieve(cpmTowerOvTES, m_cpmTowerLocationOverlap); 
+  } else sc = StatusCode::FAILURE;
   if( sc.isFailure()  ||  !cpmTowerOvTES ) {
     m_log << MSG::DEBUG<< "No Overlap CPM Tower container found"<< endreq; 
   }
+  m_overlapPresent = cpmTowerOvTES != 0;
   
   //Retrieve CPM RoIs from SG
   const CpmRoiCollection* cpmRoiTES = 0;
+  const RodHeaderCollection* rodTES = 0;
   if (m_compareWithSim) {
     sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocation);
     if( sc.isFailure()  ||  !cpmRoiTES  ||  cpmRoiTES->empty() ) {
       m_log << MSG::DEBUG << "No DAQ CPM RoIs found, trying RoIB"
             << endreq; 
       cpmRoiTES = 0;
-      sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocationRoib);
+      if (m_storeGate->contains<CpmRoiCollection>(m_cpmRoiLocationRoib)) {
+        sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocationRoib);
+      } else sc = StatusCode::FAILURE;
       if( sc.isFailure()  ||  !cpmRoiTES ) {
         m_log << MSG::DEBUG << "No RoIB CPM RoIs container found"<< endreq;
+      } else {
+	if (m_storeGate->contains<RodHeaderCollection>(m_rodHeaderLocationRoib)) {
+          sc = m_storeGate->retrieve( rodTES, m_rodHeaderLocationRoib);
+	} else sc = StatusCode::FAILURE;
+	if( sc.isFailure()  ||  !rodTES ) {
+	  m_log << MSG::DEBUG << "No RoIB ROD Header container found"<< endreq;
+        }
+      }
+    } else {
+      if (m_storeGate->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
+        sc = m_storeGate->retrieve( rodTES, m_rodHeaderLocation);
+      } else sc = StatusCode::FAILURE;
+      if( sc.isFailure()  ||  !rodTES ) {
+        m_log << MSG::DEBUG << "No ROD Header container found"<< endreq;
       }
     }
   }
@@ -557,8 +582,10 @@ StatusCode CPMSimBSMon::fillHistograms()
 
   bool overlap = false;
   compare(ttMap, cpMap, errorsCPM, overlap);
-  overlap = true;
-  compare(ttMap, ovMap, errorsCPM, overlap);
+  if (m_overlapPresent) {
+    overlap = true;
+    compare(ttMap, ovMap, errorsCPM, overlap);
+  }
 
   if (m_compareWithSim) {
 
@@ -571,7 +598,7 @@ StatusCode CPMSimBSMon::fillHistograms()
   }
   CpmRoiMap crSimMap;
   setupMap(cpmRoiSIM, crSimMap);
-  compare(crSimMap, crMap, errorsCPM);
+  compare(crSimMap, crMap, rodTES, errorsCPM);
   crSimMap.clear();
   delete cpmRoiSIM;
 
@@ -888,12 +915,15 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
 //  Compare Simulated RoIs with data
 
 void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
-                                                      ErrorVector& errors)
+                          const RodHeaderCollection* rods, ErrorVector& errors)
 {
   m_log << MSG::DEBUG << "Compare Simulated RoIs with data" << endreq;
 
+  const int nCrates = 4;
+  const int nCPMs = 14;
   const int maxKey = 0xffff;
   LVL1::CPRoIDecoder decoder;
+  std::vector<int> limitedRoi(nCrates);
   CpmRoiMap::const_iterator simMapIter    = roiSimMap.begin();
   CpmRoiMap::const_iterator simMapIterEnd = roiSimMap.end();
   CpmRoiMap::const_iterator datMapIter    = roiMap.begin();
@@ -941,12 +971,29 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
     datHits &= m_roiMask;
 
     if (!simHits && !datHits) continue;
+
+    //  Check LimitedRoISet bit
+
+    const int crate = roi->crate();
+    if (!datHits) {
+      if (rods) {
+	RodHeaderCollection::const_iterator rodIter  = rods->begin();
+	RodHeaderCollection::const_iterator rodIterE = rods->end();
+	for (; rodIter != rodIterE; ++rodIter) {
+	  LVL1::RODHeader* rod = *rodIter;
+	  const int rodCrate = rod->crate() - 8;
+	  if (rodCrate >= 0 && rodCrate < nCrates
+	      && rod->dataType() == 1 && rod->limitedRoISet()) {
+	    limitedRoi[rodCrate] = 1;
+	  }
+	}
+        rods = 0;
+      }
+      if (limitedRoi[crate]) continue;
+    }
     
     //  Fill in error plots
 
-    const int nCrates = 4;
-    const int nCPMs = 14;
-    const int crate = roi->crate();
     const int cpm   = roi->cpm();
     const int chip  = roi->chip();
     const int local = roi->location();
@@ -1725,8 +1772,9 @@ void CPMSimBSMon::simulate(const CpmTowerMap towers, const CpmTowerMap towersOv,
     if (crate >= ncrates) continue;
     crateMaps[crate].insert(std::make_pair(iter->first, tt));
   }
-  iter  = towersOv.begin();
-  iterE = towersOv.end();
+  // If overlap data not present take from core data
+  iter  = (m_overlapPresent) ? towersOv.begin() : towers.begin();
+  iterE = (m_overlapPresent) ? towersOv.end()   : towers.end();
   for (; iter != iterE; ++iter) {
     LVL1::CPMTower* tt = iter->second;
     const LVL1::Coordinate coord(tt->phi(), tt->eta());

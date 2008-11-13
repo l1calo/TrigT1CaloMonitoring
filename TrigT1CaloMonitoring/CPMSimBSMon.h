@@ -33,6 +33,7 @@ namespace LVL1 {
   class CPMHits;
   class CMMCPHits;
   class CPMRoI;
+  class RODHeader;
   class TriggerTower;
   class IL1EmTauTools;
   class IL1CPHitsTools;
@@ -70,6 +71,7 @@ private:
   typedef DataVector<LVL1::CPMRoI>       CpmRoiCollection;
   typedef DataVector<LVL1::TriggerTower> TriggerTowerCollection;
   typedef DataVector<LVL1::CPAlgorithm>  InternalRoiCollection;
+  typedef DataVector<LVL1::RODHeader>    RodHeaderCollection;
   
   typedef std::vector<int> ErrorVector;
 
@@ -87,7 +89,7 @@ private:
   void  compare(const TriggerTowerMap& ttMap, const CpmTowerMap& cpMap,
                       ErrorVector& errors, bool overlap);
   void  compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
-                                            ErrorVector& errors);
+                const RodHeaderCollection* rods, ErrorVector& errors);
   void  compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
                                              ErrorVector& errors);
   void  compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
@@ -143,6 +145,10 @@ private:
   std::string m_cpmRoiLocationRoib;
   /// Trigger Tower container StoreGate key
   std::string m_triggerTowerLocation;
+  /// ROD header container StoreGate key
+  std::string m_rodHeaderLocation;
+  /// RoIB ROD header container StoreGate key
+  std::string m_rodHeaderLocationRoib;
 
   /// Phi Units for eta/phi plots
   std::string m_phiUnits;
@@ -161,6 +167,8 @@ private:
   /// TriggerTowers to be ignored in simulation comparisons
   std::vector<int> m_ignoreTowersEm;
   std::vector<int> m_ignoreTowersHad;
+  /// CPM overlap tower container present
+  bool m_overlapPresent;
 
   //=======================
   //   Match/Mismatch plots

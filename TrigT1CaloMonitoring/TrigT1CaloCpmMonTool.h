@@ -180,6 +180,8 @@ private:
 
   TH2F* m_h_RoI_thresholds;
   TH2F* m_h_RoI_eta_phi;
+  TH2F* m_h_RoI_Em_eta_phi;
+  TH2F* m_h_RoI_Tau_eta_phi;
   // Tower saturation
   TH2F* m_h_RoI_Saturation;
   // Parity errors

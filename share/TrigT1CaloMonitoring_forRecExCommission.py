@@ -184,8 +184,9 @@ CPMSimBSMonTool = CPMSimBSMon("CPMSimBSMonTool",
                   CompareWithSimulation = CompareWithSimulation)
 ToolSvc += CPMSimBSMonTool
 L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
-ToolSvc.CPMSimBSMonTool.IgnoreTowersEM = [ 1890 ]
-ToolSvc.CPMSimBSMonTool.IgnoreTowersHad = [ 3473, 3643, 4824 ]
+ToolSvc.CPMSimBSMonTool.IgnoreTowersEM  = [ 1890,              #LUT readout
+              4082, 4083, 4146, 4147, 4210, 4211, 4274, 4275 ] #LVDS channel
+ToolSvc.CPMSimBSMonTool.IgnoreTowersHad = [ 3473, 3643, 4824 ] #LUT readout
 #ToolSvc.CPMSimBSMonTool.OutputLevel = DEBUG
 
 #=================================================================================

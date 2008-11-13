@@ -186,24 +186,36 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   m_log << MSG::DEBUG << "fillHistograms entered" << endreq;
 
   //Retrieve DAQ ROD Headers from SG
+  StatusCode sc;
   const RodHeaderCollection* rodTES = 0; 
-  StatusCode sc = m_storeGate->retrieve(rodTES, m_rodHeaderLocation); 
+  if (m_storeGate->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
+    sc = m_storeGate->retrieve(rodTES, m_rodHeaderLocation); 
+  } else sc = StatusCode::FAILURE;
   if( sc.isFailure()  ||  !rodTES ) {
     m_log << MSG::DEBUG<< "No DAQ ROD Header container found"<< endreq; 
   }
 
   //Retrieve CP RoIB ROD Headers from SG
   const RodHeaderCollection* cpRoibTES = 0; 
-  sc = m_storeGate->retrieve(cpRoibTES, m_cpRoibRodHeaderLocation); 
+  if (m_storeGate->contains<RodHeaderCollection>(m_cpRoibRodHeaderLocation)) {
+    sc = m_storeGate->retrieve(cpRoibTES, m_cpRoibRodHeaderLocation); 
+  } else sc = StatusCode::FAILURE;
   if( sc.isFailure()  ||  !cpRoibTES ) {
     m_log << MSG::DEBUG<< "No CP RoIB ROD Header container found"<< endreq; 
   }
 
   //Retrieve JEP RoIB ROD Headers from SG
   const RodHeaderCollection* jepRoibTES = 0; 
-  sc = m_storeGate->retrieve(jepRoibTES, m_jepRoibRodHeaderLocation); 
+  if (m_storeGate->contains<RodHeaderCollection>(m_jepRoibRodHeaderLocation)) {
+    sc = m_storeGate->retrieve(jepRoibTES, m_jepRoibRodHeaderLocation); 
+  } else sc = StatusCode::FAILURE;
   if( sc.isFailure()  ||  !jepRoibTES ) {
     m_log << MSG::DEBUG<< "No JEP RoIB ROD Header container found"<< endreq; 
+  }
+
+  if ( !rodTES && !cpRoibTES && !jepRoibTES ) {
+    m_log << MSG::DEBUG<< "No ROD Header containers found"<< endreq;
+    return StatusCode::SUCCESS;
   }
 
   //=============================================
