@@ -835,6 +835,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		}
 	    }
 	}
+      delete Sim_JEMEtSums;
     }
 
 
@@ -1104,6 +1105,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		}
 	    }
 	}
+      delete Sim_CMMJetHits;
     }
 	
     
@@ -1407,6 +1409,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	     }
          }
       }
+     delete Sim_CMMEtSums; 
     }
       
   // =============================================================================================
@@ -1508,6 +1511,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
           LVL1::JEMRoI* roi = new LVL1::JEMRoI((*roiIter)->RoIWord());
           Sim_JEMRoI->push_back(roi);
         }
+        delete intRois;	
       }	       
        
             
@@ -1604,6 +1608,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		}
 	    }
 	}
+      delete Sim_JEMRoI;
     }
   
   // ================= CMM RoI ========================================================
@@ -1726,6 +1731,8 @@ StatusCode JEPTransPerfMon::fillHistograms()
      
       m_h_SimBSMon_JEP->Fill(4,(19+16+1),noMatchfound);
     
+      delete Sim_JetEt;
+      delete Sim_Et;
     }
 
   return StatusCode( StatusCode::SUCCESS );

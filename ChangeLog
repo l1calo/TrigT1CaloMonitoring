@@ -1,3 +1,7 @@
+2008-11-19 Andrea Neusiedl <andrea.neusiedl@cern.ch>
+	* Tag as TrigT1CaloMonitoring-00-04-07
+	* Memory leak corrected
+
 2008-11-13  Peter Faulkner  <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-04-06
         * Take account of Limited RoI Set bit in CP RoI comparison with simulation.
