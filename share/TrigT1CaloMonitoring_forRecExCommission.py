@@ -4,7 +4,11 @@ CompareWithSimulation=True
 #MaxEnergyRange is set individually
 
 #================================= TriggerMenu ===================================
-if not ATLASCosmicFlags.doCTPMon:
+#if not ATLASCosmicFlags.doCTPMon:
+from AthenaCommon.AppMgr import ServiceMgr as svcMgr
+if hasattr(svcMgr,"LVL1ConfigSvc"):
+    log.info("ServiceMgr already includes LVL1ConfigSvc")
+else:
     log.info("will setup LVL1ConfigSvc and add instance to ServiceMgr")
     from TrigConfigSvc.TrigConfigSvcConfig import LVL1ConfigSvc
     LVL1ConfigSvc = LVL1ConfigSvc('LVL1ConfigSvc')
