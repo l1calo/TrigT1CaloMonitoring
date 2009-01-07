@@ -523,13 +523,14 @@ StatusCode JEPTransPerfMon::fillHistograms()
   JECollection::const_iterator it_je ;
 
   
+  // Is this loop a no-op?
   for( it_je = jetElements ->begin(); it_je < jetElements->end(); ++it_je )
     {
       LVL1::CoordToHardware ToHW;
       LVL1::Coordinate coord((*it_je)->phi(),(*it_je)->eta());
       
-      int crate = ToHW.jepCrate(coord);
-      int module=ToHW.jepModule(coord);
+      /*int crate =*/ ToHW.jepCrate(coord);
+      /*int module=*/ToHW.jepModule(coord);
     }
      
       int k=1;
@@ -1648,7 +1649,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
       mLog<<MSG::DEBUG<<(*it_CMMJetHits)->Hits()<<endreq;
 	           
       noMatchfound=0;  
-      if ( (*BS_CR).jetEtHits()!= (*it_CMMJetHits)->Hits() )  //signed int compare to unsigned int
+      if ( (*BS_CR).jetEtHits()!= (int)(*it_CMMJetHits)->Hits() )  //signed int compare to unsigned int
 	{
 	  mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for JetEtHits"<<endreq;
 	  mLog<<MSG::VERBOSE<<"BS: JetEtHits: "<<(*BS_CR).jetEtHits()<<endreq;
@@ -1687,7 +1688,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
       
       if (empty) {
         if ((*it_CMMEtSum)-> dataID() == 19 and (*it_CMMEtSum)->crate()==1) {
-          if ( ((BS_CR)->missingEtHits()) != (*it_CMMEtSum)->Et()) {
+          if ( ((BS_CR)->missingEtHits()) != (int)(*it_CMMEtSum)->Et()) {
 	    mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for MissingEtHits"<<endreq;
 	    mLog<<MSG::VERBOSE<<"BS: MissingEtHits: "<<(BS_CR)->missingEtHits()<<endreq;	 
     	    mLog<<MSG::VERBOSE<<"Sim: MissingEtHits: "<<(*it_CMMEtSum)->Et()<<endreq;	
@@ -1697,7 +1698,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
         }
 	
         if ((*it_CMMEtSum)-> dataID() == 20 and (*it_CMMEtSum)->crate()==1) {
-          if ( (BS_CR)->sumEtHits()!=(*it_CMMEtSum)->Et()) {
+          if ( (BS_CR)->sumEtHits()!=(int)(*it_CMMEtSum)->Et()) {
 	    mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for SumEtHits"<<endreq;
 	    mLog<<MSG::VERBOSE<<"BS: SumEtHits: "<<(*BS_CR).sumEtHits()<<endreq;	 
             mLog<<MSG::VERBOSE<<"Sim: SumEtHits: "<<(*it_CMMEtSum)->Et()<<endreq;	
@@ -1707,7 +1708,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
         }
        
         if ((*it_CMMEtSum)-> dataID() == 18 and (*it_CMMEtSum)->crate()==1) {      
-          if ( ((BS_CR)->ex()!=(*it_CMMEtSum)->Ex())or((BS_CR)->ey()!=(*it_CMMEtSum)->Ey())or((BS_CR)->et()!=(*it_CMMEtSum)->Et())) {
+          if ( ((BS_CR)->ex()!=(int)(*it_CMMEtSum)->Ex())or((BS_CR)->ey()!=(int)(*it_CMMEtSum)->Ey())or((BS_CR)->et()!=(int)(*it_CMMEtSum)->Et())) {
 	    mLog<<MSG::DEBUG<<"CMMRoI: No Match found between BS and Sim for Ex, Ey or Et"<<endreq;
 	    mLog<<MSG::VERBOSE<<"BS: Et: "<<(*BS_CR).et()<<endreq;
 	    mLog<<MSG::VERBOSE<<"BS: Ex: "<<(*BS_CR).ex()<<endreq;
