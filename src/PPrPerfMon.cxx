@@ -28,9 +28,8 @@
 
 #include "CLHEP/Units/SystemOfUnits.h"
 
-#include "TrigT1Calo/TriggerTowerCollection.h"
-#include "TrigT1Calo/TrigT1CaloDict.h"
-#include "TrigT1Calo/TriggerTower_ClassDEF.h"
+#include "TrigT1CaloEvent/TriggerTowerCollection.h"
+#include "TrigT1CaloEvent/TriggerTower_ClassDEF.h"
 
 #include "GaudiKernel/IService.h"
 #include "GaudiKernel/IToolSvc.h"

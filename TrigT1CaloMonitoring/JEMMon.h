@@ -19,9 +19,9 @@
 #include "TH2.h"
 
 #include "DataModel/DataVector.h"
-#include "TrigT1Calo/JEMHits.h"
-#include "TrigT1Calo/JEMEtSums.h"
-#include "TrigT1Calo/JetElement.h"
+#include "TrigT1CaloEvent/JEMHits.h"
+#include "TrigT1CaloEvent/JEMEtSums.h"
+#include "TrigT1CaloEvent/JetElement.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"

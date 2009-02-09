@@ -1,3 +1,8 @@
+2009-02-05  Alan Watson  <Alan.Watson@cern.ch>
+        * Tag as TrigT1CaloMonitoring-00-04-12
+        * Compatability with splitting of TrigT1Calo into TrigT1CaloEvent
+          and TrigT1CaloUtils
+
 2009-01-07  scott s snyder  <snyder@bnl.gov>
 
 	* Tag as TrigT1CaloMonitoring-00-04-11

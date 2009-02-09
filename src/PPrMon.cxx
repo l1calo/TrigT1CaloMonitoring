@@ -23,10 +23,9 @@
 #include "TrigT1CaloMonitoring/PPrMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
 
-#include "TrigT1Calo/TriggerTowerCollection.h"
-#include "TrigT1Calo/TrigT1CaloDict.h"
-#include "TrigT1Calo/TriggerTower_ClassDEF.h"
-#include "TrigT1Calo/DataError.h"
+#include "TrigT1CaloEvent/TriggerTowerCollection.h"
+#include "TrigT1CaloEvent/TriggerTower_ClassDEF.h"
+#include "TrigT1CaloUtils/DataError.h"
 #include "Identifier/HWIdentifier.h"
 
 

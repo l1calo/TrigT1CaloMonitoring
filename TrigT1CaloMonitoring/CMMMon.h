@@ -19,8 +19,8 @@
 #include "TH2.h"
 
 #include "DataModel/DataVector.h"
-#include "TrigT1Calo/CMMJetHits.h"
-#include "TrigT1Calo/CMMEtSums.h"
+#include "TrigT1CaloEvent/CMMJetHits.h"
+#include "TrigT1CaloEvent/CMMEtSums.h"
 
 
 #include "AthenaMonitoring/AthenaMonManager.h"

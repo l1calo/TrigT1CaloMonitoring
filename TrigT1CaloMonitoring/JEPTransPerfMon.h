@@ -19,11 +19,11 @@
 #include "TH2.h"
 
 #include "DataModel/DataVector.h"
-#include "TrigT1Calo/CMMJetHits.h"
-#include "TrigT1Calo/CMMEtSums.h"
-#include "TrigT1Calo/JEMHits.h"
-#include "TrigT1Calo/JEMEtSums.h"
-#include "TrigT1Calo/JetElement.h"
+#include "TrigT1CaloEvent/CMMJetHits.h"
+#include "TrigT1CaloEvent/CMMEtSums.h"
+#include "TrigT1CaloEvent/JEMHits.h"
+#include "TrigT1CaloEvent/JEMEtSums.h"
+#include "TrigT1CaloEvent/JetElement.h"
 //#include "TrigT1CaloTools/L1JetElementTools.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"

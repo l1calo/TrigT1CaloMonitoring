@@ -20,7 +20,8 @@ use EventInfo            	EventInfo-*	        Event
 
 #use CaloEvent           	CaloEvent-*           	Calorimeter
 
-use TrigT1Calo			TrigT1Calo-* 	      	Trigger/TrigT1
+use TrigT1CaloUtils             TrigT1CaloUtils-*       Trigger/TrigT1
+use TrigT1CaloEvent             TrigT1CaloEvent-*       Trigger/TrigT1
 use TrigT1Interfaces    	TrigT1Interfaces-*    	Trigger/TrigT1
 #use TrigT1CaloByteStream 	TrigT1CaloByteStream-* 	Trigger/TrigT1
 use TrigT1CaloTools		TrigT1CaloTools-*      	Trigger/TrigT1

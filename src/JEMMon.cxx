@@ -30,10 +30,10 @@
 #include "TrigT1CaloMonitoring/JEMMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
 
-#include "TrigT1Calo/JEMRoI.h"
-#include "TrigT1Calo/QuadLinear.h"
-#include "TrigT1Calo/DataError.h"
-#include "TrigT1Calo/CoordToHardware.h"
+#include "TrigT1CaloEvent/JEMRoI.h"
+#include "TrigT1CaloUtils/QuadLinear.h"
+#include "TrigT1CaloUtils/DataError.h"
+#include "TrigT1CaloUtils/CoordToHardware.h"
 #include "TrigT1Interfaces/Coordinate.h"
 
 #include "TrigT1Interfaces/JEPRoIDecoder.h"

@@ -31,10 +31,9 @@
 #include "TrigT1CaloMonitoring/CMMMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
 
-#include "TrigT1Calo/LVL1TriggerMenuDefs.h"
-#include "TrigT1Calo/CMMRoI.h"
-#include "TrigT1Calo/QuadLinear.h"
-#include "TrigT1Calo/DataError.h"
+#include "TrigT1CaloEvent/CMMRoI.h"
+#include "TrigT1CaloUtils/QuadLinear.h"
+#include "TrigT1CaloUtils/DataError.h"
 
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 #include "TrigT1Interfaces/Coordinate.h"

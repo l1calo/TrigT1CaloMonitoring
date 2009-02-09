@@ -19,7 +19,7 @@
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
-#include "TrigT1Calo/RODHeader.h"
+#include "TrigT1CaloEvent/RODHeader.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloRodMonTool.h"
 
