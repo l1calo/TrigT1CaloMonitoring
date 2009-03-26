@@ -1504,12 +1504,13 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	
 	InternalJemRoi* intRois = new InternalJemRoi;
 	
-	m_jetTool->findRoIs(jetElements, intRois, 2);
+	m_jetTool->findRoIs(jetElements, intRois);
 	
 	InternalJemRoi::iterator roiIter  = intRois->begin();
         InternalJemRoi::iterator roiIterE = intRois->end();
         for (; roiIter != roiIterE; ++roiIter) {
           LVL1::JEMRoI* roi = new LVL1::JEMRoI((*roiIter)->RoIWord());
+	  mLog << MSG::DEBUG << "roi "<<(*roiIter)->RoIWord()<<endreq;
           Sim_JEMRoI->push_back(roi);
         }
         delete intRois;	
@@ -1559,7 +1560,6 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		  )
 		{
 		  foundModule=1;
-		  
 		  if ((*it_BS_JEMRoI)->hits()!=(*it_Sim_JEMRoI)->hits())
 		    {
 		      mLog<<MSG::DEBUG<<"Crate "<<(*it_BS_JEMRoI)->crate()<<" Module "<<(*it_BS_JEMRoI)->jem()<<" frame "<<(*it_BS_JEMRoI)->frame() <<" location "<<(*it_BS_JEMRoI)->location() <<endreq;

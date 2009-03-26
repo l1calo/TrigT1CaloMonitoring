@@ -210,6 +210,52 @@ TProfile2D* HistoBooker::bookProfile2D(std::string HistoName, std::string HistoT
 // - helps treating hit multiplicity information:
 //    - for debug purposes: converts bit information (int-value) into string
 //    - fills histograms with hit multiplicity
+
+//bookProfile2D for variable bin size
+
+/*---------------------------------------------------------*/
+TProfile2D* HistoBooker::bookProfile2Dbin(std::string HistoName, std::string HistoTitle, int
+nxBins, double* xbins, int nyBins, double* ybins, std::string xAxisTitle, std::string yAxisTitle)
+/*---------------------------------------------------------*/
+{
+  //set Histo values
+  std::string name,title;
+  if (m_DataType=="")
+    {
+      name=HistoName;
+      title=HistoTitle;
+    }
+  else
+    {
+      name=m_DataType + "_" + HistoName;
+      title=m_DataType + ": " + HistoTitle;
+    }
+
+  TProfile2D* hist = new TProfile2D(TString(name), TString(title), nxBins, xbins, nyBins, ybins);
+  hist -> GetXaxis() -> SetTitle(TString(xAxisTitle));
+  hist -> GetYaxis() -> SetTitle(TString(yAxisTitle));
+  hist-> SetOption ("colz");
+
+  //book histo to corresponding mongroup
+  StatusCode regtest = m_MonGroup->regHist (hist);
+
+  if (regtest != StatusCode::SUCCESS) 
+    {
+      *m_log << MSG::WARNING << "Could not register histogram : " 
+	     << hist->GetName()  << endreq;
+    }
+
+  if (regtest = StatusCode::SUCCESS) 
+    {
+      *m_log << MSG::VERBOSE << "Registered histogram : " 
+	     << hist->GetName()  << endreq;
+    }
+ 
+  return hist;
+}
+
+
+
 /*---------------------------------------------------------*/
 Helper::Helper() 
 /*---------------------------------------------------------*/

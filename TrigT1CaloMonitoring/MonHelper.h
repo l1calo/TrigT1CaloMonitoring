@@ -46,6 +46,8 @@ class HistoBooker
      TProfile2D* bookProfile2D(std::string HistoName, std::string HistoTitle, 
 		  int xBins, double xmin, double xmax, int yBins, double ymin, double ymax, 
 		  std::string xAxisTitle, std::string yAxisTitle="N");
+     TProfile2D* bookProfile2Dbin(std::string HistoName, std::string HistoTitle, 
+		  int nxBins, double* xbins, int nyBins, double* ybins, std::string xAxisTitle, std::string yAxisTitle="N");	  
  protected:
      ManagedMonitorToolBase::MonGroup* m_MonGroup;
      std::string m_DataType;

@@ -235,7 +235,9 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       m_h_JEMRoI_FwdHitsRight = RoI_Booker.book1F("FwdHitsRight_JEM_RoI", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
       m_h_JEMRoI_FwdHitsLeft = RoI_Booker.book1F("FwdHitsLeft_JEM_RoI", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
       
-      m_h_JEMDAQ_Hits_Map= DAQ_Booker.book2F("Hits_Map_JEM","HitMap of Hits per JEM",12,-0.5,11.5,35,0.5,35.5,"","");
+      m_h_JEMDAQ_Hits_Map= DAQ_Booker.book2F("Hits_Map_JEM","HitMap of Hits per JEM",14,-0.5,13.5,35,0.5,35.5,"","");
+      m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel(13,"Sat(Main)");
+      m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel(14,"Sat(Fwd)");
       m_h_JEMDAQ_Hits_Map->SetStats(kFALSE);
       
 	  for (int i = 0; i < 16; i++)
@@ -298,12 +300,11 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	  std::string name,title;
 	  std::stringstream buffer;
 
-	  m_h_JEMRoI_error = Error_Booker.book2F("JEMROI_Error","JEMRoI Parity and Saturation",5,0.5,5.5,35,0.5,35.5,"","");
+	  m_h_JEMRoI_error = Error_Booker.book2F("JEMROI_Error","JEMRoI Parity",2,0.5,2.5,35,0.5,35.5,"","");
 	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(1, "Parity (Main Jets)");
 	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(2, "Parity (Fwd Jets)");
-	  
-	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(4, "Saturation (Main Jets)");
-	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(5, "Saturation (Fwd Jets)");
+	    
+	  //remove saturation flags from error histograms
 	  m_h_JEMRoI_error->SetStats(kFALSE);	   
 	  	  
 	  for (int i = 0; i < 16; i++)
@@ -704,12 +705,18 @@ StatusCode JEMMon::fillHistograms()
 	  // Parity (Fwd Jets)
 	  if ((*it_JEMRoIs)->forward()==1) m_h_JEMRoI_error->Fill(2,(crate*18 +module +1 ),err.get(1));
 	  
+	 //exclude these now from error flags for real data
 	// Saturation (Main Jets)
-	  if ((*it_JEMRoIs)->forward()==0) m_h_JEMRoI_error->Fill(4,(crate*18 +module +1 ),err.get(0));
+	 // if ((*it_JEMRoIs)->forward()==0) m_h_JEMRoI_error->Fill(4,(crate*18 +module +1 ),err.get(0));
 	// Saturation (Fwd Jets)
-	  if ((*it_JEMRoIs)->forward()==1) m_h_JEMRoI_error->Fill(5,(crate*18 +module +1 ),err.get(0));
+	  //if ((*it_JEMRoIs)->forward()==1) m_h_JEMRoI_error->Fill(5,(crate*18 +module +1 ),err.get(0));
 	  
-	 
+	  //new bins for showing saturation in main and fwd regiom; moved them from error plot to Hit plot
+         //Saturation (Main Jets)
+         if ((*it_JEMRoIs)->forward()==0) m_h_JEMDAQ_Hits_Map->Fill(13,(crate*18 +module +1 ),err.get(0));
+         // Saturation (Fwd Jets)
+	 if ((*it_JEMRoIs)->forward()==1) m_h_JEMDAQ_Hits_Map->Fill(14,(crate*18 +module +1 ),err.get(0));
+		 
 	
 	//Filling the Error Summary histogram
 	 //Jet errors 

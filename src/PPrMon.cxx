@@ -265,8 +265,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	  m_h_TT_HitMap_emADC_00100->SetStats(kFALSE);
 	  //m_h_TT_HitMap_emADC_00100->SetOption(colz);
 	  title="#eta - #phi Profile Map of EM FADC > "+ thresbuffer.str() + " for timeslice 2";
-	  m_p_TT_HitMap_emADC_00100=ADCTimeSlice_Booker.bookProfile2D("emFADCHitMap2_Profile",title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  m_p_TT_HitMap_emADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
+	  m_p_TT_HitMap_emADC_00100=ADCTimeSlice_Booker.bookProfile2Dbin("emFADCHitMap2_Profile",title,66,Help.TTEtaBinning(), 64,Help.TTPhiBinning(),"#eta","#phi");
+	  //m_p_TT_HitMap_emADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 	  m_p_TT_HitMap_emADC_00100->SetStats(kFALSE);
 	  //m_p_TT_HitMap_emADC_00100->SetOption(colz);
 
@@ -277,8 +277,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	  m_h_TT_HitMap_hadADC_00100->SetStats(kFALSE);
 	  //m_h_TT_HitMap_hadADC_00100->SetOption(colz);
 	  title="#eta - #phi Profile Map of HAD FADC > "+ thresbuffer.str() + " for timeslice 2";
-	  m_p_TT_HitMap_hadADC_00100=ADCTimeSlice_Booker.bookProfile2D("hadFADCHitMap2_Profile",title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  m_p_TT_HitMap_hadADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
+	  m_p_TT_HitMap_hadADC_00100=ADCTimeSlice_Booker.bookProfile2Dbin("hadFADCHitMap2_Profile",title,66,Help.TTEtaBinning(), 64,Help.TTPhiBinning(),"#eta","#phi");
+	  //m_p_TT_HitMap_hadADC_00100->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 	  m_p_TT_HitMap_hadADC_00100->SetStats(kFALSE);
 	  //m_p_TT_HitMap_hadADC_00100->SetOption(colz);
 	  m_h_dist_had_max=ADCTimeSlice_Booker.book1F("haddist_maximum"," had. Distribution of Average Maximum Timeslice",5,0.5,5.5,"time slice (1-5)");
@@ -318,11 +318,11 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 
      //-----------------------------Average Maximum Timeslice-------------------------------------------------
       
-      m_h_TT_ADC_hadTiming_signal= ADCTimeSlice_Booker.bookProfile2D("ADC_hadTiming_signal","Average Maximum TimeSlice for had Signal (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI,"#eta", "#phi");
-      m_h_TT_ADC_hadTiming_signal->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
+      m_h_TT_ADC_hadTiming_signal= ADCTimeSlice_Booker.bookProfile2Dbin("ADC_hadTiming_signal","Average Maximum TimeSlice for had Signal (TS:1-5)",66,Help.TTEtaBinning(), 64,Help.TTPhiBinning(),"#eta", "#phi");
+      //m_h_TT_ADC_hadTiming_signal->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 
-      m_h_TT_ADC_emTiming_signal=ADCTimeSlice_Booker.bookProfile2D("ADC_emTiming_signal","Average Maximum TimeSlice for em Signal (TS:1-5)",100,-4.9,4.9, 64,0,2*M_PI, "#eta", "#phi");
-      m_h_TT_ADC_emTiming_signal->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
+      m_h_TT_ADC_emTiming_signal=ADCTimeSlice_Booker.bookProfile2Dbin("ADC_emTiming_signal","Average Maximum TimeSlice for em Signal (TS:1-5)",66,Help.TTEtaBinning(), 64,Help.TTPhiBinning(), "#eta", "#phi");
+      //m_h_TT_ADC_emTiming_signal->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
 
 
       //---------------------------- LUT Hitmaps per threshold -----------------------------
