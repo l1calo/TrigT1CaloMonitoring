@@ -1,5 +1,7 @@
 Offline= not athenaCommonFlags.isOnline
-CompareWithSimulation=True
+CompareWithSimulation=False
+if (globalflags.DataSource() == "data") :
+  CompareWithSimulation=True
 
 #MaxEnergyRange is set individually
 
@@ -12,20 +14,24 @@ else:
     log.info("will setup LVL1ConfigSvc and add instance to ServiceMgr")
     from TrigConfigSvc.TrigConfigSvcConfig import LVL1ConfigSvc
     LVL1ConfigSvc = LVL1ConfigSvc('LVL1ConfigSvc')
-    LVL1ConfigSvc.ConfigSource = "XML"
-    LVL1ConfigSvc.XMLFile = "L1MenuM5.xml"
-    LVL1ConfigSvc.CreateLegacyObjects = True
-    LVL1ConfigSvc.DumpTTVmap = False
-    # LVL1ConfigSvc.OutputLevel = VERBOSE
     svcMgr += LVL1ConfigSvc
+    svcMgr.LVL1ConfigSvc.ConfigSource = "XML"
+    from TriggerJobOpts.TriggerFlags import TriggerFlags as tf  
+    tf.inputLVL1configFile = "LVL1config_SingleBeam_v1_7-bit_trigger_types_20080905.xml"
+    svcMgr.LVL1ConfigSvc.XMLFile = tf.inputLVL1configFile()
+    svcMgr.LVL1ConfigSvc.CreateLegacyObjects = True
+    svcMgr.LVL1ConfigSvc.DumpTTVmap = False
+    # LVL1ConfigSvc.OutputLevel = VERBOSE
+    
     theApp.CreateSvc += [ "TrigConf::LVL1ConfigSvc/LVL1ConfigSvc" ]
 
-#================================= L1Calo-Simulation =============================
-from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__JetElementMaker
-from AthenaCommon.AlgSequence import AlgSequence
-myjob = AlgSequence()
-myjob += LVL1__JetElementMaker( 'JetElementMaker' )
-myjob.JetElementMaker.JetElementLocation ="Sim_JetElements"
+if globalflags.DataSource() == "data":
+  #================================= L1Calo-Simulation =============================
+  from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__JetElementMaker
+  from AthenaCommon.AlgSequence import AlgSequence
+  myjob = AlgSequence()
+  myjob += LVL1__JetElementMaker( 'JetElementMaker_Mon' )
+  myjob.JetElementMaker_Mon.JetElementLocation ="Sim_JetElements"
 
 
 #================================= Monitoring configuration ======================
@@ -92,17 +98,6 @@ BS_L1JEMMonTool = JEMMon(
 ToolSvc += BS_L1JEMMonTool
 L1CaloMan.AthenaMonTools += [ BS_L1JEMMonTool ]
 
-#if CompareWithSimulation:
-#    L1CaloMan.AthenaMonTools += [ "JEMMon/Sim_L1JEMMonTool" ]
-#    toolSvc.Sim_L1JEMMonTool.DataType = "Sim"  #BS or Sim data?
-#    toolSvc.Sim_L1JEMMonTool.JetElementLocation = "Sim_JetElements"
-#    toolSvc.Sim_L1JEMMonTool.JEMHitsLocation = "Sim_JEMHits"
-#    toolSvc.Sim_L1JEMMonTool.JEMEtSumsLocation = "Sim_JEMEtSums"
-#    toolSvc.Sim_L1JEMMonTool.JEMRoILocation = "Sim_JEMRoIs"
-#    toolSvc.Sim_L1JEMMonTool.MaxEnergyRange = MaxEnergyRange
-#    toolSvc.Sim_L1JEMMonTool.PathInRootFile = "L1Calo/Sim/2_JEP_JEM"
-#toolSvc.Sim_L1JEMMonTool.OutputLevel = DEBUG
-
 #----------------------------------- CMM ------------------------------------------
 from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import CMMMon
 BS_L1CMMMonTool = CMMMon (
@@ -120,48 +115,39 @@ BS_L1CMMMonTool = CMMMon (
 ToolSvc += BS_L1CMMMonTool
 L1CaloMan.AthenaMonTools += [ BS_L1CMMMonTool ]
 
-#if CompareWithSimulation:
-#    L1CaloMan.AthenaMonTools += [ "CMMMon/Sim_L1CMMMonTool" ]
-#    toolSvc.Sim_L1CMMMonTool.DataType = "Sim"  #BS or Sim data?
-#    toolSvc.Sim_L1CMMMonTool.CMMJetHitsLocation = "Sim_CMMJetHits"
-#    toolSvc.Sim_L1CMMMonTool.CMMEtSumsLocation = "Sim_CMMEtSums"
-#   toolSvc.Sim_L1CMMMonTool.CMMRoILocation = "Sim_CMMRoIs"
-#   toolSvc.Sim_L1CMMMonTool.MaxEnergyRange = MaxEnergyRange
-#   toolSvc.Sim_L1CMMMonTool.PathInRootFile = "L1Calo/Sim/3_JEP_CMM"
-#   toolSvc.Sim_L1CMMMonTool.OutputLevel = DEBUG
+if globalflags.DataSource() == "data":
+  #--------------------- Transmission and Performance ------------------------------
+  from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import JEPTransPerfMon
+  JEPTransPerfMonTool = JEPTransPerfMon (
+      name = "JEPTransPerfMonTool",
+      BS_JetElementLocation = "JetElements",
+      #BS_TriggerTowerLocation = "TriggerTowers",
+      BS_TriggerTowerLocation = "Sim_JetElements",
+      NoLUTSlices=1,
 
-#--------------------- Transmission and Performance ------------------------------
-from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import JEPTransPerfMon
-JEPTransPerfMonTool = JEPTransPerfMon (
-    name = "JEPTransPerfMonTool",
-    BS_JetElementLocation = "JetElements",
-    #BS_TriggerTowerLocation = "TriggerTowers",
-    BS_TriggerTowerLocation = "Sim_JetElements",
-    NoLUTSlices=1,
+      BS_JEMHitsLocation = "JEMHits",
+      Sim_JEMHitsLocation = "Sim_JEMHits",
+      BS_JEMEtSumsLocation = "JEMEtSums",
+      Sim_JEMEtSumsLocation = "Sim_JEMEtSums",
+      BS_JEMRoILocation = "JEMRoIs",
+      Sim_JEMRoILocation = "Sim_JEMRoIs",
 
-    BS_JEMHitsLocation = "JEMHits",
-    Sim_JEMHitsLocation = "Sim_JEMHits",
-    BS_JEMEtSumsLocation = "JEMEtSums",
-    Sim_JEMEtSumsLocation = "Sim_JEMEtSums",
-    BS_JEMRoILocation = "JEMRoIs",
-    Sim_JEMRoILocation = "Sim_JEMRoIs",
+      BS_CMMJetHitsLocation = "CMMJetHits",
+      Sim_CMMJetHitsLocation = "Sim_CMMJetHits",
+      BS_CMMEtSumsLocation = "CMMEtSums",
+      Sim_CMMEtSumsLocation = "Sim_CMMEtSums",
+      BS_CMMRoILocation = "CMMRoIs",
+      Sim_CMMRoILocation = "Sim_CMMRoIs",
 
-    BS_CMMJetHitsLocation = "CMMJetHits",
-    Sim_CMMJetHitsLocation = "Sim_CMMJetHits",
-    BS_CMMEtSumsLocation = "CMMEtSums",
-    Sim_CMMEtSumsLocation = "Sim_CMMEtSums",
-    BS_CMMRoILocation = "CMMRoIs",
-    Sim_CMMRoILocation = "Sim_CMMRoIs",
-
-    PathInRootFile = "L1Calo/3_JEP_TransmissionAndPerformance",
-    Offline = Offline,
-    CompareWithSimulation = CompareWithSimulation,
-
-    #OutputLevel = VERBOSE,
-    OutputLevel = INFO,
-    )
-ToolSvc += JEPTransPerfMonTool
-L1CaloMan.AthenaMonTools += [ JEPTransPerfMonTool ]
+      PathInRootFile = "L1Calo/3_JEP_TransmissionAndPerformance",
+      Offline = Offline,
+      CompareWithSimulation = CompareWithSimulation,
+  
+      #OutputLevel = VERBOSE,
+      OutputLevel = INFO,
+      )
+  ToolSvc += JEPTransPerfMonTool
+  L1CaloMan.AthenaMonTools += [ JEPTransPerfMonTool ]
 
 #=================================================================================
 #===================================== CP ========================================

@@ -374,13 +374,13 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
       
      
       m_h_TransCheck_emJetElements=transmission_Booker.book2F("emJE_TransPerfCheck","em JE Transmission and Performance Check for (TT|JE)", (1*m_NoLUTSlices),0.5,(1*m_NoLUTSlices+.5), 35,0.5,35.5, "", "");
-
+      
       m_h_TransCheck_emJetElements->SetStats(kFALSE);
       //      m_h_TransCheck_emJetElements->SetOption(colz);
       m_h_TransCheck_hadJetElements=transmission_Booker.book2F("hadJE_TransPerfCheck", "had JE Transmission and Performance Check for (TT|JE)",(1*m_NoLUTSlices),0.5,(1*m_NoLUTSlices+.5), 35,0.5,35.5, "", "");
       m_h_TransCheck_hadJetElements->SetStats(kFALSE);
       //      m_h_TransCheck_hadJetElements->SetOption(colz);
-
+      
       for (int i = 0; i < 16; i++)
 	{
 	  buffer.str("");
@@ -398,7 +398,7 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
       m_h_TransCheck_hadJetElements->GetYaxis()->SetBinLabel(17, "Crate 0");
       m_h_TransCheck_hadJetElements->GetYaxis()->SetBinLabel(35, "Crate 1");
       
-
+      
       int k=1;
       for (int i=2; i<3;i++)
 	{
@@ -415,45 +415,45 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
 	      k++;
 	    }
 	}
-
+      
       mLog << MSG::DEBUG << "NoLUTSlices "<< m_NoLUTSlices << endreq ;      
-
+      
       // Comparison with Simulation
-      if (m_CompareWithSimulation ==1)
-	{
-	  m_h_SimBSMon_JEP=JEM_Booker.book2F("JEP_Calc_Error", "JEP Hardware Output compared to Simulation: Differences", 4,0.5,4.5,37,0.5,37.5, "", "");
-	  m_h_SimBSMon_JEP->SetStats(kFALSE);
-	  //m_h_SimBSMon_JEP->SetOption(colz);
-
-	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(1, "CalcErrors E_{x}, E_{y}");
-	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(2, "CalcErrors E_{t}");
-	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(3, "CalcErrors Hits");
-	  m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(4, "CalcErrors RoIs");
-	  
-	  for (int i = 0; i < 16; i++)
-	    {
-	      buffer.str("");
-	      buffer<<i;
-	      
-	      name = "JEM " + buffer.str();
-	      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel((i+1), name.c_str());
-	      
-	      buffer.str("");
-	      buffer<<i;
-	      
-	      name = "JEM " + buffer.str();
-	      m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel((i+1+19), name.c_str());
-	    }
-	  m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(17, "CMM");
-	  m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(18, "Crate 0: ");
-	  m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(36, "CMM");
-	  m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(37, "Crate 1: ");
-	}
- 
-
-
-
-
+      if (m_CompareWithSimulation ==1){ 	
+	
+	m_h_SimBSMon_JEP=JEM_Booker.book2F("JEP_Calc_Error", "JEP Hardware Output compared to Simulation: Differences", 4,0.5,4.5,37,0.5,37.5, "", "");
+	m_h_SimBSMon_JEP->SetStats(kFALSE);
+	//m_h_SimBSMon_JEP->SetOption(colz);
+	
+	m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(1, "CalcErrors E_{x}, E_{y}");
+	m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(2, "CalcErrors E_{t}");
+	m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(3, "CalcErrors Hits");
+	m_h_SimBSMon_JEP->GetXaxis()->SetBinLabel(4, "CalcErrors RoIs");
+	
+	for (int i = 0; i < 16; i++)
+	  {
+	    buffer.str("");
+	    buffer<<i;
+	    
+	    name = "JEM " + buffer.str();
+	    m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel((i+1), name.c_str());
+	    
+	    buffer.str("");
+	    buffer<<i;
+	    
+	    name = "JEM " + buffer.str();
+	    m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel((i+1+19), name.c_str());
+	  }
+	m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(17, "CMM");
+	m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(18, "Crate 0: ");
+	m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(36, "CMM");
+	m_h_SimBSMon_JEP->GetYaxis()->SetBinLabel(37, "Crate 1: ");
+      }
+      
+      
+      
+      
+      
       //---------------------------------- Backplane transmission checks -----------------------------
       m_h_TransCheck_JEP=transmission_Booker.book2F("JEP_TransCheck", "JEP Backplane Transmission Check JEM -> CMM per Module and Crate", 2,0.5,2.5,36,0.5,36.5, "", "");
       
@@ -475,7 +475,7 @@ StatusCode JEPTransPerfMon::bookHistograms( bool isNewEventsBlock,
       m_h_TransCheck_JEP->GetYaxis()->SetBinLabel(36, "Crate 1: ");
 
 
-   }
+    }
   return StatusCode( StatusCode::SUCCESS );
 }
 
@@ -497,9 +497,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
   // Check	Transmission & Functionality
   //            JetElements(PPrDAQ.TriggerTowers) = JEMDAQ.JetElements
   // ---------------------------------------------------------------------------------------------
-
-  mLog << MSG::DEBUG << "==== TriggerTowers -> JetElements: Transmission & Functionality ===="<< endreq ;
-
+  
   // retrieve JetElements
   const JECollection* jetElements;
   StatusCode sc = m_storeGate->retrieve(jetElements, m_BS_JetElementLocation);
@@ -510,38 +508,53 @@ StatusCode JEPTransPerfMon::fillHistograms()
       return StatusCode::SUCCESS;
     }
 
-  // retrieve JetElements
-  const JECollection* TT_jetElements;
-  sc = m_storeGate->retrieve(TT_jetElements, m_BS_TriggerTowerLocation);
-  
-  if( (sc==StatusCode::FAILURE) ) 
-    {
-      mLog << MSG::INFO << "No JetElements found in TES at " << m_BS_TriggerTowerLocation << endreq ;
-      return StatusCode::SUCCESS;
-    }
- 
-  JECollection::const_iterator it_je ;
 
-  
-  // Is this loop a no-op?
-  for( it_je = jetElements ->begin(); it_je < jetElements->end(); ++it_je )
-    {
-      LVL1::CoordToHardware ToHW;
-      LVL1::Coordinate coord((*it_je)->phi(),(*it_je)->eta());
-      
-      /*int crate =*/ ToHW.jepCrate(coord);
-      /*int module=*/ToHW.jepModule(coord);
-    }
+  if (m_CompareWithSimulation ==1){
+
+    mLog << MSG::DEBUG << "==== TriggerTowers -> JetElements: Transmission & Functionality ===="<< endreq ;
+    
+    // retrieve JetElements
+    const JECollection* jetElements;
+    StatusCode sc = m_storeGate->retrieve(jetElements, m_BS_JetElementLocation);
+    
+    if( (sc==StatusCode::FAILURE) ) 
+      {
+      	mLog << MSG::INFO << "No JetElements found in TES at " << m_BS_JetElementLocation << endreq ;
+      	return StatusCode::SUCCESS;
+      }
+    
+    // retrieve JetElements
+    const JECollection* TT_jetElements;
+    sc = m_storeGate->retrieve(TT_jetElements, m_BS_TriggerTowerLocation);
+    
+    if( (sc==StatusCode::FAILURE) ) 
+      {
+	mLog << MSG::INFO << "No JetElements found in TES at " << m_BS_TriggerTowerLocation << endreq ;
+	return StatusCode::SUCCESS;
+      }
+    
+    JECollection::const_iterator it_je ;
+    
+    
+    // Is this loop a no-op?
+    for( it_je = jetElements ->begin(); it_je < jetElements->end(); ++it_je )
+      {
+	LVL1::CoordToHardware ToHW;
+	LVL1::Coordinate coord((*it_je)->phi(),(*it_je)->eta());
+	
+	/*int crate =*/ ToHW.jepCrate(coord);
+	/*int module=*/ToHW.jepModule(coord);
+      }
      
-      int k=1;
-      int i=2; //Slice number of TT_JE (normally 2)
-  
-      for (int j=0; j<m_NoLUTSlices; j++)  //Slice number of TT_TS (overwritten by joboptions)
- 	{
- 	  TimeSliceMatch(k, j, TT_jetElements, i, jetElements, &mLog);
- 	  k++;
- 	}
-     
+    int k=1;
+    int i=2; //Slice number of TT_JE (normally 2)
+    
+    for (int j=0; j<m_NoLUTSlices; j++)  //Slice number of TT_TS (overwritten by joboptions)
+      {
+	TimeSliceMatch(k, j, TT_jetElements, i, jetElements, &mLog);
+	k++;
+      }
+  }
 
   // =============================================================================================
   // ================= JetElements -> JEM Jet Hits ===============================================
