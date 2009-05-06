@@ -1,3 +1,7 @@
+2009-05-05 Alan Watson <Alan.Watson@cern.ch>
+        * Tag as TrigT1CaloMonitoring-00-04-15
+        * Change dependencies from TrigT1CaloTools to TrigT1CaloToolInterfaces
+
 2009-04-08 Andrea Neusiedl <andrea.neusiedl@cern.ch>
 	* Tag as TrigT1CaloMonitoring-00-04-14
 	* Joboptions improvement simulation <-> data
