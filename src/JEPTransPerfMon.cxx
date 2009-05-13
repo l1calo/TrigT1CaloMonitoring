@@ -140,6 +140,11 @@ JEPTransPerfMon::JEPTransPerfMon( const std::string & type, const std::string & 
   
   // This is how you declare the parameters to Gaudi so that
   // they can be over-written via the job options file
+
+  declareProperty( "JEPHitsTool", m_jepHitsTool);
+  declareProperty( "JetTool", m_jetTool);
+  declareProperty( "JetElementTool", m_jetElementTool);
+  declareProperty( "JEPEtSumsTool", m_etSumsTool);
   
   declareProperty( "BS_JetElementLocation", m_BS_JetElementLocation = LVL1::TrigT1CaloDefs::JetElementLocation); 
   declareProperty( "BS_TriggerTowerLocation", m_BS_TriggerTowerLocation = LVL1::TrigT1CaloDefs::TriggerTowerLocation); 

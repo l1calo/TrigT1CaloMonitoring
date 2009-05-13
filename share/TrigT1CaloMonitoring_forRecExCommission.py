@@ -17,7 +17,8 @@ else:
     svcMgr += LVL1ConfigSvc
     svcMgr.LVL1ConfigSvc.ConfigSource = "XML"
     from TriggerJobOpts.TriggerFlags import TriggerFlags as tf  
-    tf.inputLVL1configFile = "LVL1config_SingleBeam_v1_7-bit_trigger_types_20080905.xml"
+    #tf.inputLVL1configFile = "LVL1config_SingleBeam_v1_7-bit_trigger_types_20080905.xml"
+    tf.inputLVL1configFile = "LVL1config_SingleBeam_v1_7-bit_trigger_types.xml"
     svcMgr.LVL1ConfigSvc.XMLFile = tf.inputLVL1configFile()
     svcMgr.LVL1ConfigSvc.CreateLegacyObjects = True
     svcMgr.LVL1ConfigSvc.DumpTTVmap = False
@@ -120,6 +121,11 @@ if globalflags.DataSource() == "data":
   from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import JEPTransPerfMon
   JEPTransPerfMonTool = JEPTransPerfMon (
       name = "JEPTransPerfMonTool",
+
+      JEPHitsTool = "LVL1::L1JEPHitsTools/L1JEPHitsTools_Mon",
+      JetTool = "LVL1::L1JetTools/L1JetTools_Mon",
+      JEPEtSumsTool = "LVL1::L1JEPEtSumsTools/L1JEPEtSumsTools_Mon",
+
       BS_JetElementLocation = "JetElements",
       #BS_TriggerTowerLocation = "TriggerTowers",
       BS_TriggerTowerLocation = "Sim_JetElements",
@@ -149,6 +155,20 @@ if globalflags.DataSource() == "data":
   ToolSvc += JEPTransPerfMonTool
   L1CaloMan.AthenaMonTools += [ JEPTransPerfMonTool ]
 
+  from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1JEPHitsTools
+  L1JEPHitsTools = LVL1__L1JEPHitsTools("L1JEPHitsTools_Mon")
+  ToolSvc += L1JEPHitsTools
+  from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1JetTools
+  L1JetTools = LVL1__L1JetTools("L1JetTools_Mon")
+  ToolSvc += L1JetTools
+  from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1EtTools
+  L1EtTools = LVL1__L1EtTools("L1EtTools_Mon")
+  ToolSvc += L1EtTools
+  from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1JEPEtSumsTools
+  L1JEPEtSumsTools = LVL1__L1JEPEtSumsTools("L1JEPEtSumsTools_Mon",
+                               EtTool = "LVL1::L1EtTools/L1EtTools_Mon")
+  ToolSvc += L1JEPEtSumsTools
+
 #=================================================================================
 #===================================== CP ========================================
 #=================================================================================
@@ -171,6 +191,7 @@ L1CaloMan.AthenaMonTools += [ L1BSCPMMonTool ]
 
 from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import CPMSimBSMon
 CPMSimBSMonTool = CPMSimBSMon("CPMSimBSMonTool",
+                  EmTauTool = "LVL1::L1EmTauTools/L1EmTauTools_Mon",
                   CompareWithSimulation = CompareWithSimulation)
 ToolSvc += CPMSimBSMonTool
 L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
@@ -178,6 +199,10 @@ L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
 #              4082, 4083, 4146, 4147, 4210, 4211, 4274, 4275 ] #LVDS channel
 #ToolSvc.CPMSimBSMonTool.IgnoreTowersHad = [ 3473, 3643, 4824 ] #LUT readout
 #ToolSvc.CPMSimBSMonTool.OutputLevel = DEBUG
+
+from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1EmTauTools
+L1EmTauTools = LVL1__L1EmTauTools("L1EmTauTools_Mon")
+ToolSvc += L1EmTauTools
 
 #=================================================================================
 #===================================== ROD =======================================

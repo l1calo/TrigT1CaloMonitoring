@@ -1,4 +1,9 @@
 2009-05-13  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-04-18
+        * Add properties to specify simulation tools in joboptions
+        * Needs TrigT1CaloTools-03-00-01
+
+2009-05-13  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-04-17
         * Restore old ROD directory name
 

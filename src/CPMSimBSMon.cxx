@@ -59,6 +59,9 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
 {
   declareInterface<IMonitorToolBase>(this); 
 
+  declareProperty("EmTauTool", m_emTauTool);
+  declareProperty("CPHitsTool", m_cpHitsTool);
+
   declareProperty("CPMTowerLocation",
                  m_cpmTowerLocation  = LVL1::TrigT1CaloDefs::CPMTowerLocation);
   declareProperty("CPMTowerLocationOverlap",
