@@ -85,6 +85,8 @@ private:
 
   /// Number of events
   int m_events;
+  /// Test online code flag
+  bool m_onlineTest;
 
   //=======================
   //   Payload plots

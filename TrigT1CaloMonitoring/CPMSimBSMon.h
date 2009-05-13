@@ -25,6 +25,7 @@ class TH1;
 class TH2;
 class TH1F;
 class TH2F;
+class TH2I;
 class StoreGateSvc;
 
 namespace LVL1 {
@@ -45,12 +46,13 @@ class CPMSimBSMon: public ManagedMonitorToolBase
 public:
   
   CPMSimBSMon(const std::string & type, const std::string & name,
-		       const IInterface* parent);
+		                        const IInterface* parent);
     
 
   virtual ~CPMSimBSMon();
 
   virtual StatusCode initialize();
+  virtual StatusCode finalize();
     
   virtual StatusCode bookHistograms(bool isNewEventsBlock, bool isNewLumiBlock,
                                                            bool isNewRun);
@@ -81,11 +83,19 @@ private:
   typedef std::map<int, LVL1::CPMHits*>      CpmHitsMap;
   typedef std::map<int, LVL1::CMMCPHits*>    CmmCpHitsMap;
   
-  TH1F* book1F(std::string nam, std::string tit,
-                                    int nx, double xmin, double xmax);
-  TH2F* book2F(std::string nam, std::string tit,
-                                    int nx, double xmin, double xmax,
-                                    int ny, double ymin, double ymax);
+  TH1F* book1F(const std::string& nam, const std::string& tit,
+                                       int nx, double xmin, double xmax);
+  TH2F* book2F(const std::string& nam, const std::string& tit,
+                                       int nx, double xmin, double xmax,
+                                       int ny, double ymin, double ymax);
+  TH2F* book2F(const std::string& nam, const std::string& tit,
+                                       int nx, const double* xbins,
+                                       int ny, double ymin, double ymax);
+  TH2I* book2I(const std::string& nam, const std::string& tit,
+                                       int nx, double xmin, double xmax,
+                                       int ny, double ymin, double ymax);
+  TH2F* bookEtaPhi(const std::string& nam, const std::string& tit,
+                                           bool isRoi = false);
   void  compare(const TriggerTowerMap& ttMap, const CpmTowerMap& cpMap,
                       ErrorVector& errors, bool overlap);
   void  compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
@@ -96,13 +106,15 @@ private:
                       ErrorVector& errorsCPM, ErrorVector& errorsCMM);
   void  compare(const CmmCpHitsMap& cmmSimMap, const CmmCpHitsMap& cmmMap,
                                           ErrorVector& errors, int selection);
+  void  fillEventSample(int err, int loc, bool isCpm);
   void  setLabels(TH2* hist);
   void  setLabelsCMCC(TH2* hist);
+  void  setLabelsCMS(TH2* hist);
   void  setLabelsCMT(TH2* hist, bool isRoi = false);
   void  setLabelsCPMFP(TH2* hist);
   void  setLabelsYNUM(TH2* hist, int beg, int end);
   void  setLabelsXNUM(TH2* hist, int beg, int end);
-  void  setLabelsCPM(TH2* hist);
+  void  setLabelsCPM(TH2* hist, bool xAxis = true);
   void  setLabelsMC(TH2* hist);
   void  setLabelsMCLR(TH2* hist);
   void  setLabelsSLR(TH1* hist);
@@ -121,6 +133,7 @@ private:
                        CmmCpHitsCollection* hitsOut, int selection);
   int   fpga(int crate, double phi);
   bool  ignoreTower(int layer, int key);
+  LVL1::CPMTower* ttCheck(LVL1::CPMTower* tt, CpmTowerCollection* coll);
 
   ServiceHandle<StoreGateSvc> m_storeGate;
   ToolHandle<LVL1::IL1EmTauTools> m_emTauTool;
@@ -156,10 +169,17 @@ private:
   double m_phiMax;
   /// Phi scale to convert from radians to wanted units
   double m_phiScale;
+  /// Eta Range flag
+  bool m_fullEtaRange;
+  /// Eta bins for full eta range
+  double* m_etaBins;
+  double* m_etaBinsRoi;
   /// Number of events
   int m_events;
   /// Simulation allowed flag
   bool m_compareWithSim;
+  /// Allow TriggerTower comparisons flag
+  bool m_compareTriggerTowers;
   /// RoI thresholds to compare
   std::vector<int> m_roiThresh;
   /// RoI thresholds mask for comparisons
@@ -169,6 +189,12 @@ private:
   std::vector<int> m_ignoreTowersHad;
   /// CPM overlap tower container present
   bool m_overlapPresent;
+  /// Number of error event number samples to keep
+  int m_eventSamples;
+  /// Current event number
+  int m_eventNumber;
+  /// Sample event number counts
+  std::vector<int> m_sampleCounts;
 
   //=======================
   //   Match/Mismatch plots
@@ -238,6 +264,9 @@ private:
   TH2F* m_h_CPeqSIM;
   TH2F* m_h_CPneSIM;
   TH1F* m_h_CPneSIMSummary;
+
+  // Mismatch Event Number Samples
+  std::vector<TH2I*> m_sampleHists;
 
 };
 

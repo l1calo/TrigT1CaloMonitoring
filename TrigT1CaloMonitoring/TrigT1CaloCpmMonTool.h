@@ -44,6 +44,7 @@ public:
   virtual ~TrigT1CaloCpmMonTool();
 
   virtual StatusCode initialize();
+  virtual StatusCode finalize();
     
   virtual StatusCode bookHistograms(bool isNewEventsBlock, bool isNewLumiBlock,
                                                            bool isNewRun);
@@ -53,8 +54,8 @@ public:
 
 private:
 
-  enum SummaryErrors { CPMParity, CPMLink, CPMStatus, RoIParity,
-                       CMMParity, CMMStatus, NumberOfSummaryBins };
+  enum SummaryErrors { EMParity, EMLink, HadParity, HadLink, CPMStatus,
+                       RoIParity, CMMParity, CMMStatus, NumberOfSummaryBins };
 
   typedef DataVector<LVL1::CPMTower>     CpmTowerCollection;
   typedef DataVector<LVL1::CPMHits>      CpmHitsCollection;
@@ -79,6 +80,12 @@ private:
   TH2F* book2F(const std::string& name, const std::string& title,
                                     int nx, double xmin, double xmax,
                                     int ny, double ymin, double ymax);
+  TH2F* book2F(const std::string& nam, const std::string& tit,
+                                    int nx, const double* xbins,
+				    int ny, double ymin, double ymax);
+  TH2F* bookEtaPhi(const std::string& nam, const std::string& tit,
+                                           bool isRoi = false);
+
   void  setStatusLabels(TH1* hist);
   void  setLabelsCNSTS(TH2* hist);
   void  setLabelsPSCS(TH2* hist);
@@ -112,6 +119,8 @@ private:
   
   /// Root directory
   std::string m_rootDir;
+  /// Directory layout
+  int m_layout;
 
   /// Phi Units for eta/phi plots
   std::string m_phiUnits;
@@ -119,6 +128,11 @@ private:
   double m_phiMax;
   /// Phi scale to convert from radians to wanted units
   double m_phiScale;
+  /// Eta Range flag
+  bool m_fullEtaRange;
+  /// Eta bins for full eta range
+  double* m_etaBins;
+  double* m_etaBinsRoi;
   /// Noise/signal energy split
   int m_noiseSignalSplit;
   /// Maximum energy plotted

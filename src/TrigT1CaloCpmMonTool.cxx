@@ -14,11 +14,11 @@
 
 #include "TH1F.h"
 #include "TH2F.h"
-#include "TString.h"
 
 #include "CLHEP/Units/SystemOfUnits.h"
 #include "GaudiKernel/ITHistSvc.h"
 #include "StoreGate/StoreGateSvc.h"
+#include "SGTools/StlVectorClids.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
@@ -49,7 +49,8 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
 				           const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
     m_storeGate("StoreGateSvc", name),
-    m_log(msgSvc(), name), m_monGroup(0), m_events(0)
+    m_log(msgSvc(), name), m_monGroup(0),
+    m_etaBins(0), m_etaBinsRoi(0), m_events(0)
 /*---------------------------------------------------------*/
 {
   declareInterface<IMonitorToolBase>(this); 
@@ -73,8 +74,11 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
                                  LVL1::TrigT1CaloDefs::TriggerTowerLocation);
 
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
+  declareProperty("DirectoryLayout", m_layout = 1, "Directory structure");
   declareProperty("PhiUnits", m_phiUnits = "channels",
                   "Phi Units: radians, degrees or channels");
+  declareProperty("FullEtaRange", m_fullEtaRange = false,
+                  "Eta Range: False (-2.5 to 2.5), True (-4.9 to 4.9)");
   declareProperty("NoiseSignalSplit", m_noiseSignalSplit = 0);
   declareProperty("MaxEnergyRange", m_maxEnergyRange = 256);
   declareProperty( "Offline", m_Offline = 1) ;
@@ -116,8 +120,35 @@ StatusCode TrigT1CaloCpmMonTool:: initialize()
   }
   m_phiScale = m_phiMax/twoPi;
 
+  // Eta bins for full range
+  if (m_fullEtaRange) {
+    m_etaBins    = new double[53];
+    m_etaBinsRoi = new double[54];
+    m_etaBins[0]    = -4.9;
+    m_etaBinsRoi[0] = -4.9;
+    for (int i = 0; i < 51; ++i) {
+      double val = -2.5 + double(i)/10.;
+      m_etaBins[i+1]    = val;
+      m_etaBinsRoi[i+1] = val - 0.05;
+    }
+    m_etaBins[52]    = 4.9;
+    m_etaBinsRoi[52] = 2.55;
+    m_etaBinsRoi[53] = 4.9;
+  }
+
   m_log << MSG::INFO << "TrigT1CaloCpmMonTool initialised" << endreq;
 
+  return StatusCode::SUCCESS;
+}
+
+/*---------------------------------------------------------*/
+StatusCode TrigT1CaloCpmMonTool:: finalize()
+/*---------------------------------------------------------*/
+{
+  if (m_fullEtaRange) {
+    delete [] m_etaBins;
+    delete [] m_etaBinsRoi;
+  }
   return StatusCode::SUCCESS;
 }
 
@@ -140,20 +171,78 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   if ( isNewRun ) {
 
-  std::string dir1(m_rootDir + "/5_CP_Data_Errors");
-  MonGroup monShift ( this, dir1, shift, run );
-  MonGroup monExpert( this, dir1, expert, run );
-  MonGroup monRoIs  ( this, dir1 + "/RoIs", expert, run );
-  MonGroup monCPM   ( this, dir1 + "/CPM",  expert, run );
-  MonGroup monCMM   ( this, dir1 + "/CMM",  expert, run );
-  std::string dir2(m_rootDir + "/5_CP_Data_Distributions");
-  MonGroup monRoIs2 ( this, dir2 + "/RoIs", expert, run );
-  MonGroup monCPM2  ( this, dir2 + "/CPM",  expert, run );
-  MonGroup monCMM2  ( this, dir2 + "/CMM",  expert, run );
+  MonGroup* monShift  = 0;
+  MonGroup* monExpert = 0;
+  MonGroup* monRoIs   = 0;
+  MonGroup* monCPM    = 0;
+  MonGroup* monCMM    = 0;
+  MonGroup* monRoIs2  = 0;
+  MonGroup* monCPMin  = 0;
+  MonGroup* monCPMout = 0;
+  MonGroup* monCMMin  = 0;
+  MonGroup* monCMMout = 0;
+  std::vector<MonGroup*> deletionList;
+  if (m_layout == 1) {
+    std::string dir1(m_rootDir + "/5_CP_Data_Errors");
+    monShift  = new MonGroup( this, dir1, shift, run );
+    monExpert = new MonGroup( this, dir1, expert, run );
+    monRoIs   = new MonGroup( this, dir1 + "/RoIs", expert, run );
+    monCPM    = new MonGroup( this, dir1 + "/CPM",  expert, run );
+    monCMM    = new MonGroup( this, dir1 + "/CMM",  expert, run );
+    std::string dir2(m_rootDir + "/5_CP_Data_Distributions");
+    monRoIs2  = new MonGroup( this, dir2 + "/RoIs", expert, run );
+    monCPMin  = new MonGroup( this, dir2 + "/CPM",  expert, run );
+    monCPMout = monCPMin;
+    monCMMin  = new MonGroup( this, dir2 + "/CMM",  expert, run );
+    monCMMout = monCMMin;
+    deletionList.push_back(monShift);
+    deletionList.push_back(monExpert);
+    deletionList.push_back(monRoIs);
+    deletionList.push_back(monCPM);
+    deletionList.push_back(monCMM);
+    deletionList.push_back(monRoIs2);
+    deletionList.push_back(monCPMin);
+    deletionList.push_back(monCMMin);
+  } else if (m_layout == 2) {
+    std::string dir1(m_rootDir + "/CPM");
+    monShift  = new MonGroup( this, dir1 + "/Errors", shift, run );
+    monExpert = new MonGroup( this, dir1 + "/Errors", expert, run );
+    monRoIs   = monExpert;
+    monCPM    = monExpert;
+    monCPMin  = new MonGroup( this, dir1 + "/Input", expert, run );
+    monRoIs2  = new MonGroup( this, dir1 + "/Output/RoI", expert, run );
+    monCPMout = new MonGroup( this, dir1 + "/Output/Thresholds", expert, run );
+    std::string dir2(m_rootDir + "/CPM-CMM");
+    monCMM    = new MonGroup( this, dir2 + "/Errors",  expert, run );
+    monCMMin  = new MonGroup( this, dir2 + "/Input",  expert, run );
+    monCMMout = new MonGroup( this, dir2 + "/Output",  expert, run );
+    deletionList.push_back(monShift);
+    deletionList.push_back(monExpert);
+    deletionList.push_back(monCPMin);
+    deletionList.push_back(monRoIs2);
+    deletionList.push_back(monCPMout);
+    deletionList.push_back(monCMM);
+    deletionList.push_back(monCMMin);
+    deletionList.push_back(monCMMout);
+  } else {
+    std::string dir1(m_rootDir + "/CP");
+    monShift  = new MonGroup( this, dir1, shift, run );
+    monExpert = new MonGroup( this, dir1, expert, run );
+    monRoIs   = monExpert;
+    monCPM    = monExpert;
+    monCPMin  = monExpert;
+    monRoIs2  = monExpert;
+    monCPMout = monExpert;
+    monCMM    = monExpert;
+    monCMMin  = monExpert;
+    monCMMout = monExpert;
+    deletionList.push_back(monShift);
+    deletionList.push_back(monExpert);
+  }
 
   //  Timeslice checks
 
-  m_monGroup = &monCPM;
+  m_monGroup = monCPM;
 
   const int xbins = s_crates*s_maxSlices;
   m_h_CPM_slices = book2F("CPM_slices",
@@ -172,7 +261,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
     m_v_PP_CP_slice.push_back(hist);
   }
 
-  m_monGroup = &monCMM;
+  m_monGroup = monCMM;
 
   m_h_CMM_slices = book2F("CMM_slices",
        "CMM Slices and Triggered Slice;Crate/Number of Slices;Triggered Slice",
@@ -192,7 +281,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  CPM Tower - Trigger Tower comparison Histos
 
-  m_monGroup = &monCPM2;
+  m_monGroup = monCPMin;
 
   const int signalBins = m_maxEnergyRange - m_noiseSignalSplit;
   if (m_noiseSignalSplit) {
@@ -212,16 +301,20 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   }
   m_h_TT_Em_eta = book1F("TT_EM_eta","Trigger Tower EM eta",50,-2.5,2.5);
   m_h_TT_Had_eta = book1F("TT_HAD_eta","Trigger Tower HAD eta",50,-2.5,2.5);
-  m_h_TT_Em_phi = book1F("TT_EM_phi","Trigger Tower EM phi ",64,0,m_phiMax);
-  m_h_TT_Had_phi = book1F("TT_HAD_phi","Trigger Tower HAD phi ",64,0,m_phiMax);
-  m_h_TT_Em_eta_phi = book2F("TT_EM_eta_phi",
-         "Trigger Tower EM eta/phi;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_TT_Had_eta_phi = book2F("TT_HAD_eta_phi",
-         "Trigger Tower HAD eta/phi;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_TT_Em_eta_phi_w = book2F("TT_EM_eta_phi_w",
-      "Trigger Tower EM eta/phi weighted;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_TT_Had_eta_phi_w = book2F("TT_HAD_eta_phi_w",
-      "Trigger Tower HAD eta/phi weighted;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
+  m_h_TT_Em_phi = book1F("TT_EM_phi",
+                         "Trigger Tower EM phi;phi ("+m_phiUnits+")",
+			 64,0,m_phiMax);
+  m_h_TT_Had_phi = book1F("TT_HAD_phi",
+                          "Trigger Tower HAD phi;phi ("+m_phiUnits+")",
+			  64,0,m_phiMax);
+  m_h_TT_Em_eta_phi = bookEtaPhi("TT_EM_eta_phi",
+                                 "Trigger Tower EM eta/phi");
+  m_h_TT_Had_eta_phi = bookEtaPhi("TT_HAD_eta_phi",
+                                 "Trigger Tower HAD eta/phi");
+  m_h_TT_Em_eta_phi_w = bookEtaPhi("TT_EM_eta_phi_w",
+                                 "Trigger Tower EM eta/phi weighted");
+  m_h_TT_Had_eta_phi_w = bookEtaPhi("TT_HAD_eta_phi_w",
+                                 "Trigger Tower HAD eta/phi weighted");
 
   if (m_noiseSignalSplit) {
     m_h_CT_Em_Et = book1F("CT_EM_Et","CPM Tower EM Et Noise",
@@ -240,29 +333,33 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   }
   m_h_CT_Em_eta = book1F("CT_EM_eta","CPM Tower EM eta",50,-2.5,2.5);
   m_h_CT_Had_eta = book1F("CT_HAD_eta","CPM Tower HAD eta",50,-2.5,2.5);
-  m_h_CT_Em_phi = book1F("CT_EM_phi","CPM Tower EM phi ",64,0,m_phiMax);
-  m_h_CT_Had_phi = book1F("CT_HAD_phi","CPM Tower HAD phi ",64,0,m_phiMax);
-  m_h_CT_Em_eta_phi = book2F("CT_EM_eta_phi",
-         "CPM Tower EM eta/phi;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_CT_Had_eta_phi = book2F("CT_HAD_eta_phi",
-         "CPM Tower HAD eta/phi;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_CT_Em_eta_phi_w = book2F("CT_EM_eta_phi_w",
-         "CPM Tower EM eta/phi weighted;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_CT_Had_eta_phi_w = book2F("CT_HAD_eta_phi_w",
-         "CPM Tower HAD eta/phi weighted;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
+  m_h_CT_Em_phi = book1F("CT_EM_phi",
+                         "CPM Tower EM phi;phi ("+m_phiUnits+")",
+                         64,0,m_phiMax);
+  m_h_CT_Had_phi = book1F("CT_HAD_phi",
+                          "CPM Tower HAD phi;phi ("+m_phiUnits+")",
+			  64,0,m_phiMax);
+  m_h_CT_Em_eta_phi = bookEtaPhi("CT_EM_eta_phi",
+                                 "CPM Tower EM eta/phi");
+  m_h_CT_Had_eta_phi = bookEtaPhi("CT_HAD_eta_phi",
+                                 "CPM Tower HAD eta/phi");
+  m_h_CT_Em_eta_phi_w = bookEtaPhi("CT_EM_eta_phi_w",
+                                 "CPM Tower EM eta/phi weighted");
+  m_h_CT_Had_eta_phi_w = bookEtaPhi("CT_HAD_eta_phi_w",
+                                 "CPM Tower HAD eta/phi weighted");
 
   //  CPM Tower error bits
 
-  m_monGroup = &monCPM;
+  m_monGroup = monCPM;
 
-  m_h_CT_Em_parity = book2F("CT_EM_parity",
-            "CPM Tower EM Parity Errors;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_CT_Had_parity = book2F("CT_HAD_parity",
-            "CPM Tower HAD Parity Errors;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_CT_Em_link = book2F("CT_EM_link",
-            "CPM Tower EM Link Down Errors;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
-  m_h_CT_Had_link = book2F("CT_HAD_link",
-         "CPM Tower HAD Link Down Errors;eta;phi", 50,-2.5,2.5,64,0,m_phiMax);
+  m_h_CT_Em_parity = bookEtaPhi("CT_EM_parity",
+                                "CPM Tower EM Parity Errors");
+  m_h_CT_Had_parity = bookEtaPhi("CT_HAD_parity",
+                                "CPM Tower HAD Parity Errors");
+  m_h_CT_Em_link = bookEtaPhi("CT_EM_link",
+                                "CPM Tower EM Link Down Errors");
+  m_h_CT_Had_link = bookEtaPhi("CT_HAD_link",
+                                "CPM Tower HAD Link Down Errors");
   m_h_CT_status = book2F("CT_status", "CPM Sub-status bits;;Crate/Module",
                           8, 0, 8, 56, 0, 56);
   setStatusLabels(m_h_CT_status);
@@ -270,34 +367,29 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  CPM RoIs
 
-  m_monGroup = &monRoIs2;
+  m_monGroup = monRoIs2;
 
   m_h_RoI_thresholds = book2F("RoI_Thresholds",
                        "CPM RoI Thresholds;Crate/Module;Threshold",
                         56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_RoI_thresholds);
-  const double halfPhiBin = m_phiMax/128.;
-  m_h_RoI_eta_phi = book2F("RoI_eta_phi", "CPM RoIs Eta-Phi Hit Map;eta;phi",
-             51, -2.55, 2.55, 65, -halfPhiBin, m_phiMax+halfPhiBin);
-  m_h_RoI_Em_eta_phi = book2F("RoI_Em_eta_phi",
-            "CPM RoIs EM Eta-Phi Hit Map;eta;phi",
-             51, -2.55, 2.55, 65, -halfPhiBin, m_phiMax+halfPhiBin);
-  m_h_RoI_Tau_eta_phi = book2F("RoI_Tau_eta_phi",
-            "CPM RoIs Tau Eta-Phi Hit Map;eta;phi",
-             51, -2.55, 2.55, 65, -halfPhiBin, m_phiMax+halfPhiBin);
+  m_h_RoI_eta_phi = bookEtaPhi("RoI_eta_phi",
+                               "CPM RoIs Eta-Phi Hit Map", true);
+  m_h_RoI_Em_eta_phi = bookEtaPhi("RoI_Em_eta_phi",
+                               "CPM RoIs EM Eta-Phi Hit Map", true);
+  m_h_RoI_Tau_eta_phi = bookEtaPhi("RoI_Tau_eta_phi",
+                               "CPM RoIs Tau Eta-Phi Hit Map", true);
 
-  m_monGroup = &monRoIs;
+  m_monGroup = monRoIs;
 
-  m_h_RoI_Saturation = book2F("CPM_RoI_Saturation",
-            "CPM RoI Tower Saturation;eta;phi",
-	     51, -2.55, 2.55, 65, -halfPhiBin, m_phiMax+halfPhiBin);
-  m_h_RoI_Parity = book2F("CPM_RoI_Parity",
-            "CPM RoI Parity Errors;eta;phi",
-	     51, -2.55, 2.55, 65, -halfPhiBin, m_phiMax+halfPhiBin);
+  m_h_RoI_Saturation = bookEtaPhi("CPM_RoI_Saturation",
+                               "CPM RoI Tower Saturation", true);
+  m_h_RoI_Parity = bookEtaPhi("CPM_RoI_Parity",
+                               "CPM RoI Parity Errors", true);
 
   //  CPM Hits
   
-  m_monGroup = &monCPM2;
+  m_monGroup = monCPMout;
 
   m_h_CPM_thresholds = book2F("CPM_Thresholds",
                        "CPM Hits Thresholds Weighted;Crate/Module;Threshold",
@@ -306,12 +398,15 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  CMM-CP Hits
 
-  m_monGroup = &monCMM2;
+  m_monGroup = monCMMin;
 
   m_h_CMM_thresholds = book2F("CMM_Thresholds",
                        "CMM-CP Hits Thresholds Weighted;Crate/Module;Threshold",
                         56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CMM_thresholds);
+
+  m_monGroup = monCMMout;
+
   m_h_CMM_T_thresholds = book2F("CMM_T_Thresholds",
        "CMM-CP Hit Sums Thresholds Weighted;Sum (Local/Remote/Total);Threshold",
   		          8, 0, 8, 16, 0, 16);
@@ -319,7 +414,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  CMM error bits
 
-  m_monGroup = &monCMM;
+  m_monGroup = monCMM;
 
   m_h_CMM_parity = book2F("CMM_parity",
                           "CMM Parity Errors;Module or Remote;Crate/Left-Right",
@@ -333,7 +428,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   
   //  Error Overview
 
-  m_monGroup = &monExpert;
+  m_monGroup = monExpert;
 
   m_h_CP_overview = book2F("CP_Error_Overview",
                            "CP Error Overview;Crate/Module",
@@ -347,8 +442,10 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_CP_overview->GetXaxis()->SetBinLabel(61, "2/L");
   m_h_CP_overview->GetXaxis()->SetBinLabel(63, "3/L");
   m_h_CP_overview->GetXaxis()->SetTitleOffset(1.25);
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMParity, "CPM parity");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMLink,   "CPM link");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+EMParity,  "EM parity");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+EMLink,    "EM link");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+HadParity, "Had parity");
+  m_h_CP_overview->GetYaxis()->SetBinLabel(1+HadLink,   "Had link");
   m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMStatus, "CPM status");
   m_h_CP_overview->GetYaxis()->SetBinLabel(1+RoIParity, "RoI parity");
   m_h_CP_overview->GetYaxis()->SetBinLabel(1+CMMParity, "CMM parity");
@@ -357,15 +454,17 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  Error Summary
 
-  m_monGroup = &monShift;
+  m_monGroup = monShift;
 
   //m_h_CP_errors = book1F("CP_Error_Summary",
   //                       "CP Error Summary for 0 Events;;Events",
   //                        NumberOfSummaryBins, 0, NumberOfSummaryBins);
   m_h_CP_errors = book1F("CP_Error_Summary","CP Error Summary;;Events",
                           NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMParity, "CPM parity");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMLink,   "CPM link");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+EMParity,  "EM parity");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+EMLink,    "EM link");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+HadParity, "Had parity");
+  m_h_CP_errors->GetXaxis()->SetBinLabel(1+HadLink,   "Had link");
   m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMStatus, "CPM status");
   m_h_CP_errors->GetXaxis()->SetBinLabel(1+RoIParity, "RoI parity");
   m_h_CP_errors->GetXaxis()->SetBinLabel(1+CMMParity, "CMM parity");
@@ -373,6 +472,10 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_CP_errors->GetXaxis()->SetLabelSize(0.06);
 
   m_events = 0;
+
+  std::vector<MonGroup*>::iterator iter  = deletionList.begin();
+  std::vector<MonGroup*>::iterator iterE = deletionList.end();
+  for (; iter != iterE; ++iter) delete *iter;
 
   } // end if (isNewRun ...
 
@@ -414,6 +517,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
   //Retrieve CPM RoIs from SG
   const CpmRoiCollection* cpmRoiTES = 0;
   sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocation);
+  /*
   if( sc.isFailure()  ||  !cpmRoiTES  ||  cpmRoiTES->empty() ) {
     m_log << MSG::DEBUG << "No DAQ CPM RoIs found, trying RoIB"
           << endreq; 
@@ -423,7 +527,9 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
     } else sc = StatusCode::FAILURE;
     if( sc.isFailure()  ||  !cpmRoiTES ) {
       m_log << MSG::DEBUG << "No RoIB CPM RoIs container found"<< endreq;
-    }
+    } */
+  if( sc.isFailure()  ||  !cpmRoiTES ) {
+    m_log << MSG::DEBUG << "No DAQ CPM RoIs container found"<< endreq;
   }
   
   //Retrieve CPM Hits from SG
@@ -542,11 +648,11 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	  const LVL1::DataError emError(error);
 	  if (emError.get(LVL1::DataError::Parity)) {
 	    m_h_CT_Em_parity->Fill(eta, phiMod);
-	    errorsCPM[loc] |= (1 << CPMParity);
+	    errorsCPM[loc] |= (1 << EMParity);
 	  }
           if (emError.get(LVL1::DataError::LinkDown)) {
 	    m_h_CT_Em_link->Fill(eta, phiMod);
-	    errorsCPM[loc] |= (1 << CPMLink);
+	    errorsCPM[loc] |= (1 << EMLink);
           }
 	  const int status = error >> LVL1::DataError::GLinkParity;
 	  if (status) {
@@ -561,11 +667,11 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	  const LVL1::DataError hadError(error);
 	  if (hadError.get(LVL1::DataError::Parity)) {
 	    m_h_CT_Had_parity->Fill(eta, phiMod);
-	    errorsCPM[loc] |= (1 << CPMParity);
+	    errorsCPM[loc] |= (1 << HadParity);
 	  }
           if (hadError.get(LVL1::DataError::LinkDown)) {
 	    m_h_CT_Had_link->Fill(eta, phiMod);
-	    errorsCPM[loc] |= (1 << CPMLink);
+	    errorsCPM[loc] |= (1 << HadLink);
           }
         }
 
@@ -828,27 +934,36 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 
   // Update error summary plot
 
+  const int hwOffset = 8;
+  std::vector<int> crateErr(14);
   for (int err = 0; err < NumberOfSummaryBins; ++err) {
     int error = 0;
     for (int loc = 0; loc < s_crates*s_modules; ++loc) {
       if ((errorsCPM[loc] >> err) & 0x1) {
         m_h_CP_overview->Fill(loc, err, 1.);
 	error = 1;
+	crateErr[loc/s_modules + hwOffset] |= (1 << err);
       }
       if (loc < s_crates*2) {
         if ((errorsCMM[loc] >> err) & 0x1) {
           m_h_CP_overview->Fill(loc+s_crates*s_modules, err, 1.);
 	  error = 1;
+	  crateErr[loc/2 + hwOffset] |= (1 << err);
         }
       }
     }
     m_h_CP_errors->Fill(err, error);
   }
   ++m_events;
-  //std::ostringstream cnum;
-  //cnum << m_events;
-  //std::string title("CP Error Summary for " + cnum.str() + " Events");
-  //m_h_CP_errors->SetTitle(TString(title));
+
+  // Save error vector for global summary
+
+  std::vector<int>* save = new std::vector<int>(crateErr);
+  sc = m_storeGate->record(save, "L1CaloCPMErrorVector");
+  if (sc != StatusCode::SUCCESS) {
+    m_log << MSG::ERROR << "Error recording CPM error vector in TDS " << endreq;
+    return sc;
+  }
 
   m_log << MSG::DEBUG << "Leaving fillHistograms" << endreq;
 
@@ -873,7 +988,7 @@ TH1F* TrigT1CaloCpmMonTool::book1F(const std::string& name,
                                    const std::string& title,
                                    int nx, double xmin, double xmax)
 {
-  TH1F *hist = new TH1F(TString(name), TString(title), nx, xmin, xmax);
+  TH1F *hist = new TH1F(name.c_str(), title.c_str(), nx, xmin, xmax);
   
   if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {
     m_log << MSG::WARNING << "Could not register histogram : " 
@@ -889,8 +1004,8 @@ TH2F* TrigT1CaloCpmMonTool::book2F(const std::string& name,
                                    int nx, double xmin, double xmax,  
 	                           int ny, double ymin, double ymax)
 {		
-  TH2F *hist = new TH2F(TString(name), TString(title), nx, xmin, xmax,
-                                                       ny, ymin, ymax);
+  TH2F *hist = new TH2F(name.c_str(), title.c_str(), nx, xmin, xmax,
+                                                     ny, ymin, ymax);
   
   if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {
     m_log << MSG::WARNING << "Could not register histogram : " 
@@ -898,7 +1013,51 @@ TH2F* TrigT1CaloCpmMonTool::book2F(const std::string& name,
   }
   hist->SetOption("colz");
   hist->SetStats(kFALSE);
+  //hist->SetMinimum(0);//Can't use with log scale
   
+  return hist;
+}
+
+TH2F* TrigT1CaloCpmMonTool::book2F(const std::string& name,
+                                   const std::string& title,
+                                   int nx, const double* xbins,
+                                   int ny, double ymin, double ymax)
+{
+  TH2F *hist = new TH2F(name.c_str(), title.c_str(), nx, xbins,
+                                                     ny, ymin, ymax);
+
+  if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {
+    m_log << MSG::WARNING << "Could not register histogram : "
+          << name << endreq;
+  }
+  hist->SetOption("colz");
+  hist->SetStats(kFALSE);
+  //hist->SetMinimum(0);
+
+  return hist;
+}
+
+TH2F* TrigT1CaloCpmMonTool::bookEtaPhi(const std::string& name,
+                                       const std::string& title, bool isRoi)
+{
+  TH2F* hist = 0;
+  const double halfPhiBin = m_phiMax/128.;
+  const std::string newTitle = title + ";eta;phi (" + m_phiUnits + ")";
+  if ( !m_fullEtaRange ) {
+    if ( !isRoi ) {
+      hist = book2F(name, newTitle, 50, -2.5, 2.5, 64, 0, m_phiMax);
+    } else { 
+      hist = book2F(name, newTitle, 51, -2.55, 2.55, 65, -halfPhiBin,
+                                                      m_phiMax+halfPhiBin);
+    }
+  } else {
+    if ( !isRoi ) {
+      hist = book2F(name, newTitle, 52, m_etaBins, 64, 0, m_phiMax);
+    } else {
+      hist = book2F(name, newTitle, 53, m_etaBinsRoi, 65, -halfPhiBin,
+                                                       m_phiMax+halfPhiBin);
+    }
+  }
   return hist;
 }
 
