@@ -94,7 +94,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   if ( isNewRun ) {
 
-  std::string dir1(m_rootDir + "/ROD");
+  std::string dir1(m_rootDir + "/6_ROD");
   MonGroup monShift ( this, dir1, shift, run );
   MonGroup monExpert( this, dir1, expert, run );
   MonGroup monAverage( this, dir1, expert, run, "", "weightedAverage" );

@@ -1,4 +1,8 @@
 2009-05-13  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-04-17
+        * Restore old ROD directory name
+
+2009-05-13  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-04-16
         * Minor updates to CPM and ROD monitoring
 
