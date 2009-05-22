@@ -8,6 +8,7 @@
 //
 // ********************************************************************
 
+#include <iomanip>
 #include <numeric>
 #include <sstream>
 #include <utility>
@@ -50,7 +51,7 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
   : ManagedMonitorToolBase(type, name, parent),
     m_storeGate("StoreGateSvc", name),
     m_log(msgSvc(), name), m_monGroup(0),
-    m_etaBins(0), m_etaBinsRoi(0), m_events(0)
+    m_phiScale(32./M_PI), m_events(0)
 /*---------------------------------------------------------*/
 {
   declareInterface<IMonitorToolBase>(this); 
@@ -66,22 +67,12 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
                  m_cmmCpHitsLocation = LVL1::TrigT1CaloDefs::CMMCPHitsLocation);
   declareProperty("CPMRoILocation",
                  m_cpmRoiLocation    = LVL1::TrigT1CaloDefs::CPMRoILocation);
-  declareProperty("CPMRoILocationRoIB",
-                 m_cpmRoiLocationRoib =
-                                 LVL1::TrigT1CaloDefs::CPMRoILocation+"RoIB");
   declareProperty("TriggerTowerLocation",
                  m_triggerTowerLocation =
                                  LVL1::TrigT1CaloDefs::TriggerTowerLocation);
 
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
-  declareProperty("DirectoryLayout", m_layout = 1, "Directory structure");
-  declareProperty("PhiUnits", m_phiUnits = "channels",
-                  "Phi Units: radians, degrees or channels");
-  declareProperty("FullEtaRange", m_fullEtaRange = false,
-                  "Eta Range: False (-2.5 to 2.5), True (-4.9 to 4.9)");
-  declareProperty("NoiseSignalSplit", m_noiseSignalSplit = 0);
   declareProperty("MaxEnergyRange", m_maxEnergyRange = 256);
-  declareProperty( "Offline", m_Offline = 1) ;
 
 }
 
@@ -108,34 +99,6 @@ StatusCode TrigT1CaloCpmMonTool:: initialize()
     return sc;
   }
 
-  // Phi units
-  const double twoPi = 2.*M_PI;
-  if      (m_phiUnits == "radians")  m_phiMax = twoPi;
-  else if (m_phiUnits == "degrees")  m_phiMax = 360.;
-  else if (m_phiUnits == "channels") m_phiMax = 64.;
-  else {
-    m_log << MSG::ERROR << "Invalid PhiUnits: " << m_phiUnits
-          << ", using radians" << endreq;
-    m_phiMax = twoPi;
-  }
-  m_phiScale = m_phiMax/twoPi;
-
-  // Eta bins for full range
-  if (m_fullEtaRange) {
-    m_etaBins    = new double[53];
-    m_etaBinsRoi = new double[54];
-    m_etaBins[0]    = -4.9;
-    m_etaBinsRoi[0] = -4.9;
-    for (int i = 0; i < 51; ++i) {
-      double val = -2.5 + double(i)/10.;
-      m_etaBins[i+1]    = val;
-      m_etaBinsRoi[i+1] = val - 0.05;
-    }
-    m_etaBins[52]    = 4.9;
-    m_etaBinsRoi[52] = 2.55;
-    m_etaBinsRoi[53] = 4.9;
-  }
-
   m_log << MSG::INFO << "TrigT1CaloCpmMonTool initialised" << endreq;
 
   return StatusCode::SUCCESS;
@@ -145,10 +108,6 @@ StatusCode TrigT1CaloCpmMonTool:: initialize()
 StatusCode TrigT1CaloCpmMonTool:: finalize()
 /*---------------------------------------------------------*/
 {
-  if (m_fullEtaRange) {
-    delete [] m_etaBins;
-    delete [] m_etaBinsRoi;
-  }
   return StatusCode::SUCCESS;
 }
 
@@ -171,266 +130,154 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   if ( isNewRun ) {
 
-  MonGroup* monShift  = 0;
-  MonGroup* monExpert = 0;
-  MonGroup* monRoIs   = 0;
-  MonGroup* monCPM    = 0;
-  MonGroup* monCMM    = 0;
-  MonGroup* monRoIs2  = 0;
-  MonGroup* monCPMin  = 0;
-  MonGroup* monCPMout = 0;
-  MonGroup* monCMMin  = 0;
-  MonGroup* monCMMout = 0;
-  std::vector<MonGroup*> deletionList;
-  if (m_layout == 1) {
-    std::string dir1(m_rootDir + "/5_CP_Data_Errors");
-    monShift  = new MonGroup( this, dir1, shift, run );
-    monExpert = new MonGroup( this, dir1, expert, run );
-    monRoIs   = new MonGroup( this, dir1 + "/RoIs", expert, run );
-    monCPM    = new MonGroup( this, dir1 + "/CPM",  expert, run );
-    monCMM    = new MonGroup( this, dir1 + "/CMM",  expert, run );
-    std::string dir2(m_rootDir + "/5_CP_Data_Distributions");
-    monRoIs2  = new MonGroup( this, dir2 + "/RoIs", expert, run );
-    monCPMin  = new MonGroup( this, dir2 + "/CPM",  expert, run );
-    monCPMout = monCPMin;
-    monCMMin  = new MonGroup( this, dir2 + "/CMM",  expert, run );
-    monCMMout = monCMMin;
-    deletionList.push_back(monShift);
-    deletionList.push_back(monExpert);
-    deletionList.push_back(monRoIs);
-    deletionList.push_back(monCPM);
-    deletionList.push_back(monCMM);
-    deletionList.push_back(monRoIs2);
-    deletionList.push_back(monCPMin);
-    deletionList.push_back(monCMMin);
-  } else if (m_layout == 2) {
-    std::string dir1(m_rootDir + "/CPM");
-    monShift  = new MonGroup( this, dir1 + "/Errors", shift, run );
-    monExpert = new MonGroup( this, dir1 + "/Errors", expert, run );
-    monRoIs   = monExpert;
-    monCPM    = monExpert;
-    monCPMin  = new MonGroup( this, dir1 + "/Input", expert, run );
-    monRoIs2  = new MonGroup( this, dir1 + "/Output/RoI", expert, run );
-    monCPMout = new MonGroup( this, dir1 + "/Output/Thresholds", expert, run );
-    std::string dir2(m_rootDir + "/CPM-CMM");
-    monCMM    = new MonGroup( this, dir2 + "/Errors",  expert, run );
-    monCMMin  = new MonGroup( this, dir2 + "/Input",  expert, run );
-    monCMMout = new MonGroup( this, dir2 + "/Output",  expert, run );
-    deletionList.push_back(monShift);
-    deletionList.push_back(monExpert);
-    deletionList.push_back(monCPMin);
-    deletionList.push_back(monRoIs2);
-    deletionList.push_back(monCPMout);
-    deletionList.push_back(monCMM);
-    deletionList.push_back(monCMMin);
-    deletionList.push_back(monCMMout);
-  } else {
-    std::string dir1(m_rootDir + "/CP");
-    monShift  = new MonGroup( this, dir1, shift, run );
-    monExpert = new MonGroup( this, dir1, expert, run );
-    monRoIs   = monExpert;
-    monCPM    = monExpert;
-    monCPMin  = monExpert;
-    monRoIs2  = monExpert;
-    monCPMout = monExpert;
-    monCMM    = monExpert;
-    monCMMin  = monExpert;
-    monCMMout = monExpert;
-    deletionList.push_back(monShift);
-    deletionList.push_back(monExpert);
-  }
+  std::string dir1(m_rootDir + "/CPM");
+  MonGroup monShift( this, dir1 + "/Errors/Hardware", shift, run );
+  MonGroup monExpert( this, dir1 + "/Errors/Hardware", expert, run );
+  MonGroup monDetail( this, dir1 + "/Errors/Hardware/Detail", expert, run );
+  MonGroup monCPMin( this, dir1 + "/Input", expert, run );
+  MonGroup monRoIs( this, dir1 + "/Output/RoI", expert, run );
+  MonGroup monCPMout( this, dir1 + "/Output/Thresholds", expert, run);
+  std::string dir2(m_rootDir + "/CPM-CMM");
+  MonGroup monCMM( this, dir2 + "/Errors/Hardware",  expert, run );
+  MonGroup monCMMin( this, dir2 + "/Input",  expert, run );
+  MonGroup monCMMout( this, dir2 + "/Output",  expert, run );
 
   //  Timeslice checks
 
-  m_monGroup = monCPM;
+  m_monGroup = &monCPMin;
 
   const int xbins = s_crates*s_maxSlices;
-  m_h_CPM_slices = book2F("CPM_slices",
+  m_h_CPM_slices = book2F("cpm_2d_tt_Slices",
        "CPM Slices and Triggered Slice;Crate/Number of Slices;Triggered Slice",
         xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
   setLabelsCNSTS(m_h_CPM_slices);
-  m_v_PP_CP_slice.clear();
-  for (int crate = 0; crate < s_crates; ++crate) {
-    std::ostringstream cnum;
-    cnum << crate;
-    std::string name = "PP_CP_slice_crate_" + cnum.str();
-    std::string title = "PPr/CPM Tower Slice Match Crate " + cnum.str();
-    TH2F* hist = book2F(name, title + ";PPr Slice;CPM Slice",
-                  s_maxSlices, 0, s_maxSlices, s_maxSlices, 0, s_maxSlices); 
-    setLabelsPSCS(hist);
-    m_v_PP_CP_slice.push_back(hist);
-  }
+  m_h_PP_CP_slice = book2F("cpm_2d_tt_Slice_match",
+        "PPM/CPM Tower Slice Match;Crate/CPM Slice;PPM Slice",
+        xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
+  setLabelsCNSTS(m_h_PP_CP_slice, true);
 
-  m_monGroup = monCMM;
+  m_monGroup = &monCMMin;
 
-  m_h_CMM_slices = book2F("CMM_slices",
+  m_h_CMM_slices = book2F("cmm_2d_thresh_Slices",
        "CMM Slices and Triggered Slice;Crate/Number of Slices;Triggered Slice",
         xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
   setLabelsCNSTS(m_h_CMM_slices);
-  m_v_CP_CM_slice.clear();
-  for (int crate = 0; crate < s_crates; ++crate) {
-    std::ostringstream cnum;
-    cnum << crate;
-    std::string name = "CP_CM_slice_crate_" + cnum.str();
-    std::string title = "CPM/CMM Hits Slice Match Crate " + cnum.str();
-    TH2F* hist = book2F(name, title + ";CPM Slice;CMM Slice",
-                  s_maxSlices, 0, s_maxSlices, s_maxSlices, 0, s_maxSlices); 
-    setLabelsPSCS(hist);
-    m_v_CP_CM_slice.push_back(hist);
-  }
+  m_h_CP_CM_slice = book2F("cmm_2d_thresh_Slice_match",
+        "CPM/CMM Hits Slice Match;Crate/CMM Slice;CPM Slice",
+	xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
+  setLabelsCNSTS(m_h_CP_CM_slice, true);
 
-  //  CPM Tower - Trigger Tower comparison Histos
+  //  CPM Tower - Trigger Tower Histos
 
-  m_monGroup = monCPMin;
+  m_monGroup = &monCPMin;
 
-  const int signalBins = m_maxEnergyRange - m_noiseSignalSplit;
-  if (m_noiseSignalSplit) {
-    m_h_TT_Em_Et = book1F("TT_EM_Et","Trigger Tower EM Et Noise",
-                                   m_noiseSignalSplit, 0, m_noiseSignalSplit);
-    m_h_TT_Had_Et = book1F("TT_HAD_Et","Trigger Tower HAD Et Noise",
-                                   m_noiseSignalSplit, 0, m_noiseSignalSplit);
-    m_h_TT_Em_Et_s = book1F("TT_EM_Et_s","Trigger Tower EM Et Signal",
-                            signalBins, m_noiseSignalSplit, m_maxEnergyRange);
-    m_h_TT_Had_Et_s = book1F("TT_HAD_Et_s","Trigger Tower HAD Et Signal",
-                            signalBins, m_noiseSignalSplit, m_maxEnergyRange);
-  } else {
-    m_h_TT_Em_Et = book1F("TT_EM_Et","Trigger Tower EM Et",
-                            signalBins, m_noiseSignalSplit, m_maxEnergyRange);
-    m_h_TT_Had_Et = book1F("TT_HAD_Et","Trigger Tower HAD Et",
-                            signalBins, m_noiseSignalSplit, m_maxEnergyRange);
-  }
-  m_h_TT_Em_eta = book1F("TT_EM_eta","Trigger Tower EM eta",50,-2.5,2.5);
-  m_h_TT_Had_eta = book1F("TT_HAD_eta","Trigger Tower HAD eta",50,-2.5,2.5);
-  m_h_TT_Em_phi = book1F("TT_EM_phi",
-                         "Trigger Tower EM phi;phi ("+m_phiUnits+")",
-			 64,0,m_phiMax);
-  m_h_TT_Had_phi = book1F("TT_HAD_phi",
-                          "Trigger Tower HAD phi;phi ("+m_phiUnits+")",
-			  64,0,m_phiMax);
-  m_h_TT_Em_eta_phi = bookEtaPhi("TT_EM_eta_phi",
-                                 "Trigger Tower EM eta/phi");
-  m_h_TT_Had_eta_phi = bookEtaPhi("TT_HAD_eta_phi",
-                                 "Trigger Tower HAD eta/phi");
-  m_h_TT_Em_eta_phi_w = bookEtaPhi("TT_EM_eta_phi_w",
-                                 "Trigger Tower EM eta/phi weighted");
-  m_h_TT_Had_eta_phi_w = bookEtaPhi("TT_HAD_eta_phi_w",
-                                 "Trigger Tower HAD eta/phi weighted");
+  m_h_TT_Em_eta_phi = bookEtaPhi("ppm_em_2d_etaPhi_tt_Hitmap",
+                                 "PPM Trigger Tower EM eta/phi");
+  m_h_TT_Had_eta_phi = bookEtaPhi("ppm_had_2d_etaPhi_tt_Hitmap",
+                                 "PPM Trigger Tower HAD eta/phi");
 
-  if (m_noiseSignalSplit) {
-    m_h_CT_Em_Et = book1F("CT_EM_Et","CPM Tower EM Et Noise",
-                                   m_noiseSignalSplit, 0, m_noiseSignalSplit);
-    m_h_CT_Had_Et = book1F("CT_HAD_Et","CPM Tower HAD Et Noise",
-                                   m_noiseSignalSplit, 0, m_noiseSignalSplit);
-    m_h_CT_Em_Et_s = book1F("CT_EM_Et_s","CPM Tower EM Et Signal",
-                            signalBins, m_noiseSignalSplit, m_maxEnergyRange);
-    m_h_CT_Had_Et_s = book1F("CT_HAD_Et_s","CPM Tower HAD Et Signal",
-                            signalBins, m_noiseSignalSplit, m_maxEnergyRange);
-  } else {
-    m_h_CT_Em_Et = book1F("CT_EM_Et","CPM Tower EM Et",
-                            signalBins, m_noiseSignalSplit, m_maxEnergyRange);
-    m_h_CT_Had_Et = book1F("CT_HAD_Et","CPM Tower HAD Et",
-                            signalBins, m_noiseSignalSplit, m_maxEnergyRange);
-  }
-  m_h_CT_Em_eta = book1F("CT_EM_eta","CPM Tower EM eta",50,-2.5,2.5);
-  m_h_CT_Had_eta = book1F("CT_HAD_eta","CPM Tower HAD eta",50,-2.5,2.5);
-  m_h_CT_Em_phi = book1F("CT_EM_phi",
-                         "CPM Tower EM phi;phi ("+m_phiUnits+")",
-                         64,0,m_phiMax);
-  m_h_CT_Had_phi = book1F("CT_HAD_phi",
-                          "CPM Tower HAD phi;phi ("+m_phiUnits+")",
-			  64,0,m_phiMax);
-  m_h_CT_Em_eta_phi = bookEtaPhi("CT_EM_eta_phi",
+  m_h_CT_Em_Et = book1F("cpm_em_1d_tt_Et", "CPM Tower EM Et",
+                           m_maxEnergyRange, 0, m_maxEnergyRange);
+  m_h_CT_Had_Et = book1F("cpm_had_1d_tt_Et", "CPM Tower HAD Et",
+                           m_maxEnergyRange, 0, m_maxEnergyRange);
+  m_h_CT_Em_eta = book1F("cpm_em_1d_tt_Eta", "CPM Tower EM eta",50,-2.5,2.5);
+  m_h_CT_Had_eta = book1F("cpm_had_1d_tt_Eta", "CPM Tower HAD eta",50,-2.5,2.5);
+  m_h_CT_Em_phi = book1F("cpm_em_1d_tt_Phi", "CPM Tower EM phi",64,0.,2.*M_PI);
+  m_h_CT_Had_phi = book1F("cpm_had_1d_tt_Phi", "CPM Tower HAD phi",
+			                       64,0.,2.*M_PI);
+  m_h_CT_Em_eta_phi = bookEtaPhi("cpm_em_2d_etaPhi_tt_Hitmap",
                                  "CPM Tower EM eta/phi");
-  m_h_CT_Had_eta_phi = bookEtaPhi("CT_HAD_eta_phi",
+  m_h_CT_Had_eta_phi = bookEtaPhi("cpm_had_2d_etaPhi_tt_Hitmap",
                                  "CPM Tower HAD eta/phi");
-  m_h_CT_Em_eta_phi_w = bookEtaPhi("CT_EM_eta_phi_w",
+  m_h_CT_Em_eta_phi_w = bookEtaPhi("cpm_em_2d_etaPhi_tt_Et_weighted",
                                  "CPM Tower EM eta/phi weighted");
-  m_h_CT_Had_eta_phi_w = bookEtaPhi("CT_HAD_eta_phi_w",
+  m_h_CT_Had_eta_phi_w = bookEtaPhi("cpm_had_2d_etaPhi_tt_Et_weighted",
                                  "CPM Tower HAD eta/phi weighted");
 
   //  CPM Tower error bits
 
-  m_monGroup = monCPM;
+  m_monGroup = &monDetail;
 
-  m_h_CT_Em_parity = bookEtaPhi("CT_EM_parity",
+  m_h_CT_Em_parity = bookEtaPhi("cpm_em_2d_etaPhi_tt_Parity",
                                 "CPM Tower EM Parity Errors");
-  m_h_CT_Had_parity = bookEtaPhi("CT_HAD_parity",
+  m_h_CT_Had_parity = bookEtaPhi("cpm_had_2d_etaPhi_tt_Parity",
                                 "CPM Tower HAD Parity Errors");
-  m_h_CT_Em_link = bookEtaPhi("CT_EM_link",
+  m_h_CT_Em_link = bookEtaPhi("cpm_em_2d_etaPhi_tt_LinkDown",
                                 "CPM Tower EM Link Down Errors");
-  m_h_CT_Had_link = bookEtaPhi("CT_HAD_link",
+  m_h_CT_Had_link = bookEtaPhi("cpm_had_2d_etaPhi_tt_LinkDown",
                                 "CPM Tower HAD Link Down Errors");
-  m_h_CT_status = book2F("CT_status", "CPM Sub-status bits;;Crate/Module",
+  m_h_CT_status = book2F("cpm_2d_Status", "CPM Sub-status bits;;Crate/Module",
                           8, 0, 8, 56, 0, 56);
   setStatusLabels(m_h_CT_status);
   setYLabelsCPM(m_h_CT_status);
 
   //  CPM RoIs
 
-  m_monGroup = monRoIs2;
+  m_monGroup = &monRoIs;
 
-  m_h_RoI_thresholds = book2F("RoI_Thresholds",
+  m_h_RoI_thresholds = book2F("cpm_2d_roi_Thresholds",
                        "CPM RoI Thresholds;Crate/Module;Threshold",
                         56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_RoI_thresholds);
-  m_h_RoI_eta_phi = bookEtaPhi("RoI_eta_phi",
+  m_h_RoI_eta_phi = bookEtaPhi("cpm_2d_etaPhi_roi_Hitmap",
                                "CPM RoIs Eta-Phi Hit Map", true);
-  m_h_RoI_Em_eta_phi = bookEtaPhi("RoI_Em_eta_phi",
+  m_h_RoI_Em_eta_phi = bookEtaPhi("cpm_2d_etaPhi_roi_Em_hitmap",
                                "CPM RoIs EM Eta-Phi Hit Map", true);
-  m_h_RoI_Tau_eta_phi = bookEtaPhi("RoI_Tau_eta_phi",
+  m_h_RoI_Tau_eta_phi = bookEtaPhi("cpm_2d_etaPhi_roi_Tau_hitmap",
                                "CPM RoIs Tau Eta-Phi Hit Map", true);
-
-  m_monGroup = monRoIs;
-
-  m_h_RoI_Saturation = bookEtaPhi("CPM_RoI_Saturation",
+  m_h_RoI_Saturation = bookEtaPhi("cpm_2d_etaPhi_roi_Saturation",
                                "CPM RoI Tower Saturation", true);
-  m_h_RoI_Parity = bookEtaPhi("CPM_RoI_Parity",
+
+  m_monGroup = &monDetail;
+
+  m_h_RoI_Parity = bookEtaPhi("cpm_2d_etaPhi_roi_Parity",
                                "CPM RoI Parity Errors", true);
 
   //  CPM Hits
   
-  m_monGroup = monCPMout;
+  m_monGroup = &monCPMout;
 
-  m_h_CPM_thresholds = book2F("CPM_Thresholds",
+  m_h_CPM_thresholds = book2F("cpm_2d_thresh_Weighted",
                        "CPM Hits Thresholds Weighted;Crate/Module;Threshold",
                         56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CPM_thresholds);
 
   //  CMM-CP Hits
 
-  m_monGroup = monCMMin;
+  m_monGroup = &monCMMin;
 
-  m_h_CMM_thresholds = book2F("CMM_Thresholds",
+  m_h_CMM_thresholds = book2F("cmm_2d_thresh_Weighted",
                        "CMM-CP Hits Thresholds Weighted;Crate/Module;Threshold",
                         56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CMM_thresholds);
 
-  m_monGroup = monCMMout;
+  m_monGroup = &monCMMout;
 
-  m_h_CMM_T_thresholds = book2F("CMM_T_Thresholds",
+  m_h_CMM_T_thresholds = book2F("cmm_2d_thresh_Sums_weighted",
        "CMM-CP Hit Sums Thresholds Weighted;Sum (Local/Remote/Total);Threshold",
   		          8, 0, 8, 16, 0, 16);
   setLabelsST(m_h_CMM_T_thresholds);
 
   //  CMM error bits
 
-  m_monGroup = monCMM;
+  m_monGroup = &monCMM;
 
-  m_h_CMM_parity = book2F("CMM_parity",
+  m_h_CMM_parity = book2F("cmm_2d_thresh_Parity",
                           "CMM Parity Errors;Module or Remote;Crate/Left-Right",
 		           15, 1, 16, 8, 0, 8);
   setLabelsMCLR(m_h_CMM_parity);
   m_h_CMM_parity->GetXaxis()->SetBinLabel(15, "REM");
-  m_h_CMM_status = book2F("CMM_status", "CMM Sub-status bits;;Crate/Left-Right",
-                                         8, 0., 8., 8, 0., 8.);
+  m_h_CMM_status = book2F("cmm_2d_Status",
+                          "CMM Sub-status bits;;Crate/Left-Right",
+                           8, 0., 8., 8, 0., 8.);
   setStatusLabels(m_h_CMM_status);
   setLabelsCLR(m_h_CMM_status);
   
   //  Error Overview
 
-  m_monGroup = monExpert;
+  m_monGroup = &monExpert;
 
-  m_h_CP_overview = book2F("CP_Error_Overview",
+  m_h_CP_overview = book2F("cpm_2d_Error_overview",
                            "CP Error Overview;Crate/Module",
 			    64, 0, 64,
 			    NumberOfSummaryBins, 0, NumberOfSummaryBins);
@@ -450,16 +297,13 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_CP_overview->GetYaxis()->SetBinLabel(1+RoIParity, "RoI parity");
   m_h_CP_overview->GetYaxis()->SetBinLabel(1+CMMParity, "CMM parity");
   m_h_CP_overview->GetYaxis()->SetBinLabel(1+CMMStatus, "CMM status");
-  //m_h_CP_overview->GetYaxis()->SetLabelSize(0.045);
 
   //  Error Summary
 
-  m_monGroup = monShift;
+  m_monGroup = &monShift;
 
-  //m_h_CP_errors = book1F("CP_Error_Summary",
-  //                       "CP Error Summary for 0 Events;;Events",
-  //                        NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  m_h_CP_errors = book1F("CP_Error_Summary","CP Error Summary;;Events",
+  m_h_CP_errors = book1F("cpm_1d_Error_summary",
+                         "CP Error Summary;;Events",
                           NumberOfSummaryBins, 0, NumberOfSummaryBins);
   m_h_CP_errors->GetXaxis()->SetBinLabel(1+EMParity,  "EM parity");
   m_h_CP_errors->GetXaxis()->SetBinLabel(1+EMLink,    "EM link");
@@ -472,10 +316,6 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_CP_errors->GetXaxis()->SetLabelSize(0.06);
 
   m_events = 0;
-
-  std::vector<MonGroup*>::iterator iter  = deletionList.begin();
-  std::vector<MonGroup*>::iterator iterE = deletionList.end();
-  for (; iter != iterE; ++iter) delete *iter;
 
   } // end if (isNewRun ...
 
@@ -517,19 +357,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
   //Retrieve CPM RoIs from SG
   const CpmRoiCollection* cpmRoiTES = 0;
   sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocation);
-  /*
-  if( sc.isFailure()  ||  !cpmRoiTES  ||  cpmRoiTES->empty() ) {
-    m_log << MSG::DEBUG << "No DAQ CPM RoIs found, trying RoIB"
-          << endreq; 
-    cpmRoiTES = 0;
-    if (m_storeGate->contains<CpmRoiCollection>(m_cpmRoiLocationRoib)) {
-      sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocationRoib);
-    } else sc = StatusCode::FAILURE;
-    if( sc.isFailure()  ||  !cpmRoiTES ) {
-      m_log << MSG::DEBUG << "No RoIB CPM RoIs container found"<< endreq;
-    } */
   if( sc.isFailure()  ||  !cpmRoiTES ) {
-    m_log << MSG::DEBUG << "No DAQ CPM RoIs container found"<< endreq;
+    m_log << MSG::DEBUG << "No CPM RoIs container found"<< endreq;
   }
   
   //Retrieve CPM Hits from SG
@@ -579,22 +408,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       const int    had = tt->hadEnergy();
       const double phi = tt->phi();
       const double phiMod = phi * m_phiScale;
-      if (em) {
-        m_h_TT_Em_Et->Fill(em, 1.);
-        if (m_noiseSignalSplit) m_h_TT_Em_Et_s->Fill(em, 1.);
-        m_h_TT_Em_eta->Fill(eta, 1.);
-        m_h_TT_Em_phi->Fill(phiMod, 1.);
-        m_h_TT_Em_eta_phi->Fill(eta, phiMod, 1.);
-        m_h_TT_Em_eta_phi_w->Fill(eta, phiMod, em);
-      }
-      if (had) {
-        m_h_TT_Had_Et->Fill(had, 1.);
-        if (m_noiseSignalSplit) m_h_TT_Had_Et_s->Fill(had, 1.);
-        m_h_TT_Had_eta->Fill(eta, 1.);
-        m_h_TT_Had_phi->Fill(phiMod, 1.);
-        m_h_TT_Had_eta_phi->Fill(eta, phiMod, 1.);
-        m_h_TT_Had_eta_phi_w->Fill(eta, phiMod, had);
-      }
+      if (em)  m_h_TT_Em_eta_phi->Fill(eta, phiMod, 1.);
+      if (had) m_h_TT_Had_eta_phi->Fill(eta, phiMod, 1.);
       const unsigned int key = towerKey.ttKey(phi, eta);
       if (key > maxKey) maxKey = key;
       ttMap.insert(std::make_pair(key, tt));
@@ -628,17 +443,15 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         m_h_CPM_slices->Fill(crate*s_maxSlices + slices - 1, peak, 1.);
         if (em && core) {
           m_h_CT_Em_Et->Fill(em, 1.);
-          if (m_noiseSignalSplit) m_h_CT_Em_Et_s->Fill(em, 1.);
           m_h_CT_Em_eta->Fill(eta, 1.);
-          m_h_CT_Em_phi->Fill(phiMod, 1.);
+          m_h_CT_Em_phi->Fill(phi, 1.);
           m_h_CT_Em_eta_phi->Fill(eta, phiMod, 1.);
           m_h_CT_Em_eta_phi_w->Fill(eta, phiMod, em);
         }
         if (had && core) {
           m_h_CT_Had_Et->Fill(had, 1.);
-          if (m_noiseSignalSplit) m_h_CT_Had_Et_s->Fill(had, 1.);
           m_h_CT_Had_eta->Fill(eta, 1.);
-          m_h_CT_Had_phi->Fill(phiMod, 1.);
+          m_h_CT_Had_phi->Fill(phi, 1.);
           m_h_CT_Had_eta_phi->Fill(eta, phiMod, 1.);
           m_h_CT_Had_eta_phi_w->Fill(eta, phiMod, had);
         }
@@ -715,7 +528,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         if (emLut[slice] > 0) {
 	  for (int slice2 = 0; slice2 < sliceEmVec; ++slice2) {
 	    if (emLut[slice] == emVec[slice2]) {
-	      m_v_PP_CP_slice[crate]->Fill(slice, slice2, 1.);
+	      m_h_PP_CP_slice->Fill(crate*s_maxSlices+slice2, slice, 1.);
             }
           }
         }
@@ -724,7 +537,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         if (hadLut[slice] > 0) {
 	  for (int slice2 = 0; slice2 < sliceHadVec; ++slice2) {
 	    if (hadLut[slice] == hadVec[slice2]) {
-	      m_v_PP_CP_slice[crate]->Fill(slice, slice2, 1.);
+	      m_h_PP_CP_slice->Fill(crate*s_maxSlices+slice2, slice, 1.);
             }
           }
         }
@@ -748,7 +561,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
                                 decoder.coordinate((*crIterator)->roiWord()));
       const double eta = coord.eta();
       const double phi = coord.phi();
-      const double phiMod = phi * m_phiScale;
+      const double phiMod = phi * m_phiScale - 0.5;
       const int crate = (*crIterator)->crate();
       const int cpm   = (*crIterator)->cpm();
       int bin  = crate * s_modules + cpm - 1;
@@ -921,7 +734,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	    for (int slice2 = 0; slice2 < sliceCmmVec0; ++slice2) {
 	      if (cpmVec0[slice] == cmmVec0[slice2] &&
 	          cpmVec1[slice] == cmmVec1[slice2]) {
-	        m_v_CP_CM_slice[crate]->Fill(slice, slice2, 1.);
+		m_h_CP_CM_slice->Fill(crate*s_maxSlices+slice2, slice, 1.);
 	      }
             }
           }
@@ -1040,24 +853,22 @@ TH2F* TrigT1CaloCpmMonTool::book2F(const std::string& name,
 TH2F* TrigT1CaloCpmMonTool::bookEtaPhi(const std::string& name,
                                        const std::string& title, bool isRoi)
 {
+  // We use phi range 0-64 so tick marks correspond to the bins
   TH2F* hist = 0;
-  const double halfPhiBin = m_phiMax/128.;
-  const std::string newTitle = title + ";eta;phi (" + m_phiUnits + ")";
-  if ( !m_fullEtaRange ) {
-    if ( !isRoi ) {
-      hist = book2F(name, newTitle, 50, -2.5, 2.5, 64, 0, m_phiMax);
-    } else { 
-      hist = book2F(name, newTitle, 51, -2.55, 2.55, 65, -halfPhiBin,
-                                                      m_phiMax+halfPhiBin);
-    }
-  } else {
-    if ( !isRoi ) {
-      hist = book2F(name, newTitle, 52, m_etaBins, 64, 0, m_phiMax);
-    } else {
-      hist = book2F(name, newTitle, 53, m_etaBinsRoi, 65, -halfPhiBin,
-                                                       m_phiMax+halfPhiBin);
-    }
+  const double phiBin     = M_PI/32.;
+  const double halfPhiBin = M_PI/64.;
+  std::string newTitle = title + ";eta";
+  hist = (isRoi) ? book2F(name, newTitle, 51, -2.55, 2.55, 64, 0., 64.)
+                 : book2F(name, newTitle, 50, -2.5, 2.5, 64, 0., 64.);
+  for (int chan = 0; chan < 64; chan += 4 ) {
+    const double rad = (isRoi) ? (chan + 1)*phiBin : chan*phiBin + halfPhiBin;
+    std::ostringstream cnum;
+    cnum << chan << "/"
+         << std::setiosflags(std::ios::fixed | std::ios::showpoint)
+         << std::setprecision(2) << rad;
+    hist->GetYaxis()->SetBinLabel(chan+1, cnum.str().c_str());
   }
+  hist->GetYaxis()->SetBinLabel(64, "phi");
   return hist;
 }
 
@@ -1071,12 +882,13 @@ void TrigT1CaloCpmMonTool::setStatusLabels(TH1* hist)
   hist->GetXaxis()->SetLabelSize(0.045);
 }
 
-void TrigT1CaloCpmMonTool::setLabelsCNSTS(TH2* hist)
+void TrigT1CaloCpmMonTool::setLabelsCNSTS(TH2* hist, bool doSlice)
 {
   for (int crate = 0; crate < s_crates; ++crate) {
     for (int nslices = 1; nslices <= s_maxSlices; ++nslices) {
+      const int sl = (doSlice) ? nslices-1 : nslices;
       std::ostringstream cnum;
-      cnum << crate << "/" << nslices;
+      cnum << crate << "/" << sl;
       hist->GetXaxis()->SetBinLabel(crate*s_maxSlices + nslices,
                                     cnum.str().c_str());
     }

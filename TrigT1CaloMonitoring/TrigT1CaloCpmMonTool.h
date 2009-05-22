@@ -87,7 +87,7 @@ private:
                                            bool isRoi = false);
 
   void  setStatusLabels(TH1* hist);
-  void  setLabelsCNSTS(TH2* hist);
+  void  setLabelsCNSTS(TH2* hist, bool doSlice = false);
   void  setLabelsPSCS(TH2* hist);
   void  setLabelsCMT(TH2* hist);
   void  setLabelsT(TH2* hist);
@@ -112,35 +112,18 @@ private:
   std::string m_cmmCpHitsLocation;
   /// DAQ CPM RoI container StoreGate key
   std::string m_cpmRoiLocation;
-  /// RoIB CPM RoI container StoreGate key
-  std::string m_cpmRoiLocationRoib;
   /// Trigger Tower container StoreGate key
   std::string m_triggerTowerLocation;
   
   /// Root directory
   std::string m_rootDir;
-  /// Directory layout
-  int m_layout;
 
-  /// Phi Units for eta/phi plots
-  std::string m_phiUnits;
-  /// Phi maximum in wanted units
-  double m_phiMax;
-  /// Phi scale to convert from radians to wanted units
+  /// Phi scale to convert from radians to histogram units
   double m_phiScale;
-  /// Eta Range flag
-  bool m_fullEtaRange;
-  /// Eta bins for full eta range
-  double* m_etaBins;
-  double* m_etaBinsRoi;
-  /// Noise/signal energy split
-  int m_noiseSignalSplit;
   /// Maximum energy plotted
   int m_maxEnergyRange;
   /// Number of events
   int m_events;
-  /// Not used
-  bool m_Offline;
 
   //=======================
   //   Timeslice plots
@@ -148,31 +131,19 @@ private:
 
   TH2F* m_h_CPM_slices;
   TH2F* m_h_CMM_slices;
-  std::vector<TH2F*> m_v_PP_CP_slice;
-  std::vector<TH2F*> m_v_CP_CM_slice;
+  TH2F* m_h_PP_CP_slice;
+  TH2F* m_h_CP_CM_slice;
 
   //=============================================
-  //   CPM Tower - Trigger Tower comparison plots
+  //   CPM Tower - Trigger Tower plots
   //=============================================
 
   // TriggerTower plots
-  TH1F* m_h_TT_Em_Et;  
-  TH1F* m_h_TT_Had_Et;
-  TH1F* m_h_TT_Em_Et_s;  
-  TH1F* m_h_TT_Had_Et_s;
-  TH1F* m_h_TT_Em_eta;
-  TH1F* m_h_TT_Had_eta;
-  TH1F* m_h_TT_Em_phi;
-  TH1F* m_h_TT_Had_phi;
   TH2F* m_h_TT_Em_eta_phi;
   TH2F* m_h_TT_Had_eta_phi;
-  TH2F* m_h_TT_Em_eta_phi_w;
-  TH2F* m_h_TT_Had_eta_phi_w;
   // CPMTower plots
   TH1F* m_h_CT_Em_Et;  
   TH1F* m_h_CT_Had_Et;
-  TH1F* m_h_CT_Em_Et_s;
-  TH1F* m_h_CT_Had_Et_s;
   TH1F* m_h_CT_Em_eta;
   TH1F* m_h_CT_Had_eta;
   TH1F* m_h_CT_Em_phi;

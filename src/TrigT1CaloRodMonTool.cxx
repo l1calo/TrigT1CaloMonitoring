@@ -94,7 +94,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   if ( isNewRun ) {
 
-  std::string dir1(m_rootDir + "/6_ROD");
+  std::string dir1(m_rootDir + "/ROD");
   MonGroup monShift ( this, dir1, shift, run );
   MonGroup monExpert( this, dir1, expert, run );
   MonGroup monAverage( this, dir1, expert, run, "", "weightedAverage" );
@@ -112,30 +112,33 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
          ? ";Complete Run | Recent Events        Crate/S-Link;Words per Event"
 	 : ";Crate/S-Link;Words per Event";
   int nbins = (online) ? 65 : 32;
-  m_h_ROD_PP = book1F("ROD_PP", "ROD PP Average Payload Size"+axisTitles,
-                                nbins, 0, nbins);
+  m_h_ROD_PP = book1F("rod_1d_PP_payload",
+                      "ROD PP Average Payload Size"+axisTitles,
+                       nbins, 0, nbins);
   setLabelsCSL(m_h_ROD_PP, true, 1, 32, 2, 2);
   if (online) {
     m_h_ROD_PP->GetXaxis()->SetBinLabel(33, "---");
     setLabelsCSL(m_h_ROD_PP, true, 34, 65, 2, 2);
   }
   nbins = (online) ? 17 : 8;
-  m_h_ROD_CP = book1F("ROD_CP", "ROD CP Average Payload Size"+axisTitles,
-                                nbins, 0, nbins);
+  m_h_ROD_CP = book1F("rod_1d_CP_payload",
+                      "ROD CP Average Payload Size"+axisTitles,
+                       nbins, 0, nbins);
   setLabelsCSL(m_h_ROD_CP, true, 1, 8, 1, 2);
   if (online) {
     m_h_ROD_CP->GetXaxis()->SetBinLabel(9, "---");
     setLabelsCSL(m_h_ROD_CP, true, 10, 17, 1, 2);
   }
-  m_h_ROD_JEP = book1F("ROD_JEP", "ROD JEP Average Payload Size"+axisTitles,
-                                  nbins, 0, nbins);
+  m_h_ROD_JEP = book1F("rod_1d_JEP_payload",
+                       "ROD JEP Average Payload Size"+axisTitles,
+                        nbins, 0, nbins);
   setLabelsCSL(m_h_ROD_JEP, true, 1, 8, 1, 1);
   if (online) {
     m_h_ROD_JEP->GetXaxis()->SetBinLabel(9, "---");
     setLabelsCSL(m_h_ROD_JEP, true, 10, 17, 1, 1);
   }
   nbins = (online) ? 25 : 12;
-  m_h_ROD_RoI = book1F("ROD_RoI",
+  m_h_ROD_RoI = book1F("rod_1d_CPJEP_RoI_payload",
                        "ROD CP and JEP RoI Average Payload Size"+axisTitles,
                                 nbins, 0, nbins);
   setLabelsCSL(m_h_ROD_RoI, true, 1, 8, 1, 2);
@@ -154,14 +157,14 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monExpert;
 
-  m_h_ROD_PP_stat = book2F("ROD_PP_stat",
+  m_h_ROD_PP_stat = book2F("rod_2d_PP_status",
                            "ROD PP Status Bits and Payload Check;;Crate/S-Link",
                            NumberOfStatusBins, 0, NumberOfStatusBins,
 			   32, 0, 32);
   setLabelsStatus(m_h_ROD_PP_stat);
   setLabelsCSL(m_h_ROD_PP_stat, false, 1, 32, 2, 2);
   m_h_ROD_PP_stat->GetXaxis()->SetBinLabel(1+NoPayload, "No Payload");
-  m_h_ROD_CPJEP_stat = book2F("ROD_CPJEP_stat",
+  m_h_ROD_CPJEP_stat = book2F("rod_2d_CPJEP_status",
                    "ROD CP and JEP Status Bits and Payload Check;;Crate/S-Link",
                               NumberOfStatusBins, 0, NumberOfStatusBins,
 			      16, 0, 16);
@@ -171,7 +174,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   setLabelsCSL(m_h_ROD_CPJEP_stat, false, 9, 16, 1, 1);
   m_h_ROD_CPJEP_stat->GetYaxis()->SetBinLabel(9, "JEP 0/0");
   m_h_ROD_CPJEP_stat->GetXaxis()->SetBinLabel(1+NoPayload, "No Payload");
-  m_h_ROD_RoI_stat = book2F("ROD_RoI_stat",
+  m_h_ROD_RoI_stat = book2F("rod_2d_CPJEP_RoI_status",
                             "ROD CP and JEP RoI Status Bits;;Crate/S-Link",
                             NumberOfStatusBins, 0, NumberOfStatusBins,
 			    12, 0, 12);
@@ -185,7 +188,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monShift;
 
-  m_h_ROD_summary = book1F("ROD_summary", "ROD Error Summary;;Events",
+  m_h_ROD_summary = book1F("rod_1d_Error_summary", "ROD Error Summary;;Events",
                            NumberOfStatusBins, 0, NumberOfStatusBins);
   setLabelsStatus(m_h_ROD_summary);
   m_h_ROD_summary->GetXaxis()->SetBinLabel(1+TriggerType, "");

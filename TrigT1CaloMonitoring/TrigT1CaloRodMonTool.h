@@ -78,6 +78,8 @@ private:
   
   /// Root directory
   std::string m_rootDir;
+  /// Directory layout
+  int m_layout;
 
   /// Accumulated payload sizes
   std::vector<double> m_sumPayloads1;

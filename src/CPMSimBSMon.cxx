@@ -19,6 +19,7 @@
 #include "CLHEP/Units/SystemOfUnits.h"
 #include "GaudiKernel/ITHistSvc.h"
 #include "StoreGate/StoreGateSvc.h"
+#include "SGTools/StlVectorClids.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
@@ -44,7 +45,6 @@
 
 #include "TrigT1CaloMonitoring/CPMSimBSMon.h"
 
-
 /*---------------------------------------------------------*/
 CPMSimBSMon::CPMSimBSMon(const std::string & type, 
 			 const std::string & name,
@@ -54,7 +54,7 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
     m_emTauTool("LVL1::L1EmTauTools/L1EmTauTools"),
     m_cpHitsTool("LVL1::L1CPHitsTools/L1CPHitsTools"),
     m_log(msgSvc(), name), m_debug(false),
-    m_monGroup(0), m_etaBins(0), m_etaBinsRoi(0), m_events(0)
+    m_monGroup(0), m_phiScale(32./M_PI), m_events(0)
 /*---------------------------------------------------------*/
 {
   declareInterface<IMonitorToolBase>(this); 
@@ -73,22 +73,14 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
                  m_cmmCpHitsLocation = LVL1::TrigT1CaloDefs::CMMCPHitsLocation);
   declareProperty("CPMRoILocation",
                  m_cpmRoiLocation    = LVL1::TrigT1CaloDefs::CPMRoILocation);
-  declareProperty("CPMRoILocationRoIB",
-                 m_cpmRoiLocationRoib =
-		                 LVL1::TrigT1CaloDefs::CPMRoILocation+"RoIB");
   declareProperty("TriggerTowerLocation",
                  m_triggerTowerLocation =
 		                 LVL1::TrigT1CaloDefs::TriggerTowerLocation);
   declareProperty("RodHeaderLocation",
                  m_rodHeaderLocation = "RODHeaders");
-  declareProperty("RodHeaderLocationRoIB",
-                 m_rodHeaderLocationRoib = "RODHeadersCPRoIB");
 
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
-  declareProperty("PhiUnits", m_phiUnits = "channels",
-                  "Phi Units: radians, degrees or channels");
-  declareProperty("FullEtaRange", m_fullEtaRange = false,
-                  "Eta Range: False (-2.5 to 2.5), True (-4.9 to 4.9)");
+
   declareProperty("CompareWithSimulation", m_compareWithSim = true,
                   "Include the checks that run simulation tools");
   declareProperty("CompareTriggerTowers", m_compareTriggerTowers = true,
@@ -142,34 +134,6 @@ StatusCode CPMSimBSMon::initialize()
     }
   }
 
-  // Phi units
-  const double twoPi = 2.*M_PI;
-  if      (m_phiUnits == "radians")  m_phiMax = twoPi;
-  else if (m_phiUnits == "degrees")  m_phiMax = 360.;
-  else if (m_phiUnits == "channels") m_phiMax = 64.;
-  else {
-    m_log << MSG::ERROR << "Invalid PhiUnits: " << m_phiUnits
-          << ", using radians" << endreq;
-    m_phiMax = twoPi;
-  }
-  m_phiScale = m_phiMax/twoPi;
-
-  // Eta bins for full range
-  if (m_fullEtaRange) {
-    m_etaBins    = new double[53];
-    m_etaBinsRoi = new double[54];
-    m_etaBins[0]    = -4.9;
-    m_etaBinsRoi[0] = -4.9;
-    for (int i = 0; i < 51; ++i) {
-      double val = -2.5 + double(i)/10.;
-      m_etaBins[i+1]    = val;
-      m_etaBinsRoi[i+1] = val - 0.05;
-    }
-    m_etaBins[52]    = 4.9;
-    m_etaBinsRoi[52] = 2.55;
-    m_etaBinsRoi[53] = 4.9;
-  }
-
   // RoI thresholds mask
   if (m_roiThresh.empty()) m_roiMask = 0xffff;
   else {
@@ -193,10 +157,6 @@ StatusCode CPMSimBSMon::initialize()
 StatusCode CPMSimBSMon::finalize()
 /*---------------------------------------------------------*/
 {
-  if (m_fullEtaRange) {
-    delete [] m_etaBins;
-    delete [] m_etaBinsRoi;
-  }
   return StatusCode::SUCCESS;
 }
 
@@ -219,73 +179,81 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   if( isNewRun ) {
 
-  std::string dir(m_rootDir + "/5_CP_Sim_Check");
-  MonGroup monShift ( this, dir, shift, run );
-  MonGroup monExpert( this, dir, expert, run );
-  MonGroup monRoIs  ( this, dir + "/RoIs", expert, run );
-  MonGroup monCPM   ( this, dir + "/CPM",  expert, run );
-  MonGroup monCMM   ( this, dir + "/CMM",  expert, run );
-  MonGroup monEvent ( this, dir + "/Events", expert, run, "", "eventSample" );
+  std::string dir1(m_rootDir + "/CPM/Errors/Transmission_Simulation");
+  MonGroup monShift( this, dir1, shift, run );
+  MonGroup monExpert( this, dir1, expert, run );
+  MonGroup monCPMin( this, dir1 + "/PPM2CPMTowers", expert, run );
+  MonGroup monRoIs( this, dir1 + "/Towers2RoIs", expert, run );
+  MonGroup monCPMout( this, dir1 + "/RoIs2Hits", expert, run);
+  MonGroup monEvent1( this, dir1 + "/MismatchEventNumbers", expert, run, "",
+                                                            "eventSample" );
+  std::string dir2(m_rootDir + "/CPM-CMM/Errors/Transmission_Simulation");
+  MonGroup monCMMin( this, dir2 + "/CPM2CMMHits", expert, run );
+  MonGroup monCMMout( this, dir2 + "/Hits2Sums", expert, run );
+  MonGroup monEvent2( this, dir2 + "/MismatchEventNumbers", expert, run, "",
+                                                            "eventSample" );
 
   // CPMTowers
 
-  m_monGroup = &monCPM;
+  m_monGroup = &monCPMin;
 
   if (m_compareTriggerTowers) {
 
-  m_h_EMTowerSIMeqDAT = bookEtaPhi("EMTowerSIMeqDAT",
-    "Core CPM Towers EM Data/Simulation Non-zero Matches;eta;phi");
-  m_h_EMTowerSIMneDAT = bookEtaPhi("EMTowerSIMneDAT",
-    "Core CPM Towers EM Data/Simulation Non-zero Mismatches;eta;phi");
-  m_h_EMTowerSIMnoDAT = bookEtaPhi("EMTowerSIMnoDAT",
-    "Core CPM Towers EM Simulation but no Data;eta;phi");
-  m_h_EMTowerDATnoSIM = bookEtaPhi("EMTowerDATnoSIM",
-    "Core CPM Towers EM Data but no Simulation;eta;phi");
-  m_h_HadTowerSIMeqDAT = bookEtaPhi("HadTowerSIMeqDAT",
-    "Core CPM Towers HAD Data/Simulation Non-zero Matches;eta;phi");
-  m_h_HadTowerSIMneDAT = bookEtaPhi("HadTowerSIMneDAT",
-    "Core CPM Towers HAD Data/Simulation Non-zero Mismatches;eta;phi");
-  m_h_HadTowerSIMnoDAT = bookEtaPhi("HadTowerSIMnoDAT",
-    "Core CPM Towers HAD Simulation but no Data;eta;phi");
-  m_h_HadTowerDATnoSIM = bookEtaPhi("HadTowerDATnoSIM",
-    "Core CPM Towers HAD Data but no Simulation;eta;phi");
-  m_h_EMTowerOvSIMeqDAT = bookEtaPhi("EMTowerOvSIMeqDAT",
-    "Overlap CPM Towers EM Data/Simulation Non-zero Matches;eta;phi");
-  m_h_EMTowerOvSIMneDAT = bookEtaPhi("EMTowerOvSIMneDAT",
-    "Overlap CPM Towers EM Data/Simulation Non-zero Mismatches;eta;phi");
-  m_h_EMTowerOvSIMnoDAT = bookEtaPhi("EMTowerOvSIMnoDAT",
-    "Overlap CPM Towers EM Simulation but no Data;eta;phi");
-  m_h_EMTowerOvDATnoSIM = bookEtaPhi("EMTowerOvDATnoSIM",
-    "Overlap CPM Towers EM Data but no Simulation;eta;phi");
-  m_h_HadTowerOvSIMeqDAT = bookEtaPhi("HadTowerOvSIMeqDAT",
-    "Overlap CPM Towers HAD Data/Simulation Non-zero Matches;eta;phi");
-  m_h_HadTowerOvSIMneDAT = bookEtaPhi("HadTowerOvSIMneDAT",
-    "Overlap CPM Towers HAD Data/Simulation Non-zero Mismatches;eta;phi");
-  m_h_HadTowerOvSIMnoDAT = bookEtaPhi("HadTowerOvSIMnoDAT",
-    "Overlap CPM Towers HAD Simulation but no Data;eta;phi");
-  m_h_HadTowerOvDATnoSIM = bookEtaPhi("HadTowerOvDATnoSIM",
-    "Overlap CPM Towers HAD Data but no Simulation;eta;phi");
-  m_h_FpgaTowerSIMeqDAT = book2F("FpgaTowerSIMeqDAT",
-    "CPM Towers Data/Simulation Non-zero Matches by FPGA;Crate/Module;Serialiser FPGA",
+  m_h_EMTowerSIMeqDAT = bookEtaPhi("cpm_em_2d_etaPhi_tt_PPM_eq_core",
+                       "EM Core CPM Tower/PPM Tower Non-zero Matches");
+  m_h_EMTowerSIMneDAT = bookEtaPhi("cpm_em_2d_etaPhi_tt_PPM_ne_core",
+                       "EM Core CPM Tower/PPM Tower Non-zero Mismatches");
+  m_h_EMTowerSIMnoDAT = bookEtaPhi("cpm_em_2d_etaPhi_tt_PPM_no_core",
+                       "EM PPM Towers but no Core CPM Towers");
+  m_h_EMTowerDATnoSIM = bookEtaPhi("cpm_em_2d_etaPhi_tt_Core_no_PPM",
+                       "EM Core CPM Towers but no PPM Towers");
+  m_h_HadTowerSIMeqDAT = bookEtaPhi("cpm_had_2d_etaPhi_tt_PPM_eq_core",
+                       "HAD Core CPM Tower/PPM Tower Non-zero Matches");
+  m_h_HadTowerSIMneDAT = bookEtaPhi("cpm_had_2d_etaPhi_tt_PPM_ne_core",
+                       "HAD Core CPM Tower/PPM Tower Non-zero Mismatches");
+  m_h_HadTowerSIMnoDAT = bookEtaPhi("cpm_had_2d_etaPhi_tt_PPM_no_core",
+                       "HAD PPM Towers but no Core CPM Towers");
+  m_h_HadTowerDATnoSIM = bookEtaPhi("cpm_had_2d_etaPhi_tt_Core_no_PPM",
+                       "HAD Core CPM Towers but no PPM Towers");
+  m_h_EMTowerOvSIMeqDAT = bookEtaPhi("cpm_em_2d_etaPhi_tt_PPM_eq_overlap",
+                       "EM Overlap CPM Tower/PPM Tower Non-zero Matches");
+  m_h_EMTowerOvSIMneDAT = bookEtaPhi("cpm_em_2d_etaPhi_tt_PPM_ne_overlap",
+                       "EM Overlap CPM Tower/PPM Tower Non-zero Mismatches");
+  m_h_EMTowerOvSIMnoDAT = bookEtaPhi("cpm_em_2d_etaPhi_tt_PPM_no_overlap",
+                       "EM PPM Towers but no Overlap CPM Towers");
+  m_h_EMTowerOvDATnoSIM = bookEtaPhi("cpm_em_2d_etaPhi_tt_Overlap_no_PPM",
+                       "EM Overlap CPM Towers but no PPM Towers");
+  m_h_HadTowerOvSIMeqDAT = bookEtaPhi("cpm_had_2d_etaPhi_tt_PPM_eq_overlap",
+                       "HAD Overlap CPM Tower/PPM Tower Non-zero Matches");
+  m_h_HadTowerOvSIMneDAT = bookEtaPhi("cpm_had_2d_etaPhi_tt_PPM_ne_overlap",
+                       "HAD Overlap CPM Tower/PPM Tower Non-zero Mismatches");
+  m_h_HadTowerOvSIMnoDAT = bookEtaPhi("cpm_had_2d_etaPhi_tt_PPM_no_overlap",
+                       "HAD PPM Towers but no Overlap CPM Towers");
+  m_h_HadTowerOvDATnoSIM = bookEtaPhi("cpm_had_2d_etaPhi_tt_Overlap_no_PPM",
+                       "HAD Overlap CPM Towers but no PPM Towers");
+  m_h_FpgaTowerSIMeqDAT = book2F("cpm_2d_tt_PPM_eq_CPM_fpga",
+   "CPM Tower/PPM Tower Non-zero Matches by FPGA;Crate/Module;Serialiser FPGA",
              56, 0, 56, 20, 0, 20);
   setLabelsCPMFP(m_h_FpgaTowerSIMeqDAT);
-  m_h_FpgaTowerSIMneDAT = book2F("FpgaTowerSIMneDAT",
-    "CPM Towers Data/Simulation Non-zero Mismatches by FPGA;Crate/Module;Serialiser FPGA",
+  m_h_FpgaTowerSIMneDAT = book2F("cpm_2d_tt_PPM_ne_CPM_fpga",
+   "CPM Tower/PPM Tower Non-zero Mismatches by FPGA;Crate/Module;Serialiser FPGA",
              56, 0, 56, 20, 0, 20);
   setLabelsCPMFP(m_h_FpgaTowerSIMneDAT);
-  m_h_FpgaTowerSIMnoDAT = book2F("FpgaTowerSIMnoDAT",
-    "CPM Towers Simulation but no Data by FPGA;Crate/Module;Serialiser FPGA",
+  m_h_FpgaTowerSIMnoDAT = book2F("cpm_2d_tt_PPM_no_CPM_fpga",
+   "PPM Towers but no CPM Towers by FPGA;Crate/Module;Serialiser FPGA",
              56, 0, 56, 20, 0, 20);
   setLabelsCPMFP(m_h_FpgaTowerSIMnoDAT);
-  m_h_FpgaTowerDATnoSIM = book2F("FpgaTowerDATnoSIM",
-    "CPM Towers Data but no Simulation by FPGA;Crate/Module;Serialiser FPGA",
+  m_h_FpgaTowerDATnoSIM = book2F("cpm_2d_tt_CPM_no_PPM_fpga",
+    "CPM Towers but no PPM Towers by FPGA;Crate/Module;Serialiser FPGA",
              56, 0, 56, 20, 0, 20);
   setLabelsCPMFP(m_h_FpgaTowerDATnoSIM);
 
-  m_h_IgnoreTowersEM = bookEtaPhi("IgnoreTowersEM",
-    "EM Tower Mismatches in Ignore List;eta;phi");
-  m_h_IgnoreTowersHad = bookEtaPhi("IgnoreTowersHad",
-    "Had Tower Mismatches in Ignore List;eta;phi");
+  if ( !m_ignoreTowersEm.empty() || !m_ignoreTowersHad.empty() ) {
+    m_h_IgnoreTowersEM = bookEtaPhi("cpm_em_2d_etaPhi_tt_Ignored_towers",
+      "EM Tower Mismatches in Ignore List");
+    m_h_IgnoreTowersHad = bookEtaPhi("cpm_had_2d_etaPhi_tt_Ignored_towers",
+      "Had Tower Mismatches in Ignore List");
+  }
 
   } // end if (m_compareTriggerTowers)
 
@@ -295,62 +263,62 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monRoIs;
 
-  m_h_RoISIMeqDAT = book2F("RoISIMeqDAT",
+  m_h_RoISIMeqDAT = book2F("cpm_2d_roi_Sim_eq_data",
      "CPM RoI Data/Simulation Non-zero Matches;Crate/Module;Chip/Local Coord",
              56, 0, 56, 64, 0, 64);
   setLabelsCMCC(m_h_RoISIMeqDAT);
-  m_h_RoISIMneDAT = book2F("RoISIMneDAT",
+  m_h_RoISIMneDAT = book2F("cpm_2d_roi_Sim_ne_data",
    "CPM RoI Data/Simulation Non-zero Mismatches;Crate/Module;Chip/Local Coord",
              56, 0, 56, 64, 0, 64);
   setLabelsCMCC(m_h_RoISIMneDAT);
-  m_h_RoISIMnoDAT = book2F("RoISIMnoDAT",
+  m_h_RoISIMnoDAT = book2F("cpm_2d_roi_Sim_no_data",
             "CPM RoI Simulation but no Data;Crate/Module;Chip/Local Coord",
              56, 0, 56, 64, 0, 64);
   setLabelsCMCC(m_h_RoISIMnoDAT);
-  m_h_RoIDATnoSIM = book2F("RoIDATnoSIM",
+  m_h_RoIDATnoSIM = book2F("cpm_2d_roi_Data_no_sim",
             "CPM RoI Data but no Simulation;Crate/Module;Chip/Local Coord",
              56, 0, 56, 64, 0, 64);
   setLabelsCMCC(m_h_RoIDATnoSIM);
-  m_h_RoIThreshSIMeqDAT = book2F("RoIThreshSIMeqDAT",
+  m_h_RoIThreshSIMeqDAT = book2F("cpm_2d_roi_Thresh_sim_eq_data",
      "CPM RoI Data/Simulation Threshold Matches;Crate/Module;Threshold",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_RoIThreshSIMeqDAT, true);
-  m_h_RoIThreshSIMneDAT = book2F("RoIThreshSIMneDAT",
+  m_h_RoIThreshSIMneDAT = book2F("cpm_2d_roi_Thresh_sim_ne_data",
      "CPM RoI Data/Simulation Threshold Mismatches;Crate/Module;Threshold",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_RoIThreshSIMneDAT, true);
-  m_h_RoIEtaPhiSIMeqDAT = bookEtaPhi("RoIEtaPhiSIMeqDAT",
-     "CPM RoI Data/Simulation Non-zero Matches;eta;phi", true);
-  m_h_RoIEtaPhiSIMneDAT = bookEtaPhi("RoIEtaPhiSIMneDAT",
-     "CPM RoI Data/Simulation Non-zero Mismatches;eta;phi", true);
-  m_h_RoIEtaPhiSIMnoDAT = bookEtaPhi("RoIEtaPhiSIMnoDAT",
-            "CPM RoI Simulation but no Data;eta;phi", true);
-  m_h_RoIEtaPhiDATnoSIM = bookEtaPhi("RoIEtaPhiDATnoSIM",
-            "CPM RoI Data but no Simulation;eta;phi", true);
+  m_h_RoIEtaPhiSIMeqDAT = bookEtaPhi("cpm_2d_etaPhi_roi_Sim_eq_data",
+     "CPM RoI Data/Simulation Non-zero Matches", true);
+  m_h_RoIEtaPhiSIMneDAT = bookEtaPhi("cpm_2d_etaPhi_roi_Sim_ne_data",
+     "CPM RoI Data/Simulation Non-zero Mismatches", true);
+  m_h_RoIEtaPhiSIMnoDAT = bookEtaPhi("cpm_2d_etaPhi_roi_Sim_no_data",
+            "CPM RoI Simulation but no Data", true);
+  m_h_RoIEtaPhiDATnoSIM = bookEtaPhi("cpm_2d_etaPhi_roi_Data_no_sim",
+            "CPM RoI Data but no Simulation", true);
 
   // CPMHits
 
-  m_monGroup = &monCPM;
+  m_monGroup = &monCPMout;
 
-  m_h_CPMHitsSIMeqDAT = book2F("CPMHitsSIMeqDAT",
+  m_h_CPMHitsSIMeqDAT = book2F("cpm_2d_thresh_Sim_eq_data",
      "CPM Hits Data/Simulation Non-zero Matches;Module;Crate",
              14, 1, 15, 4, 0, 4);
   setLabelsMC(m_h_CPMHitsSIMeqDAT);
-  m_h_CPMHitsSIMneDAT = book2F("CPMHitsSIMneDAT",
+  m_h_CPMHitsSIMneDAT = book2F("cpm_2d_thresh_Sim_ne_data",
      "CPM Hits Data/Simulation Non-zero Mismatches;Module;Crate",
              14, 1, 15, 4, 0, 4);
   setLabelsMC(m_h_CPMHitsSIMneDAT);
-  m_h_CPMHitsSIMnoDAT = book2F("CPMHitsSIMnoDAT",
+  m_h_CPMHitsSIMnoDAT = book2F("cpm_2d_thresh_Sim_no_data",
      "CPM Hits Simulation but no Data;Module;Crate", 14, 1, 15, 4, 0, 4);
   setLabelsMC(m_h_CPMHitsSIMnoDAT);
-  m_h_CPMHitsDATnoSIM = book2F("CPMHitsDATnoSIM",
+  m_h_CPMHitsDATnoSIM = book2F("cpm_2d_thresh_Data_no_sim",
      "CPM Hits Data but no Simulation;Module;Crate", 14, 1, 15, 4, 0, 4);
   setLabelsMC(m_h_CPMHitsDATnoSIM);
-  m_h_CPMHitsThreshSIMeqDAT = book2F("CPMHitsThreshSIMeqDAT",
+  m_h_CPMHitsThreshSIMeqDAT = book2F("cpm_2d_thresh_Thresh_sim_eq_data",
      "CPM Hits Data/Simulation Threshold Matches;Crate/Module;Threshold",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CPMHitsThreshSIMeqDAT);
-  m_h_CPMHitsThreshSIMneDAT = book2F("CPMHitsThreshSIMneDAT",
+  m_h_CPMHitsThreshSIMneDAT = book2F("cpm_2d_thresh_Thresh_sim_ne_data",
      "CPM Hits Data/Simulation Threshold Mismatches;Crate/Module;Threshold",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CPMHitsThreshSIMneDAT);
@@ -359,59 +327,61 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   // CMMHits
 
-  m_monGroup = &monCMM;
+  m_monGroup = &monCMMin;
 
-  m_h_CMMHitsSIMeqDAT = book2F("CMMHitsSIMeqDAT",
-     "CMM-CP Hits Data/Simulation Non-zero Matches;Module;Crate/Left-Right",
+  m_h_CMMHitsSIMeqDAT = book2F("cmm_2d_thresh_CPM_eq_CMM",
+     "CMM Hits/CPM Hits Non-zero Matches;Module;Crate/Left-Right",
              14, 1, 15, 8, 0, 8);
   setLabelsMCLR(m_h_CMMHitsSIMeqDAT);
-  m_h_CMMHitsSIMneDAT = book2F("CMMHitsSIMneDAT",
-     "CMM-CP Hits Data/Simulation Non-zero Mismatches;Module;Crate/Left-Right",
+  m_h_CMMHitsSIMneDAT = book2F("cmm_2d_thresh_CPM_ne_CMM",
+     "CMM Hits/CPM Hits Non-zero Mismatches;Module;Crate/Left-Right",
              14, 1, 15, 8, 0, 8);
   setLabelsMCLR(m_h_CMMHitsSIMneDAT);
-  m_h_CMMHitsSIMnoDAT = book2F("CMMHitsSIMnoDAT",
-     "CMM-CP Hits Simulation but no Data;Module;Crate/Left-Right",
+  m_h_CMMHitsSIMnoDAT = book2F("cmm_2d_thresh_CPM_no_CMM",
+     "CPM Hits but no CMM Hits;Module;Crate/Left-Right",
              14, 1, 15, 8, 0, 8);
   setLabelsMCLR(m_h_CMMHitsSIMnoDAT);
-  m_h_CMMHitsDATnoSIM = book2F("CMMHitsDATnoSIM",
-     "CMM-CP Hits Data but no Simulation;Module;Crate/Left-Right",
+  m_h_CMMHitsDATnoSIM = book2F("cmm_2d_thresh_CMM_no_CPM",
+     "CMM Hits but no CPM Hits;Module;Crate/Left-Right",
              14, 1, 15, 8, 0, 8);
   setLabelsMCLR(m_h_CMMHitsDATnoSIM);
-  m_h_CMMHitsThreshSIMeqDAT = book2F("CMMHitsThreshSIMeqDAT",
-     "CMM-CP Hits Data/Simulation Threshold Matches;Crate/Module;Threshold",
+  m_h_CMMHitsThreshSIMeqDAT = book2F("cmm_2d_thresh_Thresh_CPM_eq_CMM",
+     "CMM Hits/CPM Hits Threshold Matches;Crate/Module;Threshold",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CMMHitsThreshSIMeqDAT);
-  m_h_CMMHitsThreshSIMneDAT = book2F("CMMHitsThreshSIMneDAT",
-     "CMM-CP Hits Data/Simulation Threshold Mismatches;Crate/Module;Threshold",
+  m_h_CMMHitsThreshSIMneDAT = book2F("cmm_2d_thresh_Thresh_CPM_ne_CMM",
+     "CMM Hits/CPM Hits Threshold Mismatches;Crate/Module;Threshold",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CMMHitsThreshSIMneDAT);
+
+  m_monGroup = &monCMMout;
 
   if (m_compareWithSim) {
 
   // Local/Remote/Total sums
 
-  m_h_SumsSIMeqDAT = book1F("SumsSIMeqDAT",
-     "CMM-CP Hit Sums Data/Simulation Non-zero Matches;Sum/Left-Right",
+  m_h_SumsSIMeqDAT = book1F("cmm_1d_thresh_Sums_sim_eq_data",
+     "CMM Hit Sums Data/Simulation Non-zero Matches;Sum/Left-Right",
              16, 0, 16);
   setLabelsSLR(m_h_SumsSIMeqDAT);
-  m_h_SumsSIMneDAT = book1F("SumsSIMneDAT",
-     "CMM-CP Hit Sums Data/Simulation Non-zero Mismatches;Sum/Left-Right",
+  m_h_SumsSIMneDAT = book1F("cmm_1d_thresh_Sums_sim_ne_data",
+     "CMM Hit Sums Data/Simulation Non-zero Mismatches;Sum/Left-Right",
              16, 0, 16);
   setLabelsSLR(m_h_SumsSIMneDAT);
-  m_h_SumsSIMnoDAT = book1F("SumsSIMnoDAT",
-     "CMM-CP Hit Sums Simulation but no Data;Sum/Left-Right",
+  m_h_SumsSIMnoDAT = book1F("cmm_1d_thresh_Sums_sim_no_data",
+     "CMM Hit Sums Simulation but no Data;Sum/Left-Right",
              16, 0, 16);
   setLabelsSLR(m_h_SumsSIMnoDAT);
-  m_h_SumsDATnoSIM = book1F("SumsDATnoSIM",
-     "CMM-CP Hit Sums Data but no Simulation;Sum/Left-Right",
+  m_h_SumsDATnoSIM = book1F("cmm_1d_thresh_Sums_data_no_sim",
+     "CMM Hit Sums Data but no Simulation;Sum/Left-Right",
              16, 0, 16);
   setLabelsSLR(m_h_SumsDATnoSIM);
-  m_h_SumsThreshSIMeqDAT = book2F("SumsThreshSIMeqDAT",
-     "CMM-CP Hit Sums Data/Simulation Threshold Matches;Sum;Threshold",
+  m_h_SumsThreshSIMeqDAT = book2F("cmm_2d_thresh_Sums_thresh_sim_eq_data",
+     "CMM Hit Sums Data/Simulation Threshold Matches;Sum;Threshold",
              8, 0, 8, 16, 0, 16);
   setLabelsST(m_h_SumsThreshSIMeqDAT);
-  m_h_SumsThreshSIMneDAT = book2F("SumsThreshSIMneDAT",
-     "CMM-CP Hit Sums Data/Simulation Threshold Mismatches;Sum;Threshold",
+  m_h_SumsThreshSIMneDAT = book2F("cmm_2d_thresh_Sums_thresh_sim_ne_data",
+     "CMM Hit Sums Data/Simulation Threshold Mismatches;Sum;Threshold",
              8, 0, 8, 16, 0, 16);
   setLabelsST(m_h_SumsThreshSIMneDAT);
 
@@ -419,28 +389,28 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   // Remote sums only
 
-  m_h_SumsSIMeqDAT = book1F("SumsSIMeqDAT",
-     "CMM-CP Remote Sums Data/Simulation Non-zero Matches;Sum/Left-Right",
+  m_h_SumsSIMeqDAT = book1F("cmm_1d_thresh_Local_eq_remote",
+     "CMM Local/Remote Sums Non-zero Matches;Sum/Left-Right",
              6, 0, 6);
   setLabelsSRLR(m_h_SumsSIMeqDAT);
-  m_h_SumsSIMneDAT = book1F("SumsSIMneDAT",
-     "CMM-CP Remote Sums Data/Simulation Non-zero Mismatches;Sum/Left-Right",
+  m_h_SumsSIMneDAT = book1F("cmm_1d_thresh_Local_ne_remote",
+     "CMM Local/Remote Sums Non-zero Mismatches;Sum/Left-Right",
              6, 0, 6);
   setLabelsSRLR(m_h_SumsSIMneDAT);
-  m_h_SumsSIMnoDAT = book1F("SumsSIMnoDAT",
-     "CMM-CP Remote Sums Simulation but no Data;Sum/Left-Right",
+  m_h_SumsSIMnoDAT = book1F("cmm_1d_thresh_Local_no_remote",
+     "CMM Local Sums but no Remote Sums;Sum/Left-Right",
              6, 0, 6);
   setLabelsSRLR(m_h_SumsSIMnoDAT);
-  m_h_SumsDATnoSIM = book1F("SumsDATnoSIM",
-     "CMM-CP Remote Sums Data but no Simulation;Sum/Left-Right",
+  m_h_SumsDATnoSIM = book1F("cmm_1d_thresh_Remote_no_local",
+     "CMM Remote Sums but no Local Sums;Sum/Left-Right",
              6, 0, 6);
   setLabelsSRLR(m_h_SumsDATnoSIM);
-  m_h_SumsThreshSIMeqDAT = book2F("SumsThreshSIMeqDAT",
-     "CMM-CP Remote Sums Data/Simulation Threshold Matches;Sum;Threshold",
+  m_h_SumsThreshSIMeqDAT = book2F("cmm_2d_thresh_Local_eq_remote_thresh",
+     "CMM Local/Remote Sums Threshold Matches;Sum;Threshold",
              3, 0, 3, 16, 0, 16);
   setLabelsSRT(m_h_SumsThreshSIMeqDAT);
-  m_h_SumsThreshSIMneDAT = book2F("SumsThreshSIMneDAT",
-     "CMM-CP Remote Sums Data/Simulation Threshold Mismatches;Sum;Threshold",
+  m_h_SumsThreshSIMneDAT = book2F("cmm_2d_thresh_Local_ne_remote_thresh",
+     "CMM Local/Remote Sums Threshold Mismatches;Sum;Threshold",
              3, 0, 3, 16, 0, 16);
   setLabelsSRT(m_h_SumsThreshSIMneDAT);
 
@@ -450,21 +420,20 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monExpert;
 
-  m_h_CPeqSIM = book2F("CPeqSIMOverview",
-   "CP Comparison with Simulation Overview - Events with Matches;Crate/Module",
+  m_h_CPeqSIM = book2F("cpm_2d_Sim_eq_data_overview",
+   "CP Transmission/Comparison with Simulation Overview - Events with Matches;Crate/Module",
              64, 0, 64, NumberOfSummaryBins, 0, NumberOfSummaryBins);
   setLabels(m_h_CPeqSIM);
 
-  m_h_CPneSIM = book2F("CPneSIMOverview",
-   "CP Comparison with Simulation Overview - Events with Mismatches;Crate/Module",
+  m_h_CPneSIM = book2F("cpm_2d_Sim_ne_data_overview",
+   "CP Transmission/Comparison with Simulation Overview - Events with Mismatches;Crate/Module",
              64, 0, 64, NumberOfSummaryBins, 0, NumberOfSummaryBins);
   setLabels(m_h_CPneSIM);
 
   m_monGroup = &monShift;
 
-  m_h_CPneSIMSummary = book1F("CPneSIMSummary",
-   //"CP Comparison with Simulation Mismatch Summary for 0 Events;;Events",
-   "CP Comparison with Simulation Mismatch Summary;;Events",
+  m_h_CPneSIMSummary = book1F("cpm_1d_Sim_ne_data_summary",
+   "CP Transmission/Comparison with Simulation Mismatch Summary;;Events",
     NumberOfSummaryBins, 0, NumberOfSummaryBins);
   m_h_CPneSIMSummary->GetXaxis()->SetBinLabel(1+EMTowerMismatch,   "EM tt");
   m_h_CPneSIMSummary->GetXaxis()->SetBinLabel(1+HadTowerMismatch,  "Had tt");
@@ -491,7 +460,7 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   // Mismatch Event Number Samples
 
-  m_monGroup = &monEvent;
+  m_monGroup = &monEvent1;
 
   m_sampleCounts.clear();
   m_sampleCounts.resize(5*56+24, 0);
@@ -499,35 +468,38 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_sampleHists.clear();
   m_sampleHists.resize(6, hist);
   if (m_compareTriggerTowers) {
-    hist = book2I("EvEMTT",
+    hist = book2I("cpm_em_2d_tt_Mismatch_events",
            "CPM Towers EM Mismatch Event Numbers;Sample;Crate/Module",
            m_eventSamples, 0, m_eventSamples, 56, 0, 56);
     setLabelsCMS(hist);
     m_sampleHists[0] = hist;
-    hist = book2I("EvHadTT",
+    hist = book2I("cpm_had_2d_tt_Mismatch_events",
            "CPM Towers Had Mismatch Event Numbers;Sample;Crate/Module",
            m_eventSamples, 0, m_eventSamples, 56, 0, 56);
     setLabelsCMS(hist);
     m_sampleHists[1] = hist;
   }
   if (m_compareWithSim) {
-    hist = book2I("EvRoI",
+    hist = book2I("cpm_2d_roi_Mismatch_events",
            "CPM RoIs Mismatch Event Numbers;Sample;Crate/Module",
            m_eventSamples, 0, m_eventSamples, 56, 0, 56);
     setLabelsCMS(hist);
     m_sampleHists[2] = hist;
-    hist = book2I("EvCPMHit",
+    hist = book2I("cpm_2d_thresh_Mismatch_events",
            "CPM Hits Mismatch Event Numbers;Sample;Crate/Module",
            m_eventSamples, 0, m_eventSamples, 56, 0, 56);
     setLabelsCMS(hist);
     m_sampleHists[3] = hist;
   }
-  hist = book2I("EvCMMHit",
+
+  m_monGroup = &monEvent2;
+
+  hist = book2I("cmm_2d_thresh_Mismatch_events",
            "CMM Hits Mismatch Event Numbers;Sample;Crate/Module",
            m_eventSamples, 0, m_eventSamples, 56, 0, 56);
   setLabelsCMS(hist);
   m_sampleHists[4] = hist;
-  hist = book2I("EvSums",
+  hist = book2I("cmm_2d_thresh_Sums_mismatch_events",
            "CMM Hit Sums Mismatch Event Numbers;Sample",
            m_eventSamples, 0, m_eventSamples, 24, 0, 24);
   hist->GetYaxis()->SetBinLabel(1, "Module 0/L");
@@ -615,25 +587,6 @@ StatusCode CPMSimBSMon::fillHistograms()
   const RodHeaderCollection* rodTES = 0;
   if (m_compareWithSim) {
     sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocation);
-    /*  Silently switching to RoIB may be confusing
-    if( sc.isFailure()  ||  !cpmRoiTES  ||  cpmRoiTES->empty() ) {
-      m_log << MSG::DEBUG << "No DAQ CPM RoIs found, trying RoIB"
-            << endreq; 
-      cpmRoiTES = 0;
-      if (m_storeGate->contains<CpmRoiCollection>(m_cpmRoiLocationRoib)) {
-        sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocationRoib);
-      } else sc = StatusCode::FAILURE;
-      if( sc.isFailure()  ||  !cpmRoiTES ) {
-        m_log << MSG::DEBUG << "No RoIB CPM RoIs container found"<< endreq;
-      } else {
-	if (m_storeGate->contains<RodHeaderCollection>(m_rodHeaderLocationRoib)) {
-          sc = m_storeGate->retrieve( rodTES, m_rodHeaderLocationRoib);
-	} else sc = StatusCode::FAILURE;
-	if( sc.isFailure()  ||  !rodTES ) {
-	  m_log << MSG::DEBUG << "No RoIB ROD Header container found"<< endreq;
-        }
-      }
-    */
     if( sc.isFailure()  ||  !cpmRoiTES ) {
       m_log << MSG::DEBUG << "No DAQ CPM RoIs container found"<< endreq;
     } else {
@@ -776,6 +729,8 @@ StatusCode CPMSimBSMon::fillHistograms()
 
   // Update error summary plots
 
+  const int hwOffset = 8;
+  std::vector<int> crateErr(14);
   const int cpmBins = nCrates * nCPMs;
   const int cmmBins = nCrates * nCMMs;
   m_eventNumber = -1;
@@ -788,6 +743,7 @@ StatusCode CPMSimBSMon::fillHistograms()
       if ((errorsCPM[loc + cpmBins] >> err) & 0x1) {
         m_h_CPneSIM->Fill(loc, err, 1.);
 	error = 1;
+	crateErr[loc/nCPMs + hwOffset] |= (1 << err);
 	fillEventSample(err, loc, true);
       }
       if (loc < cmmBins) {
@@ -797,18 +753,23 @@ StatusCode CPMSimBSMon::fillHistograms()
         if ((errorsCMM[loc + cmmBins] >> err) & 0x1) {
           m_h_CPneSIM->Fill(loc+cpmBins, err, 1.);
 	  error = 1;
+	  crateErr[loc/nCMMs + hwOffset] |= (1 << err);
 	  fillEventSample(err, loc, false);
         }
       }
     }
     m_h_CPneSIMSummary->Fill(err, error);
   }
-  // Below doesn't make sense when histograms merged
-  //std::ostringstream cnum;
-  //cnum << m_events;
-  //std::string title("CP Comparison with Simulation Mismatch Summary for "
-  //                  + cnum.str() + " Events");
-  //m_h_CPneSIMSummary->SetTitle(title.c_str());
+
+  // Save error vector for global summary
+
+  std::vector<int>* save = new std::vector<int>(crateErr);
+  sc = m_storeGate->record(save, "L1CaloCPMMismatchVector");
+  if (sc != StatusCode::SUCCESS) {
+    m_log << MSG::ERROR << "Error recording CPM mismatch vector in TDS "
+          << endreq;
+    return sc;
+  }
 
   m_log << MSG::DEBUG << "Leaving fillHistograms" << endreq;
 
@@ -902,23 +863,22 @@ TH2I* CPMSimBSMon::book2I(const std::string& name,
 TH2F* CPMSimBSMon::bookEtaPhi(const std::string& name,
                               const std::string& title, bool isRoi)
 {
+  // We use phi range 0-64 so tick marks correspond to the bins
   TH2F* hist = 0;
-  const double halfPhiBin = m_phiMax/128.;
-  if ( !m_fullEtaRange ) {
-    if ( !isRoi ) {
-      hist = book2F(name, title, 50, -2.5, 2.5, 64, 0, m_phiMax);
-    } else { 
-      hist = book2F(name, title, 51, -2.55, 2.55, 65, -halfPhiBin,
-                                                      m_phiMax+halfPhiBin);
-    }
-  } else {
-    if ( !isRoi ) {
-      hist = book2F(name, title, 52, m_etaBins, 64, 0, m_phiMax);
-    } else {
-      hist = book2F(name, title, 53, m_etaBinsRoi, 65, -halfPhiBin,
-                                                       m_phiMax+halfPhiBin);
-    }
+  const double phiBin     = M_PI/32.;
+  const double halfPhiBin = M_PI/64.;
+  std::string newTitle = title + ";eta";
+  hist = (isRoi) ? book2F(name, newTitle, 51, -2.55, 2.55, 64, 0., 64.)
+                 : book2F(name, newTitle, 50, -2.5, 2.5, 64, 0., 64.);
+  for (int chan = 0; chan < 64; chan += 4 ) {
+    const double rad = (isRoi) ? (chan + 1)*phiBin : chan*phiBin + halfPhiBin;
+    std::ostringstream cnum;
+    cnum << chan << "/"
+         << std::setiosflags(std::ios::fixed | std::ios::showpoint)
+         << std::setprecision(2) << rad;
+    hist->GetYaxis()->SetBinLabel(chan+1, cnum.str().c_str());
   }
+  hist->GetYaxis()->SetBinLabel(64, "phi");
   return hist;
 }
 
@@ -1184,7 +1144,7 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
     const int bit = (1 << RoIMismatch);
     const LVL1::CoordinateRange coord(decoder.coordinate(roi->roiWord()));
     const double eta = coord.eta();
-    const double phi = coord.phi() * m_phiScale;
+    const double phi = coord.phi() * m_phiScale - 0.5;
 
     TH2F* hist1 = 0;
     TH2F* hist2 = 0;

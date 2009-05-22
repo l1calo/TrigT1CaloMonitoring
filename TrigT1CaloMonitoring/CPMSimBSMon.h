@@ -142,6 +142,7 @@ private:
   bool m_debug;
 
   MonGroup* m_monGroup;
+  /// Root directory
   std::string m_rootDir;
 
   /// CPM core tower container StoreGate key
@@ -154,26 +155,13 @@ private:
   std::string m_cmmCpHitsLocation;
   /// CPM RoI container StoreGate key
   std::string m_cpmRoiLocation;
-  /// CPM RoIB container StoreGate key
-  std::string m_cpmRoiLocationRoib;
   /// Trigger Tower container StoreGate key
   std::string m_triggerTowerLocation;
   /// ROD header container StoreGate key
   std::string m_rodHeaderLocation;
-  /// RoIB ROD header container StoreGate key
-  std::string m_rodHeaderLocationRoib;
 
-  /// Phi Units for eta/phi plots
-  std::string m_phiUnits;
-  /// Phi maximum in wanted units
-  double m_phiMax;
-  /// Phi scale to convert from radians to wanted units
+  /// Phi scale to convert from radians to histogram units
   double m_phiScale;
-  /// Eta Range flag
-  bool m_fullEtaRange;
-  /// Eta bins for full eta range
-  double* m_etaBins;
-  double* m_etaBinsRoi;
   /// Number of events
   int m_events;
   /// Simulation allowed flag

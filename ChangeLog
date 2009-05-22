@@ -1,3 +1,8 @@
+2009-05-22  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-05-00
+        * CP and ROD monitoring changed to new histogram directory
+          structure and naming convention.
+
 2009-05-13  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-04-18
         * Add properties to specify simulation tools in joboptions
