@@ -1,30 +1,30 @@
 Offline= not athenaCommonFlags.isOnline
 CompareWithSimulation=False
 if (globalflags.DataSource() == "data") :
-  CompareWithSimulation=True
-
+    CompareWithSimulation=True
+    
 #MaxEnergyRange is set individually
 
 #================================= TriggerMenu ===================================
 #if not ATLASCosmicFlags.doCTPMon:
 from AthenaCommon.AppMgr import ServiceMgr as svcMgr
-if hasattr(svcMgr,"LVL1ConfigSvc"):
-    log.info("ServiceMgr already includes LVL1ConfigSvc")
-else:
-    log.info("will setup LVL1ConfigSvc and add instance to ServiceMgr")
-    from TrigConfigSvc.TrigConfigSvcConfig import LVL1ConfigSvc
-    LVL1ConfigSvc = LVL1ConfigSvc('LVL1ConfigSvc')
-    svcMgr += LVL1ConfigSvc
-    svcMgr.LVL1ConfigSvc.ConfigSource = "XML"
-    from TriggerJobOpts.TriggerFlags import TriggerFlags as tf  
-    #tf.inputLVL1configFile = "LVL1config_SingleBeam_v1_7-bit_trigger_types_20080905.xml"
-    tf.inputLVL1configFile = "LVL1config_SingleBeam_v1_7-bit_trigger_types.xml"
-    svcMgr.LVL1ConfigSvc.XMLFile = tf.inputLVL1configFile()
-    svcMgr.LVL1ConfigSvc.CreateLegacyObjects = True
-    svcMgr.LVL1ConfigSvc.DumpTTVmap = False
-    # LVL1ConfigSvc.OutputLevel = VERBOSE
-    
-    theApp.CreateSvc += [ "TrigConf::LVL1ConfigSvc/LVL1ConfigSvc" ]
+#if hasattr(svcMgr,"LVL1ConfigSvc"):
+#    log.info("ServiceMgr already includes LVL1ConfigSvc")
+#else:
+#    log.warning( "Did not find a configured LVL1 configuration service!" )
+#    log.info("will setup LVL1ConfigSvc and add instance to ServiceMgr")
+#    from TrigConfigSvc.TrigConfigSvcConfig import LVL1ConfigSvc
+#    LVL1ConfigSvc = LVL1ConfigSvc('LVL1ConfigSvc')
+#    svcMgr += LVL1ConfigSvc
+#    svcMgr.LVL1ConfigSvc.ConfigSource = "XML"
+#    from TriggerJobOpts.TriggerFlags import TriggerFlags as tf  
+#    #tf.inputLVL1configFile = "LVL1config_SingleBeam_v1_7-bit_trigger_types_20080905.xml"
+#    tf.inputLVL1configFile = "LVL1config_SingleBeam_v1_7-bit_trigger_types.xml"
+#    svcMgr.LVL1ConfigSvc.XMLFile = tf.inputLVL1configFile()
+#    svcMgr.LVL1ConfigSvc.CreateLegacyObjects = True
+#    svcMgr.LVL1ConfigSvc.DumpTTVmap = False
+#    # LVL1ConfigSvc.OutputLevel = VERBOSE
+#    theApp.CreateSvc += [ "TrigConf::LVL1ConfigSvc/LVL1ConfigSvc" ]
 
 if globalflags.DataSource() == "data":
   #================================= L1Calo-Simulation =============================
@@ -157,16 +157,20 @@ if globalflags.DataSource() == "data":
 
   from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1JEPHitsTools
   L1JEPHitsTools = LVL1__L1JEPHitsTools("L1JEPHitsTools_Mon")
+  L1JEPHitsTools.LVL1ConfigSvc="TrigConf::TrigConfigSvc/TrigConfigSvc"
   ToolSvc += L1JEPHitsTools
   from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1JetTools
   L1JetTools = LVL1__L1JetTools("L1JetTools_Mon")
+  L1JetTools.LVL1ConfigSvc="TrigConf::TrigConfigSvc/TrigConfigSvc"
   ToolSvc += L1JetTools
   from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1EtTools
   L1EtTools = LVL1__L1EtTools("L1EtTools_Mon")
+  L1EtTools.LVL1ConfigSvc="TrigConf::TrigConfigSvc/TrigConfigSvc"
   ToolSvc += L1EtTools
   from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1JEPEtSumsTools
   L1JEPEtSumsTools = LVL1__L1JEPEtSumsTools("L1JEPEtSumsTools_Mon",
-                               EtTool = "LVL1::L1EtTools/L1EtTools_Mon")
+                                            EtTool = "LVL1::L1EtTools/L1EtTools_Mon")
+  L1JEPEtSumsTools.LVL1ConfigSvc="TrigConf::TrigConfigSvc/TrigConfigSvc"
   ToolSvc += L1JEPEtSumsTools
 
 #=================================================================================
@@ -189,8 +193,8 @@ L1CaloMan.AthenaMonTools += [ L1BSCPMMonTool ]
 
 from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import CPMSimBSMon
 CPMSimBSMonTool = CPMSimBSMon("CPMSimBSMonTool",
-                  EmTauTool = "LVL1::L1EmTauTools/L1EmTauTools_Mon",
-                  CompareWithSimulation = CompareWithSimulation)
+                              EmTauTool = "LVL1::L1EmTauTools/L1EmTauTools_Mon",
+                              CompareWithSimulation = CompareWithSimulation)
 ToolSvc += CPMSimBSMonTool
 L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
 #ToolSvc.CPMSimBSMonTool.IgnoreTowersEM  = [ 1890,              #LUT readout
@@ -200,6 +204,7 @@ L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
 
 from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1EmTauTools
 L1EmTauTools = LVL1__L1EmTauTools("L1EmTauTools_Mon")
+L1EmTauTools.LVL1ConfigSvc="TrigConf::TrigConfigSvc/TrigConfigSvc"
 ToolSvc += L1EmTauTools
 
 #=================================================================================

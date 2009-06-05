@@ -1,3 +1,7 @@
+2009-06-05 Joerg Stelzer <stelzer@cern.ch>
+	* Removed explicit usage of LVL1ConfigSvc in share/TrigT1CaloMonitoring_forRecExCommissioning.py
+	* TrigT1CaloMonitoring-00-05-00
+
 2009-05-22  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-05-00
         * CP and ROD monitoring changed to new histogram directory
