@@ -8,6 +8,7 @@
 //
 // ********************************************************************
 
+#include <iomanip>
 #include <sstream>
 #include <utility>
 #include <cmath>
@@ -729,8 +730,7 @@ StatusCode CPMSimBSMon::fillHistograms()
 
   // Update error summary plots
 
-  const int hwOffset = 8;
-  std::vector<int> crateErr(14);
+  ErrorVector crateErr(nCrates);
   const int cpmBins = nCrates * nCPMs;
   const int cmmBins = nCrates * nCMMs;
   m_eventNumber = -1;
@@ -743,7 +743,7 @@ StatusCode CPMSimBSMon::fillHistograms()
       if ((errorsCPM[loc + cpmBins] >> err) & 0x1) {
         m_h_CPneSIM->Fill(loc, err, 1.);
 	error = 1;
-	crateErr[loc/nCPMs + hwOffset] |= (1 << err);
+	crateErr[loc/nCPMs] |= (1 << err);
 	fillEventSample(err, loc, true);
       }
       if (loc < cmmBins) {
@@ -753,7 +753,7 @@ StatusCode CPMSimBSMon::fillHistograms()
         if ((errorsCMM[loc + cmmBins] >> err) & 0x1) {
           m_h_CPneSIM->Fill(loc+cpmBins, err, 1.);
 	  error = 1;
-	  crateErr[loc/nCMMs + hwOffset] |= (1 << err);
+	  crateErr[loc/nCMMs] |= (1 << err);
 	  fillEventSample(err, loc, false);
         }
       }
@@ -763,10 +763,10 @@ StatusCode CPMSimBSMon::fillHistograms()
 
   // Save error vector for global summary
 
-  std::vector<int>* save = new std::vector<int>(crateErr);
+  ErrorVector* save = new ErrorVector(crateErr);
   sc = m_storeGate->record(save, "L1CaloCPMMismatchVector");
   if (sc != StatusCode::SUCCESS) {
-    m_log << MSG::ERROR << "Error recording CPM mismatch vector in TDS "
+    m_log << MSG::ERROR << "Error recording CPM mismatch vector in TES "
           << endreq;
     return sc;
   }

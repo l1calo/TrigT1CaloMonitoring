@@ -73,6 +73,7 @@
 #include "StoreGate/StoreGateSvc.h"
 #include "GaudiKernel/AlgFactory.h"
 #include "GaudiKernel/IToolSvc.h"
+#include "SGTools/StlVectorClids.h"
 
 #include <TROOT.h>
 #include <TColor.h> 
@@ -494,6 +495,9 @@ StatusCode JEPTransPerfMon::fillHistograms()
  
   m_NoEvents++;
 
+  // Error vector for global overview
+  std::vector<int> overview(2);
+
   // =============================================================================================
   // ================= TriggerTowers -> JetElements ==============================================
   // =============================================================================================
@@ -556,7 +560,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
     
     for (int j=0; j<m_NoLUTSlices; j++)  //Slice number of TT_TS (overwritten by joboptions)
       {
-	TimeSliceMatch(k, j, TT_jetElements, i, jetElements, &mLog);
+	TimeSliceMatch(k, j, TT_jetElements, i, jetElements, overview, &mLog);
 	k++;
       }
   }
@@ -655,6 +659,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		      noMatchfound=1;
 		    }
 		  m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMHits)->crate()*19+(*it_BS_JEMHits)->module()+1),noMatchfound);
+		  overview[(*it_BS_JEMHits)->crate()] |= (noMatchfound << 2);
 		  
 		  it_BS_JEMHits=vBS_JEMHits.erase(it_BS_JEMHits);
 		  it_Sim_JEMHits=vSim_JEMHits.erase(it_Sim_JEMHits);
@@ -674,7 +679,10 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::DEBUG<<"BS: Crate "<<(*it_BS_JEMHits)->crate()<<" Module "<<(*it_BS_JEMHits)->module()<<endreq;
 	      mLog<<MSG::VERBOSE<<"BS: Hits "<<Help.Binary((*it_BS_JEMHits)->JetHits(),24)<<endreq;
 	      
-	      if ((*it_BS_JEMHits)->JetHits()!=0) m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMHits)->crate()*19+(*it_BS_JEMHits)->module()+1),1);	    
+	      if ((*it_BS_JEMHits)->JetHits()!=0) {
+              m_h_SimBSMon_JEP->Fill(3,((*it_BS_JEMHits)->crate()*19+(*it_BS_JEMHits)->module()+1),1);	    
+              overview[(*it_BS_JEMHits)->crate()] |= (1 << 2);
+	      }
 	    }
 	}
       
@@ -691,6 +699,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      
 	      if ((*it_Sim_JEMHits)->JetHits()!=0) {
 	      m_h_SimBSMon_JEP->Fill(3,((*it_Sim_JEMHits)->crate()*19+(*it_Sim_JEMHits)->module()+1),1);	    
+	      overview[(*it_Sim_JEMHits)->crate()] |= (1 << 2);
 	      }
 	    }
 	}
@@ -793,6 +802,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 			}
 
 		      m_h_SimBSMon_JEP->Fill(1,(*it_BS_JEMEtSums)->crate()*19 + ((*it_BS_JEMEtSums)->module()+1),noMatchfound1);
+		      overview[(*it_BS_JEMEtSums)->crate()] |= (noMatchfound1 << 3);
 
 		      if ((*it_BS_JEMEtSums)->Et()!=(*it_Sim_JEMEtSums)->Et())
 			{
@@ -806,6 +816,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 
    		  
 		     m_h_SimBSMon_JEP->Fill(2,(*it_BS_JEMEtSums)->crate()*19 + ((*it_BS_JEMEtSums)->module()+1),noMatchfound2);
+		     overview[(*it_BS_JEMEtSums)->crate()] |= (noMatchfound2 << 3);
 		  	  
 		  it_BS_JEMEtSums=vBS_JEMEtSums.erase(it_BS_JEMEtSums);
 		  it_Sim_JEMEtSums=vSim_JEMEtSums.erase(it_Sim_JEMEtSums);
@@ -830,6 +841,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      //fill both error bins as additional data was found for all energies
 	      m_h_SimBSMon_JEP->Fill(1,(*it_BS_JEMEtSums)->crate()*19 + ((*it_BS_JEMEtSums)->module()+1),1);	  
 	      m_h_SimBSMon_JEP->Fill(2,(*it_BS_JEMEtSums)->crate()*19 + ((*it_BS_JEMEtSums)->module()+1),1); 
+             overview[(*it_BS_JEMEtSums)->crate()] |= (1 << 3);
 	    }
 	}
       
@@ -851,6 +863,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		{
 	      m_h_SimBSMon_JEP->Fill(1,(*it_Sim_JEMEtSums)->crate()*19 + ((*it_Sim_JEMEtSums)->module()+1),1);
 	      m_h_SimBSMon_JEP->Fill(2,(*it_Sim_JEMEtSums)->crate()*19 + ((*it_Sim_JEMEtSums)->module()+1),1);
+              overview[(*it_Sim_JEMEtSums)->crate()] |= (1 << 3);
 		}
 	    }
 	}
@@ -960,6 +973,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      // if a match is found, a "0" is entered (just to see that the histogram is filled
 	      // since there hopefully are only zeros in there)
 	      m_h_TransCheck_JEP->Fill(1,(*it_vJEMHits)->crate()*19+(*it_vJEMHits)->module()+1,noMatchfound);
+	      overview[(*it_vJEMHits)->crate()] |= (noMatchfound << 4);
 	      
 	      it_vCMMJEMHits=vCMMJEMHits.erase(it_vCMMJEMHits);
 	      it_vJEMHits=vJEMHits.erase(it_vJEMHits);
@@ -983,8 +997,11 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  mLog<<MSG::VERBOSE<<"Hit "<<Help.Binary((*it_vCMMJEMHits)->Hits(),24)<<endreq;
 	  
 	  
-	  if ((*it_vCMMJEMHits)->Hits()>0) m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits)->crate()*19+(*it_vCMMJEMHits)->dataID()+1,1);
-	  
+	  if ((*it_vCMMJEMHits)->Hits()>0)
+	    {
+	      m_h_TransCheck_JEP->Fill(1,(*it_vCMMJEMHits)->crate()*19+(*it_vCMMJEMHits)->dataID()+1,1);
+	      overview[(*it_vCMMJEMHits)->crate()] |= (1 << 4);
+	    }
 	}
     }
   
@@ -1000,7 +1017,8 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  if ((*it_vJEMHits)->JetHits()>0) 
 	    {
 	      m_h_TransCheck_JEP->Fill(1,(*it_vJEMHits)->crate()*19+(*it_vJEMHits)->module()+1,1);
-	          }
+	      overview[(*it_vJEMHits)->crate()] |= (1 << 4);
+	    }
 	}
     }
 
@@ -1084,6 +1102,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		      noMatchfound=1;
 		    }
 		  m_h_SimBSMon_JEP->Fill(3,((*it_BS_CMMJetHits)->crate()*19+16+1),noMatchfound);
+		  overview[(*it_BS_CMMJetHits)->crate()] |= (noMatchfound << 5);
 		  
 		  it_BS_CMMJetHits=vBS_CMMJetHits.erase(it_BS_CMMJetHits);
 		  it_Sim_CMMJetHits=vSim_CMMJetHits.erase(it_Sim_CMMJetHits);
@@ -1104,6 +1123,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::VERBOSE<<"BS: Hits"<<Help.Binary((*it_BS_CMMJetHits)->Hits(),24)<<endreq;
 	      
 	      m_h_SimBSMon_JEP->Fill(3,((*it_BS_CMMJetHits)->crate()*19+16+1),1);
+              overview[(*it_BS_CMMJetHits)->crate()] |= (1 << 5);
 	    }
 	}
       
@@ -1121,6 +1141,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      if((*it_Sim_CMMJetHits)->Hits()!=0) 
 		{
 		  m_h_SimBSMon_JEP->Fill(3,((*it_Sim_CMMJetHits)->crate()*19+16+1),1);
+                  overview[(*it_Sim_CMMJetHits)->crate()] |= (1 << 5);
 		}
 	    }
 	}
@@ -1236,6 +1257,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      // since there hopefully are only zeros in there)
 	      
 	      m_h_TransCheck_JEP->Fill(2,((*it_vJEMEtSums)->crate()*19+(*it_vJEMEtSums)->module() + 1),noMatchfound);
+	      overview[(*it_vJEMEtSums)->crate()] |= (noMatchfound << 6);
 	      
 	      it_vCMMJEMEtSums=vCMMJEMEtSums.erase(it_vCMMJEMEtSums);
 	      it_vJEMEtSums=vJEMEtSums.erase(it_vJEMEtSums);
@@ -1257,8 +1279,12 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  mLog<<MSG::VERBOSE<<"CMM Ey "<<(*it_vCMMJEMEtSums)->Ey()<<endreq;
 	  mLog<<MSG::VERBOSE<<"CMM Et "<<(*it_vCMMJEMEtSums)->Et()<<endreq;
 	  
-	  if ((*it_vCMMJEMEtSums)->Ex()!=0 or (*it_vCMMJEMEtSums)->Ey()!=0 or (*it_vCMMJEMEtSums)->Et()!=0) m_h_TransCheck_JEP->Fill(2,(*it_vCMMJEMEtSums)->crate()*19+(*it_vCMMJEMEtSums)->dataID() + 1,1);
-	  	}
+	  if ((*it_vCMMJEMEtSums)->Ex()!=0 or (*it_vCMMJEMEtSums)->Ey()!=0 or (*it_vCMMJEMEtSums)->Et()!=0)
+	    {
+	      m_h_TransCheck_JEP->Fill(2,(*it_vCMMJEMEtSums)->crate()*19+(*it_vCMMJEMEtSums)->dataID() + 1,1);
+	      overview[(*it_vCMMJEMEtSums)->crate()] |= (1 << 6);
+	    }
+  	}
     }
   
   // if the JEMEtSums vector isn't empty, fill the error counter!
@@ -1273,6 +1299,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	  mLog<<MSG::VERBOSE<<"JEM Et "<<(*it_vJEMEtSums)->Et()<<endreq;
 	  
 	  m_h_TransCheck_JEP->Fill(2,(*it_vJEMEtSums)->crate()*19+(*it_vJEMEtSums)->module() + 1,1);
+	  overview[(*it_vJEMEtSums)->crate()] |= (1 << 6);
 	  	}
     }
   
@@ -1366,6 +1393,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		      noMatchfound1=1;    
 		    }
 		  m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,noMatchfound1);
+		  overview[(*it_BS_CMMEtSums)->crate()] |= (noMatchfound1 << 7);
 
 		  if((*it_BS_CMMEtSums)->Et()!=(*it_Sim_CMMEtSums)->Et())
 		    {
@@ -1376,6 +1404,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		      noMatchfound2=1;
 		    }    
 		  m_h_SimBSMon_JEP->Fill(2,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,noMatchfound2);
+		  overview[(*it_BS_CMMEtSums)->crate()] |= (noMatchfound2 << 7);
 		  
 
 		  it_BS_CMMEtSums=vBS_CMMEtSums.erase(it_BS_CMMEtSums);
@@ -1402,6 +1431,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		{
 		 m_h_SimBSMon_JEP->Fill(1,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,1);
 	         m_h_SimBSMon_JEP->Fill(2,(*it_BS_CMMEtSums)->crate()*19 + 16 + 1,1);
+		 overview[(*it_BS_CMMEtSums)->crate()] |= (1 << 7);
 	    	}
 	}
       
@@ -1424,6 +1454,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      
 		  m_h_SimBSMon_JEP->Fill(1,(*it_Sim_CMMEtSums)->crate()*19 + 16 + 1,1);
 		  m_h_SimBSMon_JEP->Fill(2,(*it_Sim_CMMEtSums)->crate()*19 + 16 + 1,1);
+		  overview[(*it_Sim_CMMEtSums)->crate()] |= (1 << 7);
 		}
 	     }
          }
@@ -1450,6 +1481,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
       mLog<<MSG::DEBUG<<"CMMJetHits: Transmission error between crate and system CMM"<<endreq;
     }
   m_h_TransCheck_JEP->Fill(1,17,noMatchfound);
+  overview[0] |= (noMatchfound << 8);
 
 
   // ---------------------------------------------------------------------------------------------
@@ -1481,6 +1513,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
     }
 
   m_h_TransCheck_JEP->Fill(2,17,noMatchfound);
+  overview[0] |= (noMatchfound << 9);
 
 
   // ---------------------------------------------------------------------------------------------
@@ -1587,6 +1620,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 		      noMatchfound=1;
 		    }
 		  m_h_SimBSMon_JEP->Fill(4,((*it_BS_JEMRoI)->crate()*19+(*it_BS_JEMRoI)->jem()+1),noMatchfound);
+		  overview[(*it_BS_JEMRoI)->crate()] |= (noMatchfound << 10);
 		  
 		  it_BS_JEMRoI=vBS_JEMRoI.erase(it_BS_JEMRoI);
 		  it_Sim_JEMRoI=vSim_JEMRoI.erase(it_Sim_JEMRoI);
@@ -1607,6 +1641,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      mLog<<MSG::VERBOSE<<"BS: RoI "<<Help.Binary((*it_BS_JEMRoI)->hits(),24)<<endreq;
 	      
 	      m_h_SimBSMon_JEP->Fill(4,((*it_BS_JEMRoI)->crate()*19+(*it_BS_JEMRoI)->jem()+1),1);
+              overview[(*it_BS_JEMRoI)->crate()] |= (1 << 10);
 	    }
 	}
       
@@ -1624,6 +1659,7 @@ StatusCode JEPTransPerfMon::fillHistograms()
 	      if( (*it_Sim_JEMRoI)->hits()!=0) 
 		{
 		  m_h_SimBSMon_JEP->Fill(4,((*it_Sim_JEMRoI)->crate()*19+(*it_Sim_JEMRoI)->jem()+1),1);
+                  overview[(*it_Sim_JEMRoI)->crate()] |= (1 << 10);
 		}
 	    }
 	}
@@ -1749,9 +1785,20 @@ StatusCode JEPTransPerfMon::fillHistograms()
      
      
       m_h_SimBSMon_JEP->Fill(4,(19+16+1),noMatchfound);
+      overview[1] |= (noMatchfound << 11);
     
       delete Sim_JetEt;
       delete Sim_Et;
+    }
+
+  // Write overview vector to StoreGate
+  std::vector<int>* save = new std::vector<int>(overview);
+  sc = m_storeGate->record(save, "L1CaloJEMMismatchVector");
+  if (sc != StatusCode::SUCCESS)
+    {
+      mLog << MSG::ERROR << "Error recording JEM mismatch vector in TES "
+           << endreq;
+      return sc;
     }
 
   return StatusCode( StatusCode::SUCCESS );
@@ -1810,7 +1857,7 @@ StatusCode JEPTransPerfMon::procHistograms( bool isEndOfEventsBlock,
 //---------------------------Functionality: Trigger Towers -> JetElements-----------------
 
 /*---------------------------------------------------------*/
-void JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_jetElements, int JE_TS, const JECollection* jetElements, MsgStream::MsgStream* mLog)
+void JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_jetElements, int JE_TS, const JECollection* jetElements, std::vector<int>& overview, MsgStream::MsgStream* mLog)
 /*---------------------------------------------------------*/
 {
 
@@ -1884,6 +1931,8 @@ void JEPTransPerfMon::TimeSliceMatch(int k, int TT_TS, const JECollection* TT_je
 	
       m_h_TransCheck_emJetElements->Fill(k,(crate*18+module+1),em_NoJEMatchFound);
       m_h_TransCheck_hadJetElements->Fill(k,(crate*18+module+1),had_NoJEMatchFound);
+      overview[crate] |= em_NoJEMatchFound;
+      overview[crate] |= (had_NoJEMatchFound << 1);
 
  
  *mLog <<MSG::VERBOSE<<em_NoJEMatchFound<<" and "<<had_NoJEMatchFound<<endreq;

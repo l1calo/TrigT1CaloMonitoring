@@ -10,12 +10,14 @@
 // ********************************************************************
 
 #include <sstream>
+#include <vector>
 
 #include "GaudiKernel/IJobOptionsSvc.h"
 #include "GaudiKernel/MsgStream.h"
 #include "StoreGate/StoreGateSvc.h"
 #include "GaudiKernel/AlgFactory.h"
 #include "GaudiKernel/IToolSvc.h"
+#include "SGTools/StlVectorClids.h"
 
 #include <TROOT.h>
 #include <TColor.h> 
@@ -344,6 +346,9 @@ StatusCode JEMMon::fillHistograms()
   Helper Help;
   m_NoEvents++;
 
+  // Error vector for global overview
+  std::vector<int> overview(2);
+
   // =============================================================================================
   // ================= Container: JetElements ====================================================
   // =============================================================================================
@@ -453,9 +458,14 @@ StatusCode JEMMon::fillHistograms()
 	  m_h_JEM_ErrorSummary->Fill(1,haderr.get(1));
 	  m_h_JEM_ErrorSummary->Fill(1,err.get(2));
 	  m_h_JEM_ErrorSummary->Fill(1,haderr.get(2));
+	  overview[crate] |= err.get(1);
+	  overview[crate] |= (haderr.get(1) << 1);
+	  overview[crate] |= (err.get(2)    << 2);
+	  overview[crate] |= (haderr.get(2) << 3);
 	 //Errors from substatus word from ROD: JEM
 	  if (err.get(16)!=0 or err.get(17)!=0 or err.get(18)!=0 or err.get(19)!=0 or err.get(20)!=0 or err.get(22)!=0 or err.get(23)!=0 ) {
-	  m_h_JEM_ErrorSummary->Fill(2, 1);
+	    m_h_JEM_ErrorSummary->Fill(2, 1);
+	    overview[crate] |= (1 << 4);
 	  }
 	 
 	  
@@ -721,11 +731,22 @@ StatusCode JEMMon::fillHistograms()
 	//Filling the Error Summary histogram
 	 //Jet errors 
 	  m_h_JEM_ErrorSummary->Fill(3,err.get(1));
+	  overview[crate] |= (err.get(1) << 5);
 	
 	}     	
  
 
       
+    }
+
+  // Write overview vector to StoreGate
+  std::vector<int>* save = new std::vector<int>(overview);
+  sc = m_storeGate->record(save, "L1CaloJEMErrorVector");
+  if (sc != StatusCode::SUCCESS)
+    {
+      mLog << MSG::ERROR << "Error recording JEM error vector in TES "
+           << endreq;
+      return sc;
     }
 
   mLog<<MSG::DEBUG<<"--------------------------------------"<<endreq;

@@ -12,6 +12,7 @@
 #include "GaudiKernel/ITHistSvc.h"
 #include "GaudiKernel/ISvcLocator.h"
 #include "GaudiKernel/IToolSvc.h"
+#include "SGTools/StlVectorClids.h"
 
 #include <TH1D.h>
 #include <TH2D.h>
@@ -536,6 +537,9 @@ StatusCode PPrMon::fillHistograms()
   m_NoEvents++;
 
   log << MSG::DEBUG << "in fillHistograms()" << endreq;
+
+  // Error vector for global overview
+  std::vector<int> overview(8);
   
   //Retrieve TriggerTowers from SG
   const TriggerTowerCollection* TriggerTowerTES = 0; 
@@ -755,6 +759,7 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
       // GLinkTimeout
       m_h_TT_Error->Fill(6,emerr.get(23));
       
+
       // em signals Crate 0-3
       //em+had FCAL signals get processed in one crate (Crates 4-7)
 
@@ -835,6 +840,11 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 
 	}
 
+      if (emerr.get(4) || emerr.get(5)) overview[crate] |= 1;
+      for (int i = 6; i < 12; ++i) overview[crate] |= (emerr.get(i) << 1);
+      for (int i = 16; i < 24; ++i) {
+        if (i != 21) overview[crate] |= (emerr.get(i) << 2);
+      }
 
     
      LVL1::DataError haderr((*TriggerTowerIterator)-> hadError());
@@ -907,6 +917,12 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
       m_h_TT_error_Crate_47->Fill(5,(module-4)+((crate-4)*18),haderr.get(22));
       // GLinkTimeout
       m_h_TT_error_Crate_47->Fill(6,(module-4)+((crate-4)*18),haderr.get(23));
+
+      if (haderr.get(4) || haderr.get(5)) overview[crate] |= 1;
+      for (int i = 6; i < 12; ++i) overview[crate] |= (haderr.get(i) << 1);
+      for (int i = 16; i < 24; ++i) {
+        if (i != 21) overview[crate] |= (haderr.get(i) << 2);
+      }
       
      
       // number of triggered slice
@@ -919,6 +935,16 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 
 	}	     
 	     
+  // Write overview vector to StoreGate
+  std::vector<int>* save = new std::vector<int>(overview);
+  sc = m_storeGate->record(save, "L1CaloPPMErrorVector");
+  if (sc != StatusCode::SUCCESS)
+    {
+      log << MSG::ERROR << "Error recording PPM error vector in TES "
+          << endreq;
+      return sc;
+    }
+
   
   return StatusCode( StatusCode::SUCCESS );
 }

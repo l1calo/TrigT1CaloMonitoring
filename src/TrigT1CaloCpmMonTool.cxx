@@ -747,21 +747,20 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 
   // Update error summary plot
 
-  const int hwOffset = 8;
-  std::vector<int> crateErr(14);
+  std::vector<int> crateErr(4);
   for (int err = 0; err < NumberOfSummaryBins; ++err) {
     int error = 0;
     for (int loc = 0; loc < s_crates*s_modules; ++loc) {
       if ((errorsCPM[loc] >> err) & 0x1) {
         m_h_CP_overview->Fill(loc, err, 1.);
 	error = 1;
-	crateErr[loc/s_modules + hwOffset] |= (1 << err);
+	crateErr[loc/s_modules] |= (1 << err);
       }
       if (loc < s_crates*2) {
         if ((errorsCMM[loc] >> err) & 0x1) {
           m_h_CP_overview->Fill(loc+s_crates*s_modules, err, 1.);
 	  error = 1;
-	  crateErr[loc/2 + hwOffset] |= (1 << err);
+	  crateErr[loc/2] |= (1 << err);
         }
       }
     }
@@ -774,7 +773,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
   std::vector<int>* save = new std::vector<int>(crateErr);
   sc = m_storeGate->record(save, "L1CaloCPMErrorVector");
   if (sc != StatusCode::SUCCESS) {
-    m_log << MSG::ERROR << "Error recording CPM error vector in TDS " << endreq;
+    m_log << MSG::ERROR << "Error recording CPM error vector in TES " << endreq;
     return sc;
   }
 

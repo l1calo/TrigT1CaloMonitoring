@@ -10,12 +10,14 @@
 // ********************************************************************
 
 #include <sstream>
+#include <vector>
 
 #include "GaudiKernel/IJobOptionsSvc.h"
 #include "GaudiKernel/MsgStream.h"
 #include "StoreGate/StoreGateSvc.h"
 #include "GaudiKernel/AlgFactory.h"
 #include "GaudiKernel/IToolSvc.h"
+#include "SGTools/StlVectorClids.h"
 
 #include <TROOT.h>
 #include <TColor.h> 
@@ -252,6 +254,9 @@ StatusCode CMMMon::fillHistograms()
   Helper Help;
   m_NoEvents++;
 
+  // Error vector for global overview
+  std::vector<int> overview(2);
+
   // =============================================================================================
   // ================= Container: CMM Jet Hits ===================================================
   // =============================================================================================
@@ -324,6 +329,7 @@ StatusCode CMMMon::fillHistograms()
 	  (err.get(23)==1))
 	     {
 	     m_h_CMM_ErrorSummary->Fill(1,1);
+	     overview[crate] |= 1;
 	     }
 	  	  
 	  if (module<16)
@@ -331,6 +337,7 @@ StatusCode CMMMon::fillHistograms()
 	      // Parity
 	      m_h_CMMJet_error->Fill(1,(crate*19 + 1 + module),err.get(1));
 	      m_h_CMM_ErrorSummary->Fill(2,err.get(1));
+	      overview[crate] |= (err.get(1) << 1);
 	     
 	    }
 	  
@@ -341,6 +348,7 @@ StatusCode CMMMon::fillHistograms()
 	      // Parity; set only for crate CMM -> system CMM 
 	      if (crate==1) {
 	        m_h_CMM_ErrorSummary->Fill(2,err.get(1));
+	        overview[crate] |= (err.get(1) << 1);
 		m_h_CMMJet_error->Fill(1,(1 + 16),err.get(1));
 		mLog<<MSG::DEBUG<<"parity jet =16"<<err.get(1)<<endreq;
 	      }
@@ -369,6 +377,7 @@ StatusCode CMMMon::fillHistograms()
 	      // Parity
 	      m_h_CMMJet_error->Fill(1,(1 + 16),err.get(1));
 	      m_h_CMM_ErrorSummary->Fill(2,err.get(1));
+	      overview[0] |= (err.get(1) << 1);
 	      
 	    }
 	}
@@ -515,6 +524,7 @@ StatusCode CMMMon::fillHistograms()
 	      if ((exerr.get(1)==1)or(eyerr.get(1)==1)or(eterr.get(1)==1)) error=1;
 	      m_h_CMMEnergy_error->Fill(1,(crate*19 + 1 + module),error);
 	      m_h_CMM_ErrorSummary->Fill(2,error);
+	      overview[crate] |= (error << 1);
 	    }
 	  
 	  // errors from crate CMM
@@ -526,6 +536,7 @@ StatusCode CMMMon::fillHistograms()
 	      if((eterr.get(16)==1)or(eterr.get(17)==1)or(eterr.get(18)==1)or(eterr.get(19)==1)or(eterr.get(20)==1)or(eterr.get(22)==1)or(eterr.get(23)==1)or(eyerr.get(16)==1)or(eyerr.get(17)==1)or(eyerr.get(18)==1)or(eyerr.get(19)==1)or(eyerr.get(20)==1)or(eyerr.get(22)==1)or(eyerr.get(23)==1)or(exerr.get(16)==1)or(exerr.get(17)==1)or(exerr.get(18)==1)or(exerr.get(19)==1)or(exerr.get(20)==1)or(exerr.get(22)==1)or(exerr.get(23)==1))
 	      {
 	      m_h_CMM_ErrorSummary->Fill(1,1);
+	      overview[crate] |= 1;
 	      }
 	      
 	      // Parity
@@ -533,6 +544,7 @@ StatusCode CMMMon::fillHistograms()
 	      if ((exerr.get(1)==1)or(eyerr.get(1)==1)or(eterr.get(1)==1)) error=1;
 	      m_h_CMMEnergy_error->Fill(1,(crate*19 + 1 + 16),error);
 	      m_h_CMM_ErrorSummary->Fill(2,error);
+	      overview[crate] |= (error << 1);
 	      	      
 	      // GLinkParity
 	      error=0;
@@ -652,14 +664,26 @@ StatusCode CMMMon::fillHistograms()
       m_h_CMMRoI_error->Fill(8,eterr.get(0)); 
       
       //Error summary plots
-     //substatus word
+     //parity
      if ((exerr.get(1)==1)or(eyerr.get(1)==1)or(eterr.get(1)==1)) //would need also to check jetEterr.get(1) but this is still buggy
      {
        m_h_CMM_ErrorSummary->Fill(2,1);
+       overview[1] |= 0x2;
        
      }
            
     }
+
+  // Write overview vector to StoreGate
+  std::vector<int>* save = new std::vector<int>(overview);
+  sc = m_storeGate->record(save, "L1CaloJEMCMMErrorVector");
+  if (sc != StatusCode::SUCCESS)
+    {
+      mLog << MSG::ERROR << "Error recording JEM CMM error vector in TES "
+           << endreq;
+      return sc;
+    }
+
 
   return StatusCode( StatusCode::SUCCESS );
 }

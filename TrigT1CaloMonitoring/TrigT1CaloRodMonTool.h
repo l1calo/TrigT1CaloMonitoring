@@ -53,7 +53,32 @@ private:
                     Timeout, BCNMismatch, TriggerType, LimitedRoI, NoFragment,
                     NumberOfStatusBins, NoPayload = LimitedRoI };
 
-  typedef DataVector<LVL1::RODHeader>    RodHeaderCollection;
+  // Enums for global summary plot
+
+  // Hardware errors
+  enum PPMErrors { DataStatus, DataError, PPMSubStatus };
+  enum CPMErrors { CPMEMParity, CPMEMLink, CPMHadParity, CPMHadLink, CPMStatus,
+                   CPMRoIParity, CMMCPParity, CMMCPStatus };
+  enum JEMErrors { JEMEMParity, JEMHadParity, JEMEMLink, JEMHadLink, JEMStatus,
+                   JEMRoIParity };
+  enum CMMErrors { JEMCMMStatus, JEMCMMParity };
+  // Transmission/Comparison with simulation errors
+  enum CPMMismatch { EMTowerMismatch, HadTowerMismatch, CPMRoIMismatch,
+                     CPMHitsMismatch, CMMHitsMismatch, LocalSumMismatch,
+		     RemoteSumMismatch, TotalSumMismatch };
+  enum JEMMismatch { EMElementMismatch, HadElementMismatch, JEMHitsMismatch,
+                     JEMEtSumsMismatch, CMMJetHitsMismatch,
+		     CMMJetHitSumsMismatch, CMMEtSumsMismatch,
+		     CMMEtSumsSumsMismatch, RemoteJetMismatch,
+		     RemoteEnergyMismatch, JEMRoIMismatch, EtMapsMismatch };
+
+  enum GlobalErrors { PPMDataStatus, PPMDataError, SubStatus, Parity, LinkDown,
+                      RoIParity, Transmission, Simulation, CMMSubStatus,
+		      GbCMMParity, CMMTransmission, CMMSimulation,
+		      RODStatus, RODMissing, NumberOfGlobalErrors };
+
+  typedef DataVector<LVL1::RODHeader> RodHeaderCollection;
+  typedef std::vector<int>            ErrorVector;
   
   TH1F* book1F(const std::string& name, const std::string& title,
                                     int nx, double xmin, double xmax);
@@ -78,8 +103,6 @@ private:
   
   /// Root directory
   std::string m_rootDir;
-  /// Directory layout
-  int m_layout;
 
   /// Accumulated payload sizes
   std::vector<double> m_sumPayloads1;
@@ -108,10 +131,11 @@ private:
   TH2F* m_h_ROD_RoI_stat;
 
   //=======================
-  //   Summary plot
+  //   Summary plots
   //=======================
 
   TH1F* m_h_ROD_summary;
+  TH2F* m_h_global;
 
 };
 

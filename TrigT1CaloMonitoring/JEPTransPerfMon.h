@@ -12,6 +12,8 @@
 #ifndef JEPTransPerfMon_H
 #define JEPTransPerfMon_H
 
+#include <vector>
+
 #include "GaudiKernel/StatusCode.h"
 #include "CLHEP/Units/SystemOfUnits.h"
 
@@ -86,7 +88,7 @@ public:
 
 protected:
 
- void  TimeSliceMatch(int k, int TT_TS, const JECollection* TT_jetElements, int JE_TS, const JECollection* jetElements, MsgStream::MsgStream* mLog);
+ void  TimeSliceMatch(int k, int TT_TS, const JECollection* TT_jetElements, int JE_TS, const JECollection* jetElements, std::vector<int>& overview, MsgStream::MsgStream* mLog);
 
 	
    /** a handle on Store Gate for access to the Event Store */
