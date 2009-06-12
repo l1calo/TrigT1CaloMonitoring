@@ -560,7 +560,12 @@ StatusCode JEPTransPerfMon::fillHistograms()
     
     for (int j=0; j<m_NoLUTSlices; j++)  //Slice number of TT_TS (overwritten by joboptions)
       {
-	TimeSliceMatch(k, j, TT_jetElements, i, jetElements, overview, &mLog);
+        if (j == m_NoLUTSlices/2) {
+	  TimeSliceMatch(k, j, TT_jetElements, i, jetElements, overview, &mLog);
+	} else {
+	  std::vector<int> dummy(2);
+	  TimeSliceMatch(k, j, TT_jetElements, i, jetElements, dummy, &mLog);
+	}
 	k++;
       }
   }

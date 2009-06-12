@@ -1,3 +1,7 @@
+2009-06-12  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-05-03
+        * Minor fix for multiple LUT slices
+
 2009-06-09  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-05-02
         * Added Global error overview plot
