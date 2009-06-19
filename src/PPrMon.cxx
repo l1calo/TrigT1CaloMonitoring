@@ -1023,17 +1023,9 @@ double PPrMon::recTime(const std::vector<int>& vFAdc) {
   
   //cout<<"indmax: "<<indmax<<endl;
   
-  double max = 0.;
+  double max = indmax+binshift;
   
-  if(indmax==0) {
-    max=0.+binshift;
-  } 
-  
-  else if(indmax==4) {
-    max=4.+binshift;
-  }
-  
-  else {
+  if (indmax!=0 && indmax!=(int)(vFAdc.size()-1)) {
        
     x[0] = indmax - 1 + binshift;  y[0] = vFAdc[indmax-1];
     x[1] = indmax     + binshift; y[1] = vFAdc[indmax];
@@ -1049,7 +1041,7 @@ double PPrMon::recTime(const std::vector<int>& vFAdc) {
 		 (y[0]-y[2])*(x[1]*x[1]-x[2]*x[2]) ) / (
 							(x[1]-x[2])*(x[0]*x[0]-x[2]*x[2]) - (x[0]-x[2])*(x[1]*x[1]-x[2]*x[2]) );
     //double c = y[0] - b*x[0] - a*x[0]*x[0];
-    max = -b/(2*a);
+    if (a != 0.) max = -b/(2*a);
     
   }
   
