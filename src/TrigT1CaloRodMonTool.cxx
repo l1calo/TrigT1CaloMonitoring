@@ -327,16 +327,18 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
         hist = m_h_ROD_CPJEP_stat;
 	val = (pos-32)/2;
       }
-      if (header->gLinkError()) {
+      // gLinkError is actually OR'ed with cmmParityError
+      //if (header->gLinkError()) {
+      if (header->cmmParityError()) {
         hist->Fill(GLink, val);
 	errors[GLink] = 1;
 	crateErr[crate] |= (1 << GLink);
       }
-      if (header->cmmParityError()) {
-        hist->Fill(CMMParity, val);
-	errors[CMMParity] = 1;
-	crateErr[crate] |= (1 << CMMParity);
-      }
+      //if (header->cmmParityError()) {
+      //  hist->Fill(CMMParity, val);
+      //  errors[CMMParity] = 1;
+      //  crateErr[crate] |= (1 << CMMParity);
+      //}
       if (header->lvdsLinkError()) {
         hist->Fill(LVDSLink, val);
 	errors[LVDSLink] = 1;
@@ -617,7 +619,8 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   for (int crate = 0; crate < ppmCrates+cpmCrates+jemCrates; ++crate) {
     int err = crateErr[crate];
     if (err == 0) continue;
-    if (err & 0x7f) m_h_global->Fill(RODStatus, crate);
+    //if (err & 0x7f) m_h_global->Fill(RODStatus, crate);
+    if (err & 0x3f) m_h_global->Fill(RODStatus, crate);
     if (((err >> NoFragment) & 0x1) || ((err >> NoPayload) & 0x1))
                     m_h_global->Fill(RODMissing, crate);
   }
@@ -679,7 +682,7 @@ TH2F* TrigT1CaloRodMonTool::book2F(const std::string& name,
 void TrigT1CaloRodMonTool::setLabelsStatus(TH1* hist)
 {
   hist->GetXaxis()->SetBinLabel(1+GLink,         "GLinkError");
-  hist->GetXaxis()->SetBinLabel(1+CMMParity,     "CMMParityError");
+  //hist->GetXaxis()->SetBinLabel(1+CMMParity,     "CMMParityError");
   hist->GetXaxis()->SetBinLabel(1+LVDSLink,      "LVDSLinkError");
   hist->GetXaxis()->SetBinLabel(1+FIFOOverflow,  "RODFIFOOverflow");
   hist->GetXaxis()->SetBinLabel(1+DataTransport, "DataTransportError");

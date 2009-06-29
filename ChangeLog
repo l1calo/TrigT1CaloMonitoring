@@ -1,3 +1,7 @@
+2009-06-29  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-05-05
+        * Merge ROD glinkError/cmmParityError (same bit)
+
 2009-06-19  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-05-04
         * Fixes for division by zero and vector index out of range

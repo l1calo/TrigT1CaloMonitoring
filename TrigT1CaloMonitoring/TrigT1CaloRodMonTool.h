@@ -49,7 +49,7 @@ public:
 
 private:
 
-  enum StatusBits { GLink, CMMParity, LVDSLink, FIFOOverflow, DataTransport,
+  enum StatusBits { GLink, /*CMMParity,*/ LVDSLink, FIFOOverflow, DataTransport,
                     Timeout, BCNMismatch, TriggerType, LimitedRoI, NoFragment,
                     NumberOfStatusBins, NoPayload = LimitedRoI };
 
