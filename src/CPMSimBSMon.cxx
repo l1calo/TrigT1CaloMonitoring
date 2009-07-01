@@ -1170,10 +1170,11 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
 
     for (int thr = 0; thr < 16; ++thr) {
       if ( !((m_roiMask >> thr) & 0x1) ) continue;
-      if (((datHits >> thr) & 0x1) == ((simHits >> thr) & 0x1)) {
-        m_h_RoIThreshSIMeqDAT->Fill(locX, thr);
-      } else {
-        m_h_RoIThreshSIMneDAT->Fill(locX, thr);
+      const int thrDat = (datHits >> thr) & 0x1;
+      const int thrSim = (simHits >> thr) & 0x1;
+      if (thrDat || thrSim) {
+        if (thrDat == thrSim) m_h_RoIThreshSIMeqDAT->Fill(locX, thr);
+        else                  m_h_RoIThreshSIMneDAT->Fill(locX, thr);
       }
     }
 
@@ -1298,10 +1299,14 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
       const unsigned int d1 = (datHits1 >> shift) & thrMask;
       const unsigned int s0 = (simHits0 >> shift) & thrMask;
       const unsigned int s1 = (simHits1 >> shift) & thrMask;
-      if (d0 == s0) m_h_CPMHitsThreshSIMeqDAT->Fill(loc, thr);
-      else          m_h_CPMHitsThreshSIMneDAT->Fill(loc, thr);
-      if (d1 == s1) m_h_CPMHitsThreshSIMeqDAT->Fill(loc, thr2);
-      else          m_h_CPMHitsThreshSIMneDAT->Fill(loc, thr2);
+      if (d0 || s0) {
+        if (d0 == s0) m_h_CPMHitsThreshSIMeqDAT->Fill(loc, thr);
+        else          m_h_CPMHitsThreshSIMneDAT->Fill(loc, thr);
+      }
+      if (d1 || s1) {
+        if (d1 == s1) m_h_CPMHitsThreshSIMeqDAT->Fill(loc, thr2);
+        else          m_h_CPMHitsThreshSIMneDAT->Fill(loc, thr2);
+      }
     }
   }
 }
@@ -1424,10 +1429,14 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
       const unsigned int d1 = (cmmHits1 >> shift) & thrMask;
       const unsigned int s0 = (cpmHits0 >> shift) & thrMask;
       const unsigned int s1 = (cpmHits1 >> shift) & thrMask;
-      if (d0 == s0) m_h_CMMHitsThreshSIMeqDAT->Fill(loc, thr);
-      else          m_h_CMMHitsThreshSIMneDAT->Fill(loc, thr);
-      if (d1 == s1) m_h_CMMHitsThreshSIMeqDAT->Fill(loc, thr2);
-      else          m_h_CMMHitsThreshSIMneDAT->Fill(loc, thr2);
+      if (d0 || s0) {
+        if (d0 == s0) m_h_CMMHitsThreshSIMeqDAT->Fill(loc, thr);
+        else          m_h_CMMHitsThreshSIMneDAT->Fill(loc, thr);
+      }
+      if (d1 || s1) {
+        if (d1 == s1) m_h_CMMHitsThreshSIMeqDAT->Fill(loc, thr2);
+        else          m_h_CMMHitsThreshSIMneDAT->Fill(loc, thr2);
+      }
     }
   }
 }
@@ -1567,10 +1576,14 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
         const unsigned int d1 = (cmmHits1 >> shift) & thrMask;
         const unsigned int s0 = (cmmSimHits0 >> shift) & thrMask;
         const unsigned int s1 = (cmmSimHits1 >> shift) & thrMask;
-        if (d0 == s0) m_h_SumsThreshSIMeqDAT->Fill(loc, thr);
-        else          m_h_SumsThreshSIMneDAT->Fill(loc, thr);
-        if (d1 == s1) m_h_SumsThreshSIMeqDAT->Fill(loc, thr2);
-        else          m_h_SumsThreshSIMneDAT->Fill(loc, thr2);
+	if (d0 || s0) {
+          if (d0 == s0) m_h_SumsThreshSIMeqDAT->Fill(loc, thr);
+          else          m_h_SumsThreshSIMneDAT->Fill(loc, thr);
+	}
+	if (d1 || s1) {
+          if (d1 == s1) m_h_SumsThreshSIMeqDAT->Fill(loc, thr2);
+          else          m_h_SumsThreshSIMneDAT->Fill(loc, thr2);
+        }
       }
     } else {
       if (dataId == LVL1::CMMCPHits::LOCAL) {
@@ -1637,10 +1650,14 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
 	const unsigned int s0 = (hs0 >> shift) & thrMask;
 	const unsigned int d1 = (hd1 >> shift) & thrMask;
 	const unsigned int s1 = (hs1 >> shift) & thrMask;
-        if (d0 == s0) m_h_SumsThreshSIMeqDAT->Fill(loc, thr);
-        else          m_h_SumsThreshSIMneDAT->Fill(loc, thr);
-        if (d1 == s1) m_h_SumsThreshSIMeqDAT->Fill(loc, thr2);
-        else          m_h_SumsThreshSIMneDAT->Fill(loc, thr2);
+	if (d0 || s0) {
+          if (d0 == s0) m_h_SumsThreshSIMeqDAT->Fill(loc, thr);
+          else          m_h_SumsThreshSIMneDAT->Fill(loc, thr);
+	}
+	if (d1 || s1) {
+          if (d1 == s1) m_h_SumsThreshSIMeqDAT->Fill(loc, thr2);
+          else          m_h_SumsThreshSIMneDAT->Fill(loc, thr2);
+        }
       }
     }
   }
