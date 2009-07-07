@@ -868,7 +868,7 @@ TH2F* CPMSimBSMon::bookEtaPhi(const std::string& name,
   const double phiBin     = M_PI/32.;
   const double halfPhiBin = M_PI/64.;
   std::string newTitle = title + ";eta";
-  hist = (isRoi) ? book2F(name, newTitle, 51, -2.55, 2.55, 64, 0., 64.)
+  hist = (isRoi) ? book2F(name, newTitle, 50, -2.45, 2.55, 64, 0., 64.)
                  : book2F(name, newTitle, 50, -2.5, 2.5, 64, 0., 64.);
   for (int chan = 0; chan < 64; chan += 4 ) {
     const double rad = (isRoi) ? (chan + 1)*phiBin : chan*phiBin + halfPhiBin;

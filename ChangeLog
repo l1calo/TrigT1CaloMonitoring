@@ -1,3 +1,7 @@
+2009-07-07  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-05-07
+        * Minor change to CP RoI eta/phi plots
+
 2009-07-01  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-05-06
         * Minor change to filling of CP threshold match plots
