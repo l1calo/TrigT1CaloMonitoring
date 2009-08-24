@@ -1,3 +1,7 @@
+2009-08-24  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-05-08
+        * Remove references to ATLASCosmicFlags in jobOptions
+
 2009-07-07  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-05-07
         * Minor change to CP RoI eta/phi plots

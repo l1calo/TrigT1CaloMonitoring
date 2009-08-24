@@ -6,7 +6,6 @@ if (globalflags.DataSource() == "data") :
 #MaxEnergyRange is set individually
 
 #================================= TriggerMenu ===================================
-#if not ATLASCosmicFlags.doCTPMon:
 from AthenaCommon.AppMgr import ServiceMgr as svcMgr
 #if hasattr(svcMgr,"LVL1ConfigSvc"):
 #    log.info("ServiceMgr already includes LVL1ConfigSvc")

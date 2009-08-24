@@ -16,7 +16,8 @@ from AthenaCommon.AppMgr import ToolSvc as toolSvc
 #--------------------------------------------------------------
 # CaloTriggerTowerService
 #--------------------------------------------------------------
-ATLASCosmicFlags.DetDescrTag= 'ATLAS-CSC-02-00-00'
+from AthenaCommon.GlobalFlags import globalflags
+globalflags.DetDescrVersion.set_Value_and_Lock('ATLAS-CSC-02-00-00')
 #required for use of the CaloTriggerTowerService
 #include("CaloConditions/CaloConditions_jobOptions.py")
 
