@@ -38,6 +38,8 @@ TrigT1CaloRodMonTool::TrigT1CaloRodMonTool(const std::string & type,
   declareProperty("RodHeaderLocation", m_rodHeaderLocation = "RODHeaders");
   m_cpRoibRodHeaderLocation  = m_rodHeaderLocation + "CPRoIB";
   m_jepRoibRodHeaderLocation = m_rodHeaderLocation + "JEPRoIB";
+  declareProperty("L1CaloErrorLocation",
+                   m_robErrorVectorLocation = "L1CaloUnpackingErrors");
 
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
   declareProperty("OnlineTest", m_onlineTest = false,
@@ -98,6 +100,8 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   MonGroup monShift ( this, dir1, shift, run );
   MonGroup monExpert( this, dir1, expert, run );
   MonGroup monAverage( this, dir1, expert, run, "", "weightedAverage" );
+  MonGroup monROB( this, dir1 + "/ROBStatus", expert, run );
+  MonGroup monUnpack( this, dir1 + "/Unpacking", expert, run );
   std::string dir2(m_rootDir + "/Overview/Errors");
   MonGroup monGlobal( this, dir2, shift, run );
 
@@ -160,14 +164,14 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_monGroup = &monExpert;
 
   m_h_ROD_PP_stat = book2F("rod_2d_PP_status",
-                           "ROD PP Status Bits and Payload Check;;Crate/S-Link",
+                           "PP ROD Status Bits and Payload Check;;Crate/S-Link",
                            NumberOfStatusBins, 0, NumberOfStatusBins,
 			   32, 0, 32);
   setLabelsStatus(m_h_ROD_PP_stat);
   setLabelsCSL(m_h_ROD_PP_stat, false, 1, 32, 2, 2);
   m_h_ROD_PP_stat->GetXaxis()->SetBinLabel(1+NoPayload, "No Payload");
   m_h_ROD_CPJEP_stat = book2F("rod_2d_CPJEP_status",
-                   "ROD CP and JEP Status Bits and Payload Check;;Crate/S-Link",
+                   "CP and JEP ROD Status Bits and Payload Check;;Crate/S-Link",
                               NumberOfStatusBins, 0, NumberOfStatusBins,
 			      16, 0, 16);
   setLabelsStatus(m_h_ROD_CPJEP_stat);
@@ -177,7 +181,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_ROD_CPJEP_stat->GetYaxis()->SetBinLabel(9, "JEP 0/0");
   m_h_ROD_CPJEP_stat->GetXaxis()->SetBinLabel(1+NoPayload, "No Payload");
   m_h_ROD_RoI_stat = book2F("rod_2d_CPJEP_RoI_status",
-                            "ROD CP and JEP RoI Status Bits;;Crate/S-Link",
+                            "CP and JEP RoI ROD Status Bits;;Crate/S-Link",
                             NumberOfStatusBins, 0, NumberOfStatusBins,
 			    12, 0, 12);
   setLabelsStatus(m_h_ROD_RoI_stat);
@@ -185,6 +189,58 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_ROD_RoI_stat->GetYaxis()->SetBinLabel(1, "CP 0/0");
   setLabelsCSL(m_h_ROD_RoI_stat, false, 9, 12, 1, 2);
   m_h_ROD_RoI_stat->GetYaxis()->SetBinLabel(9, "JEP 0/0");
+
+  //  ROB Status bits
+
+  m_monGroup = &monROB;
+
+  m_h_ROD_PP_rob = book2F("rod_2d_PP_ROB_status",
+                          "PP ROB Status Bits;;Crate/S-Link",
+                           19, 0, 19, 32, 0, 32);
+  setLabelsROBStatus(m_h_ROD_PP_rob);
+  setLabelsCSL(m_h_ROD_PP_rob, false, 1, 32, 2, 2);
+  m_h_ROD_CPJEP_rob = book2F("rod_2d_CPJEP_ROB_status",
+                             "CP and JEP ROB Status Bits;;Crate/S-Link",
+                              19, 0, 19, 16, 0, 16);
+  setLabelsROBStatus(m_h_ROD_CPJEP_rob);
+  setLabelsCSL(m_h_ROD_CPJEP_rob, false, 1, 8, 1, 2);
+  m_h_ROD_CPJEP_rob->GetYaxis()->SetBinLabel(1, "CP 0/0");
+  setLabelsCSL(m_h_ROD_CPJEP_rob, false, 9, 16, 1, 1);
+  m_h_ROD_CPJEP_rob->GetYaxis()->SetBinLabel(9, "JEP 0/0");
+  m_h_ROD_RoI_rob = book2F("rod_2d_CPJEP_RoI_ROB_status",
+                           "CP and JEP RoI ROB Status Bits;;Crate/S-Link",
+                            19, 0, 19, 12, 0, 12);
+  setLabelsROBStatus(m_h_ROD_RoI_rob);
+  setLabelsCSL(m_h_ROD_RoI_rob, false, 1, 8, 1, 2);
+  m_h_ROD_RoI_rob->GetYaxis()->SetBinLabel(1, "CP 0/0");
+  setLabelsCSL(m_h_ROD_RoI_rob, false, 9, 12, 1, 2);
+  m_h_ROD_RoI_rob->GetYaxis()->SetBinLabel(9, "JEP 0/0");
+
+  //  Unpacking Errors
+
+  m_monGroup = &monUnpack;
+
+  m_h_ROD_PP_unp = book2F("rod_2d_PP_unpack",
+                          "PP Bytestream Unpacking Errors;;Crate/S-Link",
+                           18, 1, 19, 32, 0, 32);
+  setLabelsUnpacking(m_h_ROD_PP_unp);
+  setLabelsCSL(m_h_ROD_PP_unp, false, 1, 32, 2, 2);
+  m_h_ROD_CPJEP_unp = book2F("rod_2d_CPJEP_unpack",
+                       "CP and JEP Bytestream Unpacking Errors;;Crate/S-Link",
+                        18, 1, 19, 16, 0, 16);
+  setLabelsUnpacking(m_h_ROD_CPJEP_unp);
+  setLabelsCSL(m_h_ROD_CPJEP_unp, false, 1, 8, 1, 2);
+  m_h_ROD_CPJEP_unp->GetYaxis()->SetBinLabel(1, "CP 0/0");
+  setLabelsCSL(m_h_ROD_CPJEP_unp, false, 9, 16, 1, 1);
+  m_h_ROD_CPJEP_unp->GetYaxis()->SetBinLabel(9, "JEP 0/0");
+  m_h_ROD_RoI_unp = book2F("rod_2d_CPJEP_RoI_unpack",
+                   "CP and JEP RoI Bytestream Unpacking Errors;;Crate/S-Link",
+                    18, 1, 19, 12, 0, 12);
+  setLabelsUnpacking(m_h_ROD_RoI_unp);
+  setLabelsCSL(m_h_ROD_RoI_unp, false, 1, 8, 1, 2);
+  m_h_ROD_RoI_unp->GetYaxis()->SetBinLabel(1, "CP 0/0");
+  setLabelsCSL(m_h_ROD_RoI_unp, false, 9, 12, 1, 2);
+  m_h_ROD_RoI_unp->GetYaxis()->SetBinLabel(9, "JEP 0/0");
 
   //  Error summary
 
@@ -196,6 +252,13 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_ROD_summary->GetXaxis()->SetBinLabel(1+TriggerType, "");
   m_h_ROD_summary->GetXaxis()->SetBinLabel(1+LimitedRoI,  "");
   m_h_ROD_summary->GetXaxis()->SetBinLabel(1+NoPayload, "No Payload");
+  m_h_ROB_summary = book1F("rod_1d_ROB_Error_summary",
+                           "ROB Status Error Summary;;Events", 19, 0, 19);
+  setLabelsROBStatus(m_h_ROB_summary);
+  m_h_Unp_summary = book1F("rod_1d_Unpack_Error_summary",
+                           "Bytestream Unpacking Error Summary;;Events",
+                           18, 1, 19);
+  setLabelsUnpacking(m_h_Unp_summary);
 
   // Global Error Overview
 
@@ -219,6 +282,9 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_global->GetXaxis()->SetBinLabel(1+CMMSimulation,   "CMMSimulation");
   m_h_global->GetXaxis()->SetBinLabel(1+RODStatus,       "RODStatus");
   m_h_global->GetXaxis()->SetBinLabel(1+RODMissing,      "RODMissing");
+  m_h_global->GetXaxis()->SetBinLabel(1+ROBStatus,       "ROBStatus");
+  m_h_global->GetXaxis()->SetBinLabel(1+Unpacking,       "Unpacking");
+
   for (int crate = 0; crate < 14; ++crate) {
     int cr = crate;
     if (cr >= 12) cr -= 12;
@@ -275,6 +341,15 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
     m_log << MSG::DEBUG<< "No JEP RoIB ROD Header container found"<< endreq; 
   }
 
+  //Retrieve ROB and Unpacking Error vector from SG
+  const ROBErrorCollection* errVecTES = 0;
+  if (m_storeGate->contains<ROBErrorCollection>(m_robErrorVectorLocation)) {
+    sc = m_storeGate->retrieve(errVecTES, m_robErrorVectorLocation);
+  } else sc = StatusCode::FAILURE;
+  if( sc.isFailure()  ||  !errVecTES ) {
+    m_log << MSG::DEBUG<< "No ROB and Unpacking Error vector found"<< endreq;
+  }
+
   //if ( !rodTES && !cpRoibTES && !jepRoibTES ) {
   //  m_log << MSG::DEBUG<< "No ROD Header containers found"<< endreq;
   //  return StatusCode::SUCCESS;
@@ -285,6 +360,8 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   //=============================================
 
   std::vector<int> errors(NumberOfStatusBins);
+  std::vector<int> errorsROB(19);
+  std::vector<int> errorsUnpack(19);
   std::vector<int> crateErr(14);
   std::vector<int> noFragmentFlags(80, 1);
   std::vector<int> noPayloadFlags(56, 1);
@@ -307,6 +384,9 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
       const int rod = crate + dataType*6;
       const int nData = header->payloadSize();
       const int pos = rod*4 + slink;
+      // Skip obviously corrupt data
+      if (crate > 13 || slink > 3 || nData < 0 ||
+                        nData > 10000 || pos >= 80) continue;
       noFragmentFlags[pos] = 0;
       if (pos < 56 && nData > 0) noPayloadFlags[pos] = 0;
       m_sumPayloads1[pos] += nData;
@@ -472,10 +552,74 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
     }
   }
 
-  // Update summary plot
+  // Update ROB Status and Unpacking Errors
+
+  if (errVecTES && !errVecTES->empty()) {
+    const int robMap[32] = {18,  0,  1,  2,  3,  4, 18, 18,
+                            18, 18, 18, 18, 18, 18, 18, 18,
+			    18,  5,  6,  7,  8,  9, 10, 11,
+			    18, 12, 13, 14, 15, 16, 17, 18};
+    ROBErrorCollection::const_iterator robIter  = errVecTES->begin();
+    ROBErrorCollection::const_iterator robIterE = errVecTES->end();
+    unsigned int numRobErr = *robIter;
+    ++robIter;
+    while (robIter != robIterE) {
+      const unsigned int sourceId = *robIter;
+      ++robIter;
+      if (robIter != robIterE) {
+        const int crate = sourceId & 0xf;
+        const int slink = (sourceId >> 4) & 0x3;
+        const int dataType = (sourceId >> 7) & 0x1;
+        const int rob = crate + dataType*6;
+        const int pos = rob*4 + slink;
+	unsigned int err = *robIter;
+	++robIter;
+	if (err == 0) continue;
+        TH2F* hist = (numRobErr) ? m_h_ROD_PP_rob : m_h_ROD_PP_unp;
+        int val = pos;
+        if (pos >= 72) {
+          hist = (numRobErr) ? m_h_ROD_RoI_rob : m_h_ROD_RoI_unp;
+	  val = (pos-72)/2 + 8;
+        } else if (pos >= 56) {
+          hist = (numRobErr) ? m_h_ROD_RoI_rob : m_h_ROD_RoI_unp;
+	  val = (pos-56)/2;
+        } else if (pos >= 48) {
+          hist = (numRobErr) ? m_h_ROD_CPJEP_rob : m_h_ROD_CPJEP_unp;
+	  val = pos-48 + 8;
+        } else if (pos >= 32) {
+          hist = (numRobErr) ? m_h_ROD_CPJEP_rob : m_h_ROD_CPJEP_unp;
+	  val = (pos-32)/2;
+        }
+	if (numRobErr) {
+	  for (int bit = 0; bit < 32; ++bit) {
+	    const int robErr = (err >> bit) & 0x1;
+	    if (robErr) {
+	      hist->Fill(robMap[bit], val);
+	      errorsROB[robMap[bit]] = 1;
+	    }
+	  }
+	  crateErr[crate] |= (1 << ROBStatusError);
+	  numRobErr--;
+        } else {
+	  if (err > 17) err = 18;
+	  hist->Fill(err, val);
+	  errorsUnpack[err] = 1;
+	  crateErr[crate] |= (1 << UnpackingError);
+        }
+      }
+    }
+  }
+
+  // Update summary plots
 
   for (int i = 0; i < NumberOfStatusBins; ++i) {
     if (errors[i]) m_h_ROD_summary->Fill(i);
+  }
+  for (int i = 0; i < 19; ++i) {
+    if (errorsROB[i]) m_h_ROB_summary->Fill(i);
+  }
+  for (int i = 1; i < 19; ++i) {
+    if (errorsUnpack[i]) m_h_Unp_summary->Fill(i);
   }
 
   // Update Global overview plot
@@ -623,6 +767,8 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
     if (err & 0x3f) m_h_global->Fill(RODStatus, crate);
     if (((err >> NoFragment) & 0x1) || ((err >> NoPayload) & 0x1))
                     m_h_global->Fill(RODMissing, crate);
+    if ((err >> ROBStatusError) & 0x1) m_h_global->Fill(ROBStatus, crate);
+    if ((err >> UnpackingError) & 0x1) m_h_global->Fill(Unpacking, crate);
   }
 
 
@@ -709,4 +855,49 @@ void TrigT1CaloRodMonTool::setLabelsCSL(TH1* hist, bool xAxis, int firstBin,
       ++crate;
     }
   }
+}
+
+void TrigT1CaloRodMonTool::setLabelsROBStatus(TH1* hist)
+{
+  hist->GetXaxis()->SetBinLabel(1,  "BCIDCheck");
+  hist->GetXaxis()->SetBinLabel(2,  "EL1IDCheck");
+  hist->GetXaxis()->SetBinLabel(3,  "Timeout");
+  hist->GetXaxis()->SetBinLabel(4,  "DataError");
+  hist->GetXaxis()->SetBinLabel(5,  "Overflow");
+  hist->GetXaxis()->SetBinLabel(6,  "FragmentSize");
+  hist->GetXaxis()->SetBinLabel(7,  "DataBlock");
+  hist->GetXaxis()->SetBinLabel(8,  "ControlWord");
+  hist->GetXaxis()->SetBinLabel(9,  "MissingBOF");
+  hist->GetXaxis()->SetBinLabel(10, "MissingEOF");
+  hist->GetXaxis()->SetBinLabel(11, "HeaderMarker");
+  hist->GetXaxis()->SetBinLabel(12, "Format");
+  hist->GetXaxis()->SetBinLabel(13, "Sequence");
+  hist->GetXaxis()->SetBinLabel(14, "Transmission");
+  hist->GetXaxis()->SetBinLabel(15, "Truncated");
+  hist->GetXaxis()->SetBinLabel(16, "Short");
+  hist->GetXaxis()->SetBinLabel(17, "Lost");
+  hist->GetXaxis()->SetBinLabel(18, "Pending");
+  hist->GetXaxis()->SetBinLabel(19, "Unknown");
+}
+
+void TrigT1CaloRodMonTool::setLabelsUnpacking(TH1* hist)
+{
+  hist->GetXaxis()->SetBinLabel(1,  "MissingHeader");
+  hist->GetXaxis()->SetBinLabel(2,  "VersionFormat");
+  hist->GetXaxis()->SetBinLabel(3,  "Channels");
+  hist->GetXaxis()->SetBinLabel(4,  "MissingData");
+  hist->GetXaxis()->SetBinLabel(5,  "CrateNumber");
+  hist->GetXaxis()->SetBinLabel(6,  "ModuleNumber");
+  hist->GetXaxis()->SetBinLabel(7,  "SliceNumber");
+  hist->GetXaxis()->SetBinLabel(8,  "RoIWord");
+  hist->GetXaxis()->SetBinLabel(9,  "RODnstatus");
+  hist->GetXaxis()->SetBinLabel(10, "DuplicateROB");
+  hist->GetXaxis()->SetBinLabel(11, "Version");
+  hist->GetXaxis()->SetBinLabel(12, "Format");
+  hist->GetXaxis()->SetBinLabel(13, "ComprVersion");
+  hist->GetXaxis()->SetBinLabel(14, "ComprSlices");
+  hist->GetXaxis()->SetBinLabel(15, "DataTruncated");
+  hist->GetXaxis()->SetBinLabel(16, "SourceID");
+  hist->GetXaxis()->SetBinLabel(17, "WordID");
+  hist->GetXaxis()->SetBinLabel(18, "Unknown");
 }
