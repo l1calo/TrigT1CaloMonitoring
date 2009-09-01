@@ -51,7 +51,8 @@ private:
 
   enum StatusBits { GLink, /*CMMParity,*/ LVDSLink, FIFOOverflow, DataTransport,
                     Timeout, BCNMismatch, TriggerType, LimitedRoI, NoFragment,
-                    NumberOfStatusBins, NoPayload = LimitedRoI };
+		    NumberOfStatusBins, NoPayload = LimitedRoI,
+		    ROBStatusError = NumberOfStatusBins, UnpackingError };
 
   // Enums for global summary plot
 
@@ -75,9 +76,11 @@ private:
   enum GlobalErrors { PPMDataStatus, PPMDataError, SubStatus, Parity, LinkDown,
                       RoIParity, Transmission, Simulation, CMMSubStatus,
 		      GbCMMParity, CMMTransmission, CMMSimulation,
-		      RODStatus, RODMissing, NumberOfGlobalErrors };
+		      RODStatus, RODMissing, ROBStatus, Unpacking,
+		      NumberOfGlobalErrors };
 
   typedef DataVector<LVL1::RODHeader> RodHeaderCollection;
+  typedef std::vector<unsigned int>   ROBErrorCollection;
   typedef std::vector<int>            ErrorVector;
   
   TH1F* book1F(const std::string& name, const std::string& title,
@@ -88,6 +91,8 @@ private:
   void setLabelsStatus(TH1* hist);
   void setLabelsCSL(TH1* hist, bool xAxis, int firstBin, int lastBin,
                                            int binIncr, int slinkIncr);
+  void setLabelsROBStatus(TH1* hist);
+  void setLabelsUnpacking(TH1* hist);
 
   ServiceHandle<StoreGateSvc> m_storeGate;
   mutable MsgStream m_log;
@@ -100,6 +105,8 @@ private:
   std::string m_cpRoibRodHeaderLocation;
   /// JEP RoIB ROD header container StoreGate key
   std::string m_jepRoibRodHeaderLocation;
+  /// ROB and Unpacking Error vector StoreGate key
+  std::string m_robErrorVectorLocation;
   
   /// Root directory
   std::string m_rootDir;
@@ -129,12 +136,20 @@ private:
   TH2F* m_h_ROD_PP_stat;
   TH2F* m_h_ROD_CPJEP_stat;
   TH2F* m_h_ROD_RoI_stat;
+  TH2F* m_h_ROD_PP_rob;
+  TH2F* m_h_ROD_CPJEP_rob;
+  TH2F* m_h_ROD_RoI_rob;
+  TH2F* m_h_ROD_PP_unp;
+  TH2F* m_h_ROD_CPJEP_unp;
+  TH2F* m_h_ROD_RoI_unp;
 
   //=======================
   //   Summary plots
   //=======================
 
   TH1F* m_h_ROD_summary;
+  TH1F* m_h_ROB_summary;
+  TH1F* m_h_Unp_summary;
   TH2F* m_h_global;
 
 };
