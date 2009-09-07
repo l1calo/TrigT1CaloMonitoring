@@ -746,14 +746,20 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
           ((err >> JEMRoIMismatch) & 0x1)     ||
           ((err >> JEMHitsMismatch) & 0x1)    ||
           ((err >> JEMEtSumsMismatch) & 0x1)) m_h_global->Fill(Simulation, cr);
-      if (((err >> CMMJetHitsMismatch) & 0x1) ||
-          ((err >> RemoteJetMismatch) & 0x1)  ||
-	  ((err >> CMMEtSumsMismatch) & 0x1)  ||
-	  ((err >> RemoteEnergyMismatch) & 0x1))
+      if (((err >> CMMJetHitsMismatch) & 0x1)   ||
+          ((err >> RemoteJetMismatch) & 0x1)    ||
+	  ((err >> JetEtRoIMismatch) & 0x1)     ||
+	  ((err >> CMMEtSumsMismatch) & 0x1)    ||
+	  ((err >> RemoteEnergyMismatch) & 0x1) ||
+	  ((err >> EnergyRoIMismatch) & 0x1))
 	                              m_h_global->Fill(CMMTransmission, cr);
-      if (((err >> CMMJetHitSumsMismatch) & 0x1) ||
-          ((err >> CMMEtSumsSumsMismatch) & 0x1) ||
-	  ((err >> EtMapsMismatch) & 0x1))
+      if (((err >> LocalJetMismatch) & 0x1)    ||
+          ((err >> TotalJetMismatch) & 0x1)    ||
+	  ((err >> JetEtMismatch) & 0x1)       ||
+          ((err >> LocalEnergyMismatch) & 0x1) ||
+          ((err >> TotalEnergyMismatch) & 0x1) ||
+	  ((err >> SumEtMismatch) & 0x1)       ||
+	  ((err >> MissingEtMismatch) & 0x1))
 	                                m_h_global->Fill(CMMSimulation, cr);
     }
   }

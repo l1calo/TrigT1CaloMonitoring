@@ -5,35 +5,6 @@ if (globalflags.DataSource() == "data") :
     
 #MaxEnergyRange is set individually
 
-#================================= TriggerMenu ===================================
-from AthenaCommon.AppMgr import ServiceMgr as svcMgr
-#if hasattr(svcMgr,"LVL1ConfigSvc"):
-#    log.info("ServiceMgr already includes LVL1ConfigSvc")
-#else:
-#    log.warning( "Did not find a configured LVL1 configuration service!" )
-#    log.info("will setup LVL1ConfigSvc and add instance to ServiceMgr")
-#    from TrigConfigSvc.TrigConfigSvcConfig import LVL1ConfigSvc
-#    LVL1ConfigSvc = LVL1ConfigSvc('LVL1ConfigSvc')
-#    svcMgr += LVL1ConfigSvc
-#    svcMgr.LVL1ConfigSvc.ConfigSource = "XML"
-#    from TriggerJobOpts.TriggerFlags import TriggerFlags as tf  
-#    #tf.inputLVL1configFile = "LVL1config_SingleBeam_v1_7-bit_trigger_types_20080905.xml"
-#    tf.inputLVL1configFile = "LVL1config_SingleBeam_v1_7-bit_trigger_types.xml"
-#    svcMgr.LVL1ConfigSvc.XMLFile = tf.inputLVL1configFile()
-#    svcMgr.LVL1ConfigSvc.CreateLegacyObjects = True
-#    svcMgr.LVL1ConfigSvc.DumpTTVmap = False
-#    # LVL1ConfigSvc.OutputLevel = VERBOSE
-#    theApp.CreateSvc += [ "TrigConf::LVL1ConfigSvc/LVL1ConfigSvc" ]
-
-if globalflags.DataSource() == "data":
-  #================================= L1Calo-Simulation =============================
-  from TrigT1CaloSim.TrigT1CaloSimConf import LVL1__JetElementMaker
-  from AthenaCommon.AlgSequence import AlgSequence
-  myjob = AlgSequence()
-  myjob += LVL1__JetElementMaker( 'JetElementMaker_Mon' )
-  myjob.JetElementMaker_Mon.JetElementLocation ="Sim_JetElements"
-
-
 #================================= Monitoring configuration ======================
 topSequence += AthenaMonManager( "L1CaloMonManager" )
 L1CaloMan = topSequence.L1CaloMonManager
@@ -117,42 +88,15 @@ L1CaloMan.AthenaMonTools += [ BS_L1CMMMonTool ]
 
 if globalflags.DataSource() == "data":
   #--------------------- Transmission and Performance ------------------------------
-  from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import JEPTransPerfMon
-  JEPTransPerfMonTool = JEPTransPerfMon (
-      name = "JEPTransPerfMonTool",
-
+  from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import JEPSimBSMon
+  JEPSimBSMonTool = JEPSimBSMon("JEPSimBSMonTool",
       JEPHitsTool = "LVL1::L1JEPHitsTools/L1JEPHitsTools_Mon",
       JetTool = "LVL1::L1JetTools/L1JetTools_Mon",
       JEPEtSumsTool = "LVL1::L1JEPEtSumsTools/L1JEPEtSumsTools_Mon",
-
-      BS_JetElementLocation = "JetElements",
-      #BS_TriggerTowerLocation = "TriggerTowers",
-      BS_TriggerTowerLocation = "Sim_JetElements",
-      NoLUTSlices=1,
-
-      BS_JEMHitsLocation = "JEMHits",
-      Sim_JEMHitsLocation = "Sim_JEMHits",
-      BS_JEMEtSumsLocation = "JEMEtSums",
-      Sim_JEMEtSumsLocation = "Sim_JEMEtSums",
-      BS_JEMRoILocation = "JEMRoIs",
-      Sim_JEMRoILocation = "Sim_JEMRoIs",
-
-      BS_CMMJetHitsLocation = "CMMJetHits",
-      Sim_CMMJetHitsLocation = "Sim_CMMJetHits",
-      BS_CMMEtSumsLocation = "CMMEtSums",
-      Sim_CMMEtSumsLocation = "Sim_CMMEtSums",
-      BS_CMMRoILocation = "CMMRoIs",
-      Sim_CMMRoILocation = "Sim_CMMRoIs",
-
-      PathInRootFile = "L1Calo/3_JEP_TransmissionAndPerformance",
-      Offline = Offline,
-      CompareWithSimulation = CompareWithSimulation,
-  
-      #OutputLevel = VERBOSE,
-      OutputLevel = INFO,
-      )
-  ToolSvc += JEPTransPerfMonTool
-  L1CaloMan.AthenaMonTools += [ JEPTransPerfMonTool ]
+      CompareWithSimulation = CompareWithSimulation)
+  ToolSvc += JEPSimBSMonTool
+  L1CaloMan.AthenaMonTools += [ JEPSimBSMonTool ]
+  #ToolSvc.JEPSimBSMonTool.OutputLevel = DEBUG
 
   from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1JEPHitsTools
   L1JEPHitsTools = LVL1__L1JEPHitsTools("L1JEPHitsTools_Mon")

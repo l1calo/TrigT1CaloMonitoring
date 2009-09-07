@@ -83,19 +83,19 @@ private:
   typedef std::map<int, LVL1::CPMHits*>      CpmHitsMap;
   typedef std::map<int, LVL1::CMMCPHits*>    CmmCpHitsMap;
   
-  TH1F* book1F(const std::string& nam, const std::string& tit,
-                                       int nx, double xmin, double xmax);
-  TH2F* book2F(const std::string& nam, const std::string& tit,
-                                       int nx, double xmin, double xmax,
-                                       int ny, double ymin, double ymax);
-  TH2F* book2F(const std::string& nam, const std::string& tit,
-                                       int nx, const double* xbins,
-                                       int ny, double ymin, double ymax);
-  TH2I* book2I(const std::string& nam, const std::string& tit,
-                                       int nx, double xmin, double xmax,
-                                       int ny, double ymin, double ymax);
-  TH2F* bookEtaPhi(const std::string& nam, const std::string& tit,
-                                           bool isRoi = false);
+  TH1F* book1F(const std::string& name, const std::string& title,
+                                        int nx, double xmin, double xmax);
+  TH2F* book2F(const std::string& name, const std::string& title,
+                                        int nx, double xmin, double xmax,
+                                        int ny, double ymin, double ymax);
+  TH2F* book2F(const std::string& name, const std::string& title,
+                                        int nx, const double* xbins,
+                                        int ny, double ymin, double ymax);
+  TH2I* book2I(const std::string& name, const std::string& title,
+                                        int nx, double xmin, double xmax,
+                                        int ny, double ymin, double ymax);
+  TH2F* bookEtaPhi(const std::string& name, const std::string& title,
+                                            bool isRoi = false);
   void  compare(const TriggerTowerMap& ttMap, const CpmTowerMap& cpMap,
                       ErrorVector& errors, bool overlap);
   void  compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
