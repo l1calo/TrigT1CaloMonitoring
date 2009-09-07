@@ -67,11 +67,13 @@ private:
   enum CPMMismatch { EMTowerMismatch, HadTowerMismatch, CPMRoIMismatch,
                      CPMHitsMismatch, CMMHitsMismatch, LocalSumMismatch,
 		     RemoteSumMismatch, TotalSumMismatch };
-  enum JEMMismatch { EMElementMismatch, HadElementMismatch, JEMHitsMismatch,
-                     JEMEtSumsMismatch, CMMJetHitsMismatch,
-		     CMMJetHitSumsMismatch, CMMEtSumsMismatch,
-		     CMMEtSumsSumsMismatch, RemoteJetMismatch,
-		     RemoteEnergyMismatch, JEMRoIMismatch, EtMapsMismatch };
+  enum JEMMismatch { EMElementMismatch, HadElementMismatch, JEMRoIMismatch,
+                     JEMHitsMismatch, CMMJetHitsMismatch, LocalJetMismatch,
+		     RemoteJetMismatch, TotalJetMismatch, JetEtMismatch,
+		     JetEtRoIMismatch, JEMEtSumsMismatch, CMMEtSumsMismatch,
+		     LocalEnergyMismatch, RemoteEnergyMismatch,
+		     TotalEnergyMismatch, SumEtMismatch, MissingEtMismatch,
+		     EnergyRoIMismatch };
 
   enum GlobalErrors { PPMDataStatus, PPMDataError, SubStatus, Parity, LinkDown,
                       RoIParity, Transmission, Simulation, CMMSubStatus,
