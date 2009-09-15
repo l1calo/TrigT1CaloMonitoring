@@ -118,7 +118,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
          ? ";Complete Run | Recent Events        Crate/S-Link;Words per Event"
 	 : ";Crate/S-Link;Words per Event";
   int nbins = (online) ? 65 : 32;
-  m_h_ROD_PP = book1F("rod_1d_PP_payload",
+  m_h_ROD_PP = book1F("rod_1d_PpPayload",
                       "ROD PP Average Payload Size"+axisTitles,
                        nbins, 0, nbins);
   setLabelsCSL(m_h_ROD_PP, true, 1, 32, 2, 2);
@@ -127,7 +127,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
     setLabelsCSL(m_h_ROD_PP, true, 34, 65, 2, 2);
   }
   nbins = (online) ? 17 : 8;
-  m_h_ROD_CP = book1F("rod_1d_CP_payload",
+  m_h_ROD_CP = book1F("rod_1d_CpPayload",
                       "ROD CP Average Payload Size"+axisTitles,
                        nbins, 0, nbins);
   setLabelsCSL(m_h_ROD_CP, true, 1, 8, 1, 2);
@@ -135,7 +135,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
     m_h_ROD_CP->GetXaxis()->SetBinLabel(9, "---");
     setLabelsCSL(m_h_ROD_CP, true, 10, 17, 1, 2);
   }
-  m_h_ROD_JEP = book1F("rod_1d_JEP_payload",
+  m_h_ROD_JEP = book1F("rod_1d_JepPayload",
                        "ROD JEP Average Payload Size"+axisTitles,
                         nbins, 0, nbins);
   setLabelsCSL(m_h_ROD_JEP, true, 1, 8, 1, 1);
@@ -144,7 +144,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
     setLabelsCSL(m_h_ROD_JEP, true, 10, 17, 1, 1);
   }
   nbins = (online) ? 25 : 12;
-  m_h_ROD_RoI = book1F("rod_1d_CPJEP_RoI_payload",
+  m_h_ROD_RoI = book1F("rod_1d_CpJepRoiPayload",
                        "ROD CP and JEP RoI Average Payload Size"+axisTitles,
                                 nbins, 0, nbins);
   setLabelsCSL(m_h_ROD_RoI, true, 1, 8, 1, 2);
@@ -163,14 +163,14 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monExpert;
 
-  m_h_ROD_PP_stat = book2F("rod_2d_PP_status",
+  m_h_ROD_PP_stat = book2F("rod_2d_PpStatus",
                            "PP ROD Status Bits and Payload Check;;Crate/S-Link",
                            NumberOfStatusBins, 0, NumberOfStatusBins,
 			   32, 0, 32);
   setLabelsStatus(m_h_ROD_PP_stat);
   setLabelsCSL(m_h_ROD_PP_stat, false, 1, 32, 2, 2);
   m_h_ROD_PP_stat->GetXaxis()->SetBinLabel(1+NoPayload, "No Payload");
-  m_h_ROD_CPJEP_stat = book2F("rod_2d_CPJEP_status",
+  m_h_ROD_CPJEP_stat = book2F("rod_2d_CpJepStatus",
                    "CP and JEP ROD Status Bits and Payload Check;;Crate/S-Link",
                               NumberOfStatusBins, 0, NumberOfStatusBins,
 			      16, 0, 16);
@@ -180,7 +180,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   setLabelsCSL(m_h_ROD_CPJEP_stat, false, 9, 16, 1, 1);
   m_h_ROD_CPJEP_stat->GetYaxis()->SetBinLabel(9, "JEP 0/0");
   m_h_ROD_CPJEP_stat->GetXaxis()->SetBinLabel(1+NoPayload, "No Payload");
-  m_h_ROD_RoI_stat = book2F("rod_2d_CPJEP_RoI_status",
+  m_h_ROD_RoI_stat = book2F("rod_2d_CpJepRoiStatus",
                             "CP and JEP RoI ROD Status Bits;;Crate/S-Link",
                             NumberOfStatusBins, 0, NumberOfStatusBins,
 			    12, 0, 12);
@@ -194,12 +194,12 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monROB;
 
-  m_h_ROD_PP_rob = book2F("rod_2d_PP_ROB_status",
+  m_h_ROD_PP_rob = book2F("rod_2d_PpRobStatus",
                           "PP ROB Status Bits;;Crate/S-Link",
                            19, 0, 19, 32, 0, 32);
   setLabelsROBStatus(m_h_ROD_PP_rob);
   setLabelsCSL(m_h_ROD_PP_rob, false, 1, 32, 2, 2);
-  m_h_ROD_CPJEP_rob = book2F("rod_2d_CPJEP_ROB_status",
+  m_h_ROD_CPJEP_rob = book2F("rod_2d_CpJepRobStatus",
                              "CP and JEP ROB Status Bits;;Crate/S-Link",
                               19, 0, 19, 16, 0, 16);
   setLabelsROBStatus(m_h_ROD_CPJEP_rob);
@@ -207,7 +207,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_ROD_CPJEP_rob->GetYaxis()->SetBinLabel(1, "CP 0/0");
   setLabelsCSL(m_h_ROD_CPJEP_rob, false, 9, 16, 1, 1);
   m_h_ROD_CPJEP_rob->GetYaxis()->SetBinLabel(9, "JEP 0/0");
-  m_h_ROD_RoI_rob = book2F("rod_2d_CPJEP_RoI_ROB_status",
+  m_h_ROD_RoI_rob = book2F("rod_2d_CpJepRoiRobStatus",
                            "CP and JEP RoI ROB Status Bits;;Crate/S-Link",
                             19, 0, 19, 12, 0, 12);
   setLabelsROBStatus(m_h_ROD_RoI_rob);
@@ -220,12 +220,12 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monUnpack;
 
-  m_h_ROD_PP_unp = book2F("rod_2d_PP_unpack",
+  m_h_ROD_PP_unp = book2F("rod_2d_PpUnpack",
                           "PP Bytestream Unpacking Errors;;Crate/S-Link",
                            18, 1, 19, 32, 0, 32);
   setLabelsUnpacking(m_h_ROD_PP_unp);
   setLabelsCSL(m_h_ROD_PP_unp, false, 1, 32, 2, 2);
-  m_h_ROD_CPJEP_unp = book2F("rod_2d_CPJEP_unpack",
+  m_h_ROD_CPJEP_unp = book2F("rod_2d_CpJepUnpack",
                        "CP and JEP Bytestream Unpacking Errors;;Crate/S-Link",
                         18, 1, 19, 16, 0, 16);
   setLabelsUnpacking(m_h_ROD_CPJEP_unp);
@@ -233,7 +233,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_ROD_CPJEP_unp->GetYaxis()->SetBinLabel(1, "CP 0/0");
   setLabelsCSL(m_h_ROD_CPJEP_unp, false, 9, 16, 1, 1);
   m_h_ROD_CPJEP_unp->GetYaxis()->SetBinLabel(9, "JEP 0/0");
-  m_h_ROD_RoI_unp = book2F("rod_2d_CPJEP_RoI_unpack",
+  m_h_ROD_RoI_unp = book2F("rod_2d_CpJepRoiUnpack",
                    "CP and JEP RoI Bytestream Unpacking Errors;;Crate/S-Link",
                     18, 1, 19, 12, 0, 12);
   setLabelsUnpacking(m_h_ROD_RoI_unp);
@@ -246,16 +246,16 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monShift;
 
-  m_h_ROD_summary = book1F("rod_1d_Error_summary", "ROD Error Summary;;Events",
+  m_h_ROD_summary = book1F("rod_1d_ErrorSummary", "ROD Error Summary;;Events",
                            NumberOfStatusBins, 0, NumberOfStatusBins);
   setLabelsStatus(m_h_ROD_summary);
   m_h_ROD_summary->GetXaxis()->SetBinLabel(1+TriggerType, "");
   m_h_ROD_summary->GetXaxis()->SetBinLabel(1+LimitedRoI,  "");
   m_h_ROD_summary->GetXaxis()->SetBinLabel(1+NoPayload, "No Payload");
-  m_h_ROB_summary = book1F("rod_1d_ROB_Error_summary",
+  m_h_ROB_summary = book1F("rod_1d_RobErrorSummary",
                            "ROB Status Error Summary;;Events", 19, 0, 19);
   setLabelsROBStatus(m_h_ROB_summary);
-  m_h_Unp_summary = book1F("rod_1d_Unpack_Error_summary",
+  m_h_Unp_summary = book1F("rod_1d_UnpackErrorSummary",
                            "Bytestream Unpacking Error Summary;;Events",
                            18, 1, 19);
   setLabelsUnpacking(m_h_Unp_summary);
@@ -264,7 +264,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monGlobal;
 
-  m_h_global = book2F("l1calo_2d_Global_overview",
+  m_h_global = book2F("l1calo_2d_GlobalOverview",
                       "L1Calo Global Error Overview;;Crate",
 	              NumberOfGlobalErrors, 0, NumberOfGlobalErrors,
 		      15, 0, 15);

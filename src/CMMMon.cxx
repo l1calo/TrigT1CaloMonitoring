@@ -11,6 +11,7 @@
 
 #include <sstream>
 #include <vector>
+#include <set>
 
 #include "GaudiKernel/IJobOptionsSvc.h"
 #include "GaudiKernel/MsgStream.h"
@@ -36,6 +37,7 @@
 #include "TrigT1CaloEvent/CMMRoI.h"
 #include "TrigT1CaloUtils/QuadLinear.h"
 #include "TrigT1CaloUtils/DataError.h"
+#include "TrigT1CaloUtils/CrateEnergy.h"
 
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 #include "TrigT1Interfaces/Coordinate.h"
@@ -63,12 +65,12 @@ CMMMon::CMMMon( const std::string & type, const std::string & name,
   declareProperty( "CMMJetHitsLocation", m_CMMJetHitsLocation =  LVL1::TrigT1CaloDefs::CMMJetHitsLocation) ;
   declareProperty( "CMMEtSumsLocation", m_CMMEtSumsLocation =  LVL1::TrigT1CaloDefs::CMMEtSumsLocation) ;  
   declareProperty( "CMMRoILocation", m_CMMRoILocation =  LVL1::TrigT1CaloDefs::CMMRoILocation) ;
-  declareProperty( "MaxEnergyRange", m_MaxEnergyRange = 50) ;
+  declareProperty( "MaxEnergyRange", m_MaxEnergyRange = 32768) ;
   declareProperty( "Offline", m_Offline = 1) ;
 
 
-  declareProperty( "PathInRootFile", m_PathInRootFile="Stats/CMM") ;
-  declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
+  declareProperty( "PathInRootFile", m_PathInRootFile="L1Calo/JEM_CMM") ;
+  declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="L1Calo/JEM_CMM/Errors/Hardware") ;
   declareProperty( "TypeOfData", m_DataType="") ;
 }
 
@@ -98,6 +100,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       return sc;
     }
 
+  /*
   ManagedMonitorToolBase::LevelOfDetail_t LevelOfDetail=shift;
   if (m_DataType=="Sim") LevelOfDetail = expert;
 
@@ -111,6 +114,24 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
   HistoBooker RoI_Booker(&CMM_RoI, &mLog, m_DataType);
   
   MonGroup CMM_transmission ( this, (m_ErrorPathInRootFile ).c_str(), shift, run );
+  HistoBooker transmission_Booker(&CMM_transmission, &mLog, "");
+  */
+  MonGroup CMM_inputThresh ( this, m_PathInRootFile+"/Input/Thresholds", expert, run );
+  HistoBooker inputThresh_Booker(&CMM_inputThresh, &mLog, "");
+
+  MonGroup CMM_inputEnergy ( this, m_PathInRootFile+"/Input/EnergySums", expert, run );
+  HistoBooker inputEnergy_Booker(&CMM_inputEnergy, &mLog, "");
+
+  MonGroup CMM_jet ( this, m_PathInRootFile+"/Output/Jet", expert, run );
+  HistoBooker jet_Booker(&CMM_jet, &mLog, "");
+
+  MonGroup CMM_energy ( this, m_PathInRootFile+"/Output/Energy", expert, run );
+  HistoBooker energy_Booker(&CMM_energy, &mLog, "");
+
+  MonGroup CMM_RoI ( this, m_PathInRootFile+"/Output/RoI", shift, run );
+  HistoBooker RoI_Booker(&CMM_RoI, &mLog, "");
+
+  MonGroup CMM_transmission ( this, m_ErrorPathInRootFile, shift, run );
   HistoBooker transmission_Booker(&CMM_transmission, &mLog, "");
   
   if( m_environment == AthenaMonManager::online ) {
@@ -127,36 +148,85 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
     {	
       m_NoEvents=0;
       //----------------------------------  CMM Input data from JEMs -----------------------------
-      m_h_CMMJetHits_JEM_MainHits=input_Booker.book1F("MainHits_CMM_input", "Main Jet Multiplicity per Threshold  --  CMM input", 8, -0.5, 7.5, "Threshold No.", "N");
-      m_h_CMMJetHits_JEM_FwdHitsRight=input_Booker.book1F("FwdHitsRight_CMM_input", "Forward Right Jet Multiplicity per Threshold  --  CMM input",4 , -0.5, 3.5, "Threshold No.", "N");
-      m_h_CMMJetHits_JEM_FwdHitsLeft=input_Booker.book1F("FwdHitsLeft_CMM_input", "Forward Left Jet Multiplicity per Threshold  --  CMM input", 4 , -0.5, 3.5,  "Threshold No.", "N");
+      //m_h_CMMJetHits_JEM_MainHits=inputThresh_Booker.book1F("MainHits_CMM_input", "Main Jet Multiplicity per Threshold  --  CMM input", 8, -0.5, 7.5, "Threshold No.", "N");
+      //m_h_CMMJetHits_JEM_FwdHitsRight=inputThresh_Booker.book1F("FwdHitsRight_CMM_input", "Forward Right Jet Multiplicity per Threshold  --  CMM input",4 , -0.5, 3.5, "Threshold No.", "N");
+      //m_h_CMMJetHits_JEM_FwdHitsLeft=inputThresh_Booker.book1F("FwdHitsLeft_CMM_input", "Forward Left Jet Multiplicity per Threshold  --  CMM input", 4 , -0.5, 3.5,  "Threshold No.", "N");
+      m_h_CMMJetHits_JEM_MainHits=inputThresh_Booker.book1F("cmm_1d_thresh_MainHits", "Main Jet Multiplicity per Threshold  --  CMM input", 8, -0.5, 7.5, "Threshold No.", "N");
+      m_h_CMMJetHits_JEM_FwdHitsRight=inputThresh_Booker.book1F("cmm_1d_thresh_FwdHitsRight", "Forward Right Jet Multiplicity per Threshold  --  CMM input",4 , -0.5, 3.5, "Threshold No.", "N");
+      m_h_CMMJetHits_JEM_FwdHitsLeft=inputThresh_Booker.book1F("cmm_1d_thresh_FwdHitsLeft", "Forward Left Jet Multiplicity per Threshold  --  CMM input", 4 , -0.5, 3.5,  "Threshold No.", "N");
 
-      m_h_CMMEtSums_JEM_Ex=input_Booker.book1F("Ex_CMM_input", "CMM E_{x}^{JEM}  --  CMM input", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ex [GeV]", "N");
-      m_h_CMMEtSums_JEM_Ey=input_Booker.book1F("Ey_CMM_input", "CMM E_{y}^{JEM}  --  CMM input", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "N");
-      m_h_CMMEtSums_JEM_Et=input_Booker.book1F("Et_CMM_input", "CMM E_{t}^{JEM}  --  CMM input", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "N");
+      // Choose binning to match the encoding
+      const int eRange = 256;  //range of encoded value
+      const int dRange = 4096; //range of decoded value
+      LVL1::QuadLinear expand;
+      std::set<int> sorted;
+      for (int i = 0; i < eRange; ++i) sorted.insert(expand.Expand(i));
+      double binedges[eRange+1];
+      int nbins = 0;
+      std::set<int>::const_iterator iter  = sorted.begin();
+      std::set<int>::const_iterator iterE = sorted.end();
+      for (; iter != iterE; ++iter) {
+        binedges[nbins] = *iter;
+	mLog<<MSG::DEBUG<<"binedge["<<nbins<<"] = "<< *iter<<endreq;
+	++nbins;
+      }
+      binedges[nbins] = dRange;
+      mLog<<MSG::DEBUG<<"binedge["<<nbins<<"] = "<< dRange<<endreq;
+      //m_h_CMMEtSums_JEM_Ex=inputEnergy_Booker.book1F("Ex_CMM_input", "CMM E_{x}^{JEM}  --  CMM input", nbins, 0, dRange, "Ex [GeV]", "N");
+      //m_h_CMMEtSums_JEM_Ey=inputEnergy_Booker.book1F("Ey_CMM_input", "CMM E_{y}^{JEM}  --  CMM input", nbins, 0, dRange, "Ey [GeV]", "N");
+      //m_h_CMMEtSums_JEM_Et=inputEnergy_Booker.book1F("Et_CMM_input", "CMM E_{t}^{JEM}  --  CMM input", nbins, 0, dRange, "Et [GeV]", "N");
+      m_h_CMMEtSums_JEM_Ex=inputEnergy_Booker.book1F("cmm_1d_energy_SubSumsEx", "CMM E_{x}^{JEM}  --  CMM input", nbins, 0, dRange, "Ex [GeV]", "N");
+      m_h_CMMEtSums_JEM_Ey=inputEnergy_Booker.book1F("cmm_1d_energy_SubSumsEy", "CMM E_{y}^{JEM}  --  CMM input", nbins, 0, dRange, "Ey [GeV]", "N");
+      m_h_CMMEtSums_JEM_Et=inputEnergy_Booker.book1F("cmm_1d_energy_SubSumsEt", "CMM E_{t}^{JEM}  --  CMM input", nbins, 0, dRange, "Et [GeV]", "N");
+      m_h_CMMEtSums_JEM_Ex->SetBins(nbins, binedges);
+      m_h_CMMEtSums_JEM_Ey->SetBins(nbins, binedges);
+      m_h_CMMEtSums_JEM_Et->SetBins(nbins, binedges);
       
 
       //---------------------------------- CMM output to DAQ -----------------------------
-      m_h_CMMJetHits_MainJets = DAQ_Booker.book1F("TotalMainHits_CMM_DAQ", "Main Jet Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "N");
-      m_h_CMMJetHits_FwdJetsRight = DAQ_Booker.book1F("TotalFwdHitsRight_CMM_DAQ", "Forward Right Jet Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5, "Threshold No.", "N");
-      m_h_CMMJetHits_FwdJetsLeft = DAQ_Booker.book1F("TotalFwdHitsLeft_CMM_DAQ", "Forward Left Jet Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5,  "Threshold No.", "N");
-      m_h_CMMJetHits_EtMap = DAQ_Booker.book1F("JetEtHits_CMM_DAQ", "JetEt Multiplicity per Threshold  --  CMM DAQ", 4 ,-0.5, 3.5, "Threshold No.", "N");
-      m_h_CMMEtSums_MissingEtMap = DAQ_Booker.book1F("MissingEtHits_CMM_DAQ", "MissingEt Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "N");
-      m_h_CMMEtSums_SumEtMap = DAQ_Booker.book1F("SumEtHits_CMM_DAQ", "SumEt Multiplicity per Threshold  --  CMM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
+      //m_h_CMMJetHits_MainJets = jet_Booker.book1F("TotalMainHits_CMM_DAQ", "Main Jet Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "N");
+      //m_h_CMMJetHits_FwdJetsRight = jet_Booker.book1F("TotalFwdHitsRight_CMM_DAQ", "Forward Right Jet Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5, "Threshold No.", "N");
+      //m_h_CMMJetHits_FwdJetsLeft = jet_Booker.book1F("TotalFwdHitsLeft_CMM_DAQ", "Forward Left Jet Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5,  "Threshold No.", "N");
+      //m_h_CMMJetHits_EtMap = jet_Booker.book1F("JetEtHits_CMM_DAQ", "JetEt Multiplicity per Threshold  --  CMM DAQ", 4 ,-0.5, 3.5, "Threshold No.", "N");
+      //m_h_CMMEtSums_MissingEtMap = energy_Booker.book1F("MissingEtHits_CMM_DAQ", "MissingEt Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "N");
+      //m_h_CMMEtSums_SumEtMap = energy_Booker.book1F("SumEtHits_CMM_DAQ", "SumEt Multiplicity per Threshold  --  CMM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
+      m_h_CMMJetHits_MainJets = jet_Booker.book1F("cmm_1d_thresh_TotalMainHits", "Main Jet Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "N");
+      m_h_CMMJetHits_FwdJetsRight = jet_Booker.book1F("cmm_1d_thresh_TotalFwdHitsRight", "Forward Right Jet Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5, "Threshold No.", "N");
+      m_h_CMMJetHits_FwdJetsLeft = jet_Booker.book1F("cmm_1d_thresh_TotalFwdHitsLeft", "Forward Left Jet Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5,  "Threshold No.", "N");
+      m_h_CMMJetHits_EtMap = jet_Booker.book1F("cmm_1d_thresh_JetEtHits", "JetEt Multiplicity per Threshold  --  CMM DAQ", 4 ,-0.5, 3.5, "Threshold No.", "N");
+      m_h_CMMEtSums_MissingEtMap = energy_Booker.book1F("cmm_1d_energy_MissingEtHits", "MissingEt Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "N");
+      m_h_CMMEtSums_SumEtMap = energy_Booker.book1F("cmm_1d_energy_SumEtHits", "SumEt Multiplicity per Threshold  --  CMM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
 
-      m_h_CMMEtSums_Ex = DAQ_Booker.book1F("Ex_CMM_DAQ", "E_{x}^{CMM}  --  CMM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ex [GeV]", "N");
-      m_h_CMMEtSums_Ey = DAQ_Booker.book1F("Ey_CMM_DAQ", "E_{y}^{CMM}  --  CMM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "N");
-      m_h_CMMEtSums_Et = DAQ_Booker.book1F("Et_CMM_DAQ", "SumE_{t}^{CMM}  --  CMM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "N");
+      for (int i = 0; i <= nbins; ++i) binedges[i] *= 8;
+      //m_h_CMMEtSums_Ex = energy_Booker.book1F("Ex_CMM_DAQ" "E_{x}^{CMM}  --  CMM DAQ", nbins, 0, binedges[nbins], "Ex [GeV]", "N");
+      //m_h_CMMEtSums_Ey = energy_Booker.book1F("Ey_CMM_DAQ", "E_{y}^{CMM}  --  CMM DAQ", nbins, 0, binedges[nbins], "Ey [GeV]", "N");
+      //m_h_CMMEtSums_Et = energy_Booker.book1F("Et_CMM_DAQ", "SumE_{t}^{CMM}  --  CMM DAQ", nbins, 0, binedges[nbins], "Et [GeV]", "N");
+      m_h_CMMEtSums_Ex = energy_Booker.book1F("cmm_1d_energy_TotalEx", "E_{x}^{CMM}  --  CMM DAQ", nbins, 0, binedges[nbins], "Ex [GeV]", "N");
+      m_h_CMMEtSums_Ey = energy_Booker.book1F("cmm_1d_energy_TotalEy", "E_{y}^{CMM}  --  CMM DAQ", nbins, 0, binedges[nbins], "Ey [GeV]", "N");
+      m_h_CMMEtSums_Et = energy_Booker.book1F("cmm_1d_energy_TotalEt", "SumE_{t}^{CMM}  --  CMM DAQ", nbins, 0, binedges[nbins], "Et [GeV]", "N");
+      m_h_CMMEtSums_Ex->SetBins(nbins, binedges);
+      m_h_CMMEtSums_Ey->SetBins(nbins, binedges);
+      m_h_CMMEtSums_Et->SetBins(nbins, binedges);
 
 
       //---------------------------------- CMM output to RoI -----------------------------
-      m_h_CMMRoI_JetEtHits =RoI_Booker.book1F("JetEtHits_CMM_RoI","JetEt Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","N");
-      m_h_CMMRoI_MissingEtHits =RoI_Booker.book1F("MissingEtHits_CMM_RoI","MissingEt Multiplicity per Threshold  --  CMM RoI", 8, -0.5,7.5,"Threshold No.","N");
-      m_h_CMMRoI_SumEtHits =RoI_Booker.book1F("SumEtHits_CMM_RoI","SumEt Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","N");
+      //m_h_CMMRoI_JetEtHits =RoI_Booker.book1F("JetEtHits_CMM_RoI","JetEt Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","N");
+      //m_h_CMMRoI_MissingEtHits =RoI_Booker.book1F("MissingEtHits_CMM_RoI","MissingEt Multiplicity per Threshold  --  CMM RoI", 8, -0.5,7.5,"Threshold No.","N");
+      //m_h_CMMRoI_SumEtHits =RoI_Booker.book1F("SumEtHits_CMM_RoI","SumEt Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","N");
 
-      m_h_CMMRoI_Ex = RoI_Booker.book1F("Ex_CMM_RoI", "E_{x}^{CMM}  --  CMM RoI", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ex [GeV]", "N");
-      m_h_CMMRoI_Ey = RoI_Booker.book1F("Ey_CMM_RoI", "E_{y}^{CMM}  --  CMM RoI", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "N");
-      m_h_CMMRoI_Et = RoI_Booker.book1F("Et_CMM_RoI", "SumE_{t}^{CMM}  --  CMM RoI", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "N");
+      //m_h_CMMRoI_Ex = RoI_Booker.book1F("Ex_CMM_RoI", "E_{x}^{CMM}  --  CMM RoI", nbins, 0, binedges[nbins], "Ex [GeV]", "N");
+      //m_h_CMMRoI_Ey = RoI_Booker.book1F("Ey_CMM_RoI", "E_{y}^{CMM}  --  CMM RoI", nbins, 0, binedges[nbins], "Ey [GeV]", "N");
+      //m_h_CMMRoI_Et = RoI_Booker.book1F("Et_CMM_RoI", "SumE_{t}^{CMM}  --  CMM RoI", nbins, 0, binedges[nbins], "Et [GeV]", "N");
+      m_h_CMMRoI_JetEtHits =RoI_Booker.book1F("cmm_1d_roi_JetEtHits","JetEt Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","N");
+      m_h_CMMRoI_MissingEtHits =RoI_Booker.book1F("cmm_1d_roi_MissingEtHits","MissingEt Multiplicity per Threshold  --  CMM RoI", 8, -0.5,7.5,"Threshold No.","N");
+      m_h_CMMRoI_SumEtHits =RoI_Booker.book1F("cmm_1d_roi_SumEtHits","SumEt Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","N");
+
+      m_h_CMMRoI_Ex = RoI_Booker.book1F("cmm_1d_roi_Ex", "E_{x}^{CMM}  --  CMM RoI", nbins, 0, binedges[nbins], "Ex [GeV]", "N");
+      m_h_CMMRoI_Ey = RoI_Booker.book1F("cmm_1d_roi_Ey", "E_{y}^{CMM}  --  CMM RoI", nbins, 0, binedges[nbins], "Ey [GeV]", "N");
+      m_h_CMMRoI_Et = RoI_Booker.book1F("cmm_1d_roi_Et", "SumE_{t}^{CMM}  --  CMM RoI", nbins, 0, binedges[nbins], "Et [GeV]", "N");
+      m_h_CMMRoI_Ex->SetBins(nbins, binedges);
+      m_h_CMMRoI_Ey->SetBins(nbins, binedges);
+      m_h_CMMRoI_Et->SetBins(nbins, binedges);
 
        
 
@@ -164,7 +234,8 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       if (m_DataType=="BS")
 	{
 	  //---------------------------------- S-Link errors -----------------------------
-	  m_h_CMMJet_error=transmission_Booker.book2F("CMMJet_errors", "Errors from CMM Jet SubStatus Word",9,0.5,9.5,37,0.5,37.5,"","");
+	  //m_h_CMMJet_error=transmission_Booker.book2F("CMMJet_errors", "Errors from CMM Jet SubStatus Word",9,0.5,9.5,37,0.5,37.5,"","");
+	  m_h_CMMJet_error=transmission_Booker.book2F("cmm_2d_thresh_Status", "Errors from CMM Jet SubStatus Word",9,0.5,9.5,37,0.5,37.5,"","");
 	  m_h_CMMJet_error->SetStats(kFALSE);
 	  
 	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(1, "Parity");
@@ -177,7 +248,8 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_CMMJet_error->GetXaxis()->SetBinLabel(9, "GLinkTimeout");
 	  
 
-	  m_h_CMMEnergy_error=transmission_Booker.book2F("CMMEnergy_errors", "Errors from CMM Energy SubStatus Word",9,0.5,9.5,37,0.5,37.5,"","");
+	  //m_h_CMMEnergy_error=transmission_Booker.book2F("CMMEnergy_errors", "Errors from CMM Energy SubStatus Word",9,0.5,9.5,37,0.5,37.5,"","");
+	  m_h_CMMEnergy_error=transmission_Booker.book2F("cmm_2d_energy_Status", "Errors from CMM Energy SubStatus Word",9,0.5,9.5,37,0.5,37.5,"","");
 	  m_h_CMMEnergy_error->SetStats(kFALSE);
 	 
 	  m_h_CMMEnergy_error->GetXaxis()->SetBinLabel(1, "Parity");
@@ -218,7 +290,8 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_CMMEnergy_error->GetYaxis()->SetBinLabel(37, "Crate 1: ");
 	
 
-	  m_h_CMMRoI_error=transmission_Booker.book1F("CMMRoI_errors", "CMM RoI Parity and Overflow",8,0.5,8.5,"");
+	  //m_h_CMMRoI_error=transmission_Booker.book1F("CMMRoI_errors", "CMM RoI Parity and Overflow",8,0.5,8.5,"");
+	  m_h_CMMRoI_error=transmission_Booker.book1F("cmm_1d_roi_Parity", "CMM RoI Parity and Overflow",8,0.5,8.5,"");
 	  m_h_CMMRoI_error->SetStats(kFALSE);
 
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(1, "Parity (Ex)");
@@ -230,10 +303,12 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(7, "Overflow (Ey)");
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(8, "Overflow (Et)");
 	  
-	  m_h_TriggeredSlice=transmission_Booker.book1F("TriggeredSlice", "Comparison of the triggered slice number",3,0.5,3.5,"Difference","N");
+	  //m_h_TriggeredSlice=transmission_Booker.book1F("TriggeredSlice", "Comparison of the triggered slice number",3,0.5,3.5,"Difference","N");
+	  m_h_TriggeredSlice=transmission_Booker.book1F("cmm_1d_TriggeredSlices", "Comparison of the triggered slice number",3,0.5,3.5,"Difference","N");
   
 	 //Error Summary for all CMMs in system
-	  m_h_CMM_ErrorSummary = transmission_Booker.book1F("CMM_ErrorSummary", "Error Summary of CMM Jet, Energy and RoI path",
+	  //m_h_CMM_ErrorSummary = transmission_Booker.book1F("CMM_ErrorSummary", "Error Summary of CMM Jet, Energy and RoI path",
+	  m_h_CMM_ErrorSummary = transmission_Booker.book1F("cmm_1d_ErrorSummary", "Error Summary of CMM Jet, Energy and RoI path",
 	  3,0.5,3.5,"","Entries");	 
 	  m_h_CMM_ErrorSummary->SetStats(kFALSE);
 	  m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(1,"CMM Status");
@@ -459,21 +534,15 @@ StatusCode CMMMon::fillHistograms()
       // total energy sums
       if  ((*it_CMMEtSums)-> dataID()==18 and (*it_CMMEtSums)->crate()==1) 
 	{
-	  // the 0th bit of Ex and Ey is their sign
-	  // -> remove it, only the value is important
-	  int Ex,Ey;
-	  std::string temp;
-	  temp= Help.Binary((*it_CMMEtSums)-> Ex(),15);
-	  temp.assign(temp,temp.length()-14,14);
-	  Ex=Help.Multiplicity(temp,0,14);
-	  
-	  temp= Help.Binary((*it_CMMEtSums)-> Ey(),15);
-	  temp.assign(temp,temp.length()-14,14);
-	  Ey=Help.Multiplicity(temp,0,14);
+	  // Use CrateEnergy object to decode 15-bit twos-complement format
+	  LVL1::CrateEnergy cen((*it_CMMEtSums)->crate(), (*it_CMMEtSums)->Et(), (*it_CMMEtSums)->Ex(), (*it_CMMEtSums)->Ey(),
+	                        ((*it_CMMEtSums)->EtError()&0x1), ((*it_CMMEtSums)->ExError()&0x1), ((*it_CMMEtSums)->EyError()&0x1));
+	  int Ex = std::abs(cen.ex());
+	  int Ey = std::abs(cen.ey());
 
-	  if (Ex>0) m_h_CMMEtSums_Ex -> Fill( Ex, 1.);
-	  if (Ey>0) m_h_CMMEtSums_Ey -> Fill( Ey, 1.);
-	  if ((*it_CMMEtSums)-> Et()>0) m_h_CMMEtSums_Et -> Fill( (*it_CMMEtSums)-> Et(), 1.);
+	  if (Ex>0 && !cen.exOverflow()) m_h_CMMEtSums_Ex -> Fill( Ex, 1.);
+	  if (Ey>0 && !cen.eyOverflow()) m_h_CMMEtSums_Ey -> Fill( Ey, 1.);
+	  if ((*it_CMMEtSums)-> Et()>0 && !cen.etOverflow()) m_h_CMMEtSums_Et -> Fill( (*it_CMMEtSums)-> Et(), 1.);
 	  mLog<<MSG::DEBUG<<"       Ex: "<<Ex<<"; Ey: "<<Ey<<"; Et "<<(*it_CMMEtSums)->Et()<<endreq;
 	  mLog<<MSG::DEBUG<<"signed Ex: "<<(*it_CMMEtSums)->Ex()<<"; Ey: "<<(*it_CMMEtSums)->Ey()<<"; Et "<<(*it_CMMEtSums)->Et()<<endreq;
 
@@ -613,24 +682,18 @@ StatusCode CMMMon::fillHistograms()
   Help.FillHitsHisto(m_h_CMMRoI_MissingEtHits , CMMRoIHit, 0, 8, 0, 1, &mLog);
  
 
-  // the 0th bit of Ex and Ey is their sign
-  // -> remove it, only the value is important
-  int Ex,Ey;
-  std::string temp;
-  temp= Help.Binary((CR)-> ex(),15);
-  temp.assign(temp,temp.length()-14,14);
-  Ex=Help.Multiplicity(temp,0,14);
-  
-  temp= Help.Binary((CR)-> ey(),15);
-  temp.assign(temp,temp.length()-14,14);
-  Ey=Help.Multiplicity(temp,0,14);
+  // Use CrateEnergy object to decode 15-bit twos-complement format
+  LVL1::CrateEnergy cen(1, (CR)->et(), (CR)->ex(), (CR)->ey(),
+                        ((CR)->etError()&0x1), ((CR)->exError()&0x1), ((CR)->eyError()&0x1));
+  int Ex = std::abs(cen.ex());
+  int Ey = std::abs(cen.ey());
   
   mLog<<MSG::DEBUG<<"       Ex: "<<Ex<<"; Ey: "<<Ey<<"; Et "<<(CR)->et()<<endreq;
   mLog<<MSG::DEBUG<<"signed Ex: "<<(CR)-> ex()<<"; Ey: "<<(CR)-> ey()<<"; Et "<<(CR)-> et()<<endreq;
 
-  if(Ex>0) m_h_CMMRoI_Ex -> Fill( Ex,1);
-  if(Ey>0) m_h_CMMRoI_Ey -> Fill( Ey,1);
-  if((CR)->et()>0) m_h_CMMRoI_Et -> Fill( (CR)->et(),1);
+  if(Ex>0 && !cen.exOverflow()) m_h_CMMRoI_Ex -> Fill( Ex,1);
+  if(Ey>0 && !cen.eyOverflow()) m_h_CMMRoI_Ey -> Fill( Ey,1);
+  if((CR)->et()>0 && !cen.etOverflow()) m_h_CMMRoI_Et -> Fill( (CR)->et(),1);
   
  
   mLog<<MSG::DEBUG<<"CMM Slice numbers: "<<"Jet: "<<j_num_slice<<" Energy: "<<e_num_slice<<endreq;
@@ -696,10 +759,11 @@ StatusCode CMMMon::procHistograms( bool isEndOfEventsBlock,
   MsgStream mLog( msgSvc(), name() );
   mLog << MSG::DEBUG << "in procHistograms" << endreq ;
 
-  if( isEndOfEventsBlock || isEndOfLumiBlock ) 
+  if( isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun ) 
     {  
     }
 	
+  /*
   if(m_Offline==1)
     {
       if (m_DataType=="BS")
@@ -724,5 +788,6 @@ StatusCode CMMMon::procHistograms( bool isEndOfEventsBlock,
 	  }
 	}
     }
+  */
   return StatusCode( StatusCode::SUCCESS );
 }

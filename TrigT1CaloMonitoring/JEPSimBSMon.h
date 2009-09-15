@@ -284,11 +284,6 @@ private:
   TH2F* m_h_JEPeqSIM;
   TH2F* m_h_JEPneSIM;
   TH1F* m_h_JEPneSIMSummary;
-  // Temporary duplicates
-  TH2F* m_h_JEPeqSIM2;
-  TH2F* m_h_JEPneSIM2;
-  TH2F* m_h_JEPeqSIM3;
-  TH2F* m_h_JEPneSIM3;
 
   // Mismatch Event Number Samples
   std::vector<TH2I*> m_sampleHists;

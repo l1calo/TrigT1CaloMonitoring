@@ -1,3 +1,7 @@
+2009-09-15  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-06-02
+        * Bugfixes and finish move to new histogram naming convention.
+
 2009-09-07  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-01
         * Missed an update needed for global overview with new tool.

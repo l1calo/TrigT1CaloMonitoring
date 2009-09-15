@@ -188,16 +188,13 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
   MonGroup monEnergy( this, dir1 + "/Elements2Energy", expert, run );
   MonGroup monEvent1( this, dir1 + "/MismatchEventNumbers", expert, run, "",
                                                             "eventSample" );
-  std::string dir2(m_rootDir + "/JEM-CMM/Errors/Transmission_Simulation");
+  std::string dir2(m_rootDir + "/JEM_CMM/Errors/Transmission_Simulation");
   MonGroup monHits2( this, dir2 + "/JEM2CMMHits", expert, run );
   MonGroup monHitSums( this, dir2 + "/Hits2Sums", expert, run );
   MonGroup monEnergy2( this, dir2 + "/JEM2CMMEnergy", expert, run );
   MonGroup monEnergySums( this, dir2 + "/Energy2Sums", expert, run );
   MonGroup monEvent2( this, dir2 + "/MismatchEventNumbers", expert, run, "",
                                                             "eventSample" );
-  //temporary
-  MonGroup monTemp( this, m_rootDir + "/3_JEP_TransmissionAndPerformance", 
-                                                               shift, run );
 
   // JetElements
 
@@ -205,99 +202,99 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monElements;
 
-  m_h_EMEleSIMeqDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_Sim_eq_core",
+  m_h_EMEleSIMeqDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_SimEqCore",
     "Core Jet Elements EM Data/Simulation Non-zero Matches");
-  m_h_EMEleSIMneDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_Sim_ne_core",
+  m_h_EMEleSIMneDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_SimNeCore",
     "Core Jet Elements EM Data/Simulation Non-zero Mismatches");
-  m_h_EMEleSIMnoDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_Sim_no_core",
+  m_h_EMEleSIMnoDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_SimNoCore",
     "Core Jet Elements EM Simulation but no Data");
-  m_h_EMEleDATnoSIM = bookEtaPhi("jem_em_2d_etaPhi_jetEl_Core_no_sim",
+  m_h_EMEleDATnoSIM = bookEtaPhi("jem_em_2d_etaPhi_jetEl_CoreNoSim",
     "Core Jet Elements EM Data but no Simulation");
-  m_h_HadEleSIMeqDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_Sim_eq_core",
+  m_h_HadEleSIMeqDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_SimEqCore",
     "Core Jet Elements HAD Data/Simulation Non-zero Matches");
-  m_h_HadEleSIMneDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_Sim_ne_core",
+  m_h_HadEleSIMneDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_SimNeCore",
     "Core Jet Elements HAD Data/Simulation Non-zero Mismatches");
-  m_h_HadEleSIMnoDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_Sim_no_core",
+  m_h_HadEleSIMnoDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_SimNoCore",
     "Core Jet Elements HAD Simulation but no Data");
-  m_h_HadEleDATnoSIM = bookEtaPhi("jem_had_2d_etaPhi_jetEl_Core_no_sim",
+  m_h_HadEleDATnoSIM = bookEtaPhi("jem_had_2d_etaPhi_jetEl_CoreNoSim",
     "Core Jet Elements HAD Data but no Simulation");
-  m_h_EMEleOvSIMeqDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_Sim_eq_overlap",
+  m_h_EMEleOvSIMeqDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_SimEqOverlap",
     "Overlap Jet Elements EM Data/Simulation Non-zero Matches");
-  m_h_EMEleOvSIMneDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_Sim_ne_overlap",
+  m_h_EMEleOvSIMneDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_SimNeOverlap",
     "Overlap Jet Elements EM Data/Simulation Non-zero Mismatches");
-  m_h_EMEleOvSIMnoDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_Sim_no_overlap",
+  m_h_EMEleOvSIMnoDAT = bookEtaPhi("jem_em_2d_etaPhi_jetEl_SimNoOverlap",
     "Overlap Jet Elements EM Simulation but no Data");
-  m_h_EMEleOvDATnoSIM = bookEtaPhi("jem_em_2d_etaPhi_jetEl_Overlap_no_sim",
+  m_h_EMEleOvDATnoSIM = bookEtaPhi("jem_em_2d_etaPhi_jetEl_OverlapNoSim",
     "Overlap Jet Elements EM Data but no Simulation");
-  m_h_HadEleOvSIMeqDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_Sim_eq_overlap",
+  m_h_HadEleOvSIMeqDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_SimEqOverlap",
     "Overlap Jet Elements HAD Data/Simulation Non-zero Matches");
-  m_h_HadEleOvSIMneDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_Sim_ne_overlap",
+  m_h_HadEleOvSIMneDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_SimNeOverlap",
     "Overlap Jet Elements HAD Data/Simulation Non-zero Mismatches");
-  m_h_HadEleOvSIMnoDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_Sim_no_overlap",
+  m_h_HadEleOvSIMnoDAT = bookEtaPhi("jem_had_2d_etaPhi_jetEl_SimNoOverlap",
     "Overlap Jet Elements HAD Simulation but no Data");
-  m_h_HadEleOvDATnoSIM = bookEtaPhi("jem_had_2d_etaPhi_jetEl_Overlap_no_sim",
+  m_h_HadEleOvDATnoSIM = bookEtaPhi("jem_had_2d_etaPhi_jetEl_OverlapNoSim",
     "Overlap Jet Elements HAD Data but no Simulation");
 
   //  RoIs
 
   m_monGroup = &monRoIs;
 
-  m_h_RoISIMeqDAT = book2F("jem_2d_roi_Sim_eq_data",
+  m_h_RoISIMeqDAT = book2F("jem_2d_roi_SimEqData",
      "JEM RoI Data/Simulation Non-zero Matches;Crate/Module;Frame/Local Coord",
              32, 0, 32, 32, 0, 32);
   setLabelsCMFC(m_h_RoISIMeqDAT);
-  m_h_RoISIMneDAT = book2F("jem_2d_roi_Sim_ne_data",
+  m_h_RoISIMneDAT = book2F("jem_2d_roi_SimNeData",
    "JEM RoI Data/Simulation Non-zero Mismatches;Crate/Module;Frame/Local Coord",
              32, 0, 32, 32, 0, 32);
   setLabelsCMFC(m_h_RoISIMneDAT);
-  m_h_RoISIMnoDAT = book2F("jem_2d_roi_Sim_no_data",
+  m_h_RoISIMnoDAT = book2F("jem_2d_roi_SimNoData",
             "JEM RoI Simulation but no Data;Crate/Module;Frame/Local Coord",
 	     32, 0, 32, 32, 0, 32);
   setLabelsCMFC(m_h_RoISIMnoDAT);
-  m_h_RoIDATnoSIM = book2F("jem_2d_roi_Data_no_sim",
+  m_h_RoIDATnoSIM = book2F("jem_2d_roi_DataNoSim",
             "JEM RoI Data but no Simulation;Crate/Module;Frame/Local Coord",
 	     32, 0, 32, 32, 0, 32);
   setLabelsCMFC(m_h_RoIDATnoSIM);
-  m_h_RoIThreshSIMeqDAT = book2F("jem_2d_roi_Thresh_sim_eq_data",
+  m_h_RoIThreshSIMeqDAT = book2F("jem_2d_roi_ThreshSimEqData",
      "JEM RoI Data/Simulation Threshold Matches;Crate/Module",
              32, 0, 32, 12, 0, 12);
   setLabelsCMT(m_h_RoIThreshSIMeqDAT);
-  m_h_RoIThreshSIMneDAT = book2F("jem_2d_roi_Thresh_sim_ne_data",
+  m_h_RoIThreshSIMneDAT = book2F("jem_2d_roi_ThreshSimNeData",
      "JEM RoI Data/Simulation Threshold Mismatches;Crate/Module",
              32, 0, 32, 12, 0, 12);
   setLabelsCMT(m_h_RoIThreshSIMneDAT);
-  m_h_RoIEtaPhiSIMeqDAT = bookEtaPhi("jem_2d_etaPhi_roi_Sim_eq_data",
+  m_h_RoIEtaPhiSIMeqDAT = bookEtaPhi("jem_2d_etaPhi_roi_SimEqData",
      "JEM RoI Data/Simulation Non-zero Matches", true);
-  m_h_RoIEtaPhiSIMneDAT = bookEtaPhi("jem_2d_etaPhi_roi_Sim_ne_data",
+  m_h_RoIEtaPhiSIMneDAT = bookEtaPhi("jem_2d_etaPhi_roi_SimNeData",
      "JEM RoI Data/Simulation Non-zero Mismatches", true);
-  m_h_RoIEtaPhiSIMnoDAT = bookEtaPhi("jem_2d_etaPhi_roi_Sim_no_data",
+  m_h_RoIEtaPhiSIMnoDAT = bookEtaPhi("jem_2d_etaPhi_roi_SimNoData",
      "JEM RoI Simulation but no Data", true);
-  m_h_RoIEtaPhiDATnoSIM = bookEtaPhi("jem_2d_etaPhi_roi_Data_no_sim",
+  m_h_RoIEtaPhiDATnoSIM = bookEtaPhi("jem_2d_etaPhi_roi_DataNoSim",
      "JEM RoI Data but no Simulation", true);
 
   // JEMHits
 
   m_monGroup = &monHits;
 
-  m_h_JEMHitsSIMeqDAT = book2F("jem_2d_thresh_Sim_eq_data",
+  m_h_JEMHitsSIMeqDAT = book2F("jem_2d_thresh_SimEqData",
      "JEM Hits Data/Simulation Non-zero Matches;Module;Crate",
              16, 0, 16, 2, 0, 2);
   setLabelsMC(m_h_JEMHitsSIMeqDAT);
-  m_h_JEMHitsSIMneDAT = book2F("jem_2d_thresh_Sim_ne_data",
+  m_h_JEMHitsSIMneDAT = book2F("jem_2d_thresh_SimNeData",
      "JEM Hits Data/Simulation Non-zero Mismatches;Module;Crate",
              16, 0, 16, 2, 0, 2);
   setLabelsMC(m_h_JEMHitsSIMneDAT);
-  m_h_JEMHitsSIMnoDAT = book2F("jem_2d_thresh_Sim_no_data",
+  m_h_JEMHitsSIMnoDAT = book2F("jem_2d_thresh_SimNoData",
      "JEM Hits Simulation but no Data;Module;Crate", 16, 0, 16, 2, 0, 2);
   setLabelsMC(m_h_JEMHitsSIMnoDAT);
-  m_h_JEMHitsDATnoSIM = book2F("jem_2d_thresh_Data_no_sim",
+  m_h_JEMHitsDATnoSIM = book2F("jem_2d_thresh_DataNoSim",
      "JEM Hits Data but no Simulation;Module;Crate", 16, 0, 16, 2, 0, 2);
   setLabelsMC(m_h_JEMHitsDATnoSIM);
-  m_h_JEMHitsThreshSIMeqDAT = book2F("jem_2d_thresh_Thresh_sim_eq_data",
+  m_h_JEMHitsThreshSIMeqDAT = book2F("jem_2d_thresh_ThreshSimEqData",
      "JEM Hits Data/Simulation Threshold Matches;Crate/Module",
              32, 0, 32, 12, 0, 12);
   setLabelsCMT(m_h_JEMHitsThreshSIMeqDAT);
-  m_h_JEMHitsThreshSIMneDAT = book2F("jem_2d_thresh_Thresh_sim_ne_data",
+  m_h_JEMHitsThreshSIMneDAT = book2F("jem_2d_thresh_ThreshSimNeData",
      "JEM Hits Data/Simulation Threshold Mismatches;Crate/Module",
              32, 0, 32, 12, 0, 12);
   setLabelsCMT(m_h_JEMHitsThreshSIMneDAT);
@@ -308,23 +305,23 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monHits2;
 
-  m_h_CMMHitsSIMeqDAT = book2F("cmm_2d_thresh_JEM_eq_CMM",
+  m_h_CMMHitsSIMeqDAT = book2F("cmm_2d_thresh_JemEqCmm",
      "CMM Hits/JEM Hits Non-zero Matches;Module;Crate", 16, 0, 16, 2, 0, 2);
   setLabelsMC(m_h_CMMHitsSIMeqDAT);
-  m_h_CMMHitsSIMneDAT = book2F("cmm_2d_thresh_JEM_ne_CMM",
+  m_h_CMMHitsSIMneDAT = book2F("cmm_2d_thresh_JemNeCmm",
      "CMM Hits/JEM Hits Non-zero Mismatches;Module;Crate", 16, 0, 16, 2, 0, 2);
   setLabelsMC(m_h_CMMHitsSIMneDAT);
-  m_h_CMMHitsSIMnoDAT = book2F("cmm_2d_thresh_JEM_no_CMM",
+  m_h_CMMHitsSIMnoDAT = book2F("cmm_2d_thresh_JemNoCmm",
      "JEM Hits but no CMM Hits;Module;Crate", 16, 0, 16, 2, 0, 2);
   setLabelsMC(m_h_CMMHitsSIMnoDAT);
-  m_h_CMMHitsDATnoSIM = book2F("cmm_2d_thresh_CMM_no_JEM",
+  m_h_CMMHitsDATnoSIM = book2F("cmm_2d_thresh_CmmNoJem",
      "CMM Hits but no JEM Hits;Module;Crate", 16, 0, 16, 2, 0, 2);
   setLabelsMC(m_h_CMMHitsDATnoSIM);
-  m_h_CMMHitsThreshSIMeqDAT = book2F("cmm_2d_thresh_Thresh_JEM_eq_CMM",
+  m_h_CMMHitsThreshSIMeqDAT = book2F("cmm_2d_thresh_ThreshJemEqCmm",
      "CMM Hits/JEM Hits Threshold Matches;Crate/Module",
              32, 0, 32, 12, 0, 12);
   setLabelsCMT(m_h_CMMHitsThreshSIMeqDAT);
-  m_h_CMMHitsThreshSIMneDAT = book2F("cmm_2d_thresh_Thresh_JEM_ne_CMM",
+  m_h_CMMHitsThreshSIMneDAT = book2F("cmm_2d_thresh_ThreshJemNeCmm",
      "CMM Hits/JEM Hits Threshold Mismatches;Crate/Module",
              32, 0, 32, 12, 0, 12);
   setLabelsCMT(m_h_CMMHitsThreshSIMneDAT);
@@ -333,23 +330,23 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   // Local/Remote/Total sums
 
-  m_h_SumsSIMeqDAT = book1F("cmm_1d_thresh_Sums_sim_eq_data",
+  m_h_SumsSIMeqDAT = book1F("cmm_1d_thresh_SumsSimEqData",
      "CMM Hit Sums Data/Simulation Non-zero Matches", 6, 0, 6);
   setLabelsSH(m_h_SumsSIMeqDAT);
-  m_h_SumsSIMneDAT = book1F("cmm_1d_thresh_Sums_sim_ne_data",
+  m_h_SumsSIMneDAT = book1F("cmm_1d_thresh_SumsSimNeData",
      "CMM Hit Sums Data/Simulation Non-zero Mismatches", 6, 0, 6);
   setLabelsSH(m_h_SumsSIMneDAT);
-  m_h_SumsSIMnoDAT = book1F("cmm_1d_thresh_Sums_sim_no_data",
+  m_h_SumsSIMnoDAT = book1F("cmm_1d_thresh_SumsSimNoData",
      "CMM Hit Sums Simulation but no Data", 6, 0, 6);
   setLabelsSH(m_h_SumsSIMnoDAT);
-  m_h_SumsDATnoSIM = book1F("cmm_1d_thresh_Sums_data_no_sim",
+  m_h_SumsDATnoSIM = book1F("cmm_1d_thresh_SumsDataNoSim",
      "CMM Hit Sums Data but no Simulation", 6, 0, 6);
   setLabelsSH(m_h_SumsDATnoSIM);
-  m_h_SumsThreshSIMeqDAT = book2F("cmm_2d_thresh_Sums_thresh_sim_eq_data",
+  m_h_SumsThreshSIMeqDAT = book2F("cmm_2d_thresh_SumsThreshSimEqData",
      "CMM Hit Sums Data/Simulation Threshold Matches",
              6, 0, 6, 16, 0, 16);
   setLabelsSHF(m_h_SumsThreshSIMeqDAT);
-  m_h_SumsThreshSIMneDAT = book2F("cmm_2d_thresh_Sums_thresh_sim_ne_data",
+  m_h_SumsThreshSIMneDAT = book2F("cmm_2d_thresh_SumsThreshSimNeData",
      "CMM Hit Sums Data/Simulation Threshold Mismatches",
              6, 0, 6, 16, 0, 16);
   setLabelsSHF(m_h_SumsThreshSIMneDAT);
@@ -360,19 +357,19 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monEnergy;
 
-  m_h_jemEtSumsSIMeqDAT = book2F("jem_2d_energy_Sim_eq_data",
+  m_h_jemEtSumsSIMeqDAT = book2F("jem_2d_energy_SimEqData",
     "JEM EtSums Data/Simulation Non-zero Matches;Crate/Module",
              32, 0, 32, 3, 0, 3);
   setLabelsJES(m_h_jemEtSumsSIMeqDAT);
-  m_h_jemEtSumsSIMneDAT = book2F("jem_2d_energy_Sim_ne_data",
+  m_h_jemEtSumsSIMneDAT = book2F("jem_2d_energy_SimNeData",
     "JEM EtSums Data/Simulation Non-zero Mismatches;Crate/Module",
              32, 0, 32, 3, 0, 3);
   setLabelsJES(m_h_jemEtSumsSIMneDAT);
-  m_h_jemEtSumsSIMnoDAT = book2F("jem_2d_energy_Sim_no_data",
+  m_h_jemEtSumsSIMnoDAT = book2F("jem_2d_energy_SimNoData",
     "JEM EtSums Simulation but no Data;Crate/Module",
              32, 0, 32, 3, 0, 3);
   setLabelsJES(m_h_jemEtSumsSIMnoDAT);
-  m_h_jemEtSumsDATnoSIM = book2F("jem_2d_energy_Data_no_sim",
+  m_h_jemEtSumsDATnoSIM = book2F("jem_2d_energy_DataNoSim",
     "JEM EtSums Data but no Simulation;Crate/Module",
              32, 0, 32, 3, 0, 3);
   setLabelsJES(m_h_jemEtSumsDATnoSIM);
@@ -383,19 +380,19 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monEnergy2;
 
-  m_h_cmmEtSumsSIMeqDAT = book2F("cmm_2d_energy_JEM_eq_CMM",
+  m_h_cmmEtSumsSIMeqDAT = book2F("cmm_2d_energy_JemEqCmm",
     "CMM EtSums/JEM EtSums Non-zero Matches;Crate/Module",
              32, 0, 32, 3, 0, 3);
   setLabelsJES(m_h_cmmEtSumsSIMeqDAT);
-  m_h_cmmEtSumsSIMneDAT = book2F("cmm_2d_energy_JEM_ne_CMM",
+  m_h_cmmEtSumsSIMneDAT = book2F("cmm_2d_energy_JemNeCmm",
     "CMM EtSums/JEM EtSums Non-zero Mismatches;Crate/Module",
              32, 0, 32, 3, 0, 3);
   setLabelsJES(m_h_cmmEtSumsSIMneDAT);
-  m_h_cmmEtSumsSIMnoDAT = book2F("cmm_2d_energy_JEM_no_CMM",
+  m_h_cmmEtSumsSIMnoDAT = book2F("cmm_2d_energy_JemNoCmm",
     "JEM EtSums but no CMM EtSums;Crate/Module",
              32, 0, 32, 3, 0, 3);
   setLabelsJES(m_h_cmmEtSumsSIMnoDAT);
-  m_h_cmmEtSumsDATnoSIM = book2F("cmm_2d_energy_CMM_no_JEM",
+  m_h_cmmEtSumsDATnoSIM = book2F("cmm_2d_energy_CmmNoJem",
     "CMM EtSums but no JEM EtSums;Crate/Module",
              32, 0, 32, 3, 0, 3);
   setLabelsJES(m_h_cmmEtSumsDATnoSIM);
@@ -404,22 +401,22 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   // Energy Crate/System sums
 
-  m_h_EnSumsSIMeqDAT = book2F("cmm_2d_energy_Sums_sim_eq_data",
+  m_h_EnSumsSIMeqDAT = book2F("cmm_2d_energy_SumsSimEqData",
     "Energy Totals Data/Simulation Non-zero Matches", 5, 0, 5, 5, 0, 5);
   setLabelsEnTot(m_h_EnSumsSIMeqDAT);
-  m_h_EnSumsSIMneDAT = book2F("cmm_2d_energy_Sums_sim_ne_data",
+  m_h_EnSumsSIMneDAT = book2F("cmm_2d_energy_SumsSimNeData",
     "Energy Totals Data/Simulation Non-zero Mismatches", 5, 0, 5, 5, 0, 5);
   setLabelsEnTot(m_h_EnSumsSIMneDAT);
-  m_h_EnSumsSIMnoDAT = book2F("cmm_2d_energy_Sums_sim_no_data",
+  m_h_EnSumsSIMnoDAT = book2F("cmm_2d_energy_SumsSimNoData",
     "Energy Totals Simulation but no Data", 5, 0, 5, 5, 0, 5);
   setLabelsEnTot(m_h_EnSumsSIMnoDAT);
-  m_h_EnSumsDATnoSIM = book2F("cmm_2d_energy_Sums_data_no_sim",
+  m_h_EnSumsDATnoSIM = book2F("cmm_2d_energy_SumsDataNoSim",
     "Energy Totals Data but no Simulation", 5, 0, 5, 5, 0, 5);
   setLabelsEnTot(m_h_EnSumsDATnoSIM);
-  m_h_EnSumsThreshSIMeqDAT = book2F("cmm_2d_energy_EtMaps_thresh_sim_eq_data",
+  m_h_EnSumsThreshSIMeqDAT = book2F("cmm_2d_energy_EtMapsThreshSimEqData",
     "Et Maps Data/Simulation Threshold Matches;;Threshold", 4, 0, 4, 8, 0, 8);
   setLabelsEnTotThr(m_h_EnSumsThreshSIMeqDAT);
-  m_h_EnSumsThreshSIMneDAT = book2F("cmm_2d_energy_EtMaps_thresh_sim_ne_data",
+  m_h_EnSumsThreshSIMneDAT = book2F("cmm_2d_energy_EtMapsThreshSimNeData",
     "Et Maps Data/Simulation Threshold Mismatches;;Threshold",
                                                             4, 0, 4, 8, 0, 8);
   setLabelsEnTotThr(m_h_EnSumsThreshSIMneDAT);
@@ -428,42 +425,19 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monExpert;
 
-  m_h_JEPeqSIM = book2F("jem_2d_Sim_eq_data_overview",
+  m_h_JEPeqSIM = book2F("jem_2d_SimEqDataOverview",
    "JEP Transmission/Comparison with Simulation Overview - Events with Matches;Crate/Module",
              36, 0, 36, NumberOfSummaryBins, 0, NumberOfSummaryBins);
   setLabels(m_h_JEPeqSIM);
 
-  m_h_JEPneSIM = book2F("jem_2d_Sim_ne_data_overview",
+  m_h_JEPneSIM = book2F("jem_2d_SimNeDataOverview",
 "JEP Transmission/Comparison with Simulation Overview - Events with Mismatches;Crate/Module",
              36, 0, 36, NumberOfSummaryBins, 0, NumberOfSummaryBins);
   setLabels(m_h_JEPneSIM);
 
-  //temporary duplicates
-  m_monGroup = &monTemp;
-  m_h_JEPeqSIM2 = book2F("JEP_TransCheck",
-   "JEP Transmission/Comparison with Simulation Overview - Events with Matches;Crate/Module",
-             36, 0, 36, NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  setLabels(m_h_JEPeqSIM2);
-
-  m_h_JEPneSIM2 = book2F("JEP_Calc_Error",
-"JEP Transmission/Comparison with Simulation Overview - Events with Mismatches;Crate/Module",
-             36, 0, 36, NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  setLabels(m_h_JEPneSIM2);
-
-  m_h_JEPeqSIM3 = book2F("hadJE_TransPerfCheck",
-   "JEP Transmission/Comparison with Simulation Overview - Events with Matches;Crate/Module",
-             36, 0, 36, NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  setLabels(m_h_JEPeqSIM3);
-
-  m_h_JEPneSIM3 = book2F("emJE_TransPerfCheck",
-"JEP Transmission/Comparison with Simulation Overview - Events with Mismatches;Crate/Module",
-             36, 0, 36, NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  setLabels(m_h_JEPneSIM3);
-  //end temporary duplicates
-
   m_monGroup = &monShift;
 
-  m_h_JEPneSIMSummary = book1F("jem_1d_Sim_ne_data_summary",
+  m_h_JEPneSIMSummary = book1F("jem_1d_SimNeDataSummary",
    "JEP Transmission/Comparison with Simulation Mismatch Summary;;Events",
     NumberOfSummaryBins, 0, NumberOfSummaryBins);
   m_h_JEPneSIMSummary->GetXaxis()->SetBinLabel(1+EMElementMismatch,  "EM je");
@@ -522,27 +496,27 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_sampleHists.clear();
   m_sampleHists.resize(9, hist);
   if (m_compareWithSim) {
-    hist = book2I("jem_em_2d_jetEl_Mismatch_events",
+    hist = book2I("jem_em_2d_jetEl_MismatchEvents",
            "Jet Elements EM Mismatch Event Numbers;Sample;Crate/Module",
 	   m_eventSamples, 0, m_eventSamples, 32, 0, 32);
     setLabelsJMS(hist);
     m_sampleHists[0] = hist;
-    hist = book2I("jem_had_2d_jetEl_Mismatch_events",
+    hist = book2I("jem_had_2d_jetEl_MismatchEvents",
            "Jet Elements Had Mismatch Event Numbers;Sample;Crate/Module",
 	   m_eventSamples, 0, m_eventSamples, 32, 0, 32);
     setLabelsJMS(hist);
     m_sampleHists[1] = hist;
-    hist = book2I("jem_2d_roi_Mismatch_events",
+    hist = book2I("jem_2d_roi_MismatchEvents",
            "JEM RoIs Mismatch Event Numbers;Sample;Crate/Module",
 	   m_eventSamples, 0, m_eventSamples, 32, 0, 32);
     setLabelsJMS(hist);
     m_sampleHists[2] = hist;
-    hist = book2I("jem_2d_thresh_Mismatch_events",
+    hist = book2I("jem_2d_thresh_MismatchEvents",
            "JEM Hits Mismatch Event Numbers;Sample;Crate/Module",
 	   m_eventSamples, 0, m_eventSamples, 32, 0, 32);
     setLabelsJMS(hist);
     m_sampleHists[3] = hist;
-    hist = book2I("jem_2d_energy_Mismatch_events",
+    hist = book2I("jem_2d_energy_MismatchEvents",
            "JEM Energy Mismatch Event Numbers;Sample;Crate/Module",
 	   m_eventSamples, 0, m_eventSamples, 32, 0, 32);
     setLabelsJMS(hist);
@@ -551,17 +525,17 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monEvent2;
 
-  hist = book2I("cmm_2d_thresh_Mismatch_events",
+  hist = book2I("cmm_2d_thresh_MismatchEvents",
            "CMM Hits Mismatch Event Numbers;Sample;Crate/Module",
 	   m_eventSamples, 0, m_eventSamples, 32, 0, 32);
   setLabelsJMS(hist);
   m_sampleHists[4] = hist;
-  hist = book2I("cmm_2d_energy_Mismatch_events",
+  hist = book2I("cmm_2d_energy_MismatchEvents",
            "CMM Energy Mismatch Event Numbers;Sample;Crate/Module",
 	   m_eventSamples, 0, m_eventSamples, 32, 0, 32);
   setLabelsJMS(hist);
   m_sampleHists[6] = hist;
-  hist = book2I("cmm_2d_thresh_Sums_mismatch_events",
+  hist = book2I("cmm_2d_thresh_SumsMismatchEvents",
            "CMM Hit Sums Mismatch Event Numbers;Sample",
 	   m_eventSamples, 0, m_eventSamples, 8, 0, 8);
   hist->GetYaxis()->SetBinLabel(1, "Modules 0");
@@ -580,7 +554,7 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
   }
   if (m_eventSamples <= 10) setLabelsXNUM(hist, 1, m_eventSamples);
   m_sampleHists[7] = hist;
-  hist = book2I("cmm_2d_energy_Sums_mismatch_events",
+  hist = book2I("cmm_2d_energy_SumsMismatchEvents",
            "CMM Energy Sums Mismatch Event Numbers;Sample",
 	   m_eventSamples, 0, m_eventSamples, 9, 0, 9);
   hist->GetYaxis()->SetBinLabel(1, "Modules 0");
@@ -923,14 +897,9 @@ StatusCode JEPSimBSMon::fillHistograms()
     for (int loc = 0; loc < jemBins; ++loc) {
       if ((errorsJEM[loc] >> err) & 0x1) {
         m_h_JEPeqSIM->Fill(loc, err, 1.);
-	//temporary duplicates
-        m_h_JEPeqSIM2->Fill(loc, err, 1.);
-        m_h_JEPeqSIM3->Fill(loc, err, 1.);
       }
       if ((errorsJEM[loc + jemBins] >> err) & 0x1) {
         m_h_JEPneSIM->Fill(loc, err, 1.);
-        m_h_JEPneSIM2->Fill(loc, err, 1.);
-        m_h_JEPneSIM3->Fill(loc, err, 1.);
 	error = 1;
 	crateErr[loc/nJEMs] |= (1 << err);
 	fillEventSample(err, loc, true);
@@ -938,13 +907,9 @@ StatusCode JEPSimBSMon::fillHistograms()
       if (loc < cmmBins) {
         if ((errorsCMM[loc] >> err) & 0x1) {
           m_h_JEPeqSIM->Fill(loc+jemBins, err, 1.);
-          m_h_JEPeqSIM2->Fill(loc+jemBins, err, 1.);
-          m_h_JEPeqSIM3->Fill(loc+jemBins, err, 1.);
         }
         if ((errorsCMM[loc + cmmBins] >> err) & 0x1) {
           m_h_JEPneSIM->Fill(loc+jemBins, err, 1.);
-          m_h_JEPneSIM2->Fill(loc+jemBins, err, 1.);
-          m_h_JEPneSIM3->Fill(loc+jemBins, err, 1.);
 	  error = 1;
 	  crateErr[loc/nCMMs] |= (1 << err);
 	  fillEventSample(err, loc, false);

@@ -58,11 +58,11 @@ JEMMon::JEMMon( const std::string & type, const std::string & name,
   declareProperty( "JEMEtSumsLocation", m_JEMEtSumsLocation=   LVL1::TrigT1CaloDefs::JEMEtSumsLocation) ;
   declareProperty( "JEMRoILocation", m_JEMRoILocation =  LVL1::TrigT1CaloDefs::JEMRoILocation) ;
   declareProperty( "NumberOfSlices", m_SliceNo = 5);
-  declareProperty( "MaxEnergyRange", m_MaxEnergyRange = 50) ;
+  declareProperty( "MaxEnergyRange", m_MaxEnergyRange = 1024) ;
   declareProperty( "Offline", m_Offline = 1) ;
 
-  declareProperty( "PathInRootFile", m_PathInRootFile="Stats/JEM") ;
-  declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="Stats/L1Calo/Errors") ;
+  declareProperty( "PathInRootFile", m_PathInRootFile="L1Calo/JEM") ;
+  declareProperty( "ErrorPathInRootFile", m_ErrorPathInRootFile="L1Calo/JEM/Errors/Hardware") ;
   declareProperty( "TypeOfData", m_DataType="") ;
 
 }
@@ -101,6 +101,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 	
+  /*
   ManagedMonitorToolBase::LevelOfDetail_t LevelOfDetail=shift;
   if (m_DataType=="Sim") LevelOfDetail = expert;
 
@@ -118,6 +119,24 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 
   MonGroup JEM_Error( this, (m_ErrorPathInRootFile).c_str(), shift, run );
   HistoBooker Error_Booker(&JEM_Error, &mLog, "");
+  */
+  MonGroup JetElements_expert (this, m_PathInRootFile+"/Input", expert, run);
+  HistoBooker expert_Booker(&JetElements_expert, &mLog, "");
+
+  MonGroup JetElements_shift (this, m_PathInRootFile+"/Input", shift, run);
+  HistoBooker shift_Booker(&JetElements_shift, &mLog, "");
+
+  MonGroup JEM_Thresholds (this, m_PathInRootFile+"/Output/Thresholds", expert, run);
+  HistoBooker Thresholds_Booker(&JEM_Thresholds, &mLog, "");
+
+  MonGroup JEM_EnergySums (this, m_PathInRootFile+"/Output/EnergySums", expert, run);
+  HistoBooker EnergySums_Booker(&JEM_EnergySums, &mLog, "");
+
+  MonGroup JEM_RoI (this, m_PathInRootFile+"/Output/RoI", shift, run);
+  HistoBooker RoI_Booker(&JEM_RoI, &mLog, "");
+
+  MonGroup JEM_Error(this, m_ErrorPathInRootFile, shift, run );
+  HistoBooker Error_Booker(&JEM_Error, &mLog, "");
 
   if ( isNewEventsBlock|| isNewLumiBlock) { }
 
@@ -128,31 +147,41 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 
       //---------------------------- JetElements histos -----------------------------
 
-      m_h_je_emeta = expert_Booker.book1F("emeta_JEM_input", "em TowerSum distribution per #eta  --  JEM input" , 50, -5, 5, "#eta" , "N");
+      //m_h_je_emeta = expert_Booker.book1F("emeta_JEM_input", "em TowerSum distribution per #eta  --  JEM input" , 50, -5, 5, "#eta" , "N");
+      m_h_je_emeta = expert_Booker.book1F("jem_em_1d_jetEl_Eta", "em TowerSum distribution per #eta  --  JEM input" , 50, -5, 5, "#eta" , "N");
       m_h_je_emeta ->SetBins(32,Help.JEEtaBinning());
       m_h_je_emeta ->SetStats(kFALSE);
-      m_h_je_hadeta = expert_Booker.book1F("hadeta_JEM_input", "had TowerSum distribution per #eta  --  JEM input" , 50, -5, 5, "#eta" , "N");
+      //m_h_je_hadeta = expert_Booker.book1F("hadeta_JEM_input", "had TowerSum distribution per #eta  --  JEM input" , 50, -5, 5, "#eta" , "N");
+      m_h_je_hadeta = expert_Booker.book1F("jem_had_1d_jetEl_Eta", "had TowerSum distribution per #eta  --  JEM input" , 50, -5, 5, "#eta" , "N");
       m_h_je_hadeta ->SetBins(32,Help.JEEtaBinning());
       m_h_je_hadeta ->SetStats(kFALSE);
 
-      m_h_je_emphi = expert_Booker.book1F("emphi_JEM_input", "em TowerSum distribution per #phi  --  JEM input", 32, 0, 6.4, "#phi" , "N");
+      //m_h_je_emphi = expert_Booker.book1F("emphi_JEM_input", "em TowerSum distribution per #phi  --  JEM input", 32, 0, 6.4, "#phi" , "N");
+      m_h_je_emphi = expert_Booker.book1F("jem_em_1d_jetEl_Phi", "em TowerSum distribution per #phi  --  JEM input", 32, 0, 6.4, "#phi" , "N");
       m_h_je_emphi->SetBins(32,Help.JEPhiBinning());
-      m_h_je_hadphi = expert_Booker.book1F("hadphi_JEM_input", "had TowerSum distribution per #phi  --  JEM input", 32, 0, 6.4, "#phi" , "N");
+      //m_h_je_hadphi = expert_Booker.book1F("hadphi_JEM_input", "had TowerSum distribution per #phi  --  JEM input", 32, 0, 6.4, "#phi" , "N");
+      m_h_je_hadphi = expert_Booker.book1F("jem_had_1d_jetEl_Phi", "had TowerSum distribution per #phi  --  JEM input", 32, 0, 6.4, "#phi" , "N");
       m_h_je_hadphi->SetBins(32,Help.JEPhiBinning());
       m_h_je_emphi ->SetStats(kFALSE);
       m_h_je_hadphi ->SetStats(kFALSE);
 
-      m_h_je_emenergy = expert_Booker.book1F("EmEnergy_JEM_input", "TowerSum EM energy distribution  --  JEM input", m_MaxEnergyRange, 0, m_MaxEnergyRange, "em energy [GeV]" , "N");
-      m_h_je_hadenergy  = expert_Booker.book1F("HadEnergy_JEM_input", "TowerSum HAD energy distribution  --  JEM input", m_MaxEnergyRange, 0, m_MaxEnergyRange, "had energy [GeV]" , "N");
+      int jebins = 256;
+      if (m_MaxEnergyRange < jebins) jebins = m_MaxEnergyRange;
+      //m_h_je_emenergy = expert_Booker.book1F("EmEnergy_JEM_input", "TowerSum EM energy distribution  --  JEM input", jebins, 0, m_MaxEnergyRange, "em energy [GeV]" , "N");
+      //m_h_je_hadenergy  = expert_Booker.book1F("HadEnergy_JEM_input", "TowerSum HAD energy distribution  --  JEM input", jebins, 0, m_MaxEnergyRange, "had energy [GeV]" , "N");
+      m_h_je_emenergy = expert_Booker.book1F("jem_em_1d_jetEl_Energy", "TowerSum EM energy distribution  --  JEM input", jebins, 0, m_MaxEnergyRange, "em energy [GeV]" , "N");
+      m_h_je_hadenergy  = expert_Booker.book1F("jem_had_1d_jetEl_Energy", "TowerSum HAD energy distribution  --  JEM input", jebins, 0, m_MaxEnergyRange, "had energy [GeV]" , "N");
       m_h_je_emenergy->SetStats(kFALSE);
       m_h_je_hadenergy->SetStats(kFALSE);
 
-      m_h_je_energy_emHitMap = shift_Booker.book2F("JE_EM_HitMap_energy_JEM_input", "#eta - #phi map of EM TowerSum weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4 , "#eta", "#phi");
+      //m_h_je_energy_emHitMap = shift_Booker.book2F("JE_EM_HitMap_energy_JEM_input", "#eta - #phi map of EM TowerSum weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4 , "#eta", "#phi");
+      m_h_je_energy_emHitMap = shift_Booker.book2F("jem_em_2d_etaPhi_jetEl_HitMapWeighted", "#eta - #phi map of EM TowerSum weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4 , "#eta", "#phi");
       m_h_je_energy_emHitMap->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
       m_h_je_energy_emHitMap->SetStats(kFALSE);
      
 
-      m_h_je_energy_hadHitMap = shift_Booker.book2F("JE_HAD_HitMap_energy_JEM_input", "#eta - #phi map of HAD TowerSum weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
+      //m_h_je_energy_hadHitMap = shift_Booker.book2F("JE_HAD_HitMap_energy_JEM_input", "#eta - #phi map of HAD TowerSum weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
+      m_h_je_energy_hadHitMap = shift_Booker.book2F("jem_had_2d_etaPhi_jetEl_HitMapWeighted", "#eta - #phi map of HAD TowerSum weighted with energy  --  JEM input", 50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
       m_h_je_energy_hadHitMap->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
       m_h_je_energy_hadHitMap->SetStats(kFALSE);
       
@@ -168,7 +197,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	      buffer.str("");
 	      buffer<<i;
 	      
-	      name = "TowerSum_EM_HitMap_" + buffer.str() + "_JEM_input";
+	      //name = "TowerSum_EM_HitMap_" + buffer.str() + "_JEM_input";
+	      name = "jem_em_2d_etaPhi_jetEl_HitMapSlice" + buffer.str();
 	      title = "#eta - #phi map of EM TowerSum for Timeslice " + buffer.str() +  "  --  JEM input";
 	      m_h_je_emHitMap[i]=shift_Booker.book2F(name,title,50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
 	      m_h_je_emHitMap[i]->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
@@ -178,7 +208,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	      buffer.str("");
 	      buffer<<i;
 	      
-	      name = "TowerSum_HAD_HitMap_" + buffer.str() + "_JEM_input";
+	      //name = "TowerSum_HAD_HitMap_" + buffer.str() + "_JEM_input";
+	      name = "jem_had_2d_etaPhi_jetEl_HitMapSlice" + buffer.str();
 	      title = "#eta - #phi map of HAD TowerSum for Timeslice " + buffer.str() +  "  --  JEM input";
 	      m_h_je_hadHitMap[i]=shift_Booker.book2F(name,title,50, -5, 5, 32, 0, 6.4, "#eta", "#phi");	  
 	      m_h_je_hadHitMap[i]->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
@@ -187,7 +218,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	    }
 
 	  // ----------------------------------- Error Histos ------------------------------------------------------
-	  m_h_je_error = Error_Booker.book2F("JEM_Error","Error reports from JEM SubStatus Word",11,0.5,11.5,35,0.5,35.5,"","");
+	  //m_h_je_error = Error_Booker.book2F("JEM_Error","Error reports from JEM SubStatus Word",11,0.5,11.5,35,0.5,35.5,"","");
+	  m_h_je_error = Error_Booker.book2F("jem_2d_Status","Error reports from JEM SubStatus Word",11,0.5,11.5,35,0.5,35.5,"","");
 	 
 	  m_h_je_error->GetXaxis()->SetBinLabel(1, "EM Parity");
 	  m_h_je_error->GetXaxis()->SetBinLabel(2, "HAD Parity");
@@ -224,20 +256,49 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       // m_h_je_triggeredSlice=expert_Booker.book1F("JE_TriggeredSlice","Number of the Triggered Slice for JE",7,-0.5,6.5,"#Slice");
       
       //---------------------------- DAQ histos -----------------------------
-      m_h_JEMHits_MainHits = DAQ_Booker.book1F("MainHits_JEM_DAQ", "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ", 8, -0.5, 7.5,  "Threshold No.", "N");
-      m_h_JEMHits_FwdHitsRight = DAQ_Booker.book1F("FwdHitsRight_JEM_DAQ", "Fwd Right Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
-      m_h_JEMHits_FwdHitsLeft = DAQ_Booker.book1F("FwdHitsLeft_JEM_DAQ", "Fwd Left Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
+      //m_h_JEMHits_MainHits = Thresholds_Booker.book1F("MainHits_JEM_DAQ", "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ", 8, -0.5, 7.5,  "Threshold No.", "N");
+      //m_h_JEMHits_FwdHitsRight = Thresholds_Booker.book1F("FwdHitsRight_JEM_DAQ", "Fwd Right Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
+      //m_h_JEMHits_FwdHitsLeft = Thresholds_Booker.book1F("FwdHitsLeft_JEM_DAQ", "Fwd Left Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
+      m_h_JEMHits_MainHits = Thresholds_Booker.book1F("jem_1d_thresh_MainHits", "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ", 8, -0.5, 7.5,  "Threshold No.", "N");
+      m_h_JEMHits_FwdHitsRight = Thresholds_Booker.book1F("jem_1d_thresh_FwdHitsRight", "Fwd Right Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
+      m_h_JEMHits_FwdHitsLeft = Thresholds_Booker.book1F("jem_1d_thresh_FwdHitsLeft", "Fwd Left Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
       
-      m_h_JEMEtSums_Ex = DAQ_Booker.book1F("Ex_JEM_DAQ", "JEM E_{x}^{JEM}  --  JEM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ex [GeV]", "N");
-      m_h_JEMEtSums_Ey = DAQ_Booker.book1F("Ey_JEM_DAQ", "JEM E_{y}^{JEM}  --  JEM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Ey [GeV]", "N");
-      m_h_JEMEtSums_Et = DAQ_Booker.book1F("Et_JEM_DAQ", "JEM E_{t}^{JEM}  --  JEM DAQ", m_MaxEnergyRange, 0,m_MaxEnergyRange, "Et [GeV]", "N");
+      // Choose binning to match the encoding - display log/log
+      const int eRange = 256;  //range of encoded value
+      const int dRange = 4096; //range of decoded value
+      LVL1::QuadLinear expand;
+      std::set<int> sorted;
+      for (int i = 0; i < eRange; ++i) sorted.insert(expand.Expand(i));
+      double binedges[eRange+1];
+      int nbins = 0;
+      std::set<int>::const_iterator iter  = sorted.begin();
+      std::set<int>::const_iterator iterE = sorted.end();
+      for (; iter != iterE; ++iter) {
+        binedges[nbins] = *iter;
+	++nbins;
+      }
+      binedges[nbins] = dRange;
+      //m_h_JEMEtSums_Ex = EnergySums_Booker.book1F("Ex_JEM_DAQ", "JEM E_{x}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Ex [GeV]", "N");
+      //m_h_JEMEtSums_Ey = EnergySums_Booker.book1F("Ey_JEM_DAQ", "JEM E_{y}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Ey [GeV]", "N");
+      //m_h_JEMEtSums_Et = EnergySums_Booker.book1F("Et_JEM_DAQ", "JEM E_{t}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Et [GeV]", "N");
+      m_h_JEMEtSums_Ex = EnergySums_Booker.book1F("jem_1d_energy_SubSumsEx", "JEM E_{x}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Ex [GeV]", "N");
+      m_h_JEMEtSums_Ey = EnergySums_Booker.book1F("jem_1d_energy_SubSumsEy", "JEM E_{y}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Ey [GeV]", "N");
+      m_h_JEMEtSums_Et = EnergySums_Booker.book1F("jem_1d_energy_SubSumsEt", "JEM E_{t}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Et [GeV]", "N");
+      m_h_JEMEtSums_Ex->SetBins(nbins, binedges);
+      m_h_JEMEtSums_Ey->SetBins(nbins, binedges);
+      m_h_JEMEtSums_Et->SetBins(nbins, binedges);
       
       //---------------------------- RoI histos -----------------------------
-      m_h_JEMRoI_MainHits = RoI_Booker.book1F("MainHits_JEM_RoI", "Main Jet Hit Multiplicity per Threshold  --  JEM RoI", 8, -0.5, 7.5,  "Threshold No.", "N");      
-      m_h_JEMRoI_FwdHitsRight = RoI_Booker.book1F("FwdHitsRight_JEM_RoI", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
-      m_h_JEMRoI_FwdHitsLeft = RoI_Booker.book1F("FwdHitsLeft_JEM_RoI", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
+      //m_h_JEMRoI_MainHits = RoI_Booker.book1F("MainHits_JEM_RoI", "Main Jet Hit Multiplicity per Threshold  --  JEM RoI", 8, -0.5, 7.5,  "Threshold No.", "N");      
+      //m_h_JEMRoI_FwdHitsRight = RoI_Booker.book1F("FwdHitsRight_JEM_RoI", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
+      //m_h_JEMRoI_FwdHitsLeft = RoI_Booker.book1F("FwdHitsLeft_JEM_RoI", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
       
-      m_h_JEMDAQ_Hits_Map= DAQ_Booker.book2F("Hits_Map_JEM","HitMap of Hits per JEM",14,-0.5,13.5,35,0.5,35.5,"","");
+      //m_h_JEMDAQ_Hits_Map= Thresholds_Booker.book2F("Hits_Map_JEM","HitMap of Hits per JEM",14,-0.5,13.5,35,0.5,35.5,"","");
+      m_h_JEMRoI_MainHits = RoI_Booker.book1F("jem_1d_roi_MainHits", "Main Jet Hit Multiplicity per Threshold  --  JEM RoI", 8, -0.5, 7.5,  "Threshold No.", "N");      
+      m_h_JEMRoI_FwdHitsRight = RoI_Booker.book1F("jem_1d_roi_FwdHitsRight", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
+      m_h_JEMRoI_FwdHitsLeft = RoI_Booker.book1F("jem_1d_roi_FwdHitsLeft", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
+      
+      m_h_JEMDAQ_Hits_Map= Thresholds_Booker.book2F("jem_2d_thresh_HitsPerJem","HitMap of Hits per JEM",14,-0.5,13.5,35,0.5,35.5,"","");
       m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel(13,"Sat(Main)");
       m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel(14,"Sat(Fwd)");
       m_h_JEMDAQ_Hits_Map->SetStats(kFALSE);
@@ -266,6 +327,18 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	m_h_JEMDAQ_Hits_Map->GetYaxis()->SetBinLabel(35, "Crate 1: ");
 
       //---------------------------- HitThreshold per Eta-Phi -----------------------------
+      // Use binning that puts RoIs in centres of bins not edges
+      const int    nxbins = 31; // last two right forward bins concatenated by decoder
+      const double xbinsRoi[nxbins+1] = {-4.9,-3.05,-2.8,-2.55,-2.3,-2.1,-1.9,-1.7,
+                                         -1.5,-1.3,-1.1,-0.9,-0.7,-0.5,-0.3,-0.1,
+	    			         0.1,0.3,0.5,0.7,0.9,1.1,1.3,1.5,1.7,1.9,
+				         2.1,2.3,2.55,2.8,3.05,4.9};
+      const double phiBin     = M_PI/16.;
+      const double halfPhiBin = M_PI/32.;
+      const int    nybins     = 32;
+      double       ybinsRoi[nybins+1];
+      for (int bin = 0; bin <= nybins; ++bin) ybinsRoi[bin] = halfPhiBin + bin*phiBin;
+
       for (int i=0;i<8;i++)
 	{
 	  std::string name,title;
@@ -273,11 +346,12 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 
 	  buffer.str("");
 	  buffer<<i;
-	  name = "MainThresh" + buffer.str()+"_EtaPhi_JEM_RoI";
+	  //name = "MainThresh" + buffer.str()+"_EtaPhi_JEM_RoI";
+	  name = "jem_2d_etaPhi_roi_MainThresh" + buffer.str();
 	  title="#eta - #phi Map of Main Hits passing Threshold "+ buffer.str()+"  --  JEM RoI";
 
 	  m_h_JEMRoI_MainThreshPerEtaPhi[i] = RoI_Booker.book2F(name.c_str(), title.c_str(), 50, -5, 5, 32,0,6.4, "#eta", "#phi");
-	  m_h_JEMRoI_MainThreshPerEtaPhi[i]->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
+	  m_h_JEMRoI_MainThreshPerEtaPhi[i]->SetBins(nxbins, xbinsRoi, nybins, ybinsRoi);
 	  m_h_JEMRoI_MainThreshPerEtaPhi[i]->SetStats(kFALSE);
 	
 	}
@@ -288,11 +362,12 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 
 	  buffer.str("");
 	  buffer<<i;
-	  name = "FwdThresh" + buffer.str()+"_EtaPhi_JEM_RoI";
+	  //name = "FwdThresh" + buffer.str()+"_EtaPhi_JEM_RoI";
+	  name = "jem_2d_etaPhi_roi_FwdThresh" + buffer.str();
 	  title="#eta - #phi Map of Fwd Hits passing Threshold "+ buffer.str()+"  --  JEM RoI";
 
 	  m_h_JEMRoI_FwdThreshPerEtaPhi[i] = RoI_Booker.book2F(name.c_str(), title.c_str(), 50, -5, 5, 32,0,6.4, "#eta", "#phi");
-	  m_h_JEMRoI_FwdThreshPerEtaPhi[i]->SetBins(32,Help.JEEtaBinning(),32,Help.JEPhiBinning());
+	  m_h_JEMRoI_FwdThreshPerEtaPhi[i]->SetBins(nxbins, xbinsRoi, nybins, ybinsRoi);
 	  m_h_JEMRoI_FwdThreshPerEtaPhi[i]->SetStats(kFALSE);
 	}
 
@@ -302,7 +377,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	  std::string name,title;
 	  std::stringstream buffer;
 
-	  m_h_JEMRoI_error = Error_Booker.book2F("JEMROI_Error","JEMRoI Parity",2,0.5,2.5,35,0.5,35.5,"","");
+	  //m_h_JEMRoI_error = Error_Booker.book2F("JEMROI_Error","JEMRoI Parity",2,0.5,2.5,35,0.5,35.5,"","");
+	  m_h_JEMRoI_error = Error_Booker.book2F("jem_2d_roi_Parity","JEMRoI Parity",2,0.5,2.5,35,0.5,35.5,"","");
 	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(1, "Parity (Main Jets)");
 	  m_h_JEMRoI_error->GetXaxis()->SetBinLabel(2, "Parity (Fwd Jets)");
 	    
@@ -324,10 +400,11 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_JEMRoI_error->GetYaxis()->SetBinLabel(17, "Crate 0: ");
 	  m_h_JEMRoI_error->GetYaxis()->SetBinLabel(35, "Crate 1: ");
 	
-	m_h_JEM_ErrorSummary = Error_Booker.book1F("JEM Error Summary","Summary of Data Errors", 3,-0.5,2.5,"","Entries");
+	//m_h_JEM_ErrorSummary = Error_Booker.book1F("JEM Error Summary","Summary of Data Errors", 3,-0.5,2.5,"","Entries");
+	m_h_JEM_ErrorSummary = Error_Booker.book1F("jem_1d_ErrorSummary","Summary of Data Errors", 3,-0.5,2.5,"","Entries");
 	m_h_JEM_ErrorSummary ->GetXaxis()->SetBinLabel(1, "Jet element errors");
 	m_h_JEM_ErrorSummary ->GetXaxis()->SetBinLabel(2, "Status error");
-	m_h_JEM_ErrorSummary ->GetXaxis()->SetBinLabel(3, "Jet Hit errors");
+	m_h_JEM_ErrorSummary ->GetXaxis()->SetBinLabel(3, "Jet RoI errors");
 	
 	}
        
@@ -762,10 +839,11 @@ StatusCode JEMMon::procHistograms( bool isEndOfEventsBlock,
   MsgStream mLog( msgSvc(), name() );
   mLog << MSG::DEBUG << "in procHistograms" << endreq ;
 
-  if( isEndOfEventsBlock || isEndOfLumiBlock ) 
+  if( isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun ) 
     {  
     }
 	
+  /*
   if(m_Offline==1)
     {
       if (m_DataType=="BS")
@@ -782,5 +860,6 @@ StatusCode JEMMon::procHistograms( bool isEndOfEventsBlock,
 	  }
 	}
     }
+  */
   return StatusCode( StatusCode::SUCCESS );
 }

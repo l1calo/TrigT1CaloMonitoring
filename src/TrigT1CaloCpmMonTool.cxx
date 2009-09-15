@@ -137,7 +137,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   MonGroup monCPMin( this, dir1 + "/Input", expert, run );
   MonGroup monRoIs( this, dir1 + "/Output/RoI", expert, run );
   MonGroup monCPMout( this, dir1 + "/Output/Thresholds", expert, run);
-  std::string dir2(m_rootDir + "/CPM-CMM");
+  std::string dir2(m_rootDir + "/CPM_CMM");
   MonGroup monCMM( this, dir2 + "/Errors/Hardware",  expert, run );
   MonGroup monCMMin( this, dir2 + "/Input",  expert, run );
   MonGroup monCMMout( this, dir2 + "/Output",  expert, run );
@@ -151,7 +151,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
        "CPM Slices and Triggered Slice;Crate/Number of Slices;Triggered Slice",
         xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
   setLabelsCNSTS(m_h_CPM_slices);
-  m_h_PP_CP_slice = book2F("cpm_2d_tt_Slice_match",
+  m_h_PP_CP_slice = book2F("cpm_2d_tt_SliceMatch",
         "PPM/CPM Tower Slice Match;Crate/CPM Slice;PPM Slice",
         xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
   setLabelsCNSTS(m_h_PP_CP_slice, true);
@@ -162,7 +162,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
        "CMM Slices and Triggered Slice;Crate/Number of Slices;Triggered Slice",
         xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
   setLabelsCNSTS(m_h_CMM_slices);
-  m_h_CP_CM_slice = book2F("cmm_2d_thresh_Slice_match",
+  m_h_CP_CM_slice = book2F("cmm_2d_thresh_SliceMatch",
         "CPM/CMM Hits Slice Match;Crate/CMM Slice;CPM Slice",
 	xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
   setLabelsCNSTS(m_h_CP_CM_slice, true);
@@ -189,9 +189,9 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
                                  "CPM Tower EM eta/phi");
   m_h_CT_Had_eta_phi = bookEtaPhi("cpm_had_2d_etaPhi_tt_Hitmap",
                                  "CPM Tower HAD eta/phi");
-  m_h_CT_Em_eta_phi_w = bookEtaPhi("cpm_em_2d_etaPhi_tt_Et_weighted",
+  m_h_CT_Em_eta_phi_w = bookEtaPhi("cpm_em_2d_etaPhi_tt_EtWeighted",
                                  "CPM Tower EM eta/phi weighted");
-  m_h_CT_Had_eta_phi_w = bookEtaPhi("cpm_had_2d_etaPhi_tt_Et_weighted",
+  m_h_CT_Had_eta_phi_w = bookEtaPhi("cpm_had_2d_etaPhi_tt_EtWeighted",
                                  "CPM Tower HAD eta/phi weighted");
 
   //  CPM Tower error bits
@@ -221,9 +221,9 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   setLabelsCMT(m_h_RoI_thresholds);
   m_h_RoI_eta_phi = bookEtaPhi("cpm_2d_etaPhi_roi_Hitmap",
                                "CPM RoIs Eta-Phi Hit Map", true);
-  m_h_RoI_Em_eta_phi = bookEtaPhi("cpm_2d_etaPhi_roi_Em_hitmap",
+  m_h_RoI_Em_eta_phi = bookEtaPhi("cpm_2d_etaPhi_roi_EmHitmap",
                                "CPM RoIs EM Eta-Phi Hit Map", true);
-  m_h_RoI_Tau_eta_phi = bookEtaPhi("cpm_2d_etaPhi_roi_Tau_hitmap",
+  m_h_RoI_Tau_eta_phi = bookEtaPhi("cpm_2d_etaPhi_roi_TauHitmap",
                                "CPM RoIs Tau Eta-Phi Hit Map", true);
   m_h_RoI_Saturation = bookEtaPhi("cpm_2d_etaPhi_roi_Saturation",
                                "CPM RoI Tower Saturation", true);
@@ -253,7 +253,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monCMMout;
 
-  m_h_CMM_T_thresholds = book2F("cmm_2d_thresh_Sums_weighted",
+  m_h_CMM_T_thresholds = book2F("cmm_2d_thresh_SumsWeighted",
        "CMM-CP Hit Sums Thresholds Weighted;Sum (Local/Remote/Total);Threshold",
   		          8, 0, 8, 16, 0, 16);
   setLabelsST(m_h_CMM_T_thresholds);
@@ -277,7 +277,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monExpert;
 
-  m_h_CP_overview = book2F("cpm_2d_Error_overview",
+  m_h_CP_overview = book2F("cpm_2d_ErrorOverview",
                            "CP Error Overview;Crate/Module",
 			    64, 0, 64,
 			    NumberOfSummaryBins, 0, NumberOfSummaryBins);
@@ -302,7 +302,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monShift;
 
-  m_h_CP_errors = book1F("cpm_1d_Error_summary",
+  m_h_CP_errors = book1F("cpm_1d_ErrorSummary",
                          "CP Error Summary;;Events",
                           NumberOfSummaryBins, 0, NumberOfSummaryBins);
   m_h_CP_errors->GetXaxis()->SetBinLabel(1+EMParity,  "EM parity");
