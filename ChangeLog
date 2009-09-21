@@ -1,3 +1,7 @@
+2009-09-21  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-06-03
+        * Bugfix for JEM-CMM timeslice comparison plot. 
+
 2009-09-15  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-02
         * Bugfixes and finish move to new histogram naming convention.

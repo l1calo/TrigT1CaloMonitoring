@@ -61,8 +61,6 @@ protected:
    int m_NoEvents;
    int m_MaxEnergyRange;
    bool m_Offline;
-   float j_num_slice;
-   float e_num_slice;
 
 
   /** Histos */   
