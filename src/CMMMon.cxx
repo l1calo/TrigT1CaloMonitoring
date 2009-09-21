@@ -304,7 +304,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	  m_h_CMMRoI_error->GetXaxis()->SetBinLabel(8, "Overflow (Et)");
 	  
 	  //m_h_TriggeredSlice=transmission_Booker.book1F("TriggeredSlice", "Comparison of the triggered slice number",3,0.5,3.5,"Difference","N");
-	  m_h_TriggeredSlice=transmission_Booker.book1F("cmm_1d_TriggeredSlices", "Comparison of the triggered slice number",3,0.5,3.5,"Difference","N");
+	  m_h_TriggeredSlice=transmission_Booker.book1F("cmm_1d_TriggeredSlices", "Comparison of CMM Jet and Energy triggered slice numbers",3,0.5,3.5,"Difference","N");
   
 	 //Error Summary for all CMMs in system
 	  //m_h_CMM_ErrorSummary = transmission_Booker.book1F("CMM_ErrorSummary", "Error Summary of CMM Jet, Energy and RoI path",
@@ -331,6 +331,10 @@ StatusCode CMMMon::fillHistograms()
 
   // Error vector for global overview
   std::vector<int> overview(2);
+
+  // triggered slice numbers
+  int j_num_slice = -1;
+  int e_num_slice = -1;
 
   // =============================================================================================
   // ================= Container: CMM Jet Hits ===================================================
@@ -571,7 +575,7 @@ StatusCode CMMMon::fillHistograms()
       if (m_DataType=="BS")
 	{
 	   e_num_slice = (*it_CMMEtSums)-> peak();
-	   m_h_TriggeredSlice->Fill(fabs(e_num_slice - j_num_slice));
+	   if (j_num_slice >= 0) m_h_TriggeredSlice->Fill(std::abs(e_num_slice - j_num_slice));
 
 	  // ------------------------------------------------------------------------------------------
 	  // ----------------- Histos with SubStatus Word errors -----------------------------
@@ -717,7 +721,8 @@ StatusCode CMMMon::fillHistograms()
       m_h_CMMRoI_error->Fill(4,jetEterr.get(1));
       
       //----------------Comparison on slice number-----------
-      if ((j_num_slice - e_num_slice)==1) m_h_CMMRoI_error->Fill(5,1);
+      //if ((j_num_slice - e_num_slice)==1) m_h_CMMRoI_error->Fill(5,1);
+      if (j_num_slice >= 0 && e_num_slice >= 0 && j_num_slice != e_num_slice) m_h_CMMRoI_error->Fill(5,1);
       //-----------------------------------------------------
       // Overflow (Ex)
       m_h_CMMRoI_error->Fill(6,exerr.get(0));
