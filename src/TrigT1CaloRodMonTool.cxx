@@ -194,27 +194,49 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monROB;
 
-  m_h_ROD_PP_rob = book2F("rod_2d_PpRobStatus",
-                          "PP ROB Status Bits;;Crate/S-Link",
-                           19, 0, 19, 32, 0, 32);
-  setLabelsROBStatus(m_h_ROD_PP_rob);
-  setLabelsCSL(m_h_ROD_PP_rob, false, 1, 32, 2, 2);
-  m_h_ROD_CPJEP_rob = book2F("rod_2d_CpJepRobStatus",
-                             "CP and JEP ROB Status Bits;;Crate/S-Link",
-                              19, 0, 19, 16, 0, 16);
-  setLabelsROBStatus(m_h_ROD_CPJEP_rob);
-  setLabelsCSL(m_h_ROD_CPJEP_rob, false, 1, 8, 1, 2);
-  m_h_ROD_CPJEP_rob->GetYaxis()->SetBinLabel(1, "CP 0/0");
-  setLabelsCSL(m_h_ROD_CPJEP_rob, false, 9, 16, 1, 1);
-  m_h_ROD_CPJEP_rob->GetYaxis()->SetBinLabel(9, "JEP 0/0");
-  m_h_ROD_RoI_rob = book2F("rod_2d_CpJepRoiRobStatus",
-                           "CP and JEP RoI ROB Status Bits;;Crate/S-Link",
-                            19, 0, 19, 12, 0, 12);
-  setLabelsROBStatus(m_h_ROD_RoI_rob);
-  setLabelsCSL(m_h_ROD_RoI_rob, false, 1, 8, 1, 2);
-  m_h_ROD_RoI_rob->GetYaxis()->SetBinLabel(1, "CP 0/0");
-  setLabelsCSL(m_h_ROD_RoI_rob, false, 9, 12, 1, 2);
-  m_h_ROD_RoI_rob->GetYaxis()->SetBinLabel(9, "JEP 0/0");
+  m_h_ROD_PP_robgen = book2F("rod_2d_PpRobStatusGeneric",
+                             "PP ROB Status Bits Generic Field;;Crate/S-Link",
+                              16, 0, 16, 32, 0, 32);
+  setLabelsROBStatusGen(m_h_ROD_PP_robgen);
+  setLabelsCSL(m_h_ROD_PP_robgen, false, 1, 32, 2, 2);
+  m_h_ROD_CPJEP_robgen = book2F("rod_2d_CpJepRobStatusGeneric",
+                       "CP and JEP ROB Status Bits Generic Field;;Crate/S-Link",
+                        16, 0, 16, 16, 0, 16);
+  setLabelsROBStatusGen(m_h_ROD_CPJEP_robgen);
+  setLabelsCSL(m_h_ROD_CPJEP_robgen, false, 1, 8, 1, 2);
+  m_h_ROD_CPJEP_robgen->GetYaxis()->SetBinLabel(1, "CP 0/0");
+  setLabelsCSL(m_h_ROD_CPJEP_robgen, false, 9, 16, 1, 1);
+  m_h_ROD_CPJEP_robgen->GetYaxis()->SetBinLabel(9, "JEP 0/0");
+  m_h_ROD_RoI_robgen = book2F("rod_2d_CpJepRoiRobStatusGeneric",
+                   "CP and JEP RoI ROB Status Bits Generic Field;;Crate/S-Link",
+                    16, 0, 16, 12, 0, 12);
+  setLabelsROBStatusGen(m_h_ROD_RoI_robgen);
+  setLabelsCSL(m_h_ROD_RoI_robgen, false, 1, 8, 1, 2);
+  m_h_ROD_RoI_robgen->GetYaxis()->SetBinLabel(1, "CP 0/0");
+  setLabelsCSL(m_h_ROD_RoI_robgen, false, 9, 12, 1, 2);
+  m_h_ROD_RoI_robgen->GetYaxis()->SetBinLabel(9, "JEP 0/0");
+
+  m_h_ROD_PP_robspec = book2F("rod_2d_PpRobStatusSpecific",
+                              "PP ROB Status Bits Specific Field;;Crate/S-Link",
+                               16, 0, 16, 32, 0, 32);
+  setLabelsROBStatusSpec(m_h_ROD_PP_robspec);
+  setLabelsCSL(m_h_ROD_PP_robspec, false, 1, 32, 2, 2);
+  m_h_ROD_CPJEP_robspec = book2F("rod_2d_CpJepRobStatusSpecific",
+                      "CP and JEP ROB Status Bits Specific Field;;Crate/S-Link",
+                       16, 0, 16, 16, 0, 16);
+  setLabelsROBStatusSpec(m_h_ROD_CPJEP_robspec);
+  setLabelsCSL(m_h_ROD_CPJEP_robspec, false, 1, 8, 1, 2);
+  m_h_ROD_CPJEP_robspec->GetYaxis()->SetBinLabel(1, "CP 0/0");
+  setLabelsCSL(m_h_ROD_CPJEP_robspec, false, 9, 16, 1, 1);
+  m_h_ROD_CPJEP_robspec->GetYaxis()->SetBinLabel(9, "JEP 0/0");
+  m_h_ROD_RoI_robspec = book2F("rod_2d_CpJepRoiRobStatusSpecific",
+                  "CP and JEP RoI ROB Status Bits Specific Field;;Crate/S-Link",
+                   16, 0, 16, 12, 0, 12);
+  setLabelsROBStatusSpec(m_h_ROD_RoI_robspec);
+  setLabelsCSL(m_h_ROD_RoI_robspec, false, 1, 8, 1, 2);
+  m_h_ROD_RoI_robspec->GetYaxis()->SetBinLabel(1, "CP 0/0");
+  setLabelsCSL(m_h_ROD_RoI_robspec, false, 9, 12, 1, 2);
+  m_h_ROD_RoI_robspec->GetYaxis()->SetBinLabel(9, "JEP 0/0");
 
   //  Unpacking Errors
 
@@ -253,8 +275,10 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_ROD_summary->GetXaxis()->SetBinLabel(1+LimitedRoI,  "");
   m_h_ROD_summary->GetXaxis()->SetBinLabel(1+NoPayload, "No Payload");
   m_h_ROB_summary = book1F("rod_1d_RobErrorSummary",
-                           "ROB Status Error Summary;;Events", 19, 0, 19);
-  setLabelsROBStatus(m_h_ROB_summary);
+                           "ROB Status Error Summary;;Events", 7, 0, 7);
+  setLabelsROBStatusGen(m_h_ROB_summary);
+  m_h_ROB_summary->GetXaxis()->SetBinLabel(6, "OtherGeneric");
+  m_h_ROB_summary->GetXaxis()->SetBinLabel(7, "Specific");
   m_h_Unp_summary = book1F("rod_1d_UnpackErrorSummary",
                            "Bytestream Unpacking Error Summary;;Events",
                            18, 1, 19);
@@ -360,7 +384,7 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   //=============================================
 
   std::vector<int> errors(NumberOfStatusBins);
-  std::vector<int> errorsROB(19);
+  std::vector<int> errorsROB(7);
   std::vector<int> errorsUnpack(19);
   std::vector<int> crateErr(14);
   std::vector<int> noFragmentFlags(80, 1);
@@ -555,10 +579,6 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   // Update ROB Status and Unpacking Errors
 
   if (errVecTES && !errVecTES->empty()) {
-    const int robMap[32] = {18,  0,  1,  2,  3,  4, 18, 18,
-                            18, 18, 18, 18, 18, 18, 18, 18,
-			    18,  5,  6,  7,  8,  9, 10, 11,
-			    18, 12, 13, 14, 15, 16, 17, 18};
     ROBErrorCollection::const_iterator robIter  = errVecTES->begin();
     ROBErrorCollection::const_iterator robIterE = errVecTES->end();
     unsigned int numRobErr = *robIter;
@@ -575,34 +595,37 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
 	unsigned int err = *robIter;
 	++robIter;
 	if (err == 0) continue;
-        TH2F* hist = (numRobErr) ? m_h_ROD_PP_rob : m_h_ROD_PP_unp;
+        TH2F* hist1 = m_h_ROD_PP_robgen;
+        TH2F* hist2 = m_h_ROD_PP_robspec;
+	TH2F* hist3 = m_h_ROD_PP_unp;
         int val = pos;
-        if (pos >= 72) {
-          hist = (numRobErr) ? m_h_ROD_RoI_rob : m_h_ROD_RoI_unp;
-	  val = (pos-72)/2 + 8;
-        } else if (pos >= 56) {
-          hist = (numRobErr) ? m_h_ROD_RoI_rob : m_h_ROD_RoI_unp;
-	  val = (pos-56)/2;
-        } else if (pos >= 48) {
-          hist = (numRobErr) ? m_h_ROD_CPJEP_rob : m_h_ROD_CPJEP_unp;
-	  val = pos-48 + 8;
+        if (pos >= 56) {
+          hist1 = m_h_ROD_RoI_robgen;
+	  hist2 = m_h_ROD_RoI_robspec;
+	  hist3 = m_h_ROD_RoI_unp;
+	  val = (pos >= 72) ? (pos-72)/2 + 8 : (pos-56)/2;
         } else if (pos >= 32) {
-          hist = (numRobErr) ? m_h_ROD_CPJEP_rob : m_h_ROD_CPJEP_unp;
-	  val = (pos-32)/2;
+          hist1 = m_h_ROD_CPJEP_robgen;
+	  hist2 = m_h_ROD_CPJEP_robspec;
+	  hist3 = m_h_ROD_CPJEP_unp;
+	  val = (pos >= 48) ? pos-48 + 8 : (pos-32)/2;
         }
 	if (numRobErr) {
 	  for (int bit = 0; bit < 32; ++bit) {
 	    const int robErr = (err >> bit) & 0x1;
 	    if (robErr) {
-	      hist->Fill(robMap[bit], val);
-	      errorsROB[robMap[bit]] = 1;
+	      if (bit < 16) hist1->Fill(bit, val);
+	      else          hist2->Fill(bit-16, val);
+	      if      (bit < 5)  errorsROB[bit] = 1;
+	      else if (bit < 16) errorsROB[5]   = 1;
+	      else               errorsROB[6]   = 1;
 	    }
 	  }
 	  crateErr[crate] |= (1 << ROBStatusError);
 	  numRobErr--;
         } else {
 	  if (err > 17) err = 18;
-	  hist->Fill(err, val);
+	  hist3->Fill(err, val);
 	  errorsUnpack[err] = 1;
 	  crateErr[crate] |= (1 << UnpackingError);
         }
@@ -615,7 +638,7 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   for (int i = 0; i < NumberOfStatusBins; ++i) {
     if (errors[i]) m_h_ROD_summary->Fill(i);
   }
-  for (int i = 0; i < 19; ++i) {
+  for (int i = 0; i < 7; ++i) {
     if (errorsROB[i]) m_h_ROB_summary->Fill(i);
   }
   for (int i = 1; i < 19; ++i) {
@@ -863,27 +886,33 @@ void TrigT1CaloRodMonTool::setLabelsCSL(TH1* hist, bool xAxis, int firstBin,
   }
 }
 
-void TrigT1CaloRodMonTool::setLabelsROBStatus(TH1* hist)
+void TrigT1CaloRodMonTool::setLabelsROBStatusGen(TH1* hist)
 {
   hist->GetXaxis()->SetBinLabel(1,  "BCIDCheck");
   hist->GetXaxis()->SetBinLabel(2,  "EL1IDCheck");
   hist->GetXaxis()->SetBinLabel(3,  "Timeout");
   hist->GetXaxis()->SetBinLabel(4,  "DataError");
   hist->GetXaxis()->SetBinLabel(5,  "Overflow");
-  hist->GetXaxis()->SetBinLabel(6,  "FragmentSize");
-  hist->GetXaxis()->SetBinLabel(7,  "DataBlock");
-  hist->GetXaxis()->SetBinLabel(8,  "ControlWord");
-  hist->GetXaxis()->SetBinLabel(9,  "MissingBOF");
-  hist->GetXaxis()->SetBinLabel(10, "MissingEOF");
-  hist->GetXaxis()->SetBinLabel(11, "HeaderMarker");
-  hist->GetXaxis()->SetBinLabel(12, "Format");
-  hist->GetXaxis()->SetBinLabel(13, "Sequence");
-  hist->GetXaxis()->SetBinLabel(14, "Transmission");
-  hist->GetXaxis()->SetBinLabel(15, "Truncated");
-  hist->GetXaxis()->SetBinLabel(16, "Short");
-  hist->GetXaxis()->SetBinLabel(17, "Lost");
-  hist->GetXaxis()->SetBinLabel(18, "Pending");
-  hist->GetXaxis()->SetBinLabel(19, "Unknown");
+}
+
+void TrigT1CaloRodMonTool::setLabelsROBStatusSpec(TH1* hist)
+{
+  hist->GetXaxis()->SetBinLabel(1,  "TrigTypeSync");
+  hist->GetXaxis()->SetBinLabel(2,  "FragmentSize");
+  hist->GetXaxis()->SetBinLabel(3,  "DataBlock");
+  hist->GetXaxis()->SetBinLabel(4,  "ControlWord");
+  hist->GetXaxis()->SetBinLabel(5,  "MissingBOF");
+  hist->GetXaxis()->SetBinLabel(6,  "MissingEOF");
+  hist->GetXaxis()->SetBinLabel(7,  "HeaderMarker");
+  hist->GetXaxis()->SetBinLabel(8,  "Format");
+  hist->GetXaxis()->SetBinLabel(9,  "Duplicate");
+  hist->GetXaxis()->SetBinLabel(10, "Sequence");
+  hist->GetXaxis()->SetBinLabel(11, "Transmission");
+  hist->GetXaxis()->SetBinLabel(12, "Truncated");
+  hist->GetXaxis()->SetBinLabel(13, "Short");
+  hist->GetXaxis()->SetBinLabel(14, "Lost");
+  hist->GetXaxis()->SetBinLabel(15, "Pending");
+  hist->GetXaxis()->SetBinLabel(16, "Discard");
 }
 
 void TrigT1CaloRodMonTool::setLabelsUnpacking(TH1* hist)

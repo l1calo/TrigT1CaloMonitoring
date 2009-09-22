@@ -1,3 +1,7 @@
+2009-09-22  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-06-04
+        * Update ROB status bits to tdaq-02-00-00.
+
 2009-09-21  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-03
         * Bugfix for JEM-CMM timeslice comparison plot. 

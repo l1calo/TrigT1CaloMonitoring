@@ -93,7 +93,8 @@ private:
   void setLabelsStatus(TH1* hist);
   void setLabelsCSL(TH1* hist, bool xAxis, int firstBin, int lastBin,
                                            int binIncr, int slinkIncr);
-  void setLabelsROBStatus(TH1* hist);
+  void setLabelsROBStatusGen(TH1* hist);
+  void setLabelsROBStatusSpec(TH1* hist);
   void setLabelsUnpacking(TH1* hist);
 
   ServiceHandle<StoreGateSvc> m_storeGate;
@@ -138,9 +139,12 @@ private:
   TH2F* m_h_ROD_PP_stat;
   TH2F* m_h_ROD_CPJEP_stat;
   TH2F* m_h_ROD_RoI_stat;
-  TH2F* m_h_ROD_PP_rob;
-  TH2F* m_h_ROD_CPJEP_rob;
-  TH2F* m_h_ROD_RoI_rob;
+  TH2F* m_h_ROD_PP_robgen;
+  TH2F* m_h_ROD_CPJEP_robgen;
+  TH2F* m_h_ROD_RoI_robgen;
+  TH2F* m_h_ROD_PP_robspec;
+  TH2F* m_h_ROD_CPJEP_robspec;
+  TH2F* m_h_ROD_RoI_robspec;
   TH2F* m_h_ROD_PP_unp;
   TH2F* m_h_ROD_CPJEP_unp;
   TH2F* m_h_ROD_RoI_unp;
