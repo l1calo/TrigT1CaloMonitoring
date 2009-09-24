@@ -15,6 +15,7 @@
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/ServiceHandle.h"
+#include "GaudiKernel/ToolHandle.h"
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "DataModel/DataVector.h"
@@ -23,6 +24,7 @@ class TH1;
 class TH1F;
 class TH2F;
 class StoreGateSvc;
+class TrigT1CaloMonErrorTool;
 
 namespace LVL1 {
   class RODHeader;
@@ -98,6 +100,7 @@ private:
   void setLabelsUnpacking(TH1* hist);
 
   ServiceHandle<StoreGateSvc> m_storeGate;
+  ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
   mutable MsgStream m_log;
 
   MonGroup* m_monGroup;

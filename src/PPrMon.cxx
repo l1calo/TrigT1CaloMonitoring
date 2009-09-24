@@ -23,6 +23,7 @@
 
 #include "TrigT1CaloMonitoring/PPrMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
 
 #include "TrigT1CaloEvent/TriggerTowerCollection.h"
 #include "TrigT1CaloEvent/TriggerTower_ClassDEF.h"
@@ -33,7 +34,8 @@
 /*---------------------------------------------------------*/
 PPrMon::PPrMon(const std::string & type, const std::string & name,
 					 const IInterface* parent)
-  : ManagedMonitorToolBase ( type, name, parent )
+  : ManagedMonitorToolBase ( type, name, parent ),
+    m_errorTool("TrigT1CaloMonErrorTool")
 /*---------------------------------------------------------*/
 {
   declareProperty("BS_TriggerTowerContainer",  m_TriggerTowerContainerName = "LVL1TriggerTowers");
@@ -66,6 +68,25 @@ PPrMon::~PPrMon()
 {
 }
 
+/*---------------------------------------------------------*/
+StatusCode PPrMon::initialize()
+/*---------------------------------------------------------*/
+{
+  MsgStream log( msgSvc(), name() );
+
+  StatusCode sc;
+
+  sc = ManagedMonitorToolBase::initialize();
+  if (sc.isFailure()) return sc;
+
+  sc = m_errorTool.retrieve();
+  if( sc.isFailure() ) {
+    log << MSG::ERROR << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                      << endreq;
+    return sc;
+  }
+  return StatusCode::SUCCESS;
+}
 
 /*---------------------------------------------------------*/
 StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun )
@@ -598,8 +619,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
    
       //----------------------------- number of events ----------------------------------
       //m_h_NumberEvents= NoEvent_Booker.book1F("NumberEvents","Number of processed events",1,0.5,1.5,"");
-      m_h_NumberEvents= NoEvent_Booker.book1F("l1calo_1d_NumberOfEvents","Number of processed events",1,0.5,1.5,"");
-      m_h_NumberEvents->GetXaxis()->SetBinLabel(1,"Number of Events");
+      m_h_NumberEvents= NoEvent_Booker.book1F("l1calo_1d_NumberOfEvents","Number of processed events",2,0.5,2.5,"");
+      m_h_NumberEvents->GetXaxis()->SetBinLabel(1,"Good Events");
+      m_h_NumberEvents->GetXaxis()->SetBinLabel(2,"Corrupt Events (skipped)");
 	     
 	}	
 
@@ -611,9 +633,18 @@ StatusCode PPrMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
   MsgStream log(msgSvc(), name());
-  m_NoEvents++;
 
   log << MSG::DEBUG << "in fillHistograms()" << endreq;
+
+  // Skip events believed to be corrupt
+
+  if (m_errorTool->corrupt()) {
+    m_h_NumberEvents->Fill(2,1);
+    log << MSG::DEBUG << "Skipping corrupt event" << endreq;
+    return StatusCode::SUCCESS;
+  }
+  m_h_NumberEvents->Fill(1,1);  
+  m_NoEvents++;
 
   // Error vector for global overview
   std::vector<int> overview(8);
@@ -626,8 +657,6 @@ StatusCode PPrMon::fillHistograms()
       log << MSG::INFO << "No TriggerTower found in TES at "<< m_TriggerTowerContainerName<< endreq ;
       return StatusCode::SUCCESS;
     }
-
-  m_h_NumberEvents->Fill(1,1);  
     
   // =============================================================================================
   // ================= Container: TriggerTower ===================================================

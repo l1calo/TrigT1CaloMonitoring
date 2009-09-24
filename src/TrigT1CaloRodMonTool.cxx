@@ -23,6 +23,7 @@
 #include "TrigT1CaloEvent/RODHeader.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloRodMonTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
 
 /*---------------------------------------------------------*/
 TrigT1CaloRodMonTool::TrigT1CaloRodMonTool(const std::string & type, 
@@ -30,6 +31,7 @@ TrigT1CaloRodMonTool::TrigT1CaloRodMonTool(const std::string & type,
 				           const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
     m_storeGate("StoreGateSvc", name),
+    m_errorTool("TrigT1CaloMonErrorTool"),
     m_log(msgSvc(), name), m_monGroup(0)
 /*---------------------------------------------------------*/
 {
@@ -67,6 +69,13 @@ StatusCode TrigT1CaloRodMonTool:: initialize()
   sc = m_storeGate.retrieve();
   if( sc.isFailure() ) {
     m_log << MSG::ERROR << "Unable to locate Service StoreGateSvc" << endreq;
+    return sc;
+  }
+
+  sc = m_errorTool.retrieve();
+  if( sc.isFailure() ) {
+    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                        << endreq;
     return sc;
   }
 
@@ -337,243 +346,246 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   const bool online = m_onlineTest ||
                      (m_environment == AthenaMonManager::online);
 
-  //Retrieve DAQ ROD Headers from SG
   StatusCode sc;
-  const RodHeaderCollection* rodTES = 0; 
-  if (m_storeGate->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
-    sc = m_storeGate->retrieve(rodTES, m_rodHeaderLocation); 
-  } else sc = StatusCode::FAILURE;
-  if( sc.isFailure()  ||  !rodTES ) {
-    m_log << MSG::DEBUG<< "No DAQ ROD Header container found"<< endreq; 
-  }
-
-  //Retrieve CP RoIB ROD Headers from SG
-  const RodHeaderCollection* cpRoibTES = 0; 
-  if (m_storeGate->contains<RodHeaderCollection>(m_cpRoibRodHeaderLocation)) {
-    sc = m_storeGate->retrieve(cpRoibTES, m_cpRoibRodHeaderLocation); 
-  } else sc = StatusCode::FAILURE;
-  if( sc.isFailure()  ||  !cpRoibTES ) {
-    m_log << MSG::DEBUG<< "No CP RoIB ROD Header container found"<< endreq; 
-  }
-
-  //Retrieve JEP RoIB ROD Headers from SG
-  const RodHeaderCollection* jepRoibTES = 0; 
-  if (m_storeGate->contains<RodHeaderCollection>(m_jepRoibRodHeaderLocation)) {
-    sc = m_storeGate->retrieve(jepRoibTES, m_jepRoibRodHeaderLocation); 
-  } else sc = StatusCode::FAILURE;
-  if( sc.isFailure()  ||  !jepRoibTES ) {
-    m_log << MSG::DEBUG<< "No JEP RoIB ROD Header container found"<< endreq; 
-  }
-
-  //Retrieve ROB and Unpacking Error vector from SG
-  const ROBErrorCollection* errVecTES = 0;
-  if (m_storeGate->contains<ROBErrorCollection>(m_robErrorVectorLocation)) {
-    sc = m_storeGate->retrieve(errVecTES, m_robErrorVectorLocation);
-  } else sc = StatusCode::FAILURE;
-  if( sc.isFailure()  ||  !errVecTES ) {
-    m_log << MSG::DEBUG<< "No ROB and Unpacking Error vector found"<< endreq;
-  }
-
-  //if ( !rodTES && !cpRoibTES && !jepRoibTES ) {
-  //  m_log << MSG::DEBUG<< "No ROD Header containers found"<< endreq;
-  //  return StatusCode::SUCCESS;
-  //}
-
-  //=============================================
-  //   ROD Payload plots
-  //=============================================
-
+  
+  // Error summary vectors
   std::vector<int> errors(NumberOfStatusBins);
   std::vector<int> errorsROB(7);
   std::vector<int> errorsUnpack(19);
   std::vector<int> crateErr(14);
-  std::vector<int> noFragmentFlags(80, 1);
-  std::vector<int> noPayloadFlags(56, 1);
-  std::vector<const RodHeaderCollection*> cols;
-  if (rodTES)     cols.push_back(rodTES);
-  if (cpRoibTES)  cols.push_back(cpRoibTES);
-  if (jepRoibTES) cols.push_back(jepRoibTES);
-  std::vector<const RodHeaderCollection*>::const_iterator colIter =
+
+  // Skip corrupt events in main plots
+
+  if ( !m_errorTool->corrupt() ) {
+
+    //Retrieve DAQ ROD Headers from SG
+    const RodHeaderCollection* rodTES = 0; 
+    if (m_storeGate->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
+      sc = m_storeGate->retrieve(rodTES, m_rodHeaderLocation); 
+    } else sc = StatusCode::FAILURE;
+    if( sc.isFailure()  ||  !rodTES ) {
+      m_log << MSG::DEBUG<< "No DAQ ROD Header container found"<< endreq; 
+    }
+
+    //Retrieve CP RoIB ROD Headers from SG
+    const RodHeaderCollection* cpRoibTES = 0; 
+    if (m_storeGate->contains<RodHeaderCollection>(m_cpRoibRodHeaderLocation)) {
+      sc = m_storeGate->retrieve(cpRoibTES, m_cpRoibRodHeaderLocation); 
+    } else sc = StatusCode::FAILURE;
+    if( sc.isFailure()  ||  !cpRoibTES ) {
+      m_log << MSG::DEBUG<< "No CP RoIB ROD Header container found"<< endreq; 
+    }
+
+    //Retrieve JEP RoIB ROD Headers from SG
+    const RodHeaderCollection* jepRoibTES = 0; 
+    if (m_storeGate->contains<RodHeaderCollection>(m_jepRoibRodHeaderLocation)) {
+      sc = m_storeGate->retrieve(jepRoibTES, m_jepRoibRodHeaderLocation); 
+    } else sc = StatusCode::FAILURE;
+    if( sc.isFailure()  ||  !jepRoibTES ) {
+      m_log << MSG::DEBUG<< "No JEP RoIB ROD Header container found"<< endreq; 
+    }
+
+    //=============================================
+    //   ROD Payload plots
+    //=============================================
+
+    std::vector<int> noFragmentFlags(80, 1);
+    std::vector<int> noPayloadFlags(56, 1);
+    std::vector<const RodHeaderCollection*> cols;
+    if (rodTES)     cols.push_back(rodTES);
+    if (cpRoibTES)  cols.push_back(cpRoibTES);
+    if (jepRoibTES) cols.push_back(jepRoibTES);
+    std::vector<const RodHeaderCollection*>::const_iterator colIter =
                                                                  cols.begin();
-  std::vector<const RodHeaderCollection*>::const_iterator colIterEnd =
+    std::vector<const RodHeaderCollection*>::const_iterator colIterEnd =
                                                                    cols.end();
-  for (; colIter != colIterEnd; ++colIter) {
-    RodHeaderCollection::const_iterator iter    = (*colIter)->begin();
-    RodHeaderCollection::const_iterator iterEnd = (*colIter)->end();
-    for (; iter != iterEnd; ++iter) {
-      const LVL1::RODHeader* header = *iter;
-      const int crate = header->crate();
-      const int slink = header->sLink();
-      const int dataType = header->dataType();
-      const int rod = crate + dataType*6;
-      const int nData = header->payloadSize();
-      const int pos = rod*4 + slink;
-      // Skip obviously corrupt data
-      if (crate > 13 || slink > 3 || nData < 0 ||
-                        nData > 10000 || pos >= 80) continue;
-      noFragmentFlags[pos] = 0;
-      if (pos < 56 && nData > 0) noPayloadFlags[pos] = 0;
-      m_sumPayloads1[pos] += nData;
-      m_sumPayloads2[pos] += nData;
-      // Status bits
-      TH2F* hist = m_h_ROD_PP_stat;
-      int val = pos;
-      if (pos >= 72) {
-        hist = m_h_ROD_RoI_stat;
-	val = (pos-72)/2 + 8;
-      } else if (pos >= 56) {
-        hist = m_h_ROD_RoI_stat;
-	val = (pos-56)/2;
-      } else if (pos >= 48) {
-        hist = m_h_ROD_CPJEP_stat;
-	val = pos-48 + 8;
-      } else if (pos >= 32) {
-        hist = m_h_ROD_CPJEP_stat;
-	val = (pos-32)/2;
-      }
-      // gLinkError is actually OR'ed with cmmParityError
-      //if (header->gLinkError()) {
-      if (header->cmmParityError()) {
-        hist->Fill(GLink, val);
-	errors[GLink] = 1;
-	crateErr[crate] |= (1 << GLink);
-      }
-      //if (header->cmmParityError()) {
-      //  hist->Fill(CMMParity, val);
-      //  errors[CMMParity] = 1;
-      //  crateErr[crate] |= (1 << CMMParity);
-      //}
-      if (header->lvdsLinkError()) {
-        hist->Fill(LVDSLink, val);
-	errors[LVDSLink] = 1;
-	crateErr[crate] |= (1 << LVDSLink);
-      }
-      if (header->rodFifoOverflow()) {
-        hist->Fill(FIFOOverflow, val);
-	errors[FIFOOverflow] = 1;
-	crateErr[crate] |= (1 << FIFOOverflow);
-      }
-      if (header->dataTransportError()) {
-        hist->Fill(DataTransport, val);
-	errors[DataTransport] = 1;
-	crateErr[crate] |= (1 << DataTransport);
-      }
-      if (header->gLinkTimeout()) {
-        hist->Fill(Timeout, val);
-	errors[Timeout] = 1;
-	crateErr[crate] |= (1 << Timeout);
-      }
-      if (header->bcnMismatch()) {
-        hist->Fill(BCNMismatch, val);
-	errors[BCNMismatch] = 1;
-	crateErr[crate] |= (1 << BCNMismatch);
-      }
-      if (header->triggerTypeTimeout()) hist->Fill(TriggerType, val);
-      if (pos >= 56 && header->limitedRoISet()) hist->Fill(LimitedRoI, val);
-    }
-  }
-
-  // Update average payload plots
-
-  ++m_events;
-  const int events1 = 20;
-  int events2 = m_events % events1;
-  if (events2 == 0) events2 = events1;
-  int events3 = events1;
-  if (m_events <= events1) events3 = 0;
-  const int events4 = events2 + events3;
-  const double error1 = 1./sqrt(m_events);
-  const double error2 = 1./sqrt(events4);
-  for (int i = 0; i < 80; ++i) {
-    const double average1 = m_sumPayloads1[i]/m_events;
-    const double average2 = (m_sumPayloads2[i]+m_sumPayloads2[i+80])/events4;
-    if (events2 == events1) {
-      m_sumPayloads2[i+80] = m_sumPayloads2[i];
-      m_sumPayloads2[i] = 0;
-    }
-    if (i >= 72) {
-      if (i%2 == 0) {
-        int bin = (i-72)/2 + 9;
-        m_h_ROD_RoI->SetBinContent(bin, average1);
-	m_h_ROD_RoI->SetBinError(bin, error1);
-	if (online) {
-          m_h_ROD_RoI->SetBinContent(13+bin, average2);
-	  m_h_ROD_RoI->SetBinError(13+bin, error2);
+    for (; colIter != colIterEnd; ++colIter) {
+      RodHeaderCollection::const_iterator iter    = (*colIter)->begin();
+      RodHeaderCollection::const_iterator iterEnd = (*colIter)->end();
+      for (; iter != iterEnd; ++iter) {
+        const LVL1::RODHeader* header = *iter;
+        const int crate = header->crate();
+        const int slink = header->sLink();
+        const int dataType = header->dataType();
+        const int rod = crate + dataType*6;
+        const int nData = header->payloadSize();
+        const int pos = rod*4 + slink;
+        // Skip obviously corrupt data
+        if (crate > 13 || slink > 3 || nData < 0 ||
+                          nData > 10000 || pos >= 80) continue;
+        noFragmentFlags[pos] = 0;
+        if (pos < 56 && nData > 0) noPayloadFlags[pos] = 0;
+        m_sumPayloads1[pos] += nData;
+        m_sumPayloads2[pos] += nData;
+        // Status bits
+        TH2F* hist = m_h_ROD_PP_stat;
+        int val = pos;
+        if (pos >= 72) {
+          hist = m_h_ROD_RoI_stat;
+	  val = (pos-72)/2 + 8;
+        } else if (pos >= 56) {
+          hist = m_h_ROD_RoI_stat;
+	  val = (pos-56)/2;
+        } else if (pos >= 48) {
+          hist = m_h_ROD_CPJEP_stat;
+	  val = pos-48 + 8;
+        } else if (pos >= 32) {
+          hist = m_h_ROD_CPJEP_stat;
+	  val = (pos-32)/2;
         }
-      }
-    } else if (i >= 56) {
-      if (i%2 == 0) {
-        int bin = (i-56)/2 + 1;
-        m_h_ROD_RoI->SetBinContent(bin, average1);
-	m_h_ROD_RoI->SetBinError(bin, error1);
-	if (online) {
-          m_h_ROD_RoI->SetBinContent(13+bin, average2);
-	  m_h_ROD_RoI->SetBinError(13+bin, error2);
+        // gLinkError is actually OR'ed with cmmParityError
+	// (email from Weiming 26/06/09)
+        //if (header->gLinkError()) {
+        if (header->cmmParityError()) {
+          hist->Fill(GLink, val);
+	  errors[GLink] = 1;
+	  crateErr[crate] |= (1 << GLink);
         }
-      }
-    } else if (i >= 48) {
-      int bin = i-48 + 1;
-      m_h_ROD_JEP->SetBinContent(bin, average1);
-      m_h_ROD_JEP->SetBinError(bin, error1);
-      if (online) {
-        m_h_ROD_JEP->SetBinContent(9+bin, average2);
-        m_h_ROD_JEP->SetBinError(9+bin, error2);
-      }
-    } else if (i >= 32) {
-      if (i%2 == 0) {
-        int bin = (i-32)/2 + 1;
-        m_h_ROD_CP->SetBinContent(bin, average1);
-	m_h_ROD_CP->SetBinError(bin, error1);
-	if (online) {
-          m_h_ROD_CP->SetBinContent(9+bin, average2);
-	  m_h_ROD_CP->SetBinError(9+bin, error2);
+        //if (header->cmmParityError()) {
+        //  hist->Fill(CMMParity, val);
+        //  errors[CMMParity] = 1;
+        //  crateErr[crate] |= (1 << CMMParity);
+        //}
+        if (header->lvdsLinkError()) {
+          hist->Fill(LVDSLink, val);
+	  errors[LVDSLink] = 1;
+	  crateErr[crate] |= (1 << LVDSLink);
         }
-      }
-    } else {
-      int bin = i + 1;
-      m_h_ROD_PP->SetBinContent(bin, average1);
-      m_h_ROD_PP->SetBinError(bin, error1);
-      if (online) {
-        m_h_ROD_PP->SetBinContent(33+bin, average2);
-        m_h_ROD_PP->SetBinError(33+bin, error2);
+        if (header->rodFifoOverflow()) {
+          hist->Fill(FIFOOverflow, val);
+	  errors[FIFOOverflow] = 1;
+	  crateErr[crate] |= (1 << FIFOOverflow);
+        }
+        if (header->dataTransportError()) {
+          hist->Fill(DataTransport, val);
+	  errors[DataTransport] = 1;
+	  crateErr[crate] |= (1 << DataTransport);
+        }
+        if (header->gLinkTimeout()) {
+          hist->Fill(Timeout, val);
+	  errors[Timeout] = 1;
+	  crateErr[crate] |= (1 << Timeout);
+        }
+        if (header->bcnMismatch()) {
+          hist->Fill(BCNMismatch, val);
+	  errors[BCNMismatch] = 1;
+	  crateErr[crate] |= (1 << BCNMismatch);
+        }
+        if (header->triggerTypeTimeout()) hist->Fill(TriggerType, val);
+        if (pos >= 56 && header->limitedRoISet()) hist->Fill(LimitedRoI, val);
       }
     }
-  }
 
-  // Update missing ROD fragments and payloads
+    // Update average payload plots
 
-  for (int pos = 0; pos < 80; ++pos) {
-    if (noFragmentFlags[pos] || (pos < 56 && noPayloadFlags[pos])) {
-      TH2F* hist = m_h_ROD_PP_stat;
-      int val = pos;
-      int crate = pos/4;
-      if (crate > 13) crate -= 6;
-      if (pos >= 72) {
-        if (pos%2) continue;
-	hist = m_h_ROD_RoI_stat;
-	val = (pos-72)/2 + 8;
-      } else if (pos >= 56) {
-        if (pos%2) continue;
-        hist = m_h_ROD_RoI_stat;
-	val = (pos-56)/2;
-      } else if (pos >= 48) {
-        hist = m_h_ROD_CPJEP_stat;
-        val = pos-48 + 8;
-      } else if (pos >= 32) {
-	if (pos%2) continue;
-        hist = m_h_ROD_CPJEP_stat;
-        val = (pos-32)/2;
+    ++m_events;
+    const int events1 = 20;
+    int events2 = m_events % events1;
+    if (events2 == 0) events2 = events1;
+    int events3 = events1;
+    if (m_events <= events1) events3 = 0;
+    const int events4 = events2 + events3;
+    const double error1 = 1./sqrt(m_events);
+    const double error2 = 1./sqrt(events4);
+    for (int i = 0; i < 80; ++i) {
+      const double average1 = m_sumPayloads1[i]/m_events;
+      const double average2 = (m_sumPayloads2[i]+m_sumPayloads2[i+80])/events4;
+      if (events2 == events1) {
+        m_sumPayloads2[i+80] = m_sumPayloads2[i];
+        m_sumPayloads2[i] = 0;
       }
-      if (noFragmentFlags[pos]) {
-        hist->Fill(NoFragment, val);
-	errors[NoFragment] = 1;
-	crateErr[crate] |= (1 << NoFragment);
+      if (i >= 72) {
+        if (i%2 == 0) {
+          int bin = (i-72)/2 + 9;
+          m_h_ROD_RoI->SetBinContent(bin, average1);
+	  m_h_ROD_RoI->SetBinError(bin, error1);
+	  if (online) {
+            m_h_ROD_RoI->SetBinContent(13+bin, average2);
+	    m_h_ROD_RoI->SetBinError(13+bin, error2);
+          }
+        }
+      } else if (i >= 56) {
+        if (i%2 == 0) {
+          int bin = (i-56)/2 + 1;
+          m_h_ROD_RoI->SetBinContent(bin, average1);
+	  m_h_ROD_RoI->SetBinError(bin, error1);
+	  if (online) {
+            m_h_ROD_RoI->SetBinContent(13+bin, average2);
+	    m_h_ROD_RoI->SetBinError(13+bin, error2);
+          }
+        }
+      } else if (i >= 48) {
+        int bin = i-48 + 1;
+        m_h_ROD_JEP->SetBinContent(bin, average1);
+        m_h_ROD_JEP->SetBinError(bin, error1);
+        if (online) {
+          m_h_ROD_JEP->SetBinContent(9+bin, average2);
+          m_h_ROD_JEP->SetBinError(9+bin, error2);
+        }
+      } else if (i >= 32) {
+        if (i%2 == 0) {
+          int bin = (i-32)/2 + 1;
+          m_h_ROD_CP->SetBinContent(bin, average1);
+	  m_h_ROD_CP->SetBinError(bin, error1);
+	  if (online) {
+            m_h_ROD_CP->SetBinContent(9+bin, average2);
+	    m_h_ROD_CP->SetBinError(9+bin, error2);
+          }
+        }
       } else {
-        hist->Fill(NoPayload, val);
-        errors[NoPayload] = 1;
-	crateErr[crate] |= (1 << NoPayload);
+        int bin = i + 1;
+        m_h_ROD_PP->SetBinContent(bin, average1);
+        m_h_ROD_PP->SetBinError(bin, error1);
+        if (online) {
+          m_h_ROD_PP->SetBinContent(33+bin, average2);
+          m_h_ROD_PP->SetBinError(33+bin, error2);
+        }
       }
     }
+
+    // Update missing ROD fragments and payloads
+
+    for (int pos = 0; pos < 80; ++pos) {
+      if (noFragmentFlags[pos] || (pos < 56 && noPayloadFlags[pos])) {
+        TH2F* hist = m_h_ROD_PP_stat;
+        int val = pos;
+        int crate = pos/4;
+        if (crate > 13) crate -= 6;
+        if (pos >= 72) {
+          if (pos%2) continue;
+	  hist = m_h_ROD_RoI_stat;
+	  val = (pos-72)/2 + 8;
+        } else if (pos >= 56) {
+          if (pos%2) continue;
+          hist = m_h_ROD_RoI_stat;
+	  val = (pos-56)/2;
+        } else if (pos >= 48) {
+          hist = m_h_ROD_CPJEP_stat;
+          val = pos-48 + 8;
+        } else if (pos >= 32) {
+	  if (pos%2) continue;
+          hist = m_h_ROD_CPJEP_stat;
+          val = (pos-32)/2;
+        }
+        if (noFragmentFlags[pos]) {
+          hist->Fill(NoFragment, val);
+	  errors[NoFragment] = 1;
+	  crateErr[crate] |= (1 << NoFragment);
+        } else {
+          hist->Fill(NoPayload, val);
+          errors[NoPayload] = 1;
+	  crateErr[crate] |= (1 << NoPayload);
+        }
+      }
+    }
+  }
+
+  //Retrieve ROB and Unpacking Error vector from SG
+  const ROBErrorCollection* errVecTES = 0;
+  sc = m_errorTool->retrieve(errVecTES);
+  if( sc.isFailure()  ||  !errVecTES ) {
+    m_log << MSG::DEBUG << "No ROB Status and Unpacking Error vector found"
+                        << endreq;
   }
 
   // Update ROB Status and Unpacking Errors

@@ -47,6 +47,7 @@
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 
 #include "TrigT1CaloMonitoring/JEPSimBSMon.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
 
 
 /*---------------------------------------------------------*/
@@ -59,6 +60,7 @@ JEPSimBSMon::JEPSimBSMon(const std::string & type,
     m_jetTool("LVL1::L1JetTools/L1JetTools"),
     m_jetElementTool("LVL1::L1JetElementTools/L1JetElementTools"),
     m_etSumsTool("LVL1::L1JEPEtSumsTools/L1JEPEtSumsTools"),
+    m_errorTool("TrigT1CaloMonErrorTool"),
     m_log(msgSvc(), name), m_debug(false),
     m_monGroup(0), m_phiScale(16./M_PI), m_events(0)
 /*---------------------------------------------------------*/
@@ -153,6 +155,13 @@ StatusCode JEPSimBSMon:: initialize()
       m_log << MSG::ERROR << "Unable to locate Tool L1JEPEtSumsTools" << endreq;
       return sc;
     }
+  }
+
+  sc = m_errorTool.retrieve();
+  if( sc.isFailure() ) {
+    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                        << endreq;
+    return sc;
   }
 
   m_log << MSG::INFO << "JEPSimBSMon initialised" << endreq;
@@ -590,6 +599,13 @@ StatusCode JEPSimBSMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
   m_log << MSG::DEBUG << "fillHistograms entered" << endreq;
+
+  // Skip events believed to be corrupt
+
+  if (m_errorTool->corrupt()) {
+    m_log << MSG::DEBUG << "Skipping corrupt event" << endreq;
+    return StatusCode::SUCCESS;
+  }
 
   // NB. Collection retrieves wrapped in m_storeGate->contains<..>(..)
   // are for those not expected to be on ESD. They should be on bytestream.

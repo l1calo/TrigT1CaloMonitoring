@@ -45,6 +45,7 @@
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 
 #include "TrigT1CaloMonitoring/CPMSimBSMon.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
 
 /*---------------------------------------------------------*/
 CPMSimBSMon::CPMSimBSMon(const std::string & type, 
@@ -54,6 +55,7 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
     m_storeGate("StoreGateSvc", name),
     m_emTauTool("LVL1::L1EmTauTools/L1EmTauTools"),
     m_cpHitsTool("LVL1::L1CPHitsTools/L1CPHitsTools"),
+    m_errorTool("TrigT1CaloMonErrorTool"),
     m_log(msgSvc(), name), m_debug(false),
     m_monGroup(0), m_phiScale(32./M_PI), m_events(0)
 /*---------------------------------------------------------*/
@@ -133,6 +135,13 @@ StatusCode CPMSimBSMon::initialize()
       m_log << MSG::ERROR << "Unable to locate Tool L1CPHitsTools" << endreq;
       return sc;
     }
+  }
+
+  sc = m_errorTool.retrieve();
+  if( sc.isFailure() ) {
+    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                        << endreq;
+    return sc;
   }
 
   // RoI thresholds mask
@@ -551,10 +560,17 @@ StatusCode CPMSimBSMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
   m_log << MSG::DEBUG << "fillHistograms entered" << endreq;
+  
+  // Skip events believed to be corrupt
+
+  if (m_errorTool->corrupt()) {
+    m_log << MSG::DEBUG << "Skipping corrupt event" << endreq;
+    return StatusCode::SUCCESS;
+  }
 
   // NB. Collection retrieves wrapped in m_storeGate->contains<..>(..)
   // are for those not expected to be on ESD. They should be on bytestream.
-  
+
   StatusCode sc;
 
   //Retrieve Trigger Towers from SG

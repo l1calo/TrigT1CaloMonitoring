@@ -13,6 +13,7 @@
 #define JEMMon_H
 
 #include "GaudiKernel/StatusCode.h"
+#include "GaudiKernel/ToolHandle.h"
 #include "CLHEP/Units/SystemOfUnits.h"
 
 #include "TH1.h"
@@ -25,6 +26,8 @@
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
+
+class TrigT1CaloMonErrorTool;
 
 namespace LVL1 {
   class JEMRoI;
@@ -45,6 +48,7 @@ public:
 
 	virtual ~JEMMon();
 
+	virtual StatusCode initialize();
 	virtual StatusCode bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun );
 	virtual StatusCode fillHistograms();
 	virtual StatusCode procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun );
@@ -53,6 +57,8 @@ protected:
 
    /** a handle on Store Gate for access to the Event Store */
    StoreGateSvc* m_storeGate;
+   // Tool to retrieve bytestream errors
+   ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
 
    /** location of data */
    std::string m_JetElementLocation;

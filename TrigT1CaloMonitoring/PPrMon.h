@@ -15,6 +15,7 @@
 #include "AthenaMonitoring/AthenaMonManager.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "GaudiKernel/StatusCode.h"
+#include "GaudiKernel/ToolHandle.h"
 #include "CLHEP/Units/SystemOfUnits.h"
 #include "CaloIdentifier/CaloIdManager.h"
 #include "CaloIdentifier/CaloLVL1_ID.h"
@@ -28,6 +29,8 @@
 #include "TProfile2D.h"
 //class StoreGateSvc;
 
+class TrigT1CaloMonErrorTool;
+
 class PPrMon: public ManagedMonitorToolBase
 {
 
@@ -39,6 +42,7 @@ class PPrMon: public ManagedMonitorToolBase
 
   virtual ~PPrMon();
 
+  virtual StatusCode initialize();
   virtual StatusCode bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun );
   virtual StatusCode fillHistograms();
   virtual StatusCode procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun );
@@ -86,6 +90,9 @@ protected:
    CaloTriggerTowerService* m_ttSvc;
    // TTOnlineID Id helper
    const TTOnlineID* m_l1ttonlineHelper;
+
+   // Tool to retrieve bytestream errors
+   ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
    
 
    // histos per channel

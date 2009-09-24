@@ -36,6 +36,7 @@
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloCpmMonTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
 
 const int TrigT1CaloCpmMonTool::s_crates;
 const int TrigT1CaloCpmMonTool::s_modules;
@@ -50,6 +51,7 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
 				           const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
     m_storeGate("StoreGateSvc", name),
+    m_errorTool("TrigT1CaloMonErrorTool"),
     m_log(msgSvc(), name), m_monGroup(0),
     m_phiScale(32./M_PI), m_events(0)
 /*---------------------------------------------------------*/
@@ -96,6 +98,13 @@ StatusCode TrigT1CaloCpmMonTool:: initialize()
   sc = m_storeGate.retrieve();
   if( sc.isFailure() ) {
     m_log << MSG::ERROR << "Unable to locate Service StoreGateSvc" << endreq;
+    return sc;
+  }
+
+  sc = m_errorTool.retrieve();
+  if( sc.isFailure() ) {
+    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                        << endreq;
     return sc;
   }
 
@@ -329,6 +338,13 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 /*---------------------------------------------------------*/
 {
   m_log << MSG::DEBUG << "fillHistograms entered" << endreq;
+
+  // Skip events believed to be corrupt
+
+  if (m_errorTool->corrupt()) {
+    m_log << MSG::DEBUG << "Skipping corrupt event" << endreq;
+    return StatusCode::SUCCESS;
+  }
 
   //Retrieve Trigger Towers from SG
   const TriggerTowerCollection* triggerTowerTES = 0; 

@@ -31,6 +31,7 @@
 
 #include "TrigT1CaloMonitoring/JEMMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
 
 #include "TrigT1CaloEvent/JEMRoI.h"
 #include "TrigT1CaloUtils/QuadLinear.h"
@@ -47,7 +48,8 @@
 /*---------------------------------------------------------*/
 JEMMon::JEMMon( const std::string & type, const std::string & name,
 		const IInterface* parent )
-  : ManagedMonitorToolBase( type, name, parent )
+  : ManagedMonitorToolBase( type, name, parent ),
+    m_errorTool("TrigT1CaloMonErrorTool")
 /*---------------------------------------------------------*/
 {
   // This is how you declare the parameters to Gaudi so that
@@ -74,6 +76,25 @@ JEMMon::~JEMMon()
 {
 }
 
+/*---------------------------------------------------------*/
+StatusCode JEMMon::initialize()
+/*---------------------------------------------------------*/
+{
+  MsgStream mLog( msgSvc(), name() );
+
+  StatusCode sc;
+
+  sc = ManagedMonitorToolBase::initialize();
+  if (sc.isFailure()) return sc;
+
+  sc = m_errorTool.retrieve();
+  if( sc.isFailure() ) {
+    mLog << MSG::ERROR << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                       << endreq;
+    return sc;
+  }
+  return StatusCode::SUCCESS;
+}
 
 /*---------------------------------------------------------*/
 StatusCode JEMMon::bookHistograms( bool isNewEventsBlock, 
@@ -420,6 +441,14 @@ StatusCode JEMMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
   MsgStream mLog( msgSvc(), name() );
+
+  // Skip events believed to be corrupt
+
+  if (m_errorTool->corrupt()) {
+    mLog << MSG::DEBUG << "Skipping corrupt event" << endreq;
+    return StatusCode::SUCCESS;
+  }
+
   Helper Help;
   m_NoEvents++;
 
