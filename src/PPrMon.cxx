@@ -620,8 +620,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       //----------------------------- number of events ----------------------------------
       //m_h_NumberEvents= NoEvent_Booker.book1F("NumberEvents","Number of processed events",1,0.5,1.5,"");
       m_h_NumberEvents= NoEvent_Booker.book1F("l1calo_1d_NumberOfEvents","Number of processed events",2,0.5,2.5,"");
-      m_h_NumberEvents->GetXaxis()->SetBinLabel(1,"Good Events");
-      m_h_NumberEvents->GetXaxis()->SetBinLabel(2,"Corrupt Events (skipped)");
+      m_h_NumberEvents->GetXaxis()->SetBinLabel(1,"Processed Events");
+      m_h_NumberEvents->GetXaxis()->SetBinLabel(2,"Corrupt Events Skipped");
 	     
 	}	
 

@@ -80,6 +80,8 @@ TrigT1CaloMonErrorTool::TrigT1CaloMonErrorTool(const std::string& type,
   m_jepRoibRodHeaderLocation = m_rodHeaderLocation + "JEPRoIB";
   declareProperty("L1CaloErrorLocation",
                    m_robErrorVectorLocation = "L1CaloUnpackingErrors");
+  declareProperty("FlagCorruptEvents", m_flagCorruptEvents = false,
+                  "Allows flagging of corrupt events by corrupt() method");
 
 }
 
@@ -272,12 +274,15 @@ StatusCode TrigT1CaloMonErrorTool::retrieve(const std::vector<unsigned int>*&
   return sc;
 }
 
-// Return true if current event has any errors
+// Return true if current event has any corruption errors
 
 bool TrigT1CaloMonErrorTool::corrupt()
 {
-  const std::vector<unsigned int>* errVecTES = 0;
-  StatusCode sc = retrieve(errVecTES);
-  return (sc.isSuccess() && !errVecTES->empty());
+  if (m_flagCorruptEvents) {
+    const std::vector<unsigned int>* errVecTES = 0;
+    StatusCode sc = retrieve(errVecTES);
+    return (sc.isSuccess() && !errVecTES->empty());
+  }
+  return false;
 }
 

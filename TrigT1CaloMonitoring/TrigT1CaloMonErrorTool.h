@@ -32,7 +32,7 @@ class TrigT1CaloMonErrorTool : public AthAlgTool {
 
    /// Retrieve error vector
    StatusCode retrieve(const std::vector<unsigned int>*& errColl);
-   /// Return true if current event has any errors
+   /// Return true if current event has any corruption errors
    bool corrupt();
 
  private:
@@ -73,6 +73,8 @@ class TrigT1CaloMonErrorTool : public AthAlgTool {
    std::string m_jepRoibRodHeaderLocation;
    /// ROB and Unpacking Error vector StoreGate key
    std::string m_robErrorVectorLocation;
+   /// Flag corrupt events
+   bool m_flagCorruptEvents;
 
 };
 

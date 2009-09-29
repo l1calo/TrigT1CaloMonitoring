@@ -1,3 +1,7 @@
+2009-09-29  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-06-06
+        * Add option to allow exclusion of corrupt events from plots
+
 2009-09-24  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-05
         * Exclude corrupt events from most histograms.
