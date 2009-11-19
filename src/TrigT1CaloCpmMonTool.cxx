@@ -780,7 +780,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         }
       }
     }
-    m_h_CP_errors->Fill(err, error);
+    if (error) m_h_CP_errors->Fill(err);
   }
   ++m_events;
 

@@ -14,12 +14,13 @@
 #include "GaudiKernel/IToolSvc.h"
 #include "SGTools/StlVectorClids.h"
 
-#include <TH1D.h>
-#include <TH2D.h>
 #include "TString.h"
 
 #include "StoreGate/StoreGateSvc.h"
 #include "CLHEP/Units/SystemOfUnits.h"
+
+#include "EventInfo/EventInfo.h"
+#include "EventInfo/EventID.h"
 
 #include "TrigT1CaloMonitoring/PPrMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
@@ -42,6 +43,8 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   declareProperty("LUTHitMap_Thresh0",  m_TT_HitMap_Thresh0 = 1);
   declareProperty("LUTHitMap_Thresh1",  m_TT_HitMap_Thresh1 = 3);
   declareProperty("LUTHitMap_Thresh2",  m_TT_HitMap_Thresh2 = 7);
+  declareProperty("LUTHitMap_ThreshMax",  m_TT_HitMap_ThreshMax = 10);
+  declareProperty("LUTHitMap_LumiBlocks",  m_TT_HitMap_LumiBlocks = 10);
   declareProperty("ADCPedestal",  m_TT_ADC_Pedestal = 35);
   declareProperty("ADCHitMap_Thresh",  m_TT_ADC_HitMap_Thresh = 15);
   declareProperty("DistPerChannel", m_TT_DistPerChannel=0);
@@ -57,6 +60,8 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   declareProperty("ErrorPathInRootFile", m_ErrorPathInRootFile="L1Calo/PPM/Errors") ;
   declareProperty("EventPathInRootFile", m_EventPathInRootFile="L1Calo/Overview") ;
   declareProperty("TypeOfData", m_DataType="") ;
+  declareProperty("OnlineTest", m_onlineTest = false,
+                  "Test online code when running offline");
 
   // Maximum possible number of ADC slices
   m_SliceNo=15;
@@ -253,6 +258,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
   MonGroup TT_Error( this, m_ErrorPathInRootFile, shift, run );
   HistoBooker Error_Booker(&TT_Error, &log, "");
 
+  MonGroup TT_ErrorDetail( this, m_ErrorPathInRootFile+"/Detail", expert, run );
+  HistoBooker ErrorDetail_Booker(&TT_ErrorDetail, &log, "");
+
   MonGroup NoEvents( this, m_EventPathInRootFile, expert, run );
   HistoBooker NoEvent_Booker(&NoEvents, &log, "");
 
@@ -401,49 +409,78 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       //m_h_TT_ADC_emTiming_signal=ADCTimeSlice_Booker.bookProfile2Dbin("ADC_emTiming_signal","Average Maximum TimeSlice for em Signal (TS:1-5)",66,Help.TTEtaBinning(), 64,Help.TTPhiBinning(), "#eta", "#phi");
       m_h_TT_ADC_emTiming_signal=ADCTimeSlice_Booker.bookProfile2Dbin("ppm_em_2d_etaPhi_tt_adc_MaxTimeslice","Average Maximum TimeSlice for em Signal (TS:1-15)",66,Help.TTEtaBinning(), 64,Help.TTPhiBinning(), "#eta", "#phi");
 
+      //---------------------------- Signal shape ------------------------------------------
+
+      m_h_TT_SignalProfile.clear();
+      int emPart = MaxPartitions/2;
+      for (int p = 0; p < MaxPartitions; ++p)
+        {
+          if (p < emPart) name = "ppm_em_1d_tt_adc_SignalProfile" + partitionName(p);
+	  else            name = "ppm_had_1d_tt_adc_SignalProfile" + partitionName(p);
+	  title = "Signal Shape Profile for " + partitionName(p);
+	  m_h_TT_SignalProfile.push_back(ADCTimeSlice_Booker.bookProfile(name, title, m_SliceNo, 0, m_SliceNo, "Timeslice", ""));
+        }
 
       //---------------------------- LUT Hitmaps per threshold -----------------------------
-      buffer.str("");
-      buffer<<m_TT_HitMap_Thresh0;
-      //m_h_TT_HitMap_emLUT_Thresh0=HitMaps_Booker.book2F("TTEmLUT"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_emLUT_Thresh0=HitMaps_Booker.book2F("ppm_em_2d_etaPhi_tt_lut_Threshold0","#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_emLUT_Thresh0->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
-      
-      buffer.str("");
-      buffer<<m_TT_HitMap_Thresh1;
-      //m_h_TT_HitMap_emLUT_Thresh1=HitMaps_Booker.book2F("TTEmLUT"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_emLUT_Thresh1=HitMaps_Booker.book2F("ppm_em_2d_etaPhi_tt_lut_Threshold1","#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_emLUT_Thresh1->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());  
-      
-      buffer.str("");
-      buffer<<m_TT_HitMap_Thresh2;
-      //m_h_TT_HitMap_emLUT_Thresh2=HitMaps_Booker.book2F("TTEmLUT"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_emLUT_Thresh2=HitMaps_Booker.book2F("ppm_em_2d_etaPhi_tt_lut_Threshold2","#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_emLUT_Thresh2->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning()); 
-      
-      
-      buffer.str("");
-      buffer<<m_TT_HitMap_Thresh0;
-      //m_h_TT_HitMap_hadLUT_Thresh0=HitMaps_Booker.book2F("TTHadLUT"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_hadLUT_Thresh0=HitMaps_Booker.book2F("ppm_had_2d_etaPhi_tt_lut_Threshold0","#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_hadLUT_Thresh0->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());   
-      
-      buffer.str("");
-      buffer<<m_TT_HitMap_Thresh1;
-      //m_h_TT_HitMap_hadLUT_Thresh1=HitMaps_Booker.book2F("TTHadLUT"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_hadLUT_Thresh1=HitMaps_Booker.book2F("ppm_had_2d_etaPhi_tt_lut_Threshold1","#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_hadLUT_Thresh1->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());   
-      
-      buffer.str("");
-      buffer<<m_TT_HitMap_Thresh2;
-      //m_h_TT_HitMap_hadLUT_Thresh2=HitMaps_Booker.book2F("TTHadLUT"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_hadLUT_Thresh2=HitMaps_Booker.book2F("ppm_had_2d_etaPhi_tt_lut_Threshold2","#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-      m_h_TT_HitMap_hadLUT_Thresh2->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());  
+      m_h_TT_HitMap_emLUT_Thresh.clear();
+      m_h_TT_HitMap_hadLUT_Thresh.clear();
+      for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh)
+        {
+	  buffer.str("");
+	  buffer<<thresh;
+	  TH2F* hist = HitMaps_Booker.book2F("ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
+	  m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
+	  hist = HitMaps_Booker.book2F("ppm_had_2d_etaPhi_tt_lut_Threshold"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	  hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
+	  m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
+        }
+
+      // Ditto last N lumiblocks - online only
+      if (m_environment == AthenaMonManager::online || m_onlineTest)
+        {
+	  for (int block = 0; block <= m_TT_HitMap_LumiBlocks; ++block)
+	    {
+              buffer.str("");
+	      buffer<<block;
+              MonGroup lumiGroup( this, m_PathInRootFile+"/LUT/EtaPhiMaps/lumi_"+buffer.str(), expert, run );
+              HistoBooker lumiBooker(&lumiGroup, &log, "");
+	      for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh)
+	        {
+		  buffer.str("");
+		  buffer<<thresh<<"Lumi"<<block;
+		  std::string name = "ppm_em_2d_etaPhi_tt_lut_Thresh"+buffer.str();
+		  buffer.str("");
+		  if (block == 0) buffer<<thresh<<", Current Lumi-block";
+		  else            buffer<<thresh<<", Lumi-block -"<<block;
+		  std::string title = "#eta - #phi Map of EM LUT > "+buffer.str();
+		  TH2F* hist = lumiBooker.book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+		  hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
+		  m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
+		  title = "#eta - #phi Map of Had LUT > "+buffer.str();
+		  buffer.str("");
+		  buffer<<thresh<<"Lumi"<<block;
+		  name = "ppm_had_2d_etaPhi_tt_lut_Thresh"+buffer.str();
+		  hist = lumiBooker.book2F(name,title,100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+		  hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
+		  m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
+	        }
+            }
+        }
+      else  // Reserve per lumi hists for offline
+        {
+	  for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh)
+	    {
+	      TH2F* hist = 0;
+	      m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
+	      m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
+            }
+        }
       
       //---------------------------- distribution of LUT peak per detector region -----------------------------
       //m_h_TT_emLUT=LUTPeakDistribution_Booker.book1F("emLUT_peak","EM LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"em LUT Peak [GeV]");
       //m_h_TT_emLUT_eta=LUTPeakDistribution_Booker.book1F("emLUT_eta","EM LUT: Distribution of Peak per #eta",21,-0.5,255.5,"#eta");
-      m_h_TT_emLUT=LUTPeakDistribution_Booker.book1F("ppm_em_1d_tt_lut_Et","EM LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"em LUT Peak [GeV]");
+      m_h_TT_emLUT=LUTPeakDistribution_Booker.book1F("ppm_em_1d_tt_lut_Et","EM LUT: Distribution of Peak",m_MaxEnergyRange-1,1,m_MaxEnergyRange,"em LUT Peak [GeV]");
       m_h_TT_emLUT_eta=LUTPeakDistribution_Booker.book1F("ppm_em_1d_tt_lut_Eta","EM LUT: Distribution of Peak per #eta",21,-0.5,255.5,"#eta");
       m_h_TT_emLUT_eta->SetBins(66,Help.TTEtaBinning());
       
@@ -454,12 +491,24 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       
       //m_h_TT_hadLUT=LUTPeakDistribution_Booker.book1F("hadLUT_peak","HAD LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"had LUT Peak [GeV]"); 
       //m_h_TT_hadLUT_eta=LUTPeakDistribution_Booker.book1F("hadLUT_eta","HAD LUT: Distribution of Peak per #eta",256,-0.5,255.5,"#eta");
-      m_h_TT_hadLUT=LUTPeakDistribution_Booker.book1F("ppm_had_1d_tt_lut_Et","HAD LUT: Distribution of Peak",m_MaxEnergyRange,0,m_MaxEnergyRange,"had LUT Peak [GeV]"); 
+      m_h_TT_hadLUT=LUTPeakDistribution_Booker.book1F("ppm_had_1d_tt_lut_Et","HAD LUT: Distribution of Peak",m_MaxEnergyRange-1,1,m_MaxEnergyRange,"had LUT Peak [GeV]"); 
       m_h_TT_hadLUT_eta=LUTPeakDistribution_Booker.book1F("ppm_had_1d_tt_lut_Eta","HAD LUT: Distribution of Peak per #eta",256,-0.5,255.5,"#eta");
       m_h_TT_hadLUT_eta->SetBins(66,Help.TTEtaBinning());
       //m_h_TT_hadLUT_phi=LUTPeakDistribution_Booker.book1F("hadLUT_phi","HAD LUT: Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
       m_h_TT_hadLUT_phi=LUTPeakDistribution_Booker.book1F("ppm_had_1d_tt_lut_Phi","HAD LUT: Distribution of Peak per #phi",256,-0.5,255.5,"#phi");
       m_h_TT_hadLUT_phi->SetBins(64,Help.TTPhiBinning());  
+
+      m_h_TT_BCLUT=LUTPeakDistribution_Booker.book1F("ppm_1d_tt_lut_LutPerBCN","Num of LUT > 5 per BC",0xdec,0,0xdec,"Bunch Crossing","Num. of LUT above limit");
+      m_h_TT_BCID=LUTPeakDistribution_Booker.book2F("ppm_2d_tt_lut_BcidBits","PPM: Bits of BCID Logic Word Vs. LUT",8,0.,8.,256,0.,256.,"","");
+      m_h_TT_BCID->GetXaxis()->SetBinLabel(1, "none");
+      m_h_TT_BCID->GetXaxis()->SetBinLabel(2, "extBC only");
+      m_h_TT_BCID->GetXaxis()->SetBinLabel(3, "satBC only");
+      m_h_TT_BCID->GetXaxis()->SetBinLabel(4, "extBC & satBC");
+      m_h_TT_BCID->GetXaxis()->SetBinLabel(5, "peakF only");
+      m_h_TT_BCID->GetXaxis()->SetBinLabel(6, "extBC & peakF");
+      m_h_TT_BCID->GetXaxis()->SetBinLabel(7, "satBC & peakF");
+      m_h_TT_BCID->GetXaxis()->SetBinLabel(8, "all");
+      m_h_TT_BCID->SetStats(kFALSE);
       
 
       //-------------------------Summary of Errors-----------------------------------------------
@@ -625,6 +674,61 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	     
 	}	
 
+  if ( isNewLumiBlock )
+    {
+      //---------------------------- LUT Hitmaps per threshold -----------------------------
+      if (m_environment == AthenaMonManager::online || m_onlineTest)
+        {
+	  // Current lumi copied to lumi-1 and so on
+	  for (int block = m_TT_HitMap_LumiBlocks-1; block >= 0; --block)
+	    {
+	      for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh)
+	        {
+		  TH2F* hist1 = m_h_TT_HitMap_emLUT_Thresh[(block+1)*m_TT_HitMap_ThreshMax + thresh];
+		  TH2F* hist2 = m_h_TT_HitMap_emLUT_Thresh[(block+2)*m_TT_HitMap_ThreshMax + thresh];
+		  TH2F* hist3 = m_h_TT_HitMap_hadLUT_Thresh[(block+1)*m_TT_HitMap_ThreshMax + thresh];
+		  TH2F* hist4 = m_h_TT_HitMap_hadLUT_Thresh[(block+2)*m_TT_HitMap_ThreshMax + thresh];
+		  hist2->Reset();
+		  hist4->Reset();
+		  for (int binx = 1; binx <= hist1->GetNbinsX(); ++binx)
+		    {
+		      for (int biny = 1; biny <= hist1->GetNbinsY(); biny++)
+		        {
+			  double val = hist1->GetBinContent(binx, biny);
+			  if (val) hist2->SetBinContent(binx, biny, val);
+			  val = hist3->GetBinContent(binx, biny);
+			  if (val) hist4->SetBinContent(binx, biny, val);
+                        }
+                    }
+		  if (block == 0)
+		    {
+		      hist1->Reset();
+		      hist3->Reset();
+		    }
+                }
+            }
+        }
+      else
+        {
+          Helper Help;
+          MonGroup TT_LumiHitMaps( this, m_PathInRootFile+"_LUT_EtaPhiMaps", expert, lumiBlock );
+          HistoBooker LumiHitMaps_Booker(&TT_LumiHitMaps, &log, "");
+          std::stringstream buffer;
+          for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh)
+            {
+	      buffer.str("");
+	      buffer<<thresh;
+	      TH2F* hist = LumiHitMaps_Booker.book2F("ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	      hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
+	      m_h_TT_HitMap_emLUT_Thresh[m_TT_HitMap_ThreshMax + thresh] = hist;
+	      hist = LumiHitMaps_Booker.book2F("ppm_had_2d_etaPhi_tt_lut_Threshold"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	      hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
+	      m_h_TT_HitMap_hadLUT_Thresh[m_TT_HitMap_ThreshMax + thresh] = hist;
+            }
+	  
+        }
+    }
+    
   return StatusCode::SUCCESS;
 	}
 
@@ -657,6 +761,18 @@ StatusCode PPrMon::fillHistograms()
       log << MSG::INFO << "No TriggerTower found in TES at "<< m_TriggerTowerContainerName<< endreq ;
       return StatusCode::SUCCESS;
     }
+
+  // Get Bunch crossing number from EventInfo
+  uint32_t bunchCrossing = 0;
+  const EventInfo* evInfo = 0;
+  sc = m_storeGate->retrieve(evInfo);
+  if (sc.isFailure()) {
+    log << MSG::DEBUG << "No EventInfo found" << endreq;
+  } else {
+    const EventID* evID = evInfo->event_ID();
+    if (evID) bunchCrossing = evID->bunch_crossing_id();
+  }
+
     
   // =============================================================================================
   // ================= Container: TriggerTower ===================================================
@@ -691,24 +807,20 @@ StatusCode PPrMon::fillHistograms()
 	  m_h_TT_emLUT_eta-> Fill((*TriggerTowerIterator)->eta(),1);
 	  m_h_TT_emLUT_phi-> Fill((*TriggerTowerIterator)->phi(),1);
 	  m_h_TT_emLUT->Fill(EmEnergy,1);
+          // Bunch crossing and BCID bits
+          if (EmEnergy>5) m_h_TT_BCLUT->Fill(bunchCrossing);
+          m_h_TT_BCID->Fill((*TriggerTowerIterator)->emBCID(), EmEnergy);
 	}
-    
-	 
-	 
 	 
        //---------------------------- EM LUT HitMaps -----------------------------
-      if (EmEnergy>m_TT_HitMap_Thresh0)
-	{
-	  m_h_TT_HitMap_emLUT_Thresh0->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-	}
-      if (EmEnergy>m_TT_HitMap_Thresh1)
-	{
-	  m_h_TT_HitMap_emLUT_Thresh1->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-	}
-      if (EmEnergy>m_TT_HitMap_Thresh2)
-	{
-	  m_h_TT_HitMap_emLUT_Thresh2->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-	}
+      for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh)
+        {
+	  if (EmEnergy > thresh)
+	    {
+	      m_h_TT_HitMap_emLUT_Thresh[thresh]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+	      m_h_TT_HitMap_emLUT_Thresh[thresh+m_TT_HitMap_ThreshMax]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+            }
+        }
     
        //---------------------------- HAD Energy -----------------------------
       HadTowerId = m_lvl1Helper->tower_id(detside, 1, detregion,eta,phi );  
@@ -726,21 +838,20 @@ StatusCode PPrMon::fillHistograms()
 	  m_h_TT_hadLUT_eta-> Fill((*TriggerTowerIterator)->eta(),1);
 	  m_h_TT_hadLUT_phi-> Fill((*TriggerTowerIterator)->phi(),1);
 	  m_h_TT_hadLUT->Fill(HadEnergy,1);
+          // Bunch crossing and BCID bits
+          if (HadEnergy>5) m_h_TT_BCLUT->Fill(bunchCrossing);
+          m_h_TT_BCID->Fill((*TriggerTowerIterator)->hadBCID(), HadEnergy);
 	}
     
        //---------------------------- had LUT HitMaps -----------------------------
-      if (HadEnergy>m_TT_HitMap_Thresh0)
-	{
-	  m_h_TT_HitMap_hadLUT_Thresh0->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-	}
-      if (HadEnergy>m_TT_HitMap_Thresh1)
-	{
-	  m_h_TT_HitMap_hadLUT_Thresh1->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-	}
-      if (HadEnergy>m_TT_HitMap_Thresh2)
-	{
-	  m_h_TT_HitMap_hadLUT_Thresh2->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-	}
+      for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh)
+        {
+	  if (HadEnergy > thresh)
+	    {
+	      m_h_TT_HitMap_hadLUT_Thresh[thresh]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+	      m_h_TT_HitMap_hadLUT_Thresh[thresh+m_TT_HitMap_ThreshMax]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+            }
+        }
     
 
 
@@ -818,14 +929,31 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 	  m_h_dist_had_max->Fill(max);
         }
 
+      //------------------------ Signal shape profile ---------------------
 
+      if ((*TriggerTowerIterator)->emEnergy() > 0)
+        {
+          const int emPart  = partition(0, (*TriggerTowerIterator)->eta());
+	  const std::vector<int>& emADC((*TriggerTowerIterator)->emADC());
+	  std::vector<int>::const_iterator it  = emADC.begin();
+	  std::vector<int>::const_iterator itE = emADC.end();
+	  for (int slice = 0; it != itE && slice < m_SliceNo; ++it, ++slice) m_h_TT_SignalProfile[emPart]->Fill(slice, *it);
+        }
+      if ((*TriggerTowerIterator)->hadEnergy() > 0)
+        {
+          const int hadPart = partition(1, (*TriggerTowerIterator)->eta());
+	  const std::vector<int>& hadADC((*TriggerTowerIterator)->hadADC());
+	  std::vector<int>::const_iterator it  = hadADC.begin();
+	  std::vector<int>::const_iterator itE = hadADC.end();
+	  for (int slice = 0; it != itE && slice < m_SliceNo; ++it, ++slice) m_h_TT_SignalProfile[hadPart]->Fill(slice, *it);
+        }
     
-      
 
       //---------------------------- SubStatus Word errors -----------------------------
       //----------------------------- em ---------------------------------------
 
-      LVL1::DataError emerr((*TriggerTowerIterator)-> emError());
+      using LVL1::DataError;
+      DataError emerr((*TriggerTowerIterator)-> emError());
 
       int crate=0;
       int module=0;
@@ -843,28 +971,20 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 
 	 }
  
-      catch(LArID_Exception& except) 
+      catch(CaloID_Exception& except) 
 	{
-	  log << MSG::ERROR << "LArID_Exception " << (std::string) except << endreq ;
+	  log << MSG::ERROR << "CaloID_Exception " << (std::string) except << endreq ;
 	}
    
       //Summary
 
-      // GLinkParity
-      m_h_TT_Error->Fill(1,emerr.get(16));
-      // GLinkProtocol
-      m_h_TT_Error->Fill(2,emerr.get(17));
-      // BCNMismatch
-      m_h_TT_Error->Fill(7,emerr.get(18));
-      // FIFOOverflow
-      m_h_TT_Error->Fill(3,emerr.get(19));
-      // ModuleError
-      m_h_TT_Error->Fill(4,emerr.get(20));
-      
-      // GLinkDown
-      m_h_TT_Error->Fill(5,emerr.get(22));
-      // GLinkTimeout
-      m_h_TT_Error->Fill(6,emerr.get(23));
+      if (emerr.get(DataError::GLinkParity))   m_h_TT_Error->Fill(1);
+      if (emerr.get(DataError::GLinkProtocol)) m_h_TT_Error->Fill(2);
+      if (emerr.get(DataError::FIFOOverflow))  m_h_TT_Error->Fill(3);
+      if (emerr.get(DataError::ModuleError))   m_h_TT_Error->Fill(4);
+      if (emerr.get(DataError::GLinkDown))     m_h_TT_Error->Fill(5);
+      if (emerr.get(DataError::GLinkTimeout))  m_h_TT_Error->Fill(6);
+      if (emerr.get(DataError::BCNMismatch))   m_h_TT_Error->Fill(7);
       
 
       // em signals Crate 0-3
@@ -872,108 +992,73 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 
       if (crate>3) {
 	//---------------- per crate and module --------------------  m_h_TT_error_Crate_47
-      // ChannelDisabled
-      m_h_fwPpmError_Crate_47->Fill(1,(module-4)+((crate-4)*18),emerr.get(4));
-      // MCMAbsent
-      m_h_fwPpmError_Crate_47->Fill(2,(module-4)+((crate-4)*18),emerr.get(5));
-      // Timeout
-      m_h_fwPpmError_Crate_47->Fill(3,(module-4)+((crate-4)*18),emerr.get(6));
-      // ASICFull
-      m_h_fwPpmError_Crate_47->Fill(4,(module-4)+((crate-4)*18),emerr.get(7));
-      // EventMismatch
-      m_h_fwPpmError_Crate_47->Fill(5,(module-4)+((crate-4)*18),emerr.get(8));
-      // BunchMismatch
-      m_h_fwPpmError_Crate_47->Fill(6,(module-4)+((crate-4)*18),emerr.get(9));
-      // FIFOCorrupt
-      m_h_fwPpmError_Crate_47->Fill(7,(module-4)+((crate-4)*18),emerr.get(10));
-      // PinParity
-      m_h_fwPpmError_Crate_47->Fill(8,(module-4)+((crate-4)*18),emerr.get(11));
+      const int ypos = (module-4)+((crate-4)*18);
+      if (emerr.get(DataError::ChannelDisabled)) m_h_fwPpmError_Crate_47->Fill(1,ypos);
+      if (emerr.get(DataError::MCMAbsent))       m_h_fwPpmError_Crate_47->Fill(2,ypos);
+      if (emerr.get(DataError::Timeout))         m_h_fwPpmError_Crate_47->Fill(3,ypos);
+      if (emerr.get(DataError::ASICFull))        m_h_fwPpmError_Crate_47->Fill(4,ypos);
+      if (emerr.get(DataError::EventMismatch))   m_h_fwPpmError_Crate_47->Fill(5,ypos);
+      if (emerr.get(DataError::BunchMismatch))   m_h_fwPpmError_Crate_47->Fill(6,ypos);
+      if (emerr.get(DataError::FIFOCorrupt))     m_h_fwPpmError_Crate_47->Fill(7,ypos);
+      if (emerr.get(DataError::PinParity))       m_h_fwPpmError_Crate_47->Fill(8,ypos);
       		  
-      // GLinkParity
-      m_h_TT_error_Crate_47->Fill(1,(module-4)+((crate-4)*18),emerr.get(16));
-      // GLinkProtocol
-      m_h_TT_error_Crate_47->Fill(2,(module-4)+((crate-4)*18),emerr.get(17));
-      // FIFOOverflow
-      m_h_TT_error_Crate_47->Fill(3,(module-4)+((crate-4)*18),emerr.get(19));
-      // ModuleError
-      m_h_TT_error_Crate_47->Fill(4,(module-4)+((crate-4)*18),emerr.get(20));
+      if (emerr.get(DataError::GLinkParity))     m_h_TT_error_Crate_47->Fill(1,ypos);
+      if (emerr.get(DataError::GLinkProtocol))   m_h_TT_error_Crate_47->Fill(2,ypos);
+      if (emerr.get(DataError::FIFOOverflow))    m_h_TT_error_Crate_47->Fill(3,ypos);
+      if (emerr.get(DataError::ModuleError))     m_h_TT_error_Crate_47->Fill(4,ypos);
+      if (emerr.get(DataError::GLinkDown))       m_h_TT_error_Crate_47->Fill(5,ypos);
+      if (emerr.get(DataError::GLinkTimeout))    m_h_TT_error_Crate_47->Fill(6,ypos);
       
-      // GLinkDown
-      m_h_TT_error_Crate_47->Fill(5,(module-4)+((crate-4)*18),emerr.get(22));
-      // GLinkTimeout
-      m_h_TT_error_Crate_47->Fill(6,(module-4)+((crate-4)*18),emerr.get(23));
-      
-       // BCNMismatch
-      m_h_BCNmis_Crate_47->Fill(1,(module-4)+((crate-4)*18),emerr.get(18));
-
+      if (emerr.get(DataError::BCNMismatch))     m_h_BCNmis_Crate_47->Fill(1,ypos);
 
 	}
 
       else {
 	//---------------- per crate and module -------------------------  
-      // ChannelDisabled
-      m_h_fwPpmError_Crate_03->Fill(1,(module-4)+(crate*18),emerr.get(4));
-      // MCMAbsent
-      m_h_fwPpmError_Crate_03->Fill(2,(module-4)+(crate*18),emerr.get(5));
-      // Timeout
-      m_h_fwPpmError_Crate_03->Fill(3,(module-4)+(crate*18),emerr.get(6));
-      // ASICFull
-      m_h_fwPpmError_Crate_03->Fill(4,(module-4)+(crate*18),emerr.get(7));
-      // EventMismatch
-      m_h_fwPpmError_Crate_03->Fill(5,(module-4)+(crate*18),emerr.get(8));
-      // BunchMismatch
-      m_h_fwPpmError_Crate_03->Fill(6,(module-4)+(crate*18),emerr.get(9));
-      // FIFOCorrupt
-      m_h_fwPpmError_Crate_03->Fill(7,(module-4)+(crate*18),emerr.get(10));
-      // PinParity
-      m_h_fwPpmError_Crate_03->Fill(8,(module-4)+(crate*18),emerr.get(11));
+      const int ypos = (module-4)+(crate*18);
+      if (emerr.get(DataError::ChannelDisabled)) m_h_fwPpmError_Crate_03->Fill(1,ypos);
+      if (emerr.get(DataError::MCMAbsent))       m_h_fwPpmError_Crate_03->Fill(2,ypos);
+      if (emerr.get(DataError::Timeout))         m_h_fwPpmError_Crate_03->Fill(3,ypos);
+      if (emerr.get(DataError::ASICFull))        m_h_fwPpmError_Crate_03->Fill(4,ypos);
+      if (emerr.get(DataError::EventMismatch))   m_h_fwPpmError_Crate_03->Fill(5,ypos);
+      if (emerr.get(DataError::BunchMismatch))   m_h_fwPpmError_Crate_03->Fill(6,ypos);
+      if (emerr.get(DataError::FIFOCorrupt))     m_h_fwPpmError_Crate_03->Fill(7,ypos);
+      if (emerr.get(DataError::PinParity))       m_h_fwPpmError_Crate_03->Fill(8,ypos);
       		  
-      // GLinkParity
-      m_h_TT_error_Crate_03->Fill(1,(module-4)+(crate*18),emerr.get(16));
-      // GLinkProtocol
-      m_h_TT_error_Crate_03->Fill(2,(module-4)+(crate*18),emerr.get(17));
-      // FIFOOverflow
-      m_h_TT_error_Crate_03->Fill(3,(module-4)+(crate*18),emerr.get(19));
-      // ModuleError
-      m_h_TT_error_Crate_03->Fill(4,(module-4)+(crate*18),emerr.get(20));
+      if (emerr.get(DataError::GLinkParity))     m_h_TT_error_Crate_03->Fill(1,ypos);
+      if (emerr.get(DataError::GLinkProtocol))   m_h_TT_error_Crate_03->Fill(2,ypos);
+      if (emerr.get(DataError::FIFOOverflow))    m_h_TT_error_Crate_03->Fill(3,ypos);
+      if (emerr.get(DataError::ModuleError))     m_h_TT_error_Crate_03->Fill(4,ypos);
+      if (emerr.get(DataError::GLinkDown))       m_h_TT_error_Crate_03->Fill(5,ypos);
+      if (emerr.get(DataError::GLinkTimeout))    m_h_TT_error_Crate_03->Fill(6,ypos);
       
-      // GLinkDown
-      m_h_TT_error_Crate_03->Fill(5,(module-4)+(crate*18),emerr.get(22));
-      // GLinkTimeout
-      m_h_TT_error_Crate_03->Fill(6,(module-4)+(crate*18),emerr.get(23));
-      
-       // BCNMismatch
-      m_h_BCNmis_Crate_03->Fill(1,(module-4)+(crate*18),emerr.get(18));
+      if (emerr.get(DataError::BCNMismatch))     m_h_BCNmis_Crate_03->Fill(1,ypos);
 
 	}
 
-      if (emerr.get(4) || emerr.get(5)) overview[crate] |= 1;
-      for (int i = 6; i < 12; ++i) overview[crate] |= (emerr.get(i) << 1);
-      for (int i = 16; i < 24; ++i) {
-        if (i != 21) overview[crate] |= (emerr.get(i) << 2);
-      }
+      if (emerr.get(DataError::ChannelDisabled) || emerr.get(DataError::MCMAbsent)) overview[crate] |= 1;
+
+      if (emerr.get(DataError::Timeout)       || emerr.get(DataError::ASICFull)      ||
+          emerr.get(DataError::EventMismatch) || emerr.get(DataError::BunchMismatch) ||
+	  emerr.get(DataError::FIFOCorrupt)   || emerr.get(DataError::PinParity)) overview[crate] |= (1 << 1);
+
+      if (emerr.get(DataError::GLinkParity)  || emerr.get(DataError::GLinkProtocol) ||
+          emerr.get(DataError::FIFOOverflow) || emerr.get(DataError::ModuleError)   ||
+	  emerr.get(DataError::GLinkDown)    || emerr.get(DataError::GLinkTimeout)  ||
+	  emerr.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
 
     
-     LVL1::DataError haderr((*TriggerTowerIterator)-> hadError());
+     DataError haderr((*TriggerTowerIterator)-> hadError());
 
      //had signals in Crates 4-7
       		  
-      // GLinkParity
-      m_h_TT_Error->Fill(1,haderr.get(16));
-      // GLinkProtocol
-      m_h_TT_Error->Fill(2,haderr.get(17));
-      // BCNMismatch
-      m_h_TT_Error->Fill(7,haderr.get(18));
-      // FIFOOverflow
-      m_h_TT_Error->Fill(3,haderr.get(19));
-      // ModuleError
-      m_h_TT_Error->Fill(4,haderr.get(20));
-      
-      // GLinkDown
-      m_h_TT_Error->Fill(5,haderr.get(22));
-      // GLinkTimeout
-      m_h_TT_Error->Fill(6,haderr.get(23));
-      
+      if (haderr.get(DataError::GLinkParity))   m_h_TT_Error->Fill(1);
+      if (haderr.get(DataError::GLinkProtocol)) m_h_TT_Error->Fill(2);
+      if (haderr.get(DataError::FIFOOverflow))  m_h_TT_Error->Fill(3);
+      if (haderr.get(DataError::ModuleError))   m_h_TT_Error->Fill(4);
+      if (haderr.get(DataError::GLinkDown))     m_h_TT_Error->Fill(5);
+      if (haderr.get(DataError::GLinkTimeout))  m_h_TT_Error->Fill(6);
+      if (haderr.get(DataError::BCNMismatch))   m_h_TT_Error->Fill(7);
 
       try 
 	{
@@ -987,58 +1072,47 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 
 	} 
 
-      catch(LArID_Exception& except) 
+      catch(CaloID_Exception& except) 
 	{
-	  log << MSG::ERROR << "LArID_Exception " << (std::string) except << endreq ;
+	  log << MSG::ERROR << "CaloID_Exception " << (std::string) except << endreq ;
 	}
     
 
       //---------------- per crate and module --------------------  m_h_TT_error_Crate_03
-      // ChannelDisabled
-      m_h_fwPpmError_Crate_47->Fill(1,(module-4)+((crate-4)*18),haderr.get(4));
-      // MCMAbsent
-      m_h_fwPpmError_Crate_47->Fill(2,(module-4)+((crate-4)*18),haderr.get(5));
-      // Timeout
-      m_h_fwPpmError_Crate_47->Fill(3,(module-4)+((crate-4)*18),haderr.get(6));
-      // ASICFull
-      m_h_fwPpmError_Crate_47->Fill(4,(module-4)+((crate-4)*18),haderr.get(7));
-      // EventMismatch
-      m_h_fwPpmError_Crate_47->Fill(5,(module-4)+((crate-4)*18),haderr.get(8));
-      // BunchMismatch
-      m_h_fwPpmError_Crate_47->Fill(6,(module-4)+((crate-4)*18),haderr.get(9));
-      // FIFOCorrupt
-      m_h_fwPpmError_Crate_47->Fill(7,(module-4)+((crate-4)*18),haderr.get(10));
-      // PinParity
-      m_h_fwPpmError_Crate_47->Fill(8,(module-4)+((crate-4)*18),haderr.get(11));
+      const int ypos = (module-4)+((crate-4)*18);
+      if (haderr.get(DataError::ChannelDisabled)) m_h_fwPpmError_Crate_47->Fill(1,ypos);
+      if (haderr.get(DataError::MCMAbsent))       m_h_fwPpmError_Crate_47->Fill(2,ypos);
+      if (haderr.get(DataError::Timeout))         m_h_fwPpmError_Crate_47->Fill(3,ypos);
+      if (haderr.get(DataError::ASICFull))        m_h_fwPpmError_Crate_47->Fill(4,ypos);
+      if (haderr.get(DataError::EventMismatch))   m_h_fwPpmError_Crate_47->Fill(5,ypos);
+      if (haderr.get(DataError::BunchMismatch))   m_h_fwPpmError_Crate_47->Fill(6,ypos);
+      if (haderr.get(DataError::FIFOCorrupt))     m_h_fwPpmError_Crate_47->Fill(7,ypos);
+      if (haderr.get(DataError::PinParity))       m_h_fwPpmError_Crate_47->Fill(8,ypos);
       		  
-      // GLinkParity
-      m_h_TT_error_Crate_47->Fill(1,(module-4)+((crate-4)*18),haderr.get(16));
-      // GLinkProtocol
-      m_h_TT_error_Crate_47->Fill(2,(module-4)+((crate-4)*18),haderr.get(17));
-      // FIFOOverflow
-      m_h_TT_error_Crate_47->Fill(3,(module-4)+((crate-4)*18),haderr.get(19));
-      // ModuleError
-      m_h_TT_error_Crate_47->Fill(4,(module-4)+((crate-4)*18),haderr.get(20));
+      if (haderr.get(DataError::GLinkParity))     m_h_TT_error_Crate_47->Fill(1,ypos);
+      if (haderr.get(DataError::GLinkProtocol))   m_h_TT_error_Crate_47->Fill(2,ypos);
+      if (haderr.get(DataError::FIFOOverflow))    m_h_TT_error_Crate_47->Fill(3,ypos);
+      if (haderr.get(DataError::ModuleError))     m_h_TT_error_Crate_47->Fill(4,ypos);
+      if (haderr.get(DataError::GLinkDown))       m_h_TT_error_Crate_47->Fill(5,ypos);
+      if (haderr.get(DataError::GLinkTimeout))    m_h_TT_error_Crate_47->Fill(6,ypos);
       
-      // GLinkDown
-      m_h_TT_error_Crate_47->Fill(5,(module-4)+((crate-4)*18),haderr.get(22));
-      // GLinkTimeout
-      m_h_TT_error_Crate_47->Fill(6,(module-4)+((crate-4)*18),haderr.get(23));
+      if (haderr.get(DataError::BCNMismatch))     m_h_BCNmis_Crate_47->Fill(1,ypos);
 
-      if (haderr.get(4) || haderr.get(5)) overview[crate] |= 1;
-      for (int i = 6; i < 12; ++i) overview[crate] |= (haderr.get(i) << 1);
-      for (int i = 16; i < 24; ++i) {
-        if (i != 21) overview[crate] |= (haderr.get(i) << 2);
-      }
+      if (haderr.get(DataError::ChannelDisabled) || haderr.get(DataError::MCMAbsent)) overview[crate] |= 1;
+
+      if (haderr.get(DataError::Timeout)       || haderr.get(DataError::ASICFull)      ||
+          haderr.get(DataError::EventMismatch) || haderr.get(DataError::BunchMismatch) ||
+	  haderr.get(DataError::FIFOCorrupt)   || haderr.get(DataError::PinParity)) overview[crate] |= (1 << 1);
+
+      if (haderr.get(DataError::GLinkParity)  || haderr.get(DataError::GLinkProtocol) ||
+          haderr.get(DataError::FIFOOverflow) || haderr.get(DataError::ModuleError)   ||
+	  haderr.get(DataError::GLinkDown)    || haderr.get(DataError::GLinkTimeout)  ||
+	  haderr.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
       
      
       // number of triggered slice
       m_h_TT_triggeredSlice_em->Fill((*TriggerTowerIterator)->emADCPeak(),1);
       m_h_TT_triggeredSlice_had->Fill((*TriggerTowerIterator)->hadADCPeak(),1);
-
-       // BCNMismatch
-      m_h_BCNmis_Crate_47->Fill(1,(module-4)+((crate-4)*18),emerr.get(18));
-
 
 	}	     
 	     
@@ -1176,5 +1250,59 @@ int PPrMon::FADCSum(const std::vector<int>& vFAdc) {
   FADCSum/=vFAdc.size();         // average per slice
   
   return FADCSum;
+}
+
+/*---------------------------------------------------------*/
+int PPrMon::partition(int layer, double eta) {
+/*---------------------------------------------------------*/
+
+  int part = 0;
+  if (layer == 0) {
+    if      (eta < -3.2) part = LArFCAL1C;
+    else if (eta < -1.5) part = LArEMECC;
+    else if (eta < -1.4) part = LArOverlapC;
+    else if (eta <  0.0) part = LArEMBC;
+    else if (eta <  1.4) part = LArEMBA;
+    else if (eta <  1.5) part = LArOverlapA;
+    else if (eta <  3.2) part = LArEMECA;
+    else                 part = LArFCAL1A;
+  } else {
+    if      (eta < -3.2) part = LArFCAL23C;
+    else if (eta < -1.5) part = LArHECC;
+    else if (eta < -0.9) part = TileEBC;
+    else if (eta <  0.0) part = TileLBC;
+    else if (eta <  0.9) part = TileLBA;
+    else if (eta <  1.5) part = TileEBA;
+    else if (eta <  3.2) part = LArHECA;
+    else                 part = LArFCAL23A;
+  }
+  return part;
+}
+
+/*---------------------------------------------------------*/
+std::string PPrMon::partitionName(int part) {
+/*---------------------------------------------------------*/
+
+  std::string name = "";
+  switch (part) {
+    case LArFCAL1C:   name = "LArFCAL1C";   break;
+    case LArEMECC:    name = "LArEMECC";    break;
+    case LArOverlapC: name = "LArOverlapC"; break;
+    case LArEMBC:     name = "LArEMBC";     break;
+    case LArEMBA:     name = "LArEMBA";     break;
+    case LArOverlapA: name = "LArOverlapA"; break;
+    case LArEMECA:    name = "LArEMECA";    break;
+    case LArFCAL1A:   name = "LArFCAL1A";   break;
+    case LArFCAL23C:  name = "LArFCAL23C";  break;
+    case LArHECC:     name = "LArHECC";     break;
+    case TileEBC:     name = "TileEBC";     break;
+    case TileLBC:     name = "TileLBC";     break;
+    case TileLBA:     name = "TileLBA";     break;
+    case TileEBA:     name = "TileEBA";     break;
+    case LArHECA:     name = "LArHECA";     break;
+    case LArFCAL23A:  name = "LArFCAL23A";  break;
+    default:          name = "Unknown";     break;
+  }
+  return name;
 }
 

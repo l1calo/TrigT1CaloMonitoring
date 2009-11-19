@@ -190,8 +190,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       if (m_MaxEnergyRange < jebins) jebins = m_MaxEnergyRange;
       //m_h_je_emenergy = expert_Booker.book1F("EmEnergy_JEM_input", "TowerSum EM energy distribution  --  JEM input", jebins, 0, m_MaxEnergyRange, "em energy [GeV]" , "N");
       //m_h_je_hadenergy  = expert_Booker.book1F("HadEnergy_JEM_input", "TowerSum HAD energy distribution  --  JEM input", jebins, 0, m_MaxEnergyRange, "had energy [GeV]" , "N");
-      m_h_je_emenergy = expert_Booker.book1F("jem_em_1d_jetEl_Energy", "TowerSum EM energy distribution  --  JEM input", jebins, 0, m_MaxEnergyRange, "em energy [GeV]" , "N");
-      m_h_je_hadenergy  = expert_Booker.book1F("jem_had_1d_jetEl_Energy", "TowerSum HAD energy distribution  --  JEM input", jebins, 0, m_MaxEnergyRange, "had energy [GeV]" , "N");
+      m_h_je_emenergy = expert_Booker.book1F("jem_em_1d_jetEl_Energy", "TowerSum EM energy distribution  --  JEM input", jebins-1, 1, m_MaxEnergyRange, "em energy [GeV]" , "N");
+      m_h_je_hadenergy  = expert_Booker.book1F("jem_had_1d_jetEl_Energy", "TowerSum HAD energy distribution  --  JEM input", jebins-1, 1, m_MaxEnergyRange, "had energy [GeV]" , "N");
       m_h_je_emenergy->SetStats(kFALSE);
       m_h_je_hadenergy->SetStats(kFALSE);
 
@@ -289,7 +289,10 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       const int dRange = 4096; //range of decoded value
       LVL1::QuadLinear expand;
       std::set<int> sorted;
-      for (int i = 0; i < eRange; ++i) sorted.insert(expand.Expand(i));
+      for (int i = 0; i < eRange; ++i) {
+	int val = expand.Expand(i);
+	if (val != 0) sorted.insert(val);
+      }
       double binedges[eRange+1];
       int nbins = 0;
       std::set<int>::const_iterator iter  = sorted.begin();
@@ -298,13 +301,14 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
         binedges[nbins] = *iter;
 	++nbins;
       }
+      binedges[0] = 1;
       binedges[nbins] = dRange;
       //m_h_JEMEtSums_Ex = EnergySums_Booker.book1F("Ex_JEM_DAQ", "JEM E_{x}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Ex [GeV]", "N");
       //m_h_JEMEtSums_Ey = EnergySums_Booker.book1F("Ey_JEM_DAQ", "JEM E_{y}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Ey [GeV]", "N");
       //m_h_JEMEtSums_Et = EnergySums_Booker.book1F("Et_JEM_DAQ", "JEM E_{t}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Et [GeV]", "N");
-      m_h_JEMEtSums_Ex = EnergySums_Booker.book1F("jem_1d_energy_SubSumsEx", "JEM E_{x}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Ex [GeV]", "N");
-      m_h_JEMEtSums_Ey = EnergySums_Booker.book1F("jem_1d_energy_SubSumsEy", "JEM E_{y}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Ey [GeV]", "N");
-      m_h_JEMEtSums_Et = EnergySums_Booker.book1F("jem_1d_energy_SubSumsEt", "JEM E_{t}^{JEM}  --  JEM DAQ", nbins, 0, dRange, "Et [GeV]", "N");
+      m_h_JEMEtSums_Ex = EnergySums_Booker.book1F("jem_1d_energy_SubSumsEx", "JEM E_{x}^{JEM}  --  JEM DAQ", nbins, 1, dRange, "Ex [GeV]", "N");
+      m_h_JEMEtSums_Ey = EnergySums_Booker.book1F("jem_1d_energy_SubSumsEy", "JEM E_{y}^{JEM}  --  JEM DAQ", nbins, 1, dRange, "Ey [GeV]", "N");
+      m_h_JEMEtSums_Et = EnergySums_Booker.book1F("jem_1d_energy_SubSumsEt", "JEM E_{t}^{JEM}  --  JEM DAQ", nbins, 1, dRange, "Et [GeV]", "N");
       m_h_JEMEtSums_Ex->SetBins(nbins, binedges);
       m_h_JEMEtSums_Ey->SetBins(nbins, binedges);
       m_h_JEMEtSums_Et->SetBins(nbins, binedges);
@@ -455,6 +459,8 @@ StatusCode JEMMon::fillHistograms()
   // Error vector for global overview
   std::vector<int> overview(2);
 
+  using LVL1::DataError;
+
   // =============================================================================================
   // ================= Container: JetElements ====================================================
   // =============================================================================================
@@ -487,18 +493,17 @@ StatusCode JEMMon::fillHistograms()
 	{ 
 	  m_h_je_emeta -> Fill( (*it_je)-> eta(), 1.);
 	  m_h_je_emphi->Fill( (*it_je)->phi() , 1.);
+          m_h_je_emenergy->Fill( (*it_je)->emEnergy() , 1.);
+          m_h_je_energy_emHitMap->Fill( (*it_je)->eta(),(*it_je)->phi() , (*it_je)->emEnergy());
 	}
       if ((*it_je)->hadEnergy()!=0) 
 	{ 
 	  m_h_je_hadeta -> Fill( (*it_je)-> eta(), 1.);
 	  m_h_je_hadphi->Fill( (*it_je)->phi() , 1.);
+          m_h_je_hadenergy->Fill( (*it_je)->hadEnergy() , 1.);
+          m_h_je_energy_hadHitMap->Fill( (*it_je)->eta(),(*it_je)->phi() ,(*it_je)->hadEnergy() ); 
 	}
       
-      m_h_je_emenergy->Fill( (*it_je)->emEnergy() , 1.);
-      m_h_je_hadenergy->Fill( (*it_je)->hadEnergy() , 1.);
-      
-      m_h_je_energy_emHitMap->Fill( (*it_je)->eta(),(*it_je)->phi() , (*it_je)->emEnergy());
-      m_h_je_energy_hadHitMap->Fill( (*it_je)->eta(),(*it_je)->phi() ,(*it_je)->hadEnergy() ); 
       
       // number of triggered slice
       //m_h_je_triggeredSlice->Fill((*it_je)->peak(),1);
@@ -519,57 +524,58 @@ StatusCode JEMMon::fillHistograms()
 	    }
 
 	  // ----------------- Error Histos -----------------------------------------
-	  LVL1::DataError err((*it_je)->emError());
-	  LVL1::DataError haderr((*it_je)->hadError());
+	  DataError err((*it_je)->emError());
+	  DataError haderr((*it_je)->hadError());
 	  LVL1::CoordToHardware ToHW;
 	  LVL1::Coordinate coord((*it_je)->phi(),(*it_je)->eta());
 
 	  int crate = ToHW.jepCrate(coord);
 	  int module=ToHW.jepModule(coord);
 
+	  const int ypos = crate*18 + module+1;
 	  // EM Parity
-	  m_h_je_error->Fill(1,(crate*18 + module+1),err.get(1));
+	  if (err.get(DataError::Parity)) {
+	    m_h_je_error->Fill(1,ypos);
+	    m_h_JEM_ErrorSummary->Fill(1);
+	    overview[crate] |= 1;
+	  }
 	  // HAD Parity
-	  m_h_je_error->Fill(2,(crate*18 + module+1),haderr.get(1));
+	  if (haderr.get(DataError::Parity)) {
+	    m_h_je_error->Fill(2,ypos);
+	    m_h_JEM_ErrorSummary->Fill(1);
+	    overview[crate] |= (1 << 1);
+	  }
 	  // PPM Link down: em.
-	  m_h_je_error->Fill(3,(crate*18 + module+1),err.get(2));
+	  if (err.get(DataError::LinkDown)) {
+	    m_h_je_error->Fill(3,ypos);
+	    m_h_JEM_ErrorSummary->Fill(1);
+	    overview[crate] |= (1 << 2);
+	  }
 	  // PPM Link down: had.
-	  m_h_je_error->Fill(4,(crate*18 + module+1),haderr.get(2));
+	  if (haderr.get(DataError::LinkDown)) {
+	    m_h_je_error->Fill(4,ypos);
+	    m_h_JEM_ErrorSummary->Fill(1);
+	    overview[crate] |= (1 << 3);
+	  }
 	  
-	  mLog << MSG::VERBOSE<<"link down bit (em) "<< err.get(2)<<endreq;
-	  mLog << MSG::VERBOSE<<"link down bit (had) "<< haderr.get(2)<<endreq;
-	  mLog << MSG::VERBOSE<<"Parity em "<< err.get(1)<<endreq;
-	  mLog << MSG::VERBOSE<<"Parity had "<< haderr.get(1)<<endreq;
+	  mLog << MSG::VERBOSE<<"link down bit (em) " << err.get(DataError::LinkDown)    <<endreq;
+	  mLog << MSG::VERBOSE<<"link down bit (had) "<< haderr.get(DataError::LinkDown) <<endreq;
+	  mLog << MSG::VERBOSE<<"Parity em "          << err.get(DataError::Parity)      <<endreq;
+	  mLog << MSG::VERBOSE<<"Parity had "         << haderr.get(DataError::Parity)   <<endreq;
 
-	  // GLinkParity
-	  m_h_je_error->Fill(5,(crate*18 + module+1),err.get(16));
-          // GLinkProtocol
-	  m_h_je_error->Fill(6,(crate*18 + module+1),err.get(17));
-	  // BCNMismatch
-	  m_h_je_error->Fill(7,(crate*18 + module+1),err.get(18));
-	  // FIFOOverflow
-	  m_h_je_error->Fill(8,(crate*18 + module+1),err.get(19));
-	  // Module Error
-	  m_h_je_error->Fill(9,(crate*18 + module+1),err.get(20));
-	  // GLinkDown
-	  m_h_je_error->Fill(10,(crate*18 + module+1),err.get(22));
-	  // GLinkTimeout
-	  m_h_je_error->Fill(11,(crate*18 + module+1),err.get(23));
-	  
-	  
-	  
-	  //Filling the Error Summary histogram
-	 //Jet element errors 
-	  m_h_JEM_ErrorSummary->Fill(1,err.get(1));
-	  m_h_JEM_ErrorSummary->Fill(1,haderr.get(1));
-	  m_h_JEM_ErrorSummary->Fill(1,err.get(2));
-	  m_h_JEM_ErrorSummary->Fill(1,haderr.get(2));
-	  overview[crate] |= err.get(1);
-	  overview[crate] |= (haderr.get(1) << 1);
-	  overview[crate] |= (err.get(2)    << 2);
-	  overview[crate] |= (haderr.get(2) << 3);
 	 //Errors from substatus word from ROD: JEM
-	  if (err.get(16)!=0 or err.get(17)!=0 or err.get(18)!=0 or err.get(19)!=0 or err.get(20)!=0 or err.get(22)!=0 or err.get(23)!=0 ) {
+	  if (err.get(DataError::GLinkParity))   m_h_je_error->Fill(5,ypos);
+	  if (err.get(DataError::GLinkProtocol)) m_h_je_error->Fill(6,ypos);
+	  if (err.get(DataError::BCNMismatch))   m_h_je_error->Fill(7,ypos);
+	  if (err.get(DataError::FIFOOverflow))  m_h_je_error->Fill(8,ypos);
+	  if (err.get(DataError::ModuleError))   m_h_je_error->Fill(9,ypos);
+	  if (err.get(DataError::GLinkDown))     m_h_je_error->Fill(10,ypos);
+	  if (err.get(DataError::GLinkTimeout))  m_h_je_error->Fill(11,ypos);
+	 
+	  if (err.get(DataError::GLinkParity) || err.get(DataError::GLinkProtocol) ||
+	      err.get(DataError::BCNMismatch) || err.get(DataError::FIFOOverflow)  ||
+	      err.get(DataError::ModuleError) || err.get(DataError::GLinkDown)     ||
+	      err.get(DataError::GLinkTimeout)) {
 	    m_h_JEM_ErrorSummary->Fill(2, 1);
 	    overview[crate] |= (1 << 4);
 	  }
@@ -723,9 +729,9 @@ StatusCode JEMMon::fillHistograms()
       ey=expand.Expand( (*it_JEMEtSums)-> Ey());
       et=expand.Expand( (*it_JEMEtSums)-> Et() );
 
-      m_h_JEMEtSums_Ex -> Fill(ex, 1.); 
-      m_h_JEMEtSums_Ey -> Fill(ey, 1.); 
-      m_h_JEMEtSums_Et -> Fill(et, 1.); 
+      if (ex != 0) m_h_JEMEtSums_Ex -> Fill(ex, 1.); 
+      if (ey != 0) m_h_JEMEtSums_Ey -> Fill(ey, 1.); 
+      if (et != 0) m_h_JEMEtSums_Et -> Fill(et, 1.); 
       mLog <<MSG::DEBUG<< " JEMEtSums Crate: "<<(*it_JEMEtSums)->crate()<<"  Module: "<<(*it_JEMEtSums)->module()
 	   <<"   Ex: "<<  ex
 	   <<"   Ey: "<<  ey 
@@ -811,15 +817,16 @@ StatusCode JEMMon::fillHistograms()
       
       if (m_DataType=="BS")
 	{
-	  LVL1::DataError err((*it_JEMRoIs)->error());
+	  DataError err((*it_JEMRoIs)->error());
 
 	  int crate=(*it_JEMRoIs)->crate();
 	  int module = (*it_JEMRoIs)->jem();
+	  int ypos = crate*18 +module +1;
 
 	  // Parity (Main Jets)
-	  if ((*it_JEMRoIs)->forward()==0) m_h_JEMRoI_error->Fill(1,(crate*18 +module +1 ),err.get(1));
+	  if ((*it_JEMRoIs)->forward()==0 && err.get(DataError::Parity)) m_h_JEMRoI_error->Fill(1,ypos);
 	  // Parity (Fwd Jets)
-	  if ((*it_JEMRoIs)->forward()==1) m_h_JEMRoI_error->Fill(2,(crate*18 +module +1 ),err.get(1));
+	  if ((*it_JEMRoIs)->forward()==1 && err.get(DataError::Parity)) m_h_JEMRoI_error->Fill(2,ypos);
 	  
 	 //exclude these now from error flags for real data
 	// Saturation (Main Jets)
@@ -829,16 +836,18 @@ StatusCode JEMMon::fillHistograms()
 	  
 	  //new bins for showing saturation in main and fwd regiom; moved them from error plot to Hit plot
          //Saturation (Main Jets)
-         if ((*it_JEMRoIs)->forward()==0) m_h_JEMDAQ_Hits_Map->Fill(13,(crate*18 +module +1 ),err.get(0));
+         if ((*it_JEMRoIs)->forward()==0 && err.get(DataError::Overflow)) m_h_JEMDAQ_Hits_Map->Fill(13,ypos);
          // Saturation (Fwd Jets)
-	 if ((*it_JEMRoIs)->forward()==1) m_h_JEMDAQ_Hits_Map->Fill(14,(crate*18 +module +1 ),err.get(0));
+	 if ((*it_JEMRoIs)->forward()==1 && err.get(DataError::Overflow)) m_h_JEMDAQ_Hits_Map->Fill(14,ypos);
 		 
 	
 	//Filling the Error Summary histogram
 	 //Jet errors 
-	  m_h_JEM_ErrorSummary->Fill(3,err.get(1));
-	  overview[crate] |= (err.get(1) << 5);
-	
+	  if (err.get(DataError::Parity)) {
+	    m_h_JEM_ErrorSummary->Fill(3);
+	    overview[crate] |= (1 << 5);
+	  }
+
 	}     	
  
 

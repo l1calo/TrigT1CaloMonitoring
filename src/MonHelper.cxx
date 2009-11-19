@@ -425,7 +425,7 @@ int Helper::Multiplicity(std::string BinaryHitMap,
 
 /*---------------------------------------------------------*/
 void Helper::FillHitsHisto(TH1F* Histo, std::string HitWord, int minThresh, int NoThresh, int ThreshOffset, 
-			    int BitsPerThresh, MsgStream::MsgStream* log)
+			    int BitsPerThresh, MsgStream::MsgStream* /*log*/)
 /*---------------------------------------------------------*/
 {
   int min=(minThresh+ThreshOffset);
@@ -435,8 +435,8 @@ void Helper::FillHitsHisto(TH1F* Histo, std::string HitWord, int minThresh, int 
     {
       int JetMult = Multiplicity(HitWord,i,BitsPerThresh);
 
-      *log<<MSG::VERBOSE<<"Thresh.No: "<<(i-ThreshOffset)<<" Multiplicity: "<< JetMult<<endreq;
-      Histo->Fill((i-ThreshOffset),JetMult);
+      //*log<<MSG::VERBOSE<<"Thresh.No: "<<(i-ThreshOffset)<<" Multiplicity: "<< JetMult<<endreq;
+      if (JetMult) Histo->Fill((i-ThreshOffset),JetMult);
     }
   return;
 }

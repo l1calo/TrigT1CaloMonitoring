@@ -770,7 +770,7 @@ StatusCode CPMSimBSMon::fillHistograms()
         }
       }
     }
-    m_h_CPneSIMSummary->Fill(err, error);
+    if (error) m_h_CPneSIMSummary->Fill(err);
   }
 
   // Save error vector for global summary

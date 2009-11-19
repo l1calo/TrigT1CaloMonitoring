@@ -49,13 +49,20 @@ class PPrMon: public ManagedMonitorToolBase
 
 private:
 
+  enum CaloPartitions { LArFCAL1C, LArEMECC, LArOverlapC, LArEMBC, LArEMBA, LArOverlapA, LArEMECA, LArFCAL1A,
+                        LArFCAL23C, LArHECC, TileEBC, TileLBC, TileLBA, TileEBA, LArHECA, LArFCAL23A, MaxPartitions };
+
   double recTime(const std::vector<int>& vFAdc);
   int FADCSum(const std::vector<int>& vFAdc) ;
+  int partition(int layer, double eta);
+  std::string partitionName(int part);
 
   std::string m_TriggerTowerContainerName;
   int m_TT_HitMap_Thresh0;
   int m_TT_HitMap_Thresh1;
   int m_TT_HitMap_Thresh2;
+  int m_TT_HitMap_ThreshMax;
+  int m_TT_HitMap_LumiBlocks;
   int m_TT_ADC_HitMap_Thresh;
   int m_SliceNo;
   bool m_TT_DistPerChannel;
@@ -66,6 +73,7 @@ private:
   bool m_TT_ADCTimingPerChannel;
   int m_HADFADCCut;
   int m_EMFADCCut;
+  bool m_onlineTest;
   
 
 
@@ -122,15 +130,11 @@ protected:
   TProfile2D* m_h_TT_ADC_emTiming_signal;
   TProfile2D* m_h_TT_ADC_hadTiming_signal;
   
+  std::vector<TProfile*> m_h_TT_SignalProfile;
 
   //LUT Hitmaps per threshold
-   TH2F* m_h_TT_HitMap_emLUT_Thresh0;
-   TH2F* m_h_TT_HitMap_emLUT_Thresh1;
-   TH2F* m_h_TT_HitMap_emLUT_Thresh2;
-
-   TH2F* m_h_TT_HitMap_hadLUT_Thresh0;
-   TH2F* m_h_TT_HitMap_hadLUT_Thresh1;
-   TH2F* m_h_TT_HitMap_hadLUT_Thresh2;
+  std::vector<TH2F*> m_h_TT_HitMap_emLUT_Thresh;
+  std::vector<TH2F*> m_h_TT_HitMap_hadLUT_Thresh;
 
    //distribution of LUT peak per detector region
    TH1F* m_h_TT_emLUT;
@@ -141,6 +145,9 @@ protected:
    TH1F* m_h_TT_hadLUT; 
    TH1F* m_h_TT_hadLUT_eta;
    TH1F* m_h_TT_hadLUT_phi;
+
+   TH1F* m_h_TT_BCLUT;
+   TH2F* m_h_TT_BCID;
    
 
    // error

@@ -932,7 +932,7 @@ StatusCode JEPSimBSMon::fillHistograms()
         }
       }
     }
-    m_h_JEPneSIMSummary->Fill(err, error);
+    if (error) m_h_JEPneSIMSummary->Fill(err);
   }
 
   // Save error vector for global summary
@@ -1159,44 +1159,32 @@ void JEPSimBSMon::compare(const JetElementMap& jeSimMap,
     const bool fcal = (eta < -3.2 || eta > 3.2);
     const double phi1 = ((fcal) ? phi - M_PI/64. : phi) * m_phiScale;
     const double phi2 = (phi + M_PI/64.) * m_phiScale;
+    TH2F* hist1 = 0;
+    TH2F* hist2 = 0;
     if (overlap) {
-      m_h_EMEleOvSIMeqDAT->Fill(eta, phi1, simEm && simEm == datEm);
-      m_h_EMEleOvSIMneDAT->Fill(eta, phi1, simEm && datEm && simEm != datEm);
-      m_h_EMEleOvSIMnoDAT->Fill(eta, phi1, simEm && !datEm);
-      m_h_EMEleOvDATnoSIM->Fill(eta, phi1, datEm && !simEm);
-      m_h_HadEleOvSIMeqDAT->Fill(eta, phi1, simHad && simHad == datHad);
-      m_h_HadEleOvSIMneDAT->Fill(eta, phi1, simHad && datHad && simHad != datHad);
-      m_h_HadEleOvSIMnoDAT->Fill(eta, phi1, simHad && !datHad);
-      m_h_HadEleOvDATnoSIM->Fill(eta, phi1, datHad && !simHad);
-      if (fcal) {
-        m_h_EMEleOvSIMeqDAT->Fill(eta, phi2, simEm && simEm == datEm);
-        m_h_EMEleOvSIMneDAT->Fill(eta, phi2, simEm && datEm && simEm != datEm);
-        m_h_EMEleOvSIMnoDAT->Fill(eta, phi2, simEm && !datEm);
-        m_h_EMEleOvDATnoSIM->Fill(eta, phi2, datEm && !simEm);
-        m_h_HadEleOvSIMeqDAT->Fill(eta, phi2, simHad && simHad == datHad);
-        m_h_HadEleOvSIMneDAT->Fill(eta, phi2, simHad && datHad && simHad != datHad);
-        m_h_HadEleOvSIMnoDAT->Fill(eta, phi2, simHad && !datHad);
-        m_h_HadEleOvDATnoSIM->Fill(eta, phi2, datHad && !simHad);
-      }
+      if (simEm && simEm == datEm)              hist1 = m_h_EMEleOvSIMeqDAT;
+      if (simEm && datEm && simEm != datEm)     hist1 = m_h_EMEleOvSIMneDAT;
+      if (simEm && !datEm)                      hist1 = m_h_EMEleOvSIMnoDAT;
+      if (datEm && !simEm)                      hist1 = m_h_EMEleOvDATnoSIM;
+      if (simHad && simHad == datHad)           hist2 = m_h_HadEleOvSIMeqDAT;
+      if (simHad && datHad && simHad != datHad) hist2 = m_h_HadEleOvSIMneDAT;
+      if (simHad && !datHad)                    hist2 = m_h_HadEleOvSIMnoDAT;
+      if (datHad && !simHad)                    hist2 = m_h_HadEleOvDATnoSIM;
     } else {
-      m_h_EMEleSIMeqDAT->Fill(eta, phi1, simEm && simEm == datEm);
-      m_h_EMEleSIMneDAT->Fill(eta, phi1, simEm && datEm && simEm != datEm);
-      m_h_EMEleSIMnoDAT->Fill(eta, phi1, simEm && !datEm);
-      m_h_EMEleDATnoSIM->Fill(eta, phi1, datEm && !simEm);
-      m_h_HadEleSIMeqDAT->Fill(eta, phi1, simHad && simHad == datHad);
-      m_h_HadEleSIMneDAT->Fill(eta, phi1, simHad && datHad && simHad != datHad);
-      m_h_HadEleSIMnoDAT->Fill(eta, phi1, simHad && !datHad);
-      m_h_HadEleDATnoSIM->Fill(eta, phi1, datHad && !simHad);
-      if (fcal) {
-        m_h_EMEleSIMeqDAT->Fill(eta, phi2, simEm && simEm == datEm);
-        m_h_EMEleSIMneDAT->Fill(eta, phi2, simEm && datEm && simEm != datEm);
-        m_h_EMEleSIMnoDAT->Fill(eta, phi2, simEm && !datEm);
-        m_h_EMEleDATnoSIM->Fill(eta, phi2, datEm && !simEm);
-        m_h_HadEleSIMeqDAT->Fill(eta, phi2, simHad && simHad == datHad);
-        m_h_HadEleSIMneDAT->Fill(eta, phi2, simHad && datHad && simHad != datHad);
-        m_h_HadEleSIMnoDAT->Fill(eta, phi2, simHad && !datHad);
-        m_h_HadEleDATnoSIM->Fill(eta, phi2, datHad && !simHad);
-      }
+      if (simEm && simEm == datEm)              hist1 = m_h_EMEleSIMeqDAT;
+      if (simEm && datEm && simEm != datEm)     hist1 = m_h_EMEleSIMneDAT;
+      if (simEm && !datEm)                      hist1 = m_h_EMEleSIMnoDAT;
+      if (datEm && !simEm)                      hist1 = m_h_EMEleDATnoSIM;
+      if (simHad && simHad == datHad)           hist2 = m_h_HadEleSIMeqDAT;
+      if (simHad && datHad && simHad != datHad) hist2 = m_h_HadEleSIMneDAT;
+      if (simHad && !datHad)                    hist2 = m_h_HadEleSIMnoDAT;
+      if (datHad && !simHad)                    hist2 = m_h_HadEleDATnoSIM;
+    }
+    if (hist1) hist1->Fill(eta, phi1);
+    if (hist2) hist2->Fill(eta, phi1);
+    if (fcal) {
+      if (hist1) hist1->Fill(eta, phi2);
+      if (hist2) hist2->Fill(eta, phi2);
     }
   }
 }
