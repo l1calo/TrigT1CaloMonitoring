@@ -657,6 +657,62 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	  m_h_BCNmis_Crate_47->GetYaxis()->SetBinLabel(17+(6-4)*18, "Crate 6");
 	  m_h_BCNmis_Crate_47->GetYaxis()->SetBinLabel(17+(7-4)*18, "Crate 7");
 
+      m_h_ErrorDetails.clear();
+      std::vector<std::string> errNames;
+      errNames.push_back("Channel0Disabled");
+      errNames.push_back("Channel1Disabled");
+      errNames.push_back("Channel2Disabled");
+      errNames.push_back("Channel3Disabled");
+      errNames.push_back("MCMAbsent");
+      errNames.push_back("");
+      errNames.push_back("Timeout");
+      errNames.push_back("ASICFull");
+      errNames.push_back("EventMismatch");
+      errNames.push_back("BunchMismatch");
+      errNames.push_back("FIFOCorrupt");
+      errNames.push_back("PinParity");
+      for (int error = 0; error < 12; error+=2) 
+        {
+          for (int crate = 0; crate < 8; crate+=2)
+            {
+	      buffer.str("");
+	      buffer<<crate;
+	      std::string name = "ppm_2d_"+errNames[error]+errNames[error+1]+"Crate"+buffer.str();
+	      std::string title = "ASIC Errors "+errNames[error]+" "+errNames[error+1]+" for Crates "+buffer.str();
+	      buffer.str("");
+	      buffer<<(crate+1);
+	      name += buffer.str();
+	      title += "-"+buffer.str();
+	      TH2F* hist = 0;
+	      if (error != 4) hist = ErrorDetail_Booker.book2F(name,title,32,0,32,32,0,32,"MCM","Crate/Module");
+	      else            hist = ErrorDetail_Booker.book2F(name,title,16,0,16,32,0,32,"MCM","Crate/Module");
+	      m_h_ErrorDetails.push_back(hist);
+	      for (int mcm = 0; mcm < 16; mcm+=2)
+	        {
+		  if (mcm == 0)
+		    {
+		      hist->GetXaxis()->SetBinLabel(1, errNames[error].c_str());
+		      if (error != 4) hist->GetXaxis()->SetBinLabel(17, errNames[error+1].c_str());
+                    }
+                  else
+		    {
+		      buffer.str("");
+		      buffer<<mcm;
+		      hist->GetXaxis()->SetBinLabel(1+mcm, buffer.str().c_str());
+		      if (error != 4) hist->GetXaxis()->SetBinLabel(17+mcm, buffer.str().c_str());
+                    }
+                }
+              for (int cr = 0; cr < 2; ++cr)
+	        {
+		  for (int module = 0; module < 16; module+=2)
+		    {
+		      buffer.str("");
+		      buffer<<(cr+crate)<<"/"<<module;
+		      hist->GetYaxis()->SetBinLabel(1+cr*16+module, buffer.str().c_str());
+                    }
+                }
+            }
+        }
 
 	  
       //---------------------------- number of triggered slice -----------------------------
@@ -1047,6 +1103,16 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 	  emerr.get(DataError::GLinkDown)    || emerr.get(DataError::GLinkTimeout)  ||
 	  emerr.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
 
+      // Detailed plots by MCM
+      int ypos = (crate%2)*16+module-5;
+      if (emerr.get(DataError::ChannelDisabled)) m_h_ErrorDetails[(channel/2)*4+crate/2]->Fill((channel%2)*16+submodule, ypos);
+      if (emerr.get(DataError::MCMAbsent))       m_h_ErrorDetails[8+crate/2]->Fill(submodule, ypos);
+      if (emerr.get(DataError::Timeout))         m_h_ErrorDetails[12+crate/2]->Fill(submodule, ypos);
+      if (emerr.get(DataError::ASICFull))        m_h_ErrorDetails[12+crate/2]->Fill(16+submodule, ypos);
+      if (emerr.get(DataError::EventMismatch))   m_h_ErrorDetails[16+crate/2]->Fill(submodule, ypos);
+      if (emerr.get(DataError::BunchMismatch))   m_h_ErrorDetails[16+crate/2]->Fill(16+submodule, ypos);
+      if (emerr.get(DataError::FIFOCorrupt))     m_h_ErrorDetails[20+crate/2]->Fill(submodule, ypos);
+      if (emerr.get(DataError::PinParity))       m_h_ErrorDetails[20+crate/2]->Fill(16+submodule, ypos);
     
      DataError haderr((*TriggerTowerIterator)-> hadError());
 
@@ -1079,7 +1145,7 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
     
 
       //---------------- per crate and module --------------------  m_h_TT_error_Crate_03
-      const int ypos = (module-4)+((crate-4)*18);
+      ypos = (module-4)+((crate-4)*18);
       if (haderr.get(DataError::ChannelDisabled)) m_h_fwPpmError_Crate_47->Fill(1,ypos);
       if (haderr.get(DataError::MCMAbsent))       m_h_fwPpmError_Crate_47->Fill(2,ypos);
       if (haderr.get(DataError::Timeout))         m_h_fwPpmError_Crate_47->Fill(3,ypos);
@@ -1108,6 +1174,17 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
           haderr.get(DataError::FIFOOverflow) || haderr.get(DataError::ModuleError)   ||
 	  haderr.get(DataError::GLinkDown)    || haderr.get(DataError::GLinkTimeout)  ||
 	  haderr.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
+
+      // Detailed plots by MCM
+      ypos = (crate%2)*16+module-5;
+      if (haderr.get(DataError::ChannelDisabled)) m_h_ErrorDetails[(channel/2)*4+crate/2]->Fill((channel%2)*16+submodule, ypos);
+      if (haderr.get(DataError::MCMAbsent))       m_h_ErrorDetails[8+crate/2]->Fill(submodule, ypos);
+      if (haderr.get(DataError::Timeout))         m_h_ErrorDetails[12+crate/2]->Fill(submodule, ypos);
+      if (haderr.get(DataError::ASICFull))        m_h_ErrorDetails[12+crate/2]->Fill(16+submodule, ypos);
+      if (haderr.get(DataError::EventMismatch))   m_h_ErrorDetails[16+crate/2]->Fill(submodule, ypos);
+      if (haderr.get(DataError::BunchMismatch))   m_h_ErrorDetails[16+crate/2]->Fill(16+submodule, ypos);
+      if (haderr.get(DataError::FIFOCorrupt))     m_h_ErrorDetails[20+crate/2]->Fill(submodule, ypos);
+      if (haderr.get(DataError::PinParity))       m_h_ErrorDetails[20+crate/2]->Fill(16+submodule, ypos);
       
      
       // number of triggered slice

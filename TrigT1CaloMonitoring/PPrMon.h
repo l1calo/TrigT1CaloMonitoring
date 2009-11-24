@@ -159,6 +159,7 @@ protected:
    TH2F* m_h_BCNmis_Crate_47; //expert: BCN mismatch
    TH2F* m_h_fwPpmError_Crate_03; //not implemented yet
    TH2F* m_h_fwPpmError_Crate_47; //      "  
+   std::vector<TH2F*> m_h_ErrorDetails; //ASIC errors by MCM
 
 
    // number of triggered slice
