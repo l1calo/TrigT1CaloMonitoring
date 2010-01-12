@@ -378,7 +378,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	      buffer.str("");
 	      etabuffer.str("");
 	      phibuffer.str("");
-	      buffer<<towerId;
+	      buffer << towerId;
 	      etabuffer<<m_l1CaloTTIdTools->IDeta(towerId);
 	      phibuffer<<m_l1CaloTTIdTools->IDphi(towerId);
 	      
@@ -387,7 +387,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 		  //name = "hadFADCTiming_" + buffer.str();
 		  name = "ppm_had_1d_tt_adc_Timing" + buffer.str();
 		  title = "TT had FADC Timing for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_HitMap_hadADCChannel_timing[towerId]= HadADCTiming_Booker.bookProfile(name, title,m_SliceNo,-0.5,m_SliceNo-0.5, "TimeSlice No", "had FADC counts");
+		  m_h_TT_HitMap_hadADCChannel_timing[towerId.get_identifier32().get_compact()] = 
+                      HadADCTiming_Booker.bookProfile(name, title,m_SliceNo,-0.5,m_SliceNo-0.5, 
+                                                      "TimeSlice No", "had FADC counts");
 		}
 
 	      if (m_lvl1Helper->sampling(towerId)==0) 
@@ -395,7 +397,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 		  //name = "emFADCTiming_" + buffer.str();
 		  name = "ppm_em_1d_tt_adc_Timing" + buffer.str();
 		  title = "TT em FADC Timing for #eta = " + etabuffer.str() + " | #phi = " + phibuffer.str();
-		  m_h_TT_HitMap_emADCChannel_timing[towerId]= EmADCTiming_Booker.bookProfile(name, title,m_SliceNo,-0.5,m_SliceNo-0.5, "TimeSlice No", "had FADC counts");
+		  m_h_TT_HitMap_emADCChannel_timing[towerId.get_identifier32().get_compact()] = 
+                      EmADCTiming_Booker.bookProfile(name, title,m_SliceNo,-0.5,m_SliceNo-0.5, 
+                                                     "TimeSlice No", "had FADC counts");
 		}
 	    }
 	}
@@ -955,7 +959,7 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 		{ 
 		  if (emFADCSum>m_EMFADCCut) 
 		    {
-		      m_h_TT_HitMap_emADCChannel_timing[EmTowerId]->Fill(i,(*TriggerTowerIterator)->emADC()[i]);
+		      m_h_TT_HitMap_emADCChannel_timing[EmTowerId.get_identifier32().get_compact()]->Fill(i,(*TriggerTowerIterator)->emADC()[i]);
 		    }
 		}
 	      
@@ -963,7 +967,7 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 		{
 		  if (hadFADCSum>m_HADFADCCut) 
 		    {
-		      m_h_TT_HitMap_hadADCChannel_timing[HadTowerId]->Fill(i,(*TriggerTowerIterator)->hadADC()[i]);
+		      m_h_TT_HitMap_hadADCChannel_timing[HadTowerId.get_identifier32().get_compact()]->Fill(i,(*TriggerTowerIterator)->hadADC()[i]);
 		    }
 		}
 	    }
