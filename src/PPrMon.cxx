@@ -364,11 +364,12 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	  //m_p_TT_HitMap_hadADC_00100->SetOption(colz);
 	  //m_h_dist_had_max=ADCTimeSlice_Booker.book1F("haddist_maximum"," had. Distribution of Average Maximum Timeslice",5,0.5,5.5,"time slice (1-5)");
 	  //m_h_dist_em_max=ADCTimeSlice_Booker.book1F("emdist_maximum"," em. Distribution of Average Maximum Timeslice",5,0.5,5.5,"time slice (1-5)");
-	  m_h_dist_had_max=ADCTimeSlice_Booker.book1F("ppm_had_1d_tt_adc_MaxTimeslice"," had. Distribution of Average Maximum Timeslice",m_SliceNo,0.5,m_SliceNo+0.5,"time slice (1-15)");
-	  m_h_dist_em_max=ADCTimeSlice_Booker.book1F("ppm_em_1d_tt_adc_MaxTimeslice"," em. Distribution of Average Maximum Timeslice",m_SliceNo,0.5,m_SliceNo+0.5,"time slice (1-15)");
+	  m_h_dist_had_max=ADCTimeSlice_Booker.book1F("ppm_had_1d_tt_adc_MaxTimeslice"," had. Distribution of Average Maximum Timeslice",m_SliceNo,-0.5,m_SliceNo-0.5,"time slice");
+	  m_h_dist_em_max=ADCTimeSlice_Booker.book1F("ppm_em_1d_tt_adc_MaxTimeslice"," em. Distribution of Average Maximum Timeslice",m_SliceNo,-0.5,m_SliceNo-0.5,"time slice");
 	  
   
       //---------------------------- Timing of FADC Signal -----------------------------
+     /* Comment out for now to avoid having to branch
      if (m_TT_ADCTimingPerChannel==1)
 	{
 	  for(;tower_it!=m_lvl1Helper->tower_end();++tower_it) 
@@ -403,6 +404,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 		}
 	    }
 	}
+     */
 
 
      //-----------------------------Average Maximum Timeslice-------------------------------------------------
@@ -426,23 +428,23 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
         }
 
       //---------------------------- LUT Hitmaps per threshold -----------------------------
-      m_h_TT_HitMap_emLUT_Thresh.clear();
-      m_h_TT_HitMap_hadLUT_Thresh.clear();
-      for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh)
-        {
-	  buffer.str("");
-	  buffer<<thresh;
-	  TH2F* hist = HitMaps_Booker.book2F("ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
-	  m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
-	  hist = HitMaps_Booker.book2F("ppm_had_2d_etaPhi_tt_lut_Threshold"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
-	  hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
-	  m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
-        }
 
-      // Ditto last N lumiblocks - online only
+      // Per run and last N lumiblocks - online only
       if (m_environment == AthenaMonManager::online || m_onlineTest)
         {
+          m_h_TT_HitMap_emLUT_Thresh.clear();
+          m_h_TT_HitMap_hadLUT_Thresh.clear();
+          for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh)
+            {
+	      buffer.str("");
+	      buffer<<thresh;
+	      TH2F* hist = HitMaps_Booker.book2F("ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	      hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
+	      m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
+	      hist = HitMaps_Booker.book2F("ppm_had_2d_etaPhi_tt_lut_Threshold"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
+	      hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
+	      m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
+            }
 	  for (int block = 0; block <= m_TT_HitMap_LumiBlocks; ++block)
 	    {
               buffer.str("");
@@ -469,15 +471,6 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 		  hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
 		  m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
 	        }
-            }
-        }
-      else  // Reserve per lumi hists for offline
-        {
-	  for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh)
-	    {
-	      TH2F* hist = 0;
-	      m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
-	      m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
             }
         }
       
@@ -722,8 +715,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
       //---------------------------- number of triggered slice -----------------------------
       //m_h_TT_triggeredSlice_em=ADCTimeSlice_Booker.book1F("TT_EMTriggeredSlice","Number of the EM Triggered Slice",7,-0.5,6.5,"#Slice");
       //m_h_TT_triggeredSlice_had=ADCTimeSlice_Booker.book1F("TT_HADTriggeredSlice","Number of the HAD Triggered Slice",7,-0.5,6.5,"#Slice");
-      m_h_TT_triggeredSlice_em=ADCTimeSlice_Booker.book1F("ppm_em_1d_tt_adc_TriggeredSlice","Number of the EM Triggered Slice",m_SliceNo,-0.5,m_SliceNo-0.5,"#Slice (0-14)");
-      m_h_TT_triggeredSlice_had=ADCTimeSlice_Booker.book1F("ppm_had_1d_tt_adc_TriggeredSlice","Number of the HAD Triggered Slice",m_SliceNo,-0.5,m_SliceNo-0.5,"#Slice (0-14)");
+      m_h_TT_triggeredSlice_em=ADCTimeSlice_Booker.book1F("ppm_em_1d_tt_adc_TriggeredSlice","Number of the EM Triggered Slice",m_SliceNo,-0.5,m_SliceNo-0.5,"#Slice");
+      m_h_TT_triggeredSlice_had=ADCTimeSlice_Booker.book1F("ppm_had_1d_tt_adc_TriggeredSlice","Number of the HAD Triggered Slice",m_SliceNo,-0.5,m_SliceNo-0.5,"#Slice");
       
    
       //----------------------------- number of events ----------------------------------
@@ -770,8 +763,11 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
         }
       else
         {
+	  // Offline - per lumiblock - merge will give per run
           Helper Help;
-          MonGroup TT_LumiHitMaps( this, m_PathInRootFile+"_LUT_EtaPhiMaps", expert, lumiBlock );
+          m_h_TT_HitMap_emLUT_Thresh.clear();
+          m_h_TT_HitMap_hadLUT_Thresh.clear();
+          MonGroup TT_LumiHitMaps( this, m_PathInRootFile+"/LUT/EtaPhiMaps", expert, lumiBlock );
           HistoBooker LumiHitMaps_Booker(&TT_LumiHitMaps, &log, "");
           std::stringstream buffer;
           for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh)
@@ -780,10 +776,10 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
 	      buffer<<thresh;
 	      TH2F* hist = LumiHitMaps_Booker.book2F("ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer.str(),"#eta - #phi Map of EM LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
 	      hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
-	      m_h_TT_HitMap_emLUT_Thresh[m_TT_HitMap_ThreshMax + thresh] = hist;
+	      m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
 	      hist = LumiHitMaps_Booker.book2F("ppm_had_2d_etaPhi_tt_lut_Threshold"+buffer.str(),"#eta - #phi Map of Had LUT > "+buffer.str(),100,-4.9,4.9, 64,0,2*M_PI,"#eta","#phi");
 	      hist->SetBins(66,Help.TTEtaBinning(),64,Help.TTPhiBinning());
-	      m_h_TT_HitMap_hadLUT_Thresh[m_TT_HitMap_ThreshMax + thresh] = hist;
+	      m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
             }
 	  
         }
@@ -878,7 +874,10 @@ StatusCode PPrMon::fillHistograms()
 	  if (EmEnergy > thresh)
 	    {
 	      m_h_TT_HitMap_emLUT_Thresh[thresh]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-	      m_h_TT_HitMap_emLUT_Thresh[thresh+m_TT_HitMap_ThreshMax]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+	      if (m_environment == AthenaMonManager::online || m_onlineTest)
+	        {
+	          m_h_TT_HitMap_emLUT_Thresh[thresh+m_TT_HitMap_ThreshMax]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+	        }
             }
         }
     
@@ -909,7 +908,10 @@ StatusCode PPrMon::fillHistograms()
 	  if (HadEnergy > thresh)
 	    {
 	      m_h_TT_HitMap_hadLUT_Thresh[thresh]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
-	      m_h_TT_HitMap_hadLUT_Thresh[thresh+m_TT_HitMap_ThreshMax]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+	      if (m_environment == AthenaMonManager::online || m_onlineTest)
+	        {
+	          m_h_TT_HitMap_hadLUT_Thresh[thresh+m_TT_HitMap_ThreshMax]->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),1);
+	        }
             }
         }
     
@@ -951,6 +953,7 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
       emFADCSum=FADCSum((*TriggerTowerIterator)->emADC());
       hadFADCSum=FADCSum((*TriggerTowerIterator)->hadADC());
 
+      /* Comment out for now to avoid having to branch
       if (m_TT_ADCTimingPerChannel==1)
 	{
 	  for (int i=0; i<m_SliceNo;i++)
@@ -972,20 +975,21 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 		}
 	    }
 	}
+      */
 
       if (emFADCSum>m_EMFADCCut)
 	{
-	  max = recTime((*TriggerTowerIterator)->emADC())+1;
+	  max = recTime((*TriggerTowerIterator)->emADC());
 	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
-	  m_h_TT_ADC_emTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max);
+	  m_h_TT_ADC_emTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max+1);
 	  m_h_dist_em_max->Fill(max);
 	}
 
       if (hadFADCSum>m_HADFADCCut)
 	{
-	  max = recTime((*TriggerTowerIterator)->hadADC())+1;
+	  max = recTime((*TriggerTowerIterator)->hadADC());
 	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
-	  m_h_TT_ADC_hadTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max);
+	  m_h_TT_ADC_hadTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max+1);
 	  m_h_dist_had_max->Fill(max);
         }
 
