@@ -1,3 +1,10 @@
+2009-01-20  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-06-11
+        * PPM: Avoid duplication of per run plots and merged per lumi plots,
+          change all 1D slice plots to 0-14 range (no 1-15).
+          For now, comment out code with 64-bit id fix to avoid having to branch.
+          It's not used by default anyway.
+
 2010-01-12  RD Schaffer  <R.D.Schaffer@cern.ch>
 
         * Tag as TrigT1CaloMonitoring-00-06-10
