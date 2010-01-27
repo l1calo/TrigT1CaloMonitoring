@@ -836,9 +836,9 @@ StatusCode JEMMon::fillHistograms()
 	  
 	  //new bins for showing saturation in main and fwd regiom; moved them from error plot to Hit plot
          //Saturation (Main Jets)
-         if ((*it_JEMRoIs)->forward()==0 && err.get(DataError::Overflow)) m_h_JEMDAQ_Hits_Map->Fill(13,ypos);
+         if ((*it_JEMRoIs)->forward()==0 && err.get(DataError::Overflow)) m_h_JEMDAQ_Hits_Map->Fill(12,ypos);
          // Saturation (Fwd Jets)
-	 if ((*it_JEMRoIs)->forward()==1 && err.get(DataError::Overflow)) m_h_JEMDAQ_Hits_Map->Fill(14,ypos);
+	 if ((*it_JEMRoIs)->forward()==1 && err.get(DataError::Overflow)) m_h_JEMDAQ_Hits_Map->Fill(13,ypos);
 		 
 	
 	//Filling the Error Summary histogram
