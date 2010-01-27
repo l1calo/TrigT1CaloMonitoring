@@ -1,3 +1,7 @@
+2009-01-27  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-06-12
+        * Fix bin error in JEMMon.cxx
+
 2009-01-20  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-11
         * PPM: Avoid duplication of per run plots and merged per lumi plots,
