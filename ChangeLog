@@ -1,3 +1,9 @@
+2009-02-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-06-13
+        * Mods for TrigT1CaloByteStream-00-08-02 and move some tools
+          to ESDtoAOD step on Tier0.  Global plot moved to separate
+          tool as needed in both steps.
+
 2009-01-27  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-12
         * Fix bin error in JEMMon.cxx

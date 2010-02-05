@@ -56,33 +56,6 @@ private:
 		    NumberOfStatusBins, NoPayload = LimitedRoI,
 		    ROBStatusError = NumberOfStatusBins, UnpackingError };
 
-  // Enums for global summary plot
-
-  // Hardware errors
-  enum PPMErrors { DataStatus, DataError, PPMSubStatus };
-  enum CPMErrors { CPMEMParity, CPMEMLink, CPMHadParity, CPMHadLink, CPMStatus,
-                   CPMRoIParity, CMMCPParity, CMMCPStatus };
-  enum JEMErrors { JEMEMParity, JEMHadParity, JEMEMLink, JEMHadLink, JEMStatus,
-                   JEMRoIParity };
-  enum CMMErrors { JEMCMMStatus, JEMCMMParity };
-  // Transmission/Comparison with simulation errors
-  enum CPMMismatch { EMTowerMismatch, HadTowerMismatch, CPMRoIMismatch,
-                     CPMHitsMismatch, CMMHitsMismatch, LocalSumMismatch,
-		     RemoteSumMismatch, TotalSumMismatch };
-  enum JEMMismatch { EMElementMismatch, HadElementMismatch, JEMRoIMismatch,
-                     JEMHitsMismatch, CMMJetHitsMismatch, LocalJetMismatch,
-		     RemoteJetMismatch, TotalJetMismatch, JetEtMismatch,
-		     JetEtRoIMismatch, JEMEtSumsMismatch, CMMEtSumsMismatch,
-		     LocalEnergyMismatch, RemoteEnergyMismatch,
-		     TotalEnergyMismatch, SumEtMismatch, MissingEtMismatch,
-		     EnergyRoIMismatch };
-
-  enum GlobalErrors { PPMDataStatus, PPMDataError, SubStatus, Parity, LinkDown,
-                      RoIParity, Transmission, Simulation, CMMSubStatus,
-		      GbCMMParity, CMMTransmission, CMMSimulation,
-		      RODStatus, RODMissing, ROBStatus, Unpacking,
-		      NumberOfGlobalErrors };
-
   typedef DataVector<LVL1::RODHeader> RodHeaderCollection;
   typedef std::vector<unsigned int>   ROBErrorCollection;
   typedef std::vector<int>            ErrorVector;
@@ -159,7 +132,6 @@ private:
   TH1F* m_h_ROD_summary;
   TH1F* m_h_ROB_summary;
   TH1F* m_h_Unp_summary;
-  TH2F* m_h_global;
 
 };
 

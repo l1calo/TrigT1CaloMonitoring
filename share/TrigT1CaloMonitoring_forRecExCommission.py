@@ -21,19 +21,20 @@ else:
     l1caloRawMon=True
     l1caloESDMon=True
 
+
+#================================= Monitoring configuration ======================
+from AthenaCommon.AlgSequence import AlgSequence
+topSequence = AlgSequence()
+topSequence += AthenaMonManager( "L1CaloMonManager" )
+L1CaloMan = topSequence.L1CaloMonManager
+
+## get a handle on the ToolSvc
+from AthenaCommon.AppMgr import ToolSvc
+
+if globalflags.InputFormat() == "bytestream":
+    include ("TrigT1CaloByteStream/ReadLVL1CaloBS_jobOptions.py")
+
 if l1caloRawMon:
-
-    #================================= Monitoring configuration ======================
-    from AthenaCommon.AlgSequence import AlgSequence
-    topSequence = AlgSequence()
-    topSequence += AthenaMonManager( "L1CaloMonManager" )
-    L1CaloMan = topSequence.L1CaloMonManager
-
-    ## get a handle on the ToolSvc
-    from AthenaCommon.AppMgr import ToolSvc
-
-    if globalflags.InputFormat() == "bytestream":
-        include ("TrigT1CaloByteStream/ReadLVL1CaloBS_jobOptions.py")
 
     #=================================================================================
     #================================= PPr ===========================================
@@ -68,6 +69,8 @@ if l1caloRawMon:
     L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
 
     #---------------------------- Performance Checks -----------------------------------
+
+if l1caloESDMon:
 
     #=================================================================================
     #=================================== JEP =========================================
@@ -139,7 +142,7 @@ if l1caloRawMon and globalflags.DataSource() == "data":
     L1JEPEtSumsTools.LVL1ConfigSvc="TrigConf::TrigConfigSvc/TrigConfigSvc"
     ToolSvc += L1JEPEtSumsTools
 
-if l1caloRawMon:
+if l1caloESDMon:
 
     #=================================================================================
     #===================================== CP ========================================
@@ -167,9 +170,6 @@ if l1caloRawMon and globalflags.DataSource() == "data":
                               CompareWithSimulation = CompareWithSimulation)
     ToolSvc += CPMSimBSMonTool
     L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
-    #ToolSvc.CPMSimBSMonTool.IgnoreTowersEM  = [ 1890,              #LUT readout
-    #              4082, 4083, 4146, 4147, 4210, 4211, 4274, 4275 ] #LVDS channel
-    #ToolSvc.CPMSimBSMonTool.IgnoreTowersHad = [ 3473, 3643, 4824 ] #LUT readout
     #ToolSvc.CPMSimBSMonTool.OutputLevel = DEBUG
 
     from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1EmTauTools
@@ -188,11 +188,22 @@ if l1caloRawMon and globalflags.DataSource() == "data":
     ToolSvc += L1BSRODMonTool
     L1CaloMan.AthenaMonTools += [ L1BSRODMonTool ]
 
-if l1caloRawMon:
+if globalflags.DataSource() == "data":
 
     #=================================================================================
-    # FileKey must match that given to THistSvc
-    L1CaloMan.FileKey             = DQMonFlags.monManFileKey()
-    L1CaloMan.Environment         = DQMonFlags.monManEnvironment()
-    L1CaloMan.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
-    L1CaloMan.DataType            = DQMonFlags.monManDataType()
+    #=============================== Global Overview =================================
+    #=================================================================================
+    from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import TrigT1CaloGlobalMonTool
+    if l1caloRawMon:
+        L1GlobalMonTool = TrigT1CaloGlobalMonTool ( name = "L1GlobalMonTool" )
+    else:
+        L1GlobalMonTool = TrigT1CaloGlobalMonTool ( name = "L1GlobalESDMonTool" )
+    ToolSvc += L1GlobalMonTool
+    L1CaloMan.AthenaMonTools += [ L1GlobalMonTool ]
+
+#=================================================================================
+# FileKey must match that given to THistSvc
+L1CaloMan.FileKey             = DQMonFlags.monManFileKey()
+L1CaloMan.Environment         = DQMonFlags.monManEnvironment()
+L1CaloMan.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+L1CaloMan.DataType            = DQMonFlags.monManDataType()

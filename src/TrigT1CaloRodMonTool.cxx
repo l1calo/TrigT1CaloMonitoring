@@ -251,14 +251,15 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_monGroup = &monUnpack;
 
+  const unsigned int numUnpErr = 19;
   m_h_ROD_PP_unp = book2F("rod_2d_PpUnpack",
                           "PP Bytestream Unpacking Errors;;Crate/S-Link",
-                           18, 1, 19, 32, 0, 32);
+                           numUnpErr, 1, numUnpErr+1, 32, 0, 32);
   setLabelsUnpacking(m_h_ROD_PP_unp);
   setLabelsCSL(m_h_ROD_PP_unp, false, 1, 32, 2, 2);
   m_h_ROD_CPJEP_unp = book2F("rod_2d_CpJepUnpack",
                        "CP and JEP Bytestream Unpacking Errors;;Crate/S-Link",
-                        18, 1, 19, 16, 0, 16);
+                        numUnpErr, 1, numUnpErr+1, 16, 0, 16);
   setLabelsUnpacking(m_h_ROD_CPJEP_unp);
   setLabelsCSL(m_h_ROD_CPJEP_unp, false, 1, 8, 1, 2);
   m_h_ROD_CPJEP_unp->GetYaxis()->SetBinLabel(1, "CP 0/0");
@@ -266,7 +267,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_ROD_CPJEP_unp->GetYaxis()->SetBinLabel(9, "JEP 0/0");
   m_h_ROD_RoI_unp = book2F("rod_2d_CpJepRoiUnpack",
                    "CP and JEP RoI Bytestream Unpacking Errors;;Crate/S-Link",
-                    18, 1, 19, 12, 0, 12);
+                    numUnpErr, 1, numUnpErr+1, 12, 0, 12);
   setLabelsUnpacking(m_h_ROD_RoI_unp);
   setLabelsCSL(m_h_ROD_RoI_unp, false, 1, 8, 1, 2);
   m_h_ROD_RoI_unp->GetYaxis()->SetBinLabel(1, "CP 0/0");
@@ -290,45 +291,8 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_ROB_summary->GetXaxis()->SetBinLabel(7, "Specific");
   m_h_Unp_summary = book1F("rod_1d_UnpackErrorSummary",
                            "Bytestream Unpacking Error Summary;;Events",
-                           18, 1, 19);
+                           numUnpErr, 1, numUnpErr+1);
   setLabelsUnpacking(m_h_Unp_summary);
-
-  // Global Error Overview
-
-  m_monGroup = &monGlobal;
-
-  m_h_global = book2F("l1calo_2d_GlobalOverview",
-                      "L1Calo Global Error Overview;;Crate",
-	              NumberOfGlobalErrors, 0, NumberOfGlobalErrors,
-		      15, 0, 15);
-  m_h_global->GetXaxis()->SetBinLabel(1+PPMDataStatus,   "PPMDataStatus");
-  m_h_global->GetXaxis()->SetBinLabel(1+PPMDataError,    "PPMDataError");
-  m_h_global->GetXaxis()->SetBinLabel(1+SubStatus,       "SubStatus");
-  m_h_global->GetXaxis()->SetBinLabel(1+Parity,          "Parity");
-  m_h_global->GetXaxis()->SetBinLabel(1+LinkDown,        "LinkDown");
-  m_h_global->GetXaxis()->SetBinLabel(1+RoIParity,       "RoIParity");
-  m_h_global->GetXaxis()->SetBinLabel(1+Transmission,    "Transmission");
-  m_h_global->GetXaxis()->SetBinLabel(1+Simulation,      "Simulation");
-  m_h_global->GetXaxis()->SetBinLabel(1+CMMSubStatus,    "CMMSubStatus");
-  m_h_global->GetXaxis()->SetBinLabel(1+GbCMMParity,     "CMMParity");
-  m_h_global->GetXaxis()->SetBinLabel(1+CMMTransmission, "CMMTransmission");
-  m_h_global->GetXaxis()->SetBinLabel(1+CMMSimulation,   "CMMSimulation");
-  m_h_global->GetXaxis()->SetBinLabel(1+RODStatus,       "RODStatus");
-  m_h_global->GetXaxis()->SetBinLabel(1+RODMissing,      "RODMissing");
-  m_h_global->GetXaxis()->SetBinLabel(1+ROBStatus,       "ROBStatus");
-  m_h_global->GetXaxis()->SetBinLabel(1+Unpacking,       "Unpacking");
-
-  for (int crate = 0; crate < 14; ++crate) {
-    int cr = crate;
-    if (cr >= 12) cr -= 12;
-    if (cr >= 8)  cr -= 8;
-    std::ostringstream cnum;
-    cnum << cr;
-    m_h_global->GetYaxis()->SetBinLabel(crate+1, cnum.str().c_str());
-  }
-  m_h_global->GetYaxis()->SetBinLabel(1, "PP 0");
-  m_h_global->GetYaxis()->SetBinLabel(9, "CP 0");
-  m_h_global->GetYaxis()->SetBinLabel(13, "JEP 0");
 
   } // end if (isNewRun ...
 
@@ -349,9 +313,10 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   StatusCode sc;
   
   // Error summary vectors
+  const unsigned int numUnpErr = 19;
   std::vector<int> errors(NumberOfStatusBins);
   std::vector<int> errorsROB(7);
-  std::vector<int> errorsUnpack(19);
+  std::vector<int> errorsUnpack(numUnpErr+1);
   std::vector<int> crateErr(14);
 
   // Skip corrupt events in main plots
@@ -636,7 +601,7 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
 	  crateErr[crate] |= (1 << ROBStatusError);
 	  numRobErr--;
         } else {
-	  if (err > 17) err = 18;
+	  if (err > numUnpErr) err = numUnpErr;
 	  hist3->Fill(err, val);
 	  errorsUnpack[err] = 1;
 	  crateErr[crate] |= (1 << UnpackingError);
@@ -653,165 +618,18 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   for (int i = 0; i < 7; ++i) {
     if (errorsROB[i]) m_h_ROB_summary->Fill(i);
   }
-  for (int i = 1; i < 19; ++i) {
+  for (unsigned int i = 1; i <= numUnpErr; ++i) {
     if (errorsUnpack[i]) m_h_Unp_summary->Fill(i);
   }
 
-  // Update Global overview plot
+  // Save error vector for global summary
 
-  const int ppmCrates = 8;
-  const int cpmCrates = 4;
-  const int jemCrates = 2;
-
-  // PPM Error data
-  const ErrorVector* errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloPPMErrorVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloPPMErrorVector"); 
-  } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
-    m_log << MSG::DEBUG << "No PPM error vector of expected size" << endreq;
-  } else {
-    for (int crate = 0; crate < ppmCrates; ++crate) {
-      int err = (*errTES)[crate];
-      if (err == 0) continue;
-      if ((err >> DataStatus) & 0x1)   m_h_global->Fill(PPMDataStatus, crate);
-      if ((err >> DataError) & 0x1)    m_h_global->Fill(PPMDataError,  crate);
-      if ((err >> PPMSubStatus) & 0x1) m_h_global->Fill(SubStatus,     crate);
-    }
+  std::vector<int>* save = new std::vector<int>(crateErr);
+  sc = m_storeGate->record(save, "L1CaloRODErrorVector");
+  if (sc != StatusCode::SUCCESS) {
+    m_log << MSG::ERROR << "Error recording ROD error vector in TES " << endreq;
+    return sc;
   }
-
-  // CPM Error data
-  errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloCPMErrorVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloCPMErrorVector"); 
-  } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(cpmCrates)) {
-    m_log << MSG::DEBUG << "No CPM error vector of expected size" << endreq;
-  } else {
-    for (int crate = 0; crate < cpmCrates; ++crate) {
-      int err = (*errTES)[crate];
-      if (err == 0) continue;
-      const int cr = crate + ppmCrates;
-      if ((err >> CPMStatus) & 0x1) m_h_global->Fill(SubStatus, cr);
-      if (((err >> CPMEMParity) & 0x1) || ((err >> CPMHadParity) & 0x1))
-                                             m_h_global->Fill(Parity, cr);
-      if (((err >> CPMEMLink) & 0x1) || ((err >> CPMHadLink) & 0x1))
-                                             m_h_global->Fill(LinkDown, cr);
-      if ((err >> CPMRoIParity) & 0x1) m_h_global->Fill(RoIParity, cr);
-      if ((err >> CMMCPStatus) & 0x1)  m_h_global->Fill(CMMSubStatus, cr);
-      if ((err >> CMMCPParity) & 0x1)  m_h_global->Fill(GbCMMParity, cr);
-    }
-  }
-
-  // JEM Error data
-  errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloJEMErrorVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloJEMErrorVector"); 
-  } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
-    m_log << MSG::DEBUG << "No JEM error vector of expected size" << endreq;
-  } else {
-    for (int crate = 0; crate < jemCrates; ++crate) {
-      int err = (*errTES)[crate];
-      if (err == 0) continue;
-      const int cr = crate + ppmCrates + cpmCrates;
-      if ((err >> JEMStatus) & 0x1) m_h_global->Fill(SubStatus, cr);
-      if (((err >> JEMEMParity) & 0x1) || ((err >> JEMHadParity) & 0x1))
-                                             m_h_global->Fill(Parity, cr);
-      if (((err >> JEMEMLink) & 0x1) || ((err >> JEMHadLink) & 0x1))
-                                             m_h_global->Fill(LinkDown, cr);
-      if ((err >> JEMRoIParity) & 0x1) m_h_global->Fill(RoIParity, cr);
-    }
-  }
-
-  // JEM CMM Error data
-  errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloJEMCMMErrorVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloJEMCMMErrorVector"); 
-  } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
-    m_log << MSG::DEBUG << "No JEM CMM error vector of expected size" << endreq;
-  } else {
-    for (int crate = 0; crate < jemCrates; ++crate) {
-      int err = (*errTES)[crate];
-      if (err == 0) continue;
-      const int cr = crate + ppmCrates + cpmCrates;
-      if ((err >> JEMCMMStatus) & 0x1) m_h_global->Fill(CMMSubStatus, cr);
-      if ((err >> JEMCMMParity) & 0x1) m_h_global->Fill(GbCMMParity, cr);
-    }
-  }
-
-  // CPM Mismatch data
-  errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloCPMMismatchVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloCPMMismatchVector"); 
-  } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(cpmCrates)) {
-    m_log << MSG::DEBUG << "No CPM mismatch vector of expected size" << endreq;
-  } else {
-    for (int crate = 0; crate < cpmCrates; ++crate) {
-      int err = (*errTES)[crate];
-      if (err == 0) continue;
-      const int cr = crate + ppmCrates;
-      if (((err >> EMTowerMismatch) & 0x1) || ((err >> HadTowerMismatch) & 0x1))
-                                        m_h_global->Fill(Transmission, cr);
-      if (((err >> CPMRoIMismatch) & 0x1) || ((err >> CPMHitsMismatch) & 0x1))
-                                        m_h_global->Fill(Simulation, cr);
-      if (((err >> CMMHitsMismatch) & 0x1) || ((err >> RemoteSumMismatch) & 0x1))
-                                        m_h_global->Fill(CMMTransmission, cr);
-      if (((err >> LocalSumMismatch) & 0x1) || ((err >> TotalSumMismatch) & 0x1))
-                                        m_h_global->Fill(CMMSimulation, cr);
-    }
-  }
-
-  // JEM Mismatch data
-  errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloJEMMismatchVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloJEMMismatchVector"); 
-  } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
-    m_log << MSG::DEBUG << "No JEM mismatch vector of expected size" << endreq;
-  } else {
-    for (int crate = 0; crate < jemCrates; ++crate) {
-      int err = (*errTES)[crate];
-      if (err == 0) continue;
-      const int cr = crate + ppmCrates + cpmCrates;
-      if (((err >> EMElementMismatch) & 0x1)  ||
-          ((err >> HadElementMismatch) & 0x1) ||
-          ((err >> JEMRoIMismatch) & 0x1)     ||
-          ((err >> JEMHitsMismatch) & 0x1)    ||
-          ((err >> JEMEtSumsMismatch) & 0x1)) m_h_global->Fill(Simulation, cr);
-      if (((err >> CMMJetHitsMismatch) & 0x1)   ||
-          ((err >> RemoteJetMismatch) & 0x1)    ||
-	  ((err >> JetEtRoIMismatch) & 0x1)     ||
-	  ((err >> CMMEtSumsMismatch) & 0x1)    ||
-	  ((err >> RemoteEnergyMismatch) & 0x1) ||
-	  ((err >> EnergyRoIMismatch) & 0x1))
-	                              m_h_global->Fill(CMMTransmission, cr);
-      if (((err >> LocalJetMismatch) & 0x1)    ||
-          ((err >> TotalJetMismatch) & 0x1)    ||
-	  ((err >> JetEtMismatch) & 0x1)       ||
-          ((err >> LocalEnergyMismatch) & 0x1) ||
-          ((err >> TotalEnergyMismatch) & 0x1) ||
-	  ((err >> SumEtMismatch) & 0x1)       ||
-	  ((err >> MissingEtMismatch) & 0x1))
-	                                m_h_global->Fill(CMMSimulation, cr);
-    }
-  }
-
-  // ROD Error data
-
-  for (int crate = 0; crate < ppmCrates+cpmCrates+jemCrates; ++crate) {
-    int err = crateErr[crate];
-    if (err == 0) continue;
-    //if (err & 0x7f) m_h_global->Fill(RODStatus, crate);
-    if (err & 0x3f) m_h_global->Fill(RODStatus, crate);
-    if (((err >> NoFragment) & 0x1) || ((err >> NoPayload) & 0x1))
-                    m_h_global->Fill(RODMissing, crate);
-    if ((err >> ROBStatusError) & 0x1) m_h_global->Fill(ROBStatus, crate);
-    if ((err >> UnpackingError) & 0x1) m_h_global->Fill(Unpacking, crate);
-  }
-
 
   m_log << MSG::DEBUG << "Leaving fillHistograms" << endreq;
 
@@ -929,22 +747,23 @@ void TrigT1CaloRodMonTool::setLabelsROBStatusSpec(TH1* hist)
 
 void TrigT1CaloRodMonTool::setLabelsUnpacking(TH1* hist)
 {
-  hist->GetXaxis()->SetBinLabel(1,  "MissingHeader");
-  hist->GetXaxis()->SetBinLabel(2,  "VersionFormat");
-  hist->GetXaxis()->SetBinLabel(3,  "Channels");
-  hist->GetXaxis()->SetBinLabel(4,  "MissingData");
-  hist->GetXaxis()->SetBinLabel(5,  "CrateNumber");
-  hist->GetXaxis()->SetBinLabel(6,  "ModuleNumber");
-  hist->GetXaxis()->SetBinLabel(7,  "SliceNumber");
-  hist->GetXaxis()->SetBinLabel(8,  "RoIWord");
-  hist->GetXaxis()->SetBinLabel(9,  "RODnstatus");
-  hist->GetXaxis()->SetBinLabel(10, "DuplicateROB");
-  hist->GetXaxis()->SetBinLabel(11, "Version");
-  hist->GetXaxis()->SetBinLabel(12, "Format");
-  hist->GetXaxis()->SetBinLabel(13, "ComprVersion");
-  hist->GetXaxis()->SetBinLabel(14, "ComprSlices");
-  hist->GetXaxis()->SetBinLabel(15, "DataTruncated");
-  hist->GetXaxis()->SetBinLabel(16, "SourceID");
-  hist->GetXaxis()->SetBinLabel(17, "WordID");
-  hist->GetXaxis()->SetBinLabel(18, "Unknown");
+  hist->GetXaxis()->SetBinLabel(1,  "DuplicateROB");
+  hist->GetXaxis()->SetBinLabel(2,  "RODSourceID");
+  hist->GetXaxis()->SetBinLabel(3,  "RODnstatus");
+  hist->GetXaxis()->SetBinLabel(4,  "UserHeader");
+  hist->GetXaxis()->SetBinLabel(5,  "MissingHeader");
+  hist->GetXaxis()->SetBinLabel(6,  "MissingSubBlock");
+  hist->GetXaxis()->SetBinLabel(7,  "CrateNumber");
+  hist->GetXaxis()->SetBinLabel(8,  "ModuleNumber");
+  hist->GetXaxis()->SetBinLabel(9,  "Slices");
+  hist->GetXaxis()->SetBinLabel(10, "DuplicateData");
+  hist->GetXaxis()->SetBinLabel(11, "RoIType");
+  hist->GetXaxis()->SetBinLabel(12, "Version");
+  hist->GetXaxis()->SetBinLabel(13, "Format");
+  hist->GetXaxis()->SetBinLabel(14, "ComprVersion");
+  hist->GetXaxis()->SetBinLabel(15, "ComprSlices");
+  hist->GetXaxis()->SetBinLabel(16, "DataTruncated");
+  hist->GetXaxis()->SetBinLabel(17, "ExcessData");
+  hist->GetXaxis()->SetBinLabel(18, "DataSourceID");
+  hist->GetXaxis()->SetBinLabel(19, "Unknown");
 }
