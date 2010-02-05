@@ -34,7 +34,7 @@ from AthenaCommon.AppMgr import ToolSvc
 if globalflags.InputFormat() == "bytestream":
     include ("TrigT1CaloByteStream/ReadLVL1CaloBS_jobOptions.py")
 
-if l1caloRawMon:
+if l1caloESDMon:
 
     #=================================================================================
     #================================= PPr ===========================================
@@ -70,7 +70,6 @@ if l1caloRawMon:
 
     #---------------------------- Performance Checks -----------------------------------
 
-if l1caloESDMon:
 
     #=================================================================================
     #=================================== JEP =========================================

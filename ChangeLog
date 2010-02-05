@@ -1,4 +1,8 @@
 2009-02-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-06-14
+        * Move PPrMon to ESDtoAOD step.
+
+2009-02-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-13
         * Mods for TrigT1CaloByteStream-00-08-02 and move some tools
           to ESDtoAOD step on Tier0.  Global plot moved to separate
