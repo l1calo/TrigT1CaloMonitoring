@@ -54,6 +54,7 @@ private:
                    Timeout, BCNMismatch, TriggerType, NoPayload, NoFragment,
 	           ROBStatusError, UnpackingError };
   // Transmission/Comparison with simulation errors
+  enum PPMMismatch { LUTMismatch };
   enum CPMMismatch { EMTowerMismatch, HadTowerMismatch, CPMRoIMismatch,
                      CPMHitsMismatch, CMMHitsMismatch, LocalSumMismatch,
 		     RemoteSumMismatch, TotalSumMismatch };

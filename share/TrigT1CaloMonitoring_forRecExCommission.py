@@ -68,8 +68,25 @@ if l1caloESDMon:
     ToolSvc += L1PPrMonTool
     L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
 
+if l1caloRawMon:
+
+    #--------------------------------- PPM Spare Channels----------------------------
+    from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrSpareMon
+    L1PPrSpareMonTool = PPrSpareMon(
+        name = "L1PPrSpareMonTool",
+        BS_TriggerTowerContainer = "TriggerTowersSpare",
+        ADCHitMap_Thresh = 40,
+        PathInRootFile = "L1Calo/PPM/SpareChannels",
+        ErrorPathInRootFile = "L1Calo/PPM/SpareChannels/Errors",
+        #OutputLevel = VERBOSE,
+        #OutputLevel = INFO,
+        )
+    ToolSvc += L1PPrSpareMonTool
+    L1CaloMan.AthenaMonTools += [ L1PPrSpareMonTool ]
+
     #---------------------------- Performance Checks -----------------------------------
 
+if l1caloESDMon:
 
     #=================================================================================
     #=================================== JEP =========================================

@@ -1,3 +1,7 @@
+2009-02-23  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-06-15
+        * Add monitoring of spare PPM channels.
+
 2009-02-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-14
         * Move PPrMon to ESDtoAOD step.

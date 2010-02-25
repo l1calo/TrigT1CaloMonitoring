@@ -161,6 +161,23 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     }
   }
 
+  // Spare PPM Channels Error data
+  errTES = 0;
+  if (m_storeGate->contains<ErrorVector>("L1CaloPPMSpareErrorVector")) {
+    sc = m_storeGate->retrieve(errTES, "L1CaloPPMSpareErrorVector"); 
+  } else sc = StatusCode::FAILURE;
+  if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
+    m_log << MSG::DEBUG << "No PPMSpare error vector of expected size" << endreq;
+  } else {
+    for (int crate = 0; crate < ppmCrates; ++crate) {
+      int err = (*errTES)[crate];
+      if (err == 0) continue;
+      if ((err >> DataStatus) & 0x1)   m_h_global->Fill(PPMDataStatus, crate);
+      if ((err >> DataError) & 0x1)    m_h_global->Fill(PPMDataError,  crate);
+      if ((err >> PPMSubStatus) & 0x1) m_h_global->Fill(SubStatus,     crate);
+    }
+  }
+
   // CPM and CPM CMM Error data
   errTES = 0; 
   if (m_storeGate->contains<ErrorVector>("L1CaloCPMErrorVector")) {
@@ -239,6 +256,21 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
                       m_h_global->Fill(RODMissing, crate);
       if ((err >> ROBStatusError) & 0x1) m_h_global->Fill(ROBStatus, crate);
       if ((err >> UnpackingError) & 0x1) m_h_global->Fill(Unpacking, crate);
+    }
+  }
+
+  // PPM Mismatch data
+  errTES = 0; 
+  if (m_storeGate->contains<ErrorVector>("L1CaloPPMMismatchVector")) {
+    sc = m_storeGate->retrieve(errTES, "L1CaloPPMMismatchVector"); 
+  } else sc = StatusCode::FAILURE;
+  if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
+    m_log << MSG::DEBUG << "No PPM mismatch vector of expected size" << endreq;
+  } else {
+    for (int crate = 0; crate < ppmCrates; ++crate) {
+      int err = (*errTES)[crate];
+      if (err == 0) continue;
+      if (((err >> LUTMismatch) & 0x1)) m_h_global->Fill(Simulation, crate);
     }
   }
 
