@@ -8,8 +8,7 @@
 #include "TrigT1CaloMonitoring/PPrSpareMon.h"
 #include "TrigT1CaloMonitoring/JEMMon.h"
 #include "TrigT1CaloMonitoring/CMMMon.h"
-#include "TrigT1CaloMonitoring/PPrPerfMon.h"
-
+#include "TrigT1CaloMonitoring/PPMSimBSMon.h"
 
 #include "GaudiKernel/DeclareFactoryEntries.h"
 
@@ -23,7 +22,7 @@ DECLARE_TOOL_FACTORY(PPrMon)
 DECLARE_TOOL_FACTORY(PPrSpareMon)
 DECLARE_TOOL_FACTORY(JEMMon)
 DECLARE_TOOL_FACTORY(CMMMon)
-DECLARE_TOOL_FACTORY(PPrPerfMon)
+DECLARE_TOOL_FACTORY(PPMSimBSMon)
 
 DECLARE_FACTORY_ENTRIES(TrigT1CaloMonitoring) {
   DECLARE_ALGTOOL(TrigT1CaloCpmMonTool );
@@ -36,7 +35,6 @@ DECLARE_FACTORY_ENTRIES(TrigT1CaloMonitoring) {
   DECLARE_ALGTOOL(PPrSpareMon);
   DECLARE_ALGTOOL(JEMMon);
   DECLARE_ALGTOOL(CMMMon);
-  DECLARE_ALGTOOL(PPrPerfMon);
-
+  DECLARE_ALGTOOL(PPMSimBSMon);
 }
 

@@ -68,6 +68,18 @@ if l1caloESDMon:
     ToolSvc += L1PPrMonTool
     L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
 
+    include("TrigT1CaloCalibConditions/L1CaloCalibConditions_jobOptions.py")
+    
+    from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPMSimBSMon
+    PPMSimBSMonTool = PPMSimBSMon("PPMSimBSMonTool")
+    ToolSvc += PPMSimBSMonTool
+    L1CaloMan.AthenaMonTools += [ PPMSimBSMonTool ]
+    #ToolSvc.PPMSimBSMonTool.OutputLevel = DEBUG
+    from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1TriggerTowerTool
+    L1TriggerTowerTool = LVL1__L1TriggerTowerTool("L1TriggerTowerTool")
+    ToolSvc += L1TriggerTowerTool
+    #ToolSvc.L1TriggerTowerTool.OutputLevel = DEBUG
+    
 if l1caloRawMon:
 
     #--------------------------------- PPM Spare Channels----------------------------

@@ -1,3 +1,8 @@
+2010-03-07  Sky French <sfrench@hep.phy.cam.ac.uk>
+	* Tag as TrigT1CaloMonitoring-00-06-16
+	* Add comparison of simulated LUT with data (PPMSimBSMon)
+	* Removed PPrPerfMon
+
 2009-02-23  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-15
         * Add monitoring of spare PPM channels.
