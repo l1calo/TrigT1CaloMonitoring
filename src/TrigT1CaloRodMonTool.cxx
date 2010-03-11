@@ -398,10 +398,14 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
           hist = m_h_ROD_CPJEP_stat;
 	  val = (pos-32)/2;
         }
+	// ToDo: Fix properly in RODHeader.
         // gLinkError is actually OR'ed with cmmParityError
 	// (email from Weiming 26/06/09)
         //if (header->gLinkError()) {
-        if (header->cmmParityError()) {
+	// gLinkError and LinkError are interchanged
+	// (email from Bruce 10/03/10
+        //if (header->cmmParityError()) {
+        if (header->lvdsLinkError()) {
           hist->Fill(GLink, val);
 	  errors[GLink] = 1;
 	  crateErr[crate] |= (1 << GLink);
@@ -411,7 +415,8 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
         //  errors[CMMParity] = 1;
         //  crateErr[crate] |= (1 << CMMParity);
         //}
-        if (header->lvdsLinkError()) {
+        //if (header->lvdsLinkError()) {
+        if (header->cmmParityError()) {
           hist->Fill(LVDSLink, val);
 	  errors[LVDSLink] = 1;
 	  crateErr[crate] |= (1 << LVDSLink);

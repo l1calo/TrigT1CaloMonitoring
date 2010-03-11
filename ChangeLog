@@ -1,27 +1,33 @@
+2010-03-11  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+	* Tag as TrigT1CaloMonitoring-00-06-17
+        * Stop forwarding of PPM spare channel errors to global overview
+          plot.
+        * Re-order error bits from ROD status word 1.
+
 2010-03-07  Sky French <sfrench@hep.phy.cam.ac.uk>
 	* Tag as TrigT1CaloMonitoring-00-06-16
 	* Add comparison of simulated LUT with data (PPMSimBSMon)
 	* Removed PPrPerfMon
 
-2009-02-23  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+2010-02-23  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-15
         * Add monitoring of spare PPM channels.
 
-2009-02-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+2010-02-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-14
         * Move PPrMon to ESDtoAOD step.
 
-2009-02-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+2010-02-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-13
         * Mods for TrigT1CaloByteStream-00-08-02 and move some tools
           to ESDtoAOD step on Tier0.  Global plot moved to separate
           tool as needed in both steps.
 
-2009-01-27  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+2010-01-27  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-12
         * Fix bin error in JEMMon.cxx
 
-2009-01-20  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+2010-01-20  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-11
         * PPM: Avoid duplication of per run plots and merged per lumi plots,
           change all 1D slice plots to 0-14 range (no 1-15).

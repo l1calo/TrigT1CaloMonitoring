@@ -402,14 +402,14 @@ StatusCode PPrSpareMon::fillHistograms()
 	}	     
      
   // Write overview vector to StoreGate
-  std::vector<int>* save = new std::vector<int>(overview);
-  sc = m_storeGate->record(save, "L1CaloPPMSpareErrorVector");
-  if (sc != StatusCode::SUCCESS)
-    {
-      log << MSG::ERROR << "Error recording PPMSpare error vector in TES "
-          << endreq;
-      return sc;
-    }
+  //std::vector<int>* save = new std::vector<int>(overview);
+  //sc = m_storeGate->record(save, "L1CaloPPMSpareErrorVector");
+  //if (sc != StatusCode::SUCCESS)
+  //  {
+  //    log << MSG::ERROR << "Error recording PPMSpare error vector in TES "
+  //        << endreq;
+  //    return sc;
+  //  }
 
   
   return StatusCode( StatusCode::SUCCESS );
