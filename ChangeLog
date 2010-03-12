@@ -1,3 +1,7 @@
+2010-03-12  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+	* Tag as TrigT1CaloMonitoring-00-06-18
+        * Simplify PPrMon::recTime()
+
 2010-03-11  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
 	* Tag as TrigT1CaloMonitoring-00-06-17
         * Stop forwarding of PPM spare channel errors to global overview
