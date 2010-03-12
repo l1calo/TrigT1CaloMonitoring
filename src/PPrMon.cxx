@@ -981,16 +981,20 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 	{
 	  max = recTime((*TriggerTowerIterator)->emADC());
 	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
-	  m_h_TT_ADC_emTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max+1);
-	  m_h_dist_em_max->Fill(max);
+	  if (max >= 0.) {
+	    m_h_TT_ADC_emTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max+1);
+	    m_h_dist_em_max->Fill(max);
+	  }
 	}
 
       if (hadFADCSum>m_HADFADCCut)
 	{
 	  max = recTime((*TriggerTowerIterator)->hadADC());
 	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
-	  m_h_TT_ADC_hadTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max+1);
-	  m_h_dist_had_max->Fill(max);
+	  if (max >= 0.) {
+	    m_h_TT_ADC_hadTiming_signal->Fill((*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max+1);
+	    m_h_dist_had_max->Fill(max);
+	  }
         }
 
       //------------------------ Signal shape profile ---------------------
@@ -1278,6 +1282,7 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBloc
 double PPrMon::recTime(const std::vector<int>& vFAdc) {
 /*---------------------------------------------------------*/
 
+  /*
   double x[3];
   double y[3];
   double binshift = 0.;
@@ -1311,6 +1316,21 @@ double PPrMon::recTime(const std::vector<int>& vFAdc) {
     //double c = y[0] - b*x[0] - a*x[0]*x[0];
     if (a != 0.) max = -b/(2*a);
     
+  }
+  */
+
+  double max = -1.;
+  int slices = vFAdc.size();
+  if (slices > 0) {
+    max = 0.;
+    int maxAdc = vFAdc[0];
+    for (int sl = 1; sl < slices; ++sl) {
+      if (vFAdc[sl] > maxAdc) {
+        maxAdc = vFAdc[sl];
+        max = sl;
+      } else if (vFAdc[sl] == maxAdc) max = -1.;
+    }
+    if (maxAdc == 0) max = -1.;
   }
   
   return max;
