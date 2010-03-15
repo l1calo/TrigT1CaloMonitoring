@@ -344,7 +344,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 	}
     }
   
-  return StatusCode( StatusCode::SUCCESS );
+  return StatusCode::SUCCESS;
 }
 
 
@@ -737,7 +737,7 @@ StatusCode CMMMon::fillHistograms()
     }
 
 
-  return StatusCode( StatusCode::SUCCESS );
+  return StatusCode::SUCCESS;
 }
 
 /*---------------------------------------------------------*/
@@ -778,5 +778,5 @@ StatusCode CMMMon::procHistograms( bool isEndOfEventsBlock,
 	}
     }
   */
-  return StatusCode( StatusCode::SUCCESS );
+  return StatusCode::SUCCESS;
 }

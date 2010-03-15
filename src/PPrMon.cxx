@@ -1216,7 +1216,7 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
     }
 
   
-  return StatusCode( StatusCode::SUCCESS );
+  return StatusCode::SUCCESS;
 }
 
 
@@ -1274,7 +1274,7 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBloc
 	}
     }
   */
-  return StatusCode( StatusCode::SUCCESS );
+  return StatusCode::SUCCESS;
 }
 
 

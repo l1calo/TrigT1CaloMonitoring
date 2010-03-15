@@ -412,7 +412,7 @@ StatusCode PPrSpareMon::fillHistograms()
   //  }
 
   
-  return StatusCode( StatusCode::SUCCESS );
+  return StatusCode::SUCCESS;
 }
 
 
@@ -428,7 +428,7 @@ StatusCode PPrSpareMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLum
     {  
     }
 	
-  return StatusCode( StatusCode::SUCCESS );
+  return StatusCode::SUCCESS;
 }
 
 

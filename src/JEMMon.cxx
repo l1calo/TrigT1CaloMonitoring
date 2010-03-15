@@ -435,7 +435,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
        
     }
     
-  return StatusCode( StatusCode::SUCCESS );
+  return StatusCode::SUCCESS;
 }
 
 
@@ -866,7 +866,7 @@ StatusCode JEMMon::fillHistograms()
 
   mLog<<MSG::DEBUG<<"--------------------------------------"<<endreq;
 
-   return StatusCode( StatusCode::SUCCESS );
+   return StatusCode::SUCCESS;
 }
 
 /*---------------------------------------------------------*/
@@ -899,5 +899,5 @@ StatusCode JEMMon::procHistograms( bool isEndOfEventsBlock,
 	}
     }
   */
-  return StatusCode( StatusCode::SUCCESS );
+  return StatusCode::SUCCESS;
 }
