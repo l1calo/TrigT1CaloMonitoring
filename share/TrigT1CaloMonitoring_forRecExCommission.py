@@ -68,6 +68,8 @@ if l1caloESDMon:
     ToolSvc += L1PPrMonTool
     L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
 
+if l1caloESDMon and globalflags.DataSource() == "data":
+        
     include("TrigT1CaloCalibConditions/L1CaloCalibConditions_jobOptions.py")
     
     from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPMSimBSMon

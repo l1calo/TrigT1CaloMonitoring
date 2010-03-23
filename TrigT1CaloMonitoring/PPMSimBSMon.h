@@ -25,6 +25,8 @@
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "DataModel/DataVector.h"
 #include "TrigT1CaloCalibTools/L1CaloTTIdTools.h"
+#include "TrigT1CaloCondSvc/L1CaloCondSvc.h"
+#include "TrigT1CaloCalibConditions/L1CaloPprLutContainer.h"
 
 #include "Identifier/Identifier.h"
 
@@ -53,6 +55,7 @@ public:
 
   virtual StatusCode initialize();
   virtual StatusCode finalize();  
+  //  virtual StatusCode retrieveConditions(bool isNewRun, bool isNewEventsBlock, bool isNewRun);
   virtual StatusCode bookHistograms(bool isNewEventsBlock, bool isNewLumiBlock,
                                                            bool isNewRun);
   virtual StatusCode fillHistograms();
@@ -71,8 +74,13 @@ private:
                                     int nx, double xmin, double xmax);
   TH2F* book2F(std::string nam, std::string tit,
                                     int nx, const double* xbins,
-                                    int ny, double ymin, double ymax);
-  TH2F* bookEtaPhi(std::string nam, std::string tit);
+                                    int ny, double ymin, double ymax, bool to_register);
+  TProfile2D* bookProfile2Dbin(std::string name, std::string tit,
+									int nx, const double* xbins,
+									int ny, double ymin, double ymax, bool to_register);
+									
+  TH2F* bookEtaPhi(std::string nam, std::string tit, bool to_register);
+  TProfile2D* bookProfileEtaPhi(std::string nam, std::string tit, bool to_register);
   TH2I* book2I(std::string nam, std::string tit,
                                     int nx, double xmin, double xmax,
                                     int ny, double ymin, double ymax);
@@ -86,6 +94,7 @@ private:
       
   mutable MsgStream m_log;
   bool m_debug;
+  bool m_onlineTest;
 
   MonGroup* m_monGroup;
   std::string m_rootDir;
@@ -107,6 +116,8 @@ private:
   int m_eventNumber;
   /// Sample event number counts
   std::vector<int> m_sampleCounts;
+  /// Number of events over which to sample pedestal
+  int m_instantaneous;
 
   //=======================
   //   Match/Mismatch plots
@@ -122,6 +133,22 @@ private:
   TH2F* m_h_ppm_had_2d_etaPhi_tt_lut_SimNoData;
   TH2F* m_h_ppm_had_2d_etaPhi_tt_lut_DataNoSim;
   
+  //Overal Pedestal
+  TProfile2D* m_h_ppm_em_2d_etaPhi_tt_ped_runavg;
+  TProfile2D* m_h_ppm_had_2d_etaPhi_tt_ped_runavg;
+  TH2F* m_h_ppm_em_2d_etaPhi_tt_ped_worstavg;
+  TH2F* m_h_ppm_had_2d_etaPhi_tt_ped_worstavg;
+  TH2F* m_h_ppm_em_2d_etaPhi_tt_ped_runrms;
+  TH2F* m_h_ppm_had_2d_etaPhi_tt_ped_runrms;
+  TProfile2D* m_h_ppm_em_2d_etaPhi_tt_ped_instavg;
+  TProfile2D* m_h_ppm_had_2d_etaPhi_tt_ped_instavg;
+  TH2F* m_h_ppm_em_2d_etaPhi_tt_ped_instrms;
+  TH2F* m_h_ppm_had_2d_etaPhi_tt_ped_instrms;
+  TProfile2D* m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B;
+  TProfile2D* m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B;
+  TH2F* m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B;
+  TH2F* m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B;
+  
   // Mismatch Histograms
   TH2I* m_h_ppm_2d_LUT_MismatchEvents_cr0cr1;
   TH2I* m_h_ppm_2d_LUT_MismatchEvents_cr2cr3;
@@ -131,6 +158,9 @@ private:
   void setLabelsCM(TH2* hist, bool xAxis = true, int first = 0);
   
  private:
+  
+  L1CaloCondSvc* m_l1CondSvc;
+  L1CaloPprLutContainer* m_LutContainer;
   
  protected:
   
