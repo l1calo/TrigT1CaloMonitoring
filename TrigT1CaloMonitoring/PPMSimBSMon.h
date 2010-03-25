@@ -90,6 +90,8 @@ private:
 
   ServiceHandle<StoreGateSvc> m_storeGate;
 
+  L1CaloCondSvc* m_l1CondSvc;
+
   ToolHandle<LVL1::IL1TriggerTowerTool> m_ttTool;
       
   mutable MsgStream m_log;
@@ -159,20 +161,12 @@ private:
   
  private:
   
-  L1CaloCondSvc* m_l1CondSvc;
   L1CaloPprLutContainer* m_LutContainer;
   
  protected:
   
   StoreGateSvc* m_detStore;
- 
-  const CaloIdManager* m_caloMgr;
-  const CaloLVL1_ID* m_lvl1Helper;
-  const L1CaloTTIdTools* m_l1CaloTTIdTools;
-  
-  CaloTriggerTowerService* m_ttSvc;
-  const TTOnlineID* m_l1ttonlineHelper;
-    
+
 };
 
 #endif

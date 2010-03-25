@@ -45,8 +45,9 @@ PPMSimBSMon::PPMSimBSMon(const std::string & type,
 			 const std::string & name,
 			 const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
-    m_storeGate("StoreGateSvc", name), m_l1CondSvc(0),
-    m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"),
+    m_storeGate("StoreGateSvc", name),
+    m_l1CondSvc(0),
+    m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"), 
     m_log(msgSvc(), name), m_debug(false),
     m_monGroup(0), m_events(0)
 /*---------------------------------------------------------*/
@@ -91,16 +92,21 @@ StatusCode PPMSimBSMon:: initialize()
     return sc;
   }
 
+  sc = service("L1CaloCondSvc", m_l1CondSvc);
+  if(sc.isFailure()){
+    m_log << MSG::WARNING << "Could not retrieve L1CaloCondSvc" << endreq;
+  }
+
   sc = m_ttTool.retrieve();
   if( sc.isFailure() ) {
     m_log << MSG::ERROR << "Unable to locate Tool L1TriggerTowerTool" << endreq;
     return sc;
   }
 
-  sc = service("L1CaloCondSvc", m_l1CondSvc);
-  if(sc.isFailure()){
-    m_log << MSG::WARNING << "Could not retrieve L1CaloCondSvc" << endreq;
-  }
+  //sc = service("L1CaloCondSvc", m_l1CondSvc);
+  //if(sc.isFailure()){
+  //  m_log << MSG::WARNING << "Could not retrieve L1CaloCondSvc" << endreq;
+  // }
   
   //===========
 
@@ -176,7 +182,8 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   MonGroup monPPM   ( this, dir + "/PPMLUTSim", expert, run );
   MonGroup monEvent ( this, dir + "/MismatchEventNumbers", expert, run, "", "eventSample" );
   std::string dirPed (m_rootDir + "/PPM/ADC/Pedestal");
-  MonGroup monPed( this, dirPed, expert, run);
+  MonGroup monPed ( this, dirPed, expert, run);
+  MonGroup monPedrms ( this, dirPed, expert, run,"","mergeRMS");
 
   // LUT
 
@@ -207,6 +214,8 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 							"PPM Mean Pedestal Difference EM (over run);eta;phi",1);
   m_h_ppm_had_2d_etaPhi_tt_ped_runavg = bookProfileEtaPhi("ppm_had_2d_etaPhi_tt_ped_runavg",
 							"PPM Mean Pedestal Difference Had (over run);eta;phi",1);
+  
+  m_monGroup = &monPedrms;
 
   m_h_ppm_em_2d_etaPhi_tt_ped_runrms = bookEtaPhi("ppm_em_2d_etaPhi_tt_ped_runrms",
 							 "PPM rms Pedestal Difference EM (over run);eta;phi",1);
@@ -214,6 +223,8 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 						   "PPM rms Pedestal Difference Had (over run);eta;phi",1);
 
   if(m_onlineTest || m_environment == AthenaMonManager::online) {
+
+    m_monGroup = &monPed;
 
     m_h_ppm_em_2d_etaPhi_tt_ped_worstavg = bookEtaPhi("ppm_em_2d_etaPhi_tt_ped_worstavg",
 						      "PPM Worst Pedestal Difference EM (over run);eta;phi",1);
@@ -224,15 +235,23 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 							    "PPM Mean Pedestal Difference EM (instantaneous);eta;phi",1);
     m_h_ppm_had_2d_etaPhi_tt_ped_instavg = bookProfileEtaPhi("ppm_had_2d_etaPhi_tt_ped_instavg",
 							     "PPM Mean Pedestal Difference Had (instantaneous);eta;phi",1);
+    
+    m_monGroup = &monPedrms;
+
     m_h_ppm_em_2d_etaPhi_tt_ped_instrms = bookEtaPhi("ppm_em_2d_etaPhi_tt_ped_instrms",
 						     "PPM rms Pedestal Difference EM (instantaneous);eta;phi",1);
     m_h_ppm_had_2d_etaPhi_tt_ped_instrms = bookEtaPhi("ppm_had_2d_etaPhi_tt_ped_instrms",
 						      "PPM rms Pedestal Difference Had (instantaneous);eta;phi",1);
     
+    m_monGroup = &monPed;
+
     m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B = bookProfileEtaPhi("ppm_em_2d_etaPhi_tt_ped_instavg_B",
 							      "PPM Mean Pedestal Difference EM (instantaneous [B]);eta;phi",0);
     m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B = bookProfileEtaPhi("ppm_had_2d_etaPhi_tt_ped_instavg_B",
 							       "PPM Mean Pedestal Difference Had (instantaneous [B]);eta;phi",0);
+   
+    m_monGroup = &monPedrms;
+
     m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B = bookEtaPhi("ppm_em_2d_etaPhi_tt_ped_instrms_B",
 						       "PPM rms Pedestal Difference EM (instantaneous [B]);eta;phi",0);
     m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B = bookEtaPhi("ppm_had_2d_etaPhi_tt_ped_instrms_B",
@@ -288,7 +307,56 @@ StatusCode PPMSimBSMon::fillHistograms()
   if (triggerTowerTES) {
     simulateAndCompare(triggerTowerTES);
   }
- 
+
+
+  if ((m_environment == AthenaMonManager::online || m_onlineTest) && (m_events%int(0.5*m_instantaneous)==0)) {
+    double worst_value;
+    int worst_bin;
+    int worst_min = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetMinimumBin();
+    double worst_min_value = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_min);
+    int worst_max = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetMaximumBin();
+    double worst_max_value = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_max);
+    if(fabs(worst_min_value)>fabs(worst_max_value)){
+      worst_value = worst_min_value;
+      worst_bin = worst_min;
+    }
+    else {
+      worst_value = worst_max_value;
+      worst_bin = worst_max;
+    }
+    if(fabs(worst_value)>fabs(m_h_ppm_em_2d_etaPhi_tt_ped_worstavg->GetBinContent(worst_bin))) {
+      m_h_ppm_em_2d_etaPhi_tt_ped_worstavg->SetBinContent(worst_bin,worst_value);
+    }
+    m_h_ppm_em_2d_etaPhi_tt_ped_instavg->Reset();
+    m_h_ppm_em_2d_etaPhi_tt_ped_instavg->Add(m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B);
+    m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->Reset();
+    m_h_ppm_em_2d_etaPhi_tt_ped_instrms->Reset();
+    m_h_ppm_em_2d_etaPhi_tt_ped_instrms->Add(m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B);
+    m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B->Reset();	    
+    
+    worst_min = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetMinimumBin();
+    worst_min_value = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_min);
+    worst_max = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetMaximumBin();
+    worst_max_value = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_max);
+    if(fabs(worst_min_value)>fabs(worst_max_value)){
+      worst_value = worst_min_value;
+      worst_bin = worst_min;
+    }
+    else {
+      worst_value = worst_max_value;
+      worst_bin = worst_max;
+    }
+    if(fabs(worst_value)>fabs(m_h_ppm_had_2d_etaPhi_tt_ped_worstavg->GetBinContent(worst_bin))) {
+      m_h_ppm_had_2d_etaPhi_tt_ped_worstavg->SetBinContent(worst_bin,worst_value);
+    }
+    m_h_ppm_had_2d_etaPhi_tt_ped_instavg->Reset();
+    m_h_ppm_had_2d_etaPhi_tt_ped_instavg->Add(m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B);
+    m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->Reset();
+    m_h_ppm_had_2d_etaPhi_tt_ped_instrms->Reset();
+    m_h_ppm_had_2d_etaPhi_tt_ped_instrms->Add(m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B);
+    m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B->Reset();
+  }
+  
   m_log << MSG::DEBUG << "Leaving fillHistograms" << endreq;
 
   return StatusCode::SUCCESS;
@@ -405,7 +473,6 @@ nx, const double* xbins, int ny, double ymin, double ymax, bool to_register)
   }
 	
   hist-> SetOption ("colz");
-  hist->GetZaxis()->SetRangeUser(-10,10);
 
   return hist;
 }
@@ -541,7 +608,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     int tt_accept = 1;
     int bin = 0;
 
-    for(int i=0; i<(tt->emADC()).size(); i++) {
+    for(int i=0; i<emSlices; i++) {
       if(em_notSignal) {
 	if(fabs((tt->emADC()).at(i)-em_offset)>10) tt_accept = 0;
       }
@@ -550,7 +617,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     if(tt_accept==1) {
       if(em_notSignal) {
 	
-	for(int i=0; i<(tt->emADC()).size(); i++) {
+	for(int i=0; i<emSlices; i++) {
 	  
 	  m_h_ppm_em_2d_etaPhi_tt_ped_runavg->Fill(eta,phiMod,((tt->emADC()).at(i)-em_offset));
 
@@ -561,36 +628,13 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	  
 	  bin = m_h_ppm_em_2d_etaPhi_tt_ped_runavg->FindBin(eta,phiMod);
 	  m_h_ppm_em_2d_etaPhi_tt_ped_runrms->SetBinContent(bin,m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinError(bin));
-	 
+	  m_h_ppm_em_2d_etaPhi_tt_ped_runrms->SetBinError(bin,m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinError(bin)/sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinEntries(bin)));
 	  if (m_environment == AthenaMonManager::online || m_onlineTest) {
 	    m_h_ppm_em_2d_etaPhi_tt_ped_instrms->SetBinContent(bin,m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinError(bin));
+	    m_h_ppm_em_2d_etaPhi_tt_ped_instrms->SetBinError(bin,m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinError(bin)/sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinEntries(bin)));
 	    m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B->SetBinContent(bin,m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin));
+	    m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B->SetBinError(bin,m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin)/sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinEntries(bin)));
 	    
-	    if(m_events%int(0.5*m_instantaneous)==0) {
-	      double worst_value;
-	      int worst_bin;
-	      int worst_min = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetMinimumBin();
-	      double worst_min_value = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_min);
-	      int worst_max = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetMaximumBin();
-	      double worst_max_value = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_max);
-	      if(fabs(worst_min_value)>fabs(worst_max_value)){
-		worst_value = worst_min_value;
-		worst_bin = worst_min;
-	      }
-	      else {
-		worst_value = worst_max_value;
-		worst_bin = worst_max;
-	      }
-	      if(fabs(worst_value)>fabs(m_h_ppm_em_2d_etaPhi_tt_ped_worstavg->GetBinContent(worst_bin))) {
-		m_h_ppm_em_2d_etaPhi_tt_ped_worstavg->SetBinContent(worst_bin,worst_value);
-	      }
-	      m_h_ppm_em_2d_etaPhi_tt_ped_instavg->Reset();
-	      m_h_ppm_em_2d_etaPhi_tt_ped_instavg->Add(m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B);
-	      m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->Reset();
-	      m_h_ppm_em_2d_etaPhi_tt_ped_instrms->Reset();
-	      m_h_ppm_em_2d_etaPhi_tt_ped_instrms->Add(m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B);
-	      m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B->Reset();	    
-	    }
 	  }
 	}	 
       }	
@@ -598,7 +642,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
       
     tt_accept = 1;
 
-    for(int i=0;i<(tt->hadADC()).size(); i++) {
+    for(int i=0;i<hadSlices; i++) {
       if(had_notSignal) {
 	if(fabs((tt->hadADC()).at(i)-had_offset)>10) tt_accept = 0;
       }
@@ -607,7 +651,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     if(tt_accept==1) {
       if(had_notSignal) {
 
-	for(int i=0; i<(tt->hadADC()).size(); i++) {
+	for(int i=0; i<hadSlices; i++) {
 	  
 	  m_h_ppm_had_2d_etaPhi_tt_ped_runavg->Fill(eta,phiMod,((tt->hadADC()).at(i)-had_offset));
 
@@ -617,36 +661,14 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	  }
 	  bin = m_h_ppm_had_2d_etaPhi_tt_ped_runavg->FindBin(eta,phiMod);
 	  m_h_ppm_had_2d_etaPhi_tt_ped_runrms->SetBinContent(bin,m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinError(bin));
+	  m_h_ppm_had_2d_etaPhi_tt_ped_runrms->SetBinError(bin,m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinError(bin)/sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinEntries(bin)));
 
 	  if (m_environment == AthenaMonManager::online || m_onlineTest) {	  
 	    m_h_ppm_had_2d_etaPhi_tt_ped_instrms->SetBinContent(bin,m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinError(bin));
+	    m_h_ppm_had_2d_etaPhi_tt_ped_instrms->SetBinError(bin,m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinError(bin)/sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinEntries(bin)));
 	    m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B->SetBinContent(bin,m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin));
-	    
-	    if(m_events%int(0.5*m_instantaneous)==0) {
-	      double worst_value;
-	      int worst_bin;
-	      int worst_min = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetMinimumBin();
-	      double worst_min_value = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_min);
-	      int worst_max = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetMaximumBin();
-	      double worst_max_value = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_max);
-	      if(fabs(worst_min_value)>fabs(worst_max_value)){
-		worst_value = worst_min_value;
-		worst_bin = worst_min;
-	      }
-	      else {
-		worst_value = worst_max_value;
-		worst_bin = worst_max;
-	      }
-	      if(fabs(worst_value)>fabs(m_h_ppm_had_2d_etaPhi_tt_ped_worstavg->GetBinContent(worst_bin))) {
-		m_h_ppm_had_2d_etaPhi_tt_ped_worstavg->SetBinContent(worst_bin,worst_value);
-	      }
-	      m_h_ppm_had_2d_etaPhi_tt_ped_instavg->Reset();
-	      m_h_ppm_had_2d_etaPhi_tt_ped_instavg->Add(m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B);
-	      m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->Reset();
-	      m_h_ppm_had_2d_etaPhi_tt_ped_instrms->Reset();
-	      m_h_ppm_had_2d_etaPhi_tt_ped_instrms->Add(m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B);
-	      m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B->Reset();
-	    }
+	    m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B->SetBinError(bin,m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin)/sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinEntries(bin)));
+	  
 	  }
 	}
       }
@@ -769,8 +791,8 @@ void PPMSimBSMon::fillEventSample(int crate, int module)
     int count = 0;
     if(crate %2 == 0) offset = 0;
     else offset = 16;
-    y = (module-5) + offset;
-    count = crate*16 + (module-5);
+    y = (module) + offset;
+    count = crate*16 + (module);
     x = m_sampleCounts[count];
     if (x < m_eventSamples) {
       if(crate==0 || crate==1) {
