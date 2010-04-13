@@ -46,6 +46,7 @@
 
 #include "TrigT1CaloMonitoring/CPMSimBSMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
 
 /*---------------------------------------------------------*/
 CPMSimBSMon::CPMSimBSMon(const std::string & type, 
@@ -56,6 +57,7 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
     m_emTauTool("LVL1::L1EmTauTools/L1EmTauTools"),
     m_cpHitsTool("LVL1::L1CPHitsTools/L1CPHitsTools"),
     m_errorTool("TrigT1CaloMonErrorTool"),
+    m_histTool("TrigT1CaloHistogramTool"),
     m_log(msgSvc(), name), m_debug(false),
     m_monGroup(0), m_phiScale(32./M_PI), m_events(0)
 /*---------------------------------------------------------*/
@@ -140,6 +142,13 @@ StatusCode CPMSimBSMon::initialize()
   sc = m_errorTool.retrieve();
   if( sc.isFailure() ) {
     m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                        << endreq;
+    return sc;
+  }
+
+  sc = m_histTool.retrieve();
+  if( sc.isFailure() ) {
+    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloHistogramTool"
                         << endreq;
     return sc;
   }
@@ -290,11 +299,11 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
              56, 0, 56, 64, 0, 64);
   setLabelsCMCC(m_h_RoIDATnoSIM);
   m_h_RoIThreshSIMeqDAT = book2F("cpm_2d_roi_ThreshSimEqData",
-     "CPM RoI Data/Simulation Threshold Matches;Crate/Module;Threshold",
+     "CPM RoI Data/Simulation Threshold Matches;Crate/Module",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_RoIThreshSIMeqDAT, true);
   m_h_RoIThreshSIMneDAT = book2F("cpm_2d_roi_ThreshSimNeData",
-     "CPM RoI Data/Simulation Threshold Mismatches;Crate/Module;Threshold",
+     "CPM RoI Data/Simulation Threshold Mismatches;Crate/Module",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_RoIThreshSIMneDAT, true);
   m_h_RoIEtaPhiSIMeqDAT = bookEtaPhi("cpm_2d_etaPhi_roi_SimEqData",
@@ -325,11 +334,11 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
      "CPM Hits Data but no Simulation;Module;Crate", 14, 1, 15, 4, 0, 4);
   setLabelsMC(m_h_CPMHitsDATnoSIM);
   m_h_CPMHitsThreshSIMeqDAT = book2F("cpm_2d_thresh_ThreshSimEqData",
-     "CPM Hits Data/Simulation Threshold Matches;Crate/Module;Threshold",
+     "CPM Hits Data/Simulation Threshold Matches;Crate/Module",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CPMHitsThreshSIMeqDAT);
   m_h_CPMHitsThreshSIMneDAT = book2F("cpm_2d_thresh_ThreshSimNeData",
-     "CPM Hits Data/Simulation Threshold Mismatches;Crate/Module;Threshold",
+     "CPM Hits Data/Simulation Threshold Mismatches;Crate/Module",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CPMHitsThreshSIMneDAT);
 
@@ -356,11 +365,11 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
              14, 1, 15, 8, 0, 8);
   setLabelsMCLR(m_h_CMMHitsDATnoSIM);
   m_h_CMMHitsThreshSIMeqDAT = book2F("cmm_2d_thresh_ThreshCpmEqCmm",
-     "CMM Hits/CPM Hits Threshold Matches;Crate/Module;Threshold",
+     "CMM Hits/CPM Hits Threshold Matches;Crate/Module",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CMMHitsThreshSIMeqDAT);
   m_h_CMMHitsThreshSIMneDAT = book2F("cmm_2d_thresh_ThreshCpmNeCmm",
-     "CMM Hits/CPM Hits Threshold Mismatches;Crate/Module;Threshold",
+     "CMM Hits/CPM Hits Threshold Mismatches;Crate/Module",
              56, 0, 56, 16, 0, 16);
   setLabelsCMT(m_h_CMMHitsThreshSIMneDAT);
 
@@ -387,11 +396,11 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
              16, 0, 16);
   setLabelsSLR(m_h_SumsDATnoSIM);
   m_h_SumsThreshSIMeqDAT = book2F("cmm_2d_thresh_SumsThreshSimEqData",
-     "CMM Hit Sums Data/Simulation Threshold Matches;Sum;Threshold",
+     "CMM Hit Sums Data/Simulation Threshold Matches;Sum",
              8, 0, 8, 16, 0, 16);
   setLabelsST(m_h_SumsThreshSIMeqDAT);
   m_h_SumsThreshSIMneDAT = book2F("cmm_2d_thresh_SumsThreshSimNeData",
-     "CMM Hit Sums Data/Simulation Threshold Mismatches;Sum;Threshold",
+     "CMM Hit Sums Data/Simulation Threshold Mismatches;Sum",
              8, 0, 8, 16, 0, 16);
   setLabelsST(m_h_SumsThreshSIMneDAT);
 
@@ -416,11 +425,11 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
              6, 0, 6);
   setLabelsSRLR(m_h_SumsDATnoSIM);
   m_h_SumsThreshSIMeqDAT = book2F("cmm_2d_thresh_LocalEqRemoteThresh",
-     "CMM Local/Remote Sums Threshold Matches;Sum;Threshold",
+     "CMM Local/Remote Sums Threshold Matches;Sum",
              3, 0, 3, 16, 0, 16);
   setLabelsSRT(m_h_SumsThreshSIMeqDAT);
   m_h_SumsThreshSIMneDAT = book2F("cmm_2d_thresh_LocalNeRemoteThresh",
-     "CMM Local/Remote Sums Threshold Mismatches;Sum;Threshold",
+     "CMM Local/Remote Sums Threshold Mismatches;Sum",
              3, 0, 3, 16, 0, 16);
   setLabelsSRT(m_h_SumsThreshSIMneDAT);
 
@@ -479,24 +488,24 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_sampleHists.resize(6, hist);
   if (m_compareTriggerTowers) {
     hist = book2I("cpm_em_2d_tt_MismatchEvents",
-           "CPM Towers EM Mismatch Event Numbers;Sample;Crate/Module",
+           "CPM Towers EM Mismatch Event Numbers;Events with mismatch;Crate/Module",
            m_eventSamples, 0, m_eventSamples, 56, 0, 56);
     setLabelsCMS(hist);
     m_sampleHists[0] = hist;
     hist = book2I("cpm_had_2d_tt_MismatchEvents",
-           "CPM Towers Had Mismatch Event Numbers;Sample;Crate/Module",
+           "CPM Towers Had Mismatch Event Numbers;Events with mismatch;Crate/Module",
            m_eventSamples, 0, m_eventSamples, 56, 0, 56);
     setLabelsCMS(hist);
     m_sampleHists[1] = hist;
   }
   if (m_compareWithSim) {
     hist = book2I("cpm_2d_roi_MismatchEvents",
-           "CPM RoIs Mismatch Event Numbers;Sample;Crate/Module",
+           "CPM RoIs Mismatch Event Numbers;Events with mismatch;Crate/Module",
            m_eventSamples, 0, m_eventSamples, 56, 0, 56);
     setLabelsCMS(hist);
     m_sampleHists[2] = hist;
     hist = book2I("cpm_2d_thresh_MismatchEvents",
-           "CPM Hits Mismatch Event Numbers;Sample;Crate/Module",
+           "CPM Hits Mismatch Event Numbers;Events with mismatch;Crate/Module",
            m_eventSamples, 0, m_eventSamples, 56, 0, 56);
     setLabelsCMS(hist);
     m_sampleHists[3] = hist;
@@ -505,12 +514,12 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_monGroup = &monEvent2;
 
   hist = book2I("cmm_2d_thresh_MismatchEvents",
-           "CMM Hits Mismatch Event Numbers;Sample;Crate/Module",
+           "CMM Hits Mismatch Event Numbers;Events with mismatch;Crate/Module",
            m_eventSamples, 0, m_eventSamples, 56, 0, 56);
   setLabelsCMS(hist);
   m_sampleHists[4] = hist;
   hist = book2I("cmm_2d_thresh_SumsMismatchEvents",
-           "CMM Hit Sums Mismatch Event Numbers;Sample",
+           "CMM Hit Sums Mismatch Event Numbers;Events with mismatch",
            m_eventSamples, 0, m_eventSamples, 24, 0, 24);
   hist->GetYaxis()->SetBinLabel(1, "Module 0/L");
   hist->GetYaxis()->SetBinLabel(2, "0/R");
@@ -1755,7 +1764,8 @@ void CPMSimBSMon::setLabelsCMS(TH2* hist)
 void CPMSimBSMon::setLabelsCMT(TH2* hist, bool isRoi)
 {
   setLabelsCPM(hist);
-  setLabelsYNUM(hist, 0, 15);
+  //setLabelsYNUM(hist, 0, 15);
+  m_histTool->cpmThresholds(hist, 0, false);
   if (isRoi) {
     for (int thr = 0; thr < 16; ++thr) {
       if ( !((m_roiMask >> thr) & 0x1) ) {
@@ -1865,7 +1875,8 @@ void CPMSimBSMon::setLabelsST(TH2* hist)
   hist->GetXaxis()->SetBinLabel(7, "R2");
   hist->GetXaxis()->SetBinLabel(8, "T");
   hist->GetXaxis()->SetLabelSize(0.05);
-  setLabelsYNUM(hist, 0, 15);
+  //setLabelsYNUM(hist, 0, 15);
+  m_histTool->cpmThresholds(hist, 0, false);
 }
 
 void CPMSimBSMon::setLabelsSRLR(TH1* hist)
@@ -1885,7 +1896,8 @@ void CPMSimBSMon::setLabelsSRT(TH2* hist)
   hist->GetXaxis()->SetBinLabel(2, "L1");
   hist->GetXaxis()->SetBinLabel(3, "L2");
   hist->GetXaxis()->SetLabelSize(0.05);
-  setLabelsYNUM(hist, 0, 15);
+  //setLabelsYNUM(hist, 0, 15);
+  m_histTool->cpmThresholds(hist, 0, false);
 }
 
 void CPMSimBSMon::setupMap(const TriggerTowerCollection* coll,

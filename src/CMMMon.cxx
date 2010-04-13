@@ -34,6 +34,7 @@
 #include "TrigT1CaloMonitoring/CMMMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
 
 #include "TrigT1CaloEvent/CMMRoI.h"
 #include "TrigT1CaloUtils/QuadLinear.h"
@@ -58,7 +59,8 @@ namespace LVL1 {
 CMMMon::CMMMon( const std::string & type, const std::string & name,
 		const IInterface* parent )
   : ManagedMonitorToolBase( type, name, parent ),
-    m_errorTool("TrigT1CaloMonErrorTool")
+    m_errorTool("TrigT1CaloMonErrorTool"),
+    m_histTool("TrigT1CaloHistogramTool")
 /*---------------------------------------------------------*/
 {
   // This is how you declare the parameters to Gaudi so that
@@ -100,6 +102,14 @@ StatusCode CMMMon::initialize()
                        << endreq;
     return sc;
   }
+
+  sc = m_histTool.retrieve();
+  if( sc.isFailure() ) {
+    mLog << MSG::ERROR << "Unable to locate Tool TrigT1CaloHistogramTool"
+                       << endreq;
+    return sc;
+  }
+
   return StatusCode::SUCCESS;
 }
 
@@ -173,9 +183,12 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       //m_h_CMMJetHits_JEM_MainHits=inputThresh_Booker.book1F("MainHits_CMM_input", "Main Jet Multiplicity per Threshold  --  CMM input", 8, -0.5, 7.5, "Threshold No.", "N");
       //m_h_CMMJetHits_JEM_FwdHitsRight=inputThresh_Booker.book1F("FwdHitsRight_CMM_input", "Forward Right Jet Multiplicity per Threshold  --  CMM input",4 , -0.5, 3.5, "Threshold No.", "N");
       //m_h_CMMJetHits_JEM_FwdHitsLeft=inputThresh_Booker.book1F("FwdHitsLeft_CMM_input", "Forward Left Jet Multiplicity per Threshold  --  CMM input", 4 , -0.5, 3.5,  "Threshold No.", "N");
-      m_h_CMMJetHits_JEM_MainHits=inputThresh_Booker.book1F("cmm_1d_thresh_MainHits", "Main Jet Multiplicity per Threshold  --  CMM input", 8, -0.5, 7.5, "Threshold No.", "N");
-      m_h_CMMJetHits_JEM_FwdHitsRight=inputThresh_Booker.book1F("cmm_1d_thresh_FwdHitsRight", "Forward Right Jet Multiplicity per Threshold  --  CMM input",4 , -0.5, 3.5, "Threshold No.", "N");
-      m_h_CMMJetHits_JEM_FwdHitsLeft=inputThresh_Booker.book1F("cmm_1d_thresh_FwdHitsLeft", "Forward Left Jet Multiplicity per Threshold  --  CMM input", 4 , -0.5, 3.5,  "Threshold No.", "N");
+      m_h_CMMJetHits_JEM_MainHits=inputThresh_Booker.book1F("cmm_1d_thresh_MainHits", "Main Jet Multiplicity per Threshold  --  CMM input", 8, -0.5, 7.5, "", "N");
+      m_histTool->mainJetThresholds(m_h_CMMJetHits_JEM_MainHits);
+      m_h_CMMJetHits_JEM_FwdHitsRight=inputThresh_Booker.book1F("cmm_1d_thresh_FwdHitsRight", "Forward Right Jet Multiplicity per Threshold  --  CMM input",4 , -0.5, 3.5, "", "N");
+      m_histTool->forwardJetThresholds(m_h_CMMJetHits_JEM_FwdHitsRight);
+      m_h_CMMJetHits_JEM_FwdHitsLeft=inputThresh_Booker.book1F("cmm_1d_thresh_FwdHitsLeft", "Forward Left Jet Multiplicity per Threshold  --  CMM input", 4 , -0.5, 3.5,  "", "N");
+      m_histTool->backwardJetThresholds(m_h_CMMJetHits_JEM_FwdHitsLeft);
 
       // Choose binning to match the encoding
       const int eRange = 256;  //range of encoded value
@@ -216,12 +229,18 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       //m_h_CMMJetHits_EtMap = jet_Booker.book1F("JetEtHits_CMM_DAQ", "JetEt Multiplicity per Threshold  --  CMM DAQ", 4 ,-0.5, 3.5, "Threshold No.", "N");
       //m_h_CMMEtSums_MissingEtMap = energy_Booker.book1F("MissingEtHits_CMM_DAQ", "MissingEt Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "N");
       //m_h_CMMEtSums_SumEtMap = energy_Booker.book1F("SumEtHits_CMM_DAQ", "SumEt Multiplicity per Threshold  --  CMM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
-      m_h_CMMJetHits_MainJets = jet_Booker.book1F("cmm_1d_thresh_TotalMainHits", "Main Jet Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "N");
-      m_h_CMMJetHits_FwdJetsRight = jet_Booker.book1F("cmm_1d_thresh_TotalFwdHitsRight", "Forward Right Jet Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5, "Threshold No.", "N");
-      m_h_CMMJetHits_FwdJetsLeft = jet_Booker.book1F("cmm_1d_thresh_TotalFwdHitsLeft", "Forward Left Jet Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5,  "Threshold No.", "N");
-      m_h_CMMJetHits_EtMap = jet_Booker.book1F("cmm_1d_thresh_JetEtHits", "JetEt Multiplicity per Threshold  --  CMM DAQ", 4 ,-0.5, 3.5, "Threshold No.", "N");
-      m_h_CMMEtSums_MissingEtMap = energy_Booker.book1F("cmm_1d_energy_MissingEtHits", "MissingEt Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "Threshold No.", "N");
-      m_h_CMMEtSums_SumEtMap = energy_Booker.book1F("cmm_1d_energy_SumEtHits", "SumEt Multiplicity per Threshold  --  CMM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
+      m_h_CMMJetHits_MainJets = jet_Booker.book1F("cmm_1d_thresh_TotalMainHits", "Main Jet Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "", "N");
+      m_histTool->mainJetThresholds(m_h_CMMJetHits_MainJets);
+      m_h_CMMJetHits_FwdJetsRight = jet_Booker.book1F("cmm_1d_thresh_TotalFwdHitsRight", "Forward Right Jet Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5, "", "N");
+      m_histTool->forwardJetThresholds(m_h_CMMJetHits_FwdJetsRight);
+      m_h_CMMJetHits_FwdJetsLeft = jet_Booker.book1F("cmm_1d_thresh_TotalFwdHitsLeft", "Forward Left Jet Multiplicity per Threshold  --  CMM DAQ", 4 , -0.5, 3.5,  "", "N");
+      m_histTool->backwardJetThresholds(m_h_CMMJetHits_FwdJetsLeft);
+      m_h_CMMJetHits_EtMap = jet_Booker.book1F("cmm_1d_thresh_JetEtHits", "JetEt Multiplicity per Threshold  --  CMM DAQ", 4 ,-0.5, 3.5, "", "N");
+      m_histTool->jetEtThresholds(m_h_CMMJetHits_EtMap);
+      m_h_CMMEtSums_MissingEtMap = energy_Booker.book1F("cmm_1d_energy_MissingEtHits", "MissingEt Multiplicity per Threshold  --  CMM DAQ", 8, -0.5, 7.5, "", "N");
+      m_histTool->missingEtThresholds(m_h_CMMEtSums_MissingEtMap);
+      m_h_CMMEtSums_SumEtMap = energy_Booker.book1F("cmm_1d_energy_SumEtHits", "SumEt Multiplicity per Threshold  --  CMM DAQ", 4, -0.5, 3.5, "", "N");
+      m_histTool->sumEtThresholds(m_h_CMMEtSums_SumEtMap);
 
       for (int i = nbins; i >= 0; --i) binedges[i+1] = binedges[i]*8;
       nbins++;
@@ -244,9 +263,12 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       //m_h_CMMRoI_Ex = RoI_Booker.book1F("Ex_CMM_RoI", "E_{x}^{CMM}  --  CMM RoI", nbins, 0, binedges[nbins], "Ex [GeV]", "N");
       //m_h_CMMRoI_Ey = RoI_Booker.book1F("Ey_CMM_RoI", "E_{y}^{CMM}  --  CMM RoI", nbins, 0, binedges[nbins], "Ey [GeV]", "N");
       //m_h_CMMRoI_Et = RoI_Booker.book1F("Et_CMM_RoI", "SumE_{t}^{CMM}  --  CMM RoI", nbins, 0, binedges[nbins], "Et [GeV]", "N");
-      m_h_CMMRoI_JetEtHits =RoI_Booker.book1F("cmm_1d_roi_JetEtHits","JetEt Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","N");
-      m_h_CMMRoI_MissingEtHits =RoI_Booker.book1F("cmm_1d_roi_MissingEtHits","MissingEt Multiplicity per Threshold  --  CMM RoI", 8, -0.5,7.5,"Threshold No.","N");
-      m_h_CMMRoI_SumEtHits =RoI_Booker.book1F("cmm_1d_roi_SumEtHits","SumEt Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"Threshold No.","N");
+      m_h_CMMRoI_JetEtHits =RoI_Booker.book1F("cmm_1d_roi_JetEtHits","JetEt Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"","N");
+      m_histTool->jetEtThresholds(m_h_CMMRoI_JetEtHits);
+      m_h_CMMRoI_MissingEtHits =RoI_Booker.book1F("cmm_1d_roi_MissingEtHits","MissingEt Multiplicity per Threshold  --  CMM RoI", 8, -0.5,7.5,"","N");
+      m_histTool->missingEtThresholds(m_h_CMMRoI_MissingEtHits);
+      m_h_CMMRoI_SumEtHits =RoI_Booker.book1F("cmm_1d_roi_SumEtHits","SumEt Multiplicity per Threshold  --  CMM RoI", 4, -0.5,3.5,"","N");
+      m_histTool->sumEtThresholds(m_h_CMMRoI_SumEtHits);
 
       m_h_CMMRoI_Ex = RoI_Booker.book1F("cmm_1d_roi_Ex", "E_{x}^{CMM}  --  CMM RoI", nbins, 1, binedges[nbins], "Ex [GeV]", "N");
       m_h_CMMRoI_Ey = RoI_Booker.book1F("cmm_1d_roi_Ey", "E_{y}^{CMM}  --  CMM RoI", nbins, 1, binedges[nbins], "Ey [GeV]", "N");

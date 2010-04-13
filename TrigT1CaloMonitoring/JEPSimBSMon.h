@@ -26,6 +26,7 @@ class TH2F;
 class TH2I;
 class StoreGateSvc;
 class TrigT1CaloMonErrorTool;
+class TrigT1CaloHistogramTool;
 
 namespace LVL1 {
   class CMMEtSums;
@@ -163,7 +164,8 @@ private:
   ToolHandle<LVL1::IL1JetTools>        m_jetTool;
   ToolHandle<LVL1::IL1JetElementTools> m_jetElementTool;
   ToolHandle<LVL1::IL1JEPEtSumsTools>  m_etSumsTool;
-  ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
+  ToolHandle<TrigT1CaloMonErrorTool>   m_errorTool;
+  ToolHandle<TrigT1CaloHistogramTool>  m_histTool;
   mutable MsgStream m_log;
   bool m_debug;
 

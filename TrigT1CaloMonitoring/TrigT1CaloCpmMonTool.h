@@ -25,6 +25,7 @@ class TH1F;
 class TH2F;
 class StoreGateSvc;
 class TrigT1CaloMonErrorTool;
+class TrigT1CaloHistogramTool;
 
 namespace LVL1 {
   class CPMTower;
@@ -76,34 +77,11 @@ private:
   static const int s_thresholds = 16;
   static const int s_threshBits = 3;
   static const int s_threshMask = 0x7;
-  
-  TH1F* book1F(const std::string& name, const std::string& title,
-                                    int nx, double xmin, double xmax);
-  TH2F* book2F(const std::string& name, const std::string& title,
-                                    int nx, double xmin, double xmax,
-                                    int ny, double ymin, double ymax);
-  TH2F* book2F(const std::string& nam, const std::string& tit,
-                                    int nx, const double* xbins,
-				    int ny, double ymin, double ymax);
-  TH2F* bookEtaPhi(const std::string& nam, const std::string& tit,
-                                           bool isRoi = false);
-
-  void  setStatusLabels(TH1* hist);
-  void  setLabelsCNSTS(TH2* hist, bool doSlice = false);
-  void  setLabelsPSCS(TH2* hist);
-  void  setLabelsCMT(TH2* hist);
-  void  setLabelsT(TH2* hist);
-  void  setLabelsCPM(TH2* hist);
-  void  setYLabelsCPM(TH2* hist);
-  void  setLabelsMCLR(TH2* hist);
-  void  setLabelsCLR(TH2* hist);
-  void  setLabelsST(TH2* hist);
 
   ServiceHandle<StoreGateSvc> m_storeGate;
   ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
+  ToolHandle<TrigT1CaloHistogramTool> m_histTool;
   mutable MsgStream m_log;
-
-  MonGroup* m_monGroup;
 
   /// Core CPM tower container StoreGate key
   std::string m_cpmTowerLocation;
@@ -121,8 +99,6 @@ private:
   /// Root directory
   std::string m_rootDir;
 
-  /// Phi scale to convert from radians to histogram units
-  double m_phiScale;
   /// Maximum energy plotted
   int m_maxEnergyRange;
   /// Number of events

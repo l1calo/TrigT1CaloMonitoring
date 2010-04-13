@@ -32,6 +32,7 @@
 #include "TrigT1CaloMonitoring/JEMMon.h"
 #include "TrigT1CaloMonitoring/MonHelper.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
 
 #include "TrigT1CaloEvent/JEMRoI.h"
 #include "TrigT1CaloUtils/QuadLinear.h"
@@ -49,7 +50,8 @@
 JEMMon::JEMMon( const std::string & type, const std::string & name,
 		const IInterface* parent )
   : ManagedMonitorToolBase( type, name, parent ),
-    m_errorTool("TrigT1CaloMonErrorTool")
+    m_errorTool("TrigT1CaloMonErrorTool"),
+    m_histTool("TrigT1CaloHistogramTool")
 /*---------------------------------------------------------*/
 {
   // This is how you declare the parameters to Gaudi so that
@@ -93,6 +95,14 @@ StatusCode JEMMon::initialize()
                        << endreq;
     return sc;
   }
+
+  sc = m_histTool.retrieve();
+  if( sc.isFailure() ) {
+    mLog << MSG::ERROR << "Unable to locate Tool TrigT1CaloHistogramTool"
+                       << endreq;
+    return sc;
+  }
+
   return StatusCode::SUCCESS;
 }
 
@@ -280,9 +290,12 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       //m_h_JEMHits_MainHits = Thresholds_Booker.book1F("MainHits_JEM_DAQ", "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ", 8, -0.5, 7.5,  "Threshold No.", "N");
       //m_h_JEMHits_FwdHitsRight = Thresholds_Booker.book1F("FwdHitsRight_JEM_DAQ", "Fwd Right Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
       //m_h_JEMHits_FwdHitsLeft = Thresholds_Booker.book1F("FwdHitsLeft_JEM_DAQ", "Fwd Left Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
-      m_h_JEMHits_MainHits = Thresholds_Booker.book1F("jem_1d_thresh_MainHits", "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ", 8, -0.5, 7.5,  "Threshold No.", "N");
-      m_h_JEMHits_FwdHitsRight = Thresholds_Booker.book1F("jem_1d_thresh_FwdHitsRight", "Fwd Right Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
-      m_h_JEMHits_FwdHitsLeft = Thresholds_Booker.book1F("jem_1d_thresh_FwdHitsLeft", "Fwd Left Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "Threshold No.", "N");
+      m_h_JEMHits_MainHits = Thresholds_Booker.book1F("jem_1d_thresh_MainHits", "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ", 8, -0.5, 7.5,  "", "N");
+      m_histTool->mainJetThresholds(m_h_JEMHits_MainHits);
+      m_h_JEMHits_FwdHitsRight = Thresholds_Booker.book1F("jem_1d_thresh_FwdHitsRight", "Fwd Right Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "", "N");
+      m_histTool->forwardJetThresholds(m_h_JEMHits_FwdHitsRight);
+      m_h_JEMHits_FwdHitsLeft = Thresholds_Booker.book1F("jem_1d_thresh_FwdHitsLeft", "Fwd Left Jet Hit Multiplicity per Threshold  --  JEM DAQ", 4, -0.5, 3.5, "", "N");
+      m_histTool->backwardJetThresholds(m_h_JEMHits_FwdHitsLeft);
       
       // Choose binning to match the encoding - display log/log
       const int eRange = 256;  //range of encoded value
@@ -319,13 +332,17 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       //m_h_JEMRoI_FwdHitsLeft = RoI_Booker.book1F("FwdHitsLeft_JEM_RoI", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
       
       //m_h_JEMDAQ_Hits_Map= Thresholds_Booker.book2F("Hits_Map_JEM","HitMap of Hits per JEM",14,-0.5,13.5,35,0.5,35.5,"","");
-      m_h_JEMRoI_MainHits = RoI_Booker.book1F("jem_1d_roi_MainHits", "Main Jet Hit Multiplicity per Threshold  --  JEM RoI", 8, -0.5, 7.5,  "Threshold No.", "N");      
-      m_h_JEMRoI_FwdHitsRight = RoI_Booker.book1F("jem_1d_roi_FwdHitsRight", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
-      m_h_JEMRoI_FwdHitsLeft = RoI_Booker.book1F("jem_1d_roi_FwdHitsLeft", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "Threshold No.", "N");
+      m_h_JEMRoI_MainHits = RoI_Booker.book1F("jem_1d_roi_MainHits", "Main Jet Hit Multiplicity per Threshold  --  JEM RoI", 8, -0.5, 7.5,  "", "N");      
+      m_histTool->mainJetThresholds(m_h_JEMRoI_MainHits);
+      m_h_JEMRoI_FwdHitsRight = RoI_Booker.book1F("jem_1d_roi_FwdHitsRight", "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "", "N");
+      m_histTool->forwardJetThresholds(m_h_JEMRoI_FwdHitsRight);
+      m_h_JEMRoI_FwdHitsLeft = RoI_Booker.book1F("jem_1d_roi_FwdHitsLeft", "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI", 4, -0.5, 3.5, "", "N");
+      m_histTool->backwardJetThresholds(m_h_JEMRoI_FwdHitsLeft);
       
-      m_h_JEMDAQ_Hits_Map= Thresholds_Booker.book2F("jem_2d_thresh_HitsPerJem","HitMap of Hits per JEM",14,-0.5,13.5,35,0.5,35.5,"","");
-      m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel(13,"Sat(Main)");
-      m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel(14,"Sat(Fwd)");
+      m_h_JEMDAQ_Hits_Map= Thresholds_Booker.book2F("jem_2d_thresh_HitsPerJem","HitMap of Hits per JEM",18,-0.5,17.5,35,0.5,35.5,"","");
+      m_histTool->jemThresholds(m_h_JEMDAQ_Hits_Map);
+      m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel(17,"Sat(Main)");
+      m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel(18,"Sat(Fwd)");
       m_h_JEMDAQ_Hits_Map->SetStats(kFALSE);
       
 	  for (int i = 0; i < 16; i++)
@@ -337,12 +354,11 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
               buffer.str("");
 	      buffer<<i;
 	      name = "JEM " + buffer.str();
-              if (i<12) {
-	      xbin_name = "Thrh" + buffer.str();
-	      m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel((i+1),xbin_name.c_str());
-              
-	      }
-               
+              //if (i<12) {
+	      //xbin_name = "Thrh" + buffer.str();
+	      //m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel((i+1),xbin_name.c_str());
+	      //}
+                 
 	      m_h_JEMDAQ_Hits_Map->GetYaxis()->SetBinLabel((i+1), name.c_str());
 	         
 	      m_h_JEMDAQ_Hits_Map->GetYaxis()->SetBinLabel((i+1+18), name.c_str());
@@ -674,7 +690,11 @@ StatusCode JEMMon::fillHistograms()
 	    for(int i=8; i<12;i++)
 	      {
 		if ((Help.Multiplicity(JEMHit,2*i,1))!=0){
-		  m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+1,1);
+		  if ((*it_JEMHits)->module()%8 == 0) {
+		    m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+1,1);
+		  } else {
+		    m_h_JEMDAQ_Hits_Map->Fill(i+4,(*it_JEMHits)->module()+1,1);
+		  }
 		}
 	      }
 	  }
@@ -690,7 +710,11 @@ StatusCode JEMMon::fillHistograms()
 	    for(int i=8; i<12;i++)
 	      {
 		if ((Help.Multiplicity(JEMHit,2*i,1))!=0){
-		  m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+19,1);
+		  if ((*it_JEMHits)->module()%8 == 0) {
+		    m_h_JEMDAQ_Hits_Map->Fill(i,(*it_JEMHits)->module()+19,1);
+		  } else {
+		    m_h_JEMDAQ_Hits_Map->Fill(i+4,(*it_JEMHits)->module()+19,1);
+                  }
 		}
 	      }
 	  }
@@ -836,9 +860,9 @@ StatusCode JEMMon::fillHistograms()
 	  
 	  //new bins for showing saturation in main and fwd regiom; moved them from error plot to Hit plot
          //Saturation (Main Jets)
-         if ((*it_JEMRoIs)->forward()==0 && err.get(DataError::Overflow)) m_h_JEMDAQ_Hits_Map->Fill(12,ypos);
+         if ((*it_JEMRoIs)->forward()==0 && err.get(DataError::Overflow)) m_h_JEMDAQ_Hits_Map->Fill(16,ypos);
          // Saturation (Fwd Jets)
-	 if ((*it_JEMRoIs)->forward()==1 && err.get(DataError::Overflow)) m_h_JEMDAQ_Hits_Map->Fill(13,ypos);
+	 if ((*it_JEMRoIs)->forward()==1 && err.get(DataError::Overflow)) m_h_JEMDAQ_Hits_Map->Fill(17,ypos);
 		 
 	
 	//Filling the Error Summary histogram

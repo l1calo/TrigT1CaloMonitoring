@@ -19,6 +19,7 @@
 
 class TH2F;
 class StoreGateSvc;
+class TrigT1CaloHistogramTool;
 
 class TrigT1CaloGlobalMonTool: public ManagedMonitorToolBase
 {
@@ -79,6 +80,7 @@ private:
                                     int ny, double ymin, double ymax);
 
   ServiceHandle<StoreGateSvc> m_storeGate;
+  ToolHandle<TrigT1CaloHistogramTool> m_histTool;
   mutable MsgStream m_log;
 
   MonGroup* m_monGroup;

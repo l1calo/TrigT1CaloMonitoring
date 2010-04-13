@@ -20,6 +20,7 @@
 #include "AthenaMonitoring/AthenaMonManager.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloGlobalMonTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
 
 /*---------------------------------------------------------*/
 TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type, 
@@ -27,6 +28,7 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
 				                 const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
     m_storeGate("StoreGateSvc", name),
+    m_histTool("TrigT1CaloHistogramTool"),
     m_log(msgSvc(), name), m_monGroup(0)
 /*---------------------------------------------------------*/
 {
@@ -58,6 +60,13 @@ StatusCode TrigT1CaloGlobalMonTool:: initialize()
     m_log << MSG::ERROR << "Unable to locate Service StoreGateSvc" << endreq;
     return sc;
   }
+
+  sc = m_histTool.retrieve();
+  if( sc.isFailure() ) {
+    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloHistogramTool"
+                        << endreq;
+  return sc;
+}
 
   m_log << MSG::INFO << "TrigT1CaloGlobalMonTool initialised" << endreq;
 
@@ -93,7 +102,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_global = book2F("l1calo_2d_GlobalOverview",
                       "L1Calo Global Error Overview;;Crate",
 	              NumberOfGlobalErrors, 0, NumberOfGlobalErrors,
-		      15, 0, 15);
+		      14, 0, 14);
   m_h_global->GetXaxis()->SetBinLabel(1+PPMDataStatus,   "PPMDataStatus");
   m_h_global->GetXaxis()->SetBinLabel(1+PPMDataError,    "PPMDataError");
   m_h_global->GetXaxis()->SetBinLabel(1+SubStatus,       "SubStatus");
@@ -115,13 +124,11 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
     int cr = crate;
     if (cr >= 12) cr -= 12;
     if (cr >= 8)  cr -= 8;
+    std::string type = (crate < 8) ? "PP " : (crate < 12) ? "CP " : "JEP ";
     std::ostringstream cnum;
-    cnum << cr;
+    cnum << type << cr;
     m_h_global->GetYaxis()->SetBinLabel(crate+1, cnum.str().c_str());
   }
-  m_h_global->GetYaxis()->SetBinLabel(1, "PP 0");
-  m_h_global->GetYaxis()->SetBinLabel(9, "CP 0");
-  m_h_global->GetYaxis()->SetBinLabel(13, "JEP 0");
 
   } // end if (isNewRun ...
 

@@ -1,12 +1,16 @@
+2010-04-13  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+	* Tag as TrigT1CaloMonitoring-00-06-22
+        * Add tool to give threshold names for bin labels.
+
 2010-03-25  Sky French <sfrench@hep.phy.cam.ac.uk>
 	* Tag as TrigT1CaloMonitoring-00-06-21
 	* Fixed compilation warnings and pedestal plots
-	
+
 2010-03-23  Sky French <sfrench@hep.phy.cam.ac.uk>
 	* Tag as TrigT1CaloMonitoring-00-06-20
 	* Added pedestal monitoring plots
 	* Changed LUT EventMismatch Summary plot x-axis labels
-	
+
 2010-03-15  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
 	* Tag as TrigT1CaloMonitoring-00-06-19
         * Fix unchecked StatusCodes.

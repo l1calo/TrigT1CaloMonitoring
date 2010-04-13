@@ -28,6 +28,7 @@ class TH2F;
 class TH2I;
 class StoreGateSvc;
 class TrigT1CaloMonErrorTool;
+class TrigT1CaloHistogramTool;
 
 namespace LVL1 {
   class CPAlgorithm;
@@ -140,6 +141,7 @@ private:
   ToolHandle<LVL1::IL1EmTauTools> m_emTauTool;
   ToolHandle<LVL1::IL1CPHitsTools> m_cpHitsTool;
   ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
+  ToolHandle<TrigT1CaloHistogramTool> m_histTool;
   mutable MsgStream m_log;
   bool m_debug;
 

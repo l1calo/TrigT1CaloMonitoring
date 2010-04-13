@@ -28,6 +28,7 @@
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 
 class TrigT1CaloMonErrorTool;
+class TrigT1CaloHistogramTool;
 
 class CMMMon : public ManagedMonitorToolBase
 {
@@ -54,6 +55,7 @@ protected:
    StoreGateSvc* m_storeGate;
    // Tool to retrieve bytestream errors
    ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
+   ToolHandle<TrigT1CaloHistogramTool> m_histTool;
 
    /** location of data */
    std::string m_CMMJetHitsLocation;
