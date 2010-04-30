@@ -100,7 +100,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
   m_monGroup = &monGlobal;
 
   m_h_global = book2F("l1calo_2d_GlobalOverview",
-                      "L1Calo Global Error Overview;;Crate",
+                      "L1Calo Global Error Overview",
 	              NumberOfGlobalErrors, 0, NumberOfGlobalErrors,
 		      14, 0, 14);
   m_h_global->GetXaxis()->SetBinLabel(1+PPMDataStatus,   "PPMDataStatus");

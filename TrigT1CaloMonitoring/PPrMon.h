@@ -30,6 +30,7 @@
 //class StoreGateSvc;
 
 class TrigT1CaloMonErrorTool;
+class TrigT1CaloHistogramTool;
 
 class PPrMon: public ManagedMonitorToolBase
 {
@@ -101,6 +102,7 @@ protected:
 
    // Tool to retrieve bytestream errors
    ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
+   ToolHandle<TrigT1CaloHistogramTool> m_histTool;
    
 
    // histos per channel
@@ -135,6 +137,8 @@ protected:
   //LUT Hitmaps per threshold
   std::vector<TH2F*> m_h_TT_HitMap_emLUT_Thresh;
   std::vector<TH2F*> m_h_TT_HitMap_hadLUT_Thresh;
+  TProfile2D* m_p_TT_HitMap_emLUT_etAv;
+  TProfile2D* m_p_TT_HitMap_hadLUT_etAv;
 
    //distribution of LUT peak per detector region
    TH1F* m_h_TT_emLUT;

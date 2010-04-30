@@ -26,9 +26,6 @@
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
-#include "EventInfo/EventInfo.h"
-#include "EventInfo/EventID.h"
-
 #include "TrigT1CaloUtils/CoordToHardware.h"
 #include "TrigT1CaloEvent/TriggerTower.h"
 #include "TrigT1CaloUtils/TriggerTowerKey.h"
@@ -37,6 +34,7 @@
 #include "TrigT1Interfaces/CoordinateRange.h"
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 #include "TrigT1CaloCalibConditions/L1CaloPprLut.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
 
 #include "TrigT1CaloMonitoring/PPMSimBSMon.h"
 
@@ -48,8 +46,9 @@ PPMSimBSMon::PPMSimBSMon(const std::string & type,
     m_storeGate("StoreGateSvc", name),
     m_l1CondSvc(0),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"), 
+    m_histTool("TrigT1CaloHistogramTool"),
     m_log(msgSvc(), name), m_debug(false),
-    m_monGroup(0), m_events(0)
+    m_events(0)
 /*---------------------------------------------------------*/
 {
   declareInterface<IMonitorToolBase>(this); 
@@ -59,9 +58,6 @@ PPMSimBSMon::PPMSimBSMon(const std::string & type,
 		  LVL1::TrigT1CaloDefs::TriggerTowerLocation);
   
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
-
-  declareProperty("EventSamples", m_eventSamples = 10,
-                  "Number of Error Event Number Samples");
 
   declareProperty("PedestalSampleSize", m_instantaneous=400);
   declareProperty("OnlineTest", m_onlineTest = false,
@@ -103,17 +99,19 @@ StatusCode PPMSimBSMon:: initialize()
     return sc;
   }
 
+  sc = m_histTool.retrieve();
+  if( sc.isFailure() ) {
+    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloHistogramTool"
+                        << endreq;
+    return sc;
+  }
+
   //sc = service("L1CaloCondSvc", m_l1CondSvc);
   //if(sc.isFailure()){
   //  m_log << MSG::WARNING << "Could not retrieve L1CaloCondSvc" << endreq;
   // }
   
   //===========
-
-  // Phi units
-  const double twoPi = 2.*M_PI;
-  m_phiMax = 64;
-  m_phiScale = m_phiMax/twoPi;
 
   m_log << MSG::INFO << "PPMSimBSMon initialised" << endreq;
 
@@ -187,95 +185,113 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   // LUT
 
-  m_monGroup = &monPPM;
+  m_histTool->setMonGroup(&monPPM);
 
-  m_h_ppm_em_2d_etaPhi_tt_lut_SimEqData = bookEtaPhi("ppm_em_2d_etaPhi_tt_lut_SimEqData",
-						     "PPM LUT EM Data/Simulation Non-zero Matches;eta;phi",1);
-  m_h_ppm_em_2d_etaPhi_tt_lut_SimNeData = bookEtaPhi("ppm_em_2d_etaPhi_tt_lut_SimNeData",
-						     "PPM LUT EM Data/Simulation Non-zero Mismatches;eta;phi",1);
-  m_h_ppm_em_2d_etaPhi_tt_lut_SimNoData = bookEtaPhi("ppm_em_2d_etaPhi_tt_lut_SimNoData",
-						     "PPM LUT EM Simulation but no Data;eta;phi",1);
-  m_h_ppm_em_2d_etaPhi_tt_lut_DataNoSim = bookEtaPhi("ppm_em_2d_etaPhi_tt_lut_DataNoSim",
-						     "PPM LUT EM Data but no Simulation;eta;phi",1);
-  m_h_ppm_had_2d_etaPhi_tt_lut_SimEqData = bookEtaPhi("ppm_had_2d_etaPhi_tt_lut_SimEqData",
-						      "PPM LUT HAD Data/Simulation Non-zero Matches;eta;phi",1);
-  m_h_ppm_had_2d_etaPhi_tt_lut_SimNeData = bookEtaPhi("ppm_had_2d_etaPhi_tt_lut_SimNeData",
-						      "PPM LUT HAD Data/Simulation Non-zero Mismatches;eta;phi",1);
-  m_h_ppm_had_2d_etaPhi_tt_lut_SimNoData = bookEtaPhi("ppm_had_2d_etaPhi_tt_lut_SimNoData",
-						      "PPM LUT HAD Simulation but no Data;eta;phi",1);
-  m_h_ppm_had_2d_etaPhi_tt_lut_DataNoSim = bookEtaPhi("ppm_had_2d_etaPhi_tt_lut_DataNoSim",
-						      "PPM LUT HAD Data but no Simulation;eta;phi",1);
+  m_h_ppm_em_2d_etaPhi_tt_lut_SimEqData = m_histTool->bookPPMEmEtaVsPhi(
+    "ppm_em_2d_etaPhi_tt_lut_SimEqData",
+    "PPM LUT EM Data/Simulation Non-zero Matches");
+  m_h_ppm_em_2d_etaPhi_tt_lut_SimNeData = m_histTool->bookPPMEmEtaVsPhi(
+    "ppm_em_2d_etaPhi_tt_lut_SimNeData",
+    "PPM LUT EM Data/Simulation Non-zero Mismatches");
+  m_h_ppm_em_2d_etaPhi_tt_lut_SimNoData = m_histTool->bookPPMEmEtaVsPhi(
+    "ppm_em_2d_etaPhi_tt_lut_SimNoData",
+    "PPM LUT EM Simulation but no Data");
+  m_h_ppm_em_2d_etaPhi_tt_lut_DataNoSim = m_histTool->bookPPMEmEtaVsPhi(
+    "ppm_em_2d_etaPhi_tt_lut_DataNoSim",
+    "PPM LUT EM Data but no Simulation");
+  m_h_ppm_had_2d_etaPhi_tt_lut_SimEqData = m_histTool->bookPPMHadEtaVsPhi(
+    "ppm_had_2d_etaPhi_tt_lut_SimEqData",
+    "PPM LUT HAD Data/Simulation Non-zero Matches");
+  m_h_ppm_had_2d_etaPhi_tt_lut_SimNeData = m_histTool->bookPPMHadEtaVsPhi(
+    "ppm_had_2d_etaPhi_tt_lut_SimNeData",
+    "PPM LUT HAD Data/Simulation Non-zero Mismatches");
+  m_h_ppm_had_2d_etaPhi_tt_lut_SimNoData = m_histTool->bookPPMHadEtaVsPhi(
+    "ppm_had_2d_etaPhi_tt_lut_SimNoData",
+    "PPM LUT HAD Simulation but no Data");
+  m_h_ppm_had_2d_etaPhi_tt_lut_DataNoSim = m_histTool->bookPPMHadEtaVsPhi(
+    "ppm_had_2d_etaPhi_tt_lut_DataNoSim",
+    "PPM LUT HAD Data but no Simulation");
 
   // Overall pedestal
  
-  m_monGroup = &monPed; 
+  m_histTool->setMonGroup(&monPed);
 
-  m_h_ppm_em_2d_etaPhi_tt_ped_runavg = bookProfileEtaPhi("ppm_em_2d_etaPhi_tt_ped_runavg",
-							"PPM Mean Pedestal Difference EM (over run);eta;phi",1);
-  m_h_ppm_had_2d_etaPhi_tt_ped_runavg = bookProfileEtaPhi("ppm_had_2d_etaPhi_tt_ped_runavg",
-							"PPM Mean Pedestal Difference Had (over run);eta;phi",1);
+  m_h_ppm_em_2d_etaPhi_tt_ped_runavg = m_histTool->bookProfilePPMEmEtaVsPhi(
+    "ppm_em_2d_etaPhi_tt_ped_runavg",
+    "PPM Mean Pedestal Difference EM (over run)");
+  m_h_ppm_had_2d_etaPhi_tt_ped_runavg = m_histTool->bookProfilePPMHadEtaVsPhi(
+    "ppm_had_2d_etaPhi_tt_ped_runavg",
+    "PPM Mean Pedestal Difference Had (over run)");
   
-  m_monGroup = &monPedrms;
+  m_histTool->setMonGroup(&monPedrms);
 
-  m_h_ppm_em_2d_etaPhi_tt_ped_runrms = bookEtaPhi("ppm_em_2d_etaPhi_tt_ped_runrms",
-							 "PPM rms Pedestal Difference EM (over run);eta;phi",1);
-  m_h_ppm_had_2d_etaPhi_tt_ped_runrms = bookEtaPhi("ppm_had_2d_etaPhi_tt_ped_runrms",
-						   "PPM rms Pedestal Difference Had (over run);eta;phi",1);
+  m_h_ppm_em_2d_etaPhi_tt_ped_runrms = m_histTool->bookPPMEmEtaVsPhi(
+    "ppm_em_2d_etaPhi_tt_ped_runrms",
+    "PPM rms Pedestal Difference EM (over run)");
+  m_h_ppm_had_2d_etaPhi_tt_ped_runrms = m_histTool->bookPPMHadEtaVsPhi(
+    "ppm_had_2d_etaPhi_tt_ped_runrms",
+    "PPM rms Pedestal Difference Had (over run)");
 
   if(m_onlineTest || m_environment == AthenaMonManager::online) {
 
-    m_monGroup = &monPed;
+    m_histTool->setMonGroup(&monPed);
 
-    m_h_ppm_em_2d_etaPhi_tt_ped_worstavg = bookEtaPhi("ppm_em_2d_etaPhi_tt_ped_worstavg",
-						      "PPM Worst Pedestal Difference EM (over run);eta;phi",1);
-    m_h_ppm_had_2d_etaPhi_tt_ped_worstavg = bookEtaPhi("ppm_had_2d_etaPhi_tt_ped_worstavg",
-							"PPM Worst Pedestal Difference Had (over run);eta;phi",1);
+    m_h_ppm_em_2d_etaPhi_tt_ped_worstavg = m_histTool->bookPPMEmEtaVsPhi(
+      "ppm_em_2d_etaPhi_tt_ped_worstavg",
+      "PPM Worst Pedestal Difference EM (over run)");
+    m_h_ppm_had_2d_etaPhi_tt_ped_worstavg = m_histTool->bookPPMHadEtaVsPhi(
+      "ppm_had_2d_etaPhi_tt_ped_worstavg",
+      "PPM Worst Pedestal Difference Had (over run)");
 
-    m_h_ppm_em_2d_etaPhi_tt_ped_instavg = bookProfileEtaPhi("ppm_em_2d_etaPhi_tt_ped_instavg",
-							    "PPM Mean Pedestal Difference EM (instantaneous);eta;phi",1);
-    m_h_ppm_had_2d_etaPhi_tt_ped_instavg = bookProfileEtaPhi("ppm_had_2d_etaPhi_tt_ped_instavg",
-							     "PPM Mean Pedestal Difference Had (instantaneous);eta;phi",1);
+    m_h_ppm_em_2d_etaPhi_tt_ped_instavg = m_histTool->bookProfilePPMEmEtaVsPhi(
+      "ppm_em_2d_etaPhi_tt_ped_instavg",
+      "PPM Mean Pedestal Difference EM (instantaneous)");
+    m_h_ppm_had_2d_etaPhi_tt_ped_instavg = m_histTool->bookProfilePPMHadEtaVsPhi(
+      "ppm_had_2d_etaPhi_tt_ped_instavg",
+      "PPM Mean Pedestal Difference Had (instantaneous)");
     
-    m_monGroup = &monPedrms;
+    m_histTool->setMonGroup(&monPedrms);
 
-    m_h_ppm_em_2d_etaPhi_tt_ped_instrms = bookEtaPhi("ppm_em_2d_etaPhi_tt_ped_instrms",
-						     "PPM rms Pedestal Difference EM (instantaneous);eta;phi",1);
-    m_h_ppm_had_2d_etaPhi_tt_ped_instrms = bookEtaPhi("ppm_had_2d_etaPhi_tt_ped_instrms",
-						      "PPM rms Pedestal Difference Had (instantaneous);eta;phi",1);
+    m_h_ppm_em_2d_etaPhi_tt_ped_instrms = m_histTool->bookPPMEmEtaVsPhi(
+      "ppm_em_2d_etaPhi_tt_ped_instrms",
+      "PPM rms Pedestal Difference EM (instantaneous)");
+    m_h_ppm_had_2d_etaPhi_tt_ped_instrms = m_histTool->bookPPMHadEtaVsPhi(
+      "ppm_had_2d_etaPhi_tt_ped_instrms",
+      "PPM rms Pedestal Difference Had (instantaneous)");
     
-    m_monGroup = &monPed;
+    m_histTool->unsetMonGroup();
 
-    m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B = bookProfileEtaPhi("ppm_em_2d_etaPhi_tt_ped_instavg_B",
-							      "PPM Mean Pedestal Difference EM (instantaneous [B]);eta;phi",0);
-    m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B = bookProfileEtaPhi("ppm_had_2d_etaPhi_tt_ped_instavg_B",
-							       "PPM Mean Pedestal Difference Had (instantaneous [B]);eta;phi",0);
+    m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B = m_histTool->bookProfilePPMEmEtaVsPhi(
+      "ppm_em_2d_etaPhi_tt_ped_instavg_B",
+      "PPM Mean Pedestal Difference EM (instantaneous [B])");
+    m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B = m_histTool->bookProfilePPMHadEtaVsPhi(
+      "ppm_had_2d_etaPhi_tt_ped_instavg_B",
+      "PPM Mean Pedestal Difference Had (instantaneous [B])");
    
-    m_monGroup = &monPedrms;
-
-    m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B = bookEtaPhi("ppm_em_2d_etaPhi_tt_ped_instrms_B",
-						       "PPM rms Pedestal Difference EM (instantaneous [B]);eta;phi",0);
-    m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B = bookEtaPhi("ppm_had_2d_etaPhi_tt_ped_instrms_B",
-						      "PPM rms Pedestal Difference Had (instantaneous [B]);eta;phi",0);
+    m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B = m_histTool->bookPPMEmEtaVsPhi(
+      "ppm_em_2d_etaPhi_tt_ped_instrms_B",
+      "PPM rms Pedestal Difference EM (instantaneous [B])");
+    m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B = m_histTool->bookPPMHadEtaVsPhi(
+      "ppm_had_2d_etaPhi_tt_ped_instrms_B",
+      "PPM rms Pedestal Difference Had (instantaneous [B])");
   
   }
 							
   // Mismatch Histograms
 
-  m_monGroup = &monEvent;
+  m_histTool->setMonGroup(&monEvent);
 
-  m_sampleCounts.clear();
-  m_sampleCounts.resize(8*32,0);
+  m_h_ppm_2d_LUT_MismatchEvents_cr0cr1 = m_histTool->bookPPMEventVsCrateModule(
+    "ppm_2d_LUT_MismatchEvents_cr0cr1","PPM LUT Mismatch Event Numbers",0,1);
+  m_h_ppm_2d_LUT_MismatchEvents_cr2cr3 = m_histTool->bookPPMEventVsCrateModule(
+    "ppm_2d_LUT_MismatchEvents_cr2cr3","PPM LUT Mismatch Event Numbers",2,3);
+  m_h_ppm_2d_LUT_MismatchEvents_cr4cr5 = m_histTool->bookPPMEventVsCrateModule(
+    "ppm_2d_LUT_MismatchEvents_cr4cr5","PPM LUT Mismatch Event Numbers",4,5);
+  m_h_ppm_2d_LUT_MismatchEvents_cr6cr7 = m_histTool->bookPPMEventVsCrateModule(
+    "ppm_2d_LUT_MismatchEvents_cr6cr7","PPM LUT Mismatch Event Numbers",6,7);
 
-  m_h_ppm_2d_LUT_MismatchEvents_cr0cr1 = book2I("ppm_2d_LUT_MismatchEvents_cr0cr1","PPM LUT Mismatch Event Numbers;First ten events with mismatch;Crate/Module",m_eventSamples,0,m_eventSamples,32,0,32);
-  m_h_ppm_2d_LUT_MismatchEvents_cr2cr3 = book2I("ppm_2d_LUT_MismatchEvents_cr2cr3","PPM LUT Mismatch Event Numbers;First ten events with mismatch;Crate/Module",m_eventSamples,0,m_eventSamples,32,0,32);
-  m_h_ppm_2d_LUT_MismatchEvents_cr4cr5 = book2I("ppm_2d_LUT_MismatchEvents_cr4cr5","PPM LUT Mismatch Event Numbers;First ten events with mismatch;Crate/Module",m_eventSamples,0,m_eventSamples,32,0,32);
-  m_h_ppm_2d_LUT_MismatchEvents_cr6cr7 = book2I("ppm_2d_LUT_MismatchEvents_cr6cr7","PPM LUT Mismatch Event Numbers;First ten events with mismatch;Crate/Module",m_eventSamples,0,m_eventSamples,32,0,32);
+  m_histTool->unsetMonGroup();
 
-  setLabelsCM(m_h_ppm_2d_LUT_MismatchEvents_cr0cr1,false,0);
-  setLabelsCM(m_h_ppm_2d_LUT_MismatchEvents_cr2cr3,false,2);
-  setLabelsCM(m_h_ppm_2d_LUT_MismatchEvents_cr4cr5,false,4);
-  setLabelsCM(m_h_ppm_2d_LUT_MismatchEvents_cr6cr7,false,6);
-	
   } // end if (isNewRun ...
 
   m_log << MSG::DEBUG << "Leaving bookHistograms" << endreq;
@@ -289,9 +305,6 @@ StatusCode PPMSimBSMon::fillHistograms()
 {
   m_log << MSG::DEBUG << "fillHistograms entered" << endreq;
 
-  // NB. Collection retrieves wrapped in m_storeGate->contains<..>(..)
-  // are for those not expected to be on ESD. They should be on bytestream.
-  
   StatusCode sc;
 
   //Retrieve Trigger Towers from SG
@@ -325,7 +338,8 @@ StatusCode PPMSimBSMon::fillHistograms()
       worst_bin = worst_max;
     }
     if(fabs(worst_value)>fabs(m_h_ppm_em_2d_etaPhi_tt_ped_worstavg->GetBinContent(worst_bin))) {
-      m_h_ppm_em_2d_etaPhi_tt_ped_worstavg->SetBinContent(worst_bin,worst_value);
+      m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_worstavg,
+                                      worst_bin,worst_value);
     }
     m_h_ppm_em_2d_etaPhi_tt_ped_instavg->Reset();
     m_h_ppm_em_2d_etaPhi_tt_ped_instavg->Add(m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B);
@@ -347,7 +361,8 @@ StatusCode PPMSimBSMon::fillHistograms()
       worst_bin = worst_max;
     }
     if(fabs(worst_value)>fabs(m_h_ppm_had_2d_etaPhi_tt_ped_worstavg->GetBinContent(worst_bin))) {
-      m_h_ppm_had_2d_etaPhi_tt_ped_worstavg->SetBinContent(worst_bin,worst_value);
+      m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_worstavg,
+                                       worst_bin,worst_value);
     }
     m_h_ppm_had_2d_etaPhi_tt_ped_instavg->Reset();
     m_h_ppm_had_2d_etaPhi_tt_ped_instavg->Add(m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B);
@@ -375,125 +390,6 @@ StatusCode PPMSimBSMon::procHistograms(bool isEndOfEventsBlock,
   return StatusCode::SUCCESS;
 }
 
-TH1F* PPMSimBSMon::book1F(std::string name, std::string title,
-                                   int nx, double xmin, double xmax)
-{
-  TH1F *hist = new TH1F(TString(name), TString(title), nx, xmin, xmax);
-  
-  if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {
-    m_log << MSG::WARNING << "Could not register histogram : " 
- 	  << name << endreq;
-  }
-  hist->SetStats(kFALSE);
-  
-  return hist;
-}
-
-TH2F* PPMSimBSMon::bookEtaPhi(std::string name, std::string title, bool to_register)
-{
-  TH2F* hist = 0;
-  const double phiBin = M_PI/32.;
-  const double halfPhiBin = M_PI/64.;
-  const int nxbins = 66;
-
-  const double xbins[nxbins+1] = {-4.9,-4.475,-4.050,-3.625,-3.2,-3.1,-2.9,-2.7,-2.5,-2.4,-2.3,-2.2,-2.1,-2.0,-1.9,-1.8,-1.7,-1.6,-1.5,-1.4,-1.3,-1.2,-1.1,-1.0,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.7,2.9,3.1,3.2,3.625,4.050,4.475,4.9};
-  std::string newTitle = title + ";eta";
-  hist = book2F(name, newTitle, nxbins, xbins, 64,0.,64,to_register);
-  for (int chan = 0; chan < 64; chan +=2 ) {
-    const double rad = chan*phiBin + halfPhiBin;
-    std::ostringstream cnum;
-    cnum << chan << "/"
-        << std::setiosflags(std::ios::fixed | std::ios::showpoint)
-        << std::setprecision(2) << rad;
-    hist->GetYaxis()->SetBinLabel(chan+1, cnum.str().c_str());
-  }
-  hist->GetYaxis()->SetTitleOffset(1.3);
-
-  return hist;
-
-}
-
-TProfile2D* PPMSimBSMon::bookProfileEtaPhi(std::string name, std::string title, bool to_register)
-{
-  TProfile2D* hist = 0;
-  const double phiBin = M_PI/32.;
-  const double halfPhiBin = M_PI/64.;
-  const int nxbins = 66;
-
-  const double xbins[nxbins+1] = {-4.9,-4.475,-4.050,-3.625,-3.2,-3.1,-2.9,-2.7,-2.5,-2.4,-2.3,-2.2,-2.1,-2.0,-1.9,-1.8,-1.7,-1.6,-1.5,-1.4,-1.3,-1.2,-1.1,-1.0,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.7,2.9,3.1,3.2,3.625,4.050,4.475,4.9};
-  std::string newTitle = title + ";eta";
-  hist = bookProfile2Dbin(name, newTitle, nxbins, xbins, 64,0.,64,to_register);
-  for (int chan = 0; chan < 64; chan +=2 ) {
-    const double rad = chan*phiBin + halfPhiBin;
-    std::ostringstream cnum;
-    cnum << chan << "/"
-        << std::setiosflags(std::ios::fixed | std::ios::showpoint)
-        << std::setprecision(2) << rad;
-    hist->GetYaxis()->SetBinLabel(chan+1, cnum.str().c_str());
-  }
-  hist->GetYaxis()->SetTitleOffset(1.3);
-
-  return hist;
-}
-
-
-TH2F* PPMSimBSMon::book2F(std::string name, std::string title,
-			  int nx, const double* xbins,
-			  int ny, double ymin, double ymax,bool to_register)
-{		
-  TH2F *hist = new TH2F(TString(name), TString(title), nx, xbins,
-                                                       ny, ymin, ymax);
-  
-      
-  if(to_register) {
-    if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {
-      m_log << MSG::WARNING << "Could not register histogram : " 
-	    << name << endreq;
-    }
-  }
-
-  hist->SetOption("colz");
-  hist->SetStats(kFALSE);
-  
-  return hist;
-}
-
-TProfile2D* PPMSimBSMon::bookProfile2Dbin(std::string name, std::string title, int
-nx, const double* xbins, int ny, double ymin, double ymax, bool to_register)
-
-{
-
-  TProfile2D *hist = new TProfile2D(TString(name), TString(title), nx, xbins, ny, ymin, ymax);
-	
-  if(to_register) {
-    if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {
-      m_log << MSG::WARNING << "Could not register histogram : "
-	    << name << endreq;
-    }
-  }
-	
-  hist-> SetOption ("colz");
-
-  return hist;
-}
-
-TH2I* PPMSimBSMon::book2I(std::string name, std::string title,
-                                   int nx, double xmin, double xmax,  
-	                           int ny, double ymin, double ymax)
-{		
-  TH2I *hist = new TH2I(TString(name), TString(title), nx, xmin, xmax,
-                                                       ny, ymin, ymax);
-  
-  if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {
-    m_log << MSG::WARNING << "Could not register histogram : " 
-	  << name << endreq;
-  }
-  hist->SetOption("text");
-  hist->SetStats(kFALSE);
-  
-  return hist;
-}
-
 void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 {
   m_log << MSG::DEBUG << "Simulate LUT data from FADC data" << endreq;
@@ -506,7 +402,6 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
   ErrorVector moduleError(nCrates);
   
   m_ttTool->setDebug(false);
-  m_eventNumber = -1;
   TriggerTowerCollection::const_iterator iter  = ttIn->begin();
   TriggerTowerCollection::const_iterator iterE = ttIn->end();
 
@@ -573,8 +468,6 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     const int datEm  = tt->emEnergy();
     const int datHad = tt->hadEnergy();
 
-    if (!simEm && !simHad && !datEm && !datHad) continue;
-    
     int em_offset = 0;
     
     if (m_LutContainer) {
@@ -603,7 +496,6 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     
     const double eta = tt->eta();
     const double phi = tt->phi();
-    const double phiMod = phi * m_phiScale;
   
     int tt_accept = 1;
     int bin = 0;
@@ -619,21 +511,31 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	
 	for(int i=0; i<emSlices; i++) {
 	  
-	  m_h_ppm_em_2d_etaPhi_tt_ped_runavg->Fill(eta,phiMod,((tt->emADC()).at(i)-em_offset));
+	  m_histTool->fillPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_runavg,
+	                          eta, phi, ((tt->emADC()).at(i)-em_offset));
 
 	  if (m_environment == AthenaMonManager::online || m_onlineTest) {
-	    m_h_ppm_em_2d_etaPhi_tt_ped_instavg->Fill(eta,phiMod,((tt->emADC()).at(i)-em_offset));
-	    m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->Fill(eta,phiMod,((tt->emADC()).at(i)-em_offset));
+	    m_histTool->fillPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_instavg,
+	                          eta, phi, ((tt->emADC()).at(i)-em_offset));
+	    m_histTool->fillPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B,
+	                          eta, phi, ((tt->emADC()).at(i)-em_offset));
 	  }
 	  
-	  bin = m_h_ppm_em_2d_etaPhi_tt_ped_runavg->FindBin(eta,phiMod);
-	  m_h_ppm_em_2d_etaPhi_tt_ped_runrms->SetBinContent(bin,m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinError(bin));
-	  m_h_ppm_em_2d_etaPhi_tt_ped_runrms->SetBinError(bin,m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinError(bin)/sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinEntries(bin)));
+	  bin = m_histTool->findBinPPMEmEtaVsPhi(
+	                    m_h_ppm_em_2d_etaPhi_tt_ped_runavg, eta, phi);
+	  m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_runrms,
+	    bin, m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinError(bin),
+	    m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinError(bin)/
+	      sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinEntries(bin)));
 	  if (m_environment == AthenaMonManager::online || m_onlineTest) {
-	    m_h_ppm_em_2d_etaPhi_tt_ped_instrms->SetBinContent(bin,m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinError(bin));
-	    m_h_ppm_em_2d_etaPhi_tt_ped_instrms->SetBinError(bin,m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinError(bin)/sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinEntries(bin)));
-	    m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B->SetBinContent(bin,m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin));
-	    m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B->SetBinError(bin,m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin)/sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinEntries(bin)));
+	    m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_instrms,
+	      bin, m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinError(bin),
+	      m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinError(bin)/
+	        sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinEntries(bin)));
+	    m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B,
+	      bin, m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin),
+	      m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin)/
+	        sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinEntries(bin)));
 	    
 	  }
 	}	 
@@ -653,26 +555,38 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 
 	for(int i=0; i<hadSlices; i++) {
 	  
-	  m_h_ppm_had_2d_etaPhi_tt_ped_runavg->Fill(eta,phiMod,((tt->hadADC()).at(i)-had_offset));
+	  m_histTool->fillPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_runavg,
+	                          eta, phi, ((tt->hadADC()).at(i)-had_offset));
 
 	  if (m_environment == AthenaMonManager::online || m_onlineTest) {
-	    m_h_ppm_had_2d_etaPhi_tt_ped_instavg->Fill(eta,phiMod,((tt->hadADC()).at(i)-had_offset));
-	    m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->Fill(eta,phiMod,((tt->hadADC()).at(i)-had_offset));
+	    m_histTool->fillPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_instavg,
+	                          eta, phi, ((tt->hadADC()).at(i)-had_offset));
+	    m_histTool->fillPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B,
+	                          eta, phi, ((tt->hadADC()).at(i)-had_offset));
 	  }
-	  bin = m_h_ppm_had_2d_etaPhi_tt_ped_runavg->FindBin(eta,phiMod);
-	  m_h_ppm_had_2d_etaPhi_tt_ped_runrms->SetBinContent(bin,m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinError(bin));
-	  m_h_ppm_had_2d_etaPhi_tt_ped_runrms->SetBinError(bin,m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinError(bin)/sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinEntries(bin)));
+	  bin = m_histTool->findBinPPMHadEtaVsPhi(
+	                    m_h_ppm_had_2d_etaPhi_tt_ped_runavg, eta, phi);
+	  m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_runrms,
+	    bin, m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinError(bin),
+	    m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinError(bin)/
+	      sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinEntries(bin)));
 
 	  if (m_environment == AthenaMonManager::online || m_onlineTest) {	  
-	    m_h_ppm_had_2d_etaPhi_tt_ped_instrms->SetBinContent(bin,m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinError(bin));
-	    m_h_ppm_had_2d_etaPhi_tt_ped_instrms->SetBinError(bin,m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinError(bin)/sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinEntries(bin)));
-	    m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B->SetBinContent(bin,m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin));
-	    m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B->SetBinError(bin,m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin)/sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinEntries(bin)));
+	    m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_instrms,
+	      bin, m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinError(bin),
+	      m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinError(bin)/
+	        sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinEntries(bin)));
+	    m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B,
+	      bin, m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin),
+	      m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin)/
+	        sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinEntries(bin)));
 	  
 	  }
 	}
       }
     }
+
+    if (!simEm && !simHad && !datEm && !datHad) continue;
     
     //  Fill in error plots
     
@@ -699,7 +613,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
       }
     }
     
-    if (hist1) hist1->Fill(eta, phiMod);
+    if (hist1) m_histTool->fillPPMEmEtaVsPhi(hist1, eta, phi);
     
     if(em_mismatch==1) {
       crateError[em_crate]=1;
@@ -729,7 +643,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
       }
     }
 
-    if (hist1) hist1->Fill(eta, phiMod);
+    if (hist1) m_histTool->fillPPMHadEtaVsPhi(hist1, eta, phi);
       
     if(had_mismatch==1) {
       crateError[had_crate] = 1;
@@ -752,69 +666,15 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
   
 }
 
-void PPMSimBSMon::setLabelsCM(TH2* hist, bool xAxis, int first)
-{
-  const int nPPMmodulespercrate = 16;
-  for (int crate = 0; crate < 2; ++crate) {
-    for (int module = 0; module < nPPMmodulespercrate; module += 2) {
-      std::ostringstream cnum;
-      cnum << crate+first << "/" << module;
-      if (xAxis) {
-        hist->GetXaxis()->SetBinLabel(crate*nPPMmodulespercrate + module + 1,
-                                                        cnum.str().c_str());
-      } else {
-        hist->GetYaxis()->SetBinLabel(crate*nPPMmodulespercrate + module + 1,
-                                                        cnum.str().c_str());
-      }
-    }
-  }
-}
-
 void PPMSimBSMon::fillEventSample(int crate, int module)
 {
-  
-  if (m_eventNumber < 0) {
-    m_eventNumber = 0;
-    const EventInfo* evInfo = 0;
-    StatusCode sc = m_storeGate->retrieve(evInfo);
-    if (sc.isFailure()) {
-      m_log << MSG::DEBUG << "No EventInfo found" << endreq;
-    } else {
-      const EventID* evID = evInfo->event_ID();
-      if (evID) m_eventNumber = evID->event_number();
-    }
-  }
-  if (m_eventNumber > 0) {
-    int offset = 0;
-    int y = 0;
-    int x = 0;
-    int count = 0;
-    if(crate %2 == 0) offset = 0;
-    else offset = 16;
-    y = (module) + offset;
-    count = crate*16 + (module);
-    x = m_sampleCounts[count];
-    if (x < m_eventSamples) {
-      if(crate==0 || crate==1) {
-	TH2I* hist = m_h_ppm_2d_LUT_MismatchEvents_cr0cr1;
-	if (hist) hist->Fill(x,y, m_eventNumber);
-      }
-      if(crate==2 || crate==3) {
-	TH2I* hist = m_h_ppm_2d_LUT_MismatchEvents_cr2cr3;
-	if (hist) hist->Fill(x,y, m_eventNumber);
-      }
-      if(crate==4 || crate==5) {
-	TH2I* hist = m_h_ppm_2d_LUT_MismatchEvents_cr4cr5;
-	if (hist) hist->Fill(x,y, m_eventNumber);
-      }
-      if(crate==6 || crate==7) {
-	TH2I* hist = m_h_ppm_2d_LUT_MismatchEvents_cr6cr7;
-	if (hist) hist->Fill(x,y, m_eventNumber);
-      }
-      ++m_sampleCounts[count];
-    }
-  }
-
+  int y = module + 16*(crate%2);;
+  TH2I* hist = 0;
+  if     (crate==0 || crate==1) hist = m_h_ppm_2d_LUT_MismatchEvents_cr0cr1;
+  else if(crate==2 || crate==3) hist = m_h_ppm_2d_LUT_MismatchEvents_cr2cr3;
+  else if(crate==4 || crate==5) hist = m_h_ppm_2d_LUT_MismatchEvents_cr4cr5;
+  else if(crate==6 || crate==7) hist = m_h_ppm_2d_LUT_MismatchEvents_cr6cr7;
+  if (hist) m_histTool->fillEventNumber(hist, y);
 }
 
 

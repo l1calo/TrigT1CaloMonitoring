@@ -37,6 +37,8 @@ class TH2F;
 class TH2I;
 class StoreGateSvc;
 
+class TrigT1CaloHistogramTool;
+
 namespace LVL1 {
   class TriggerTower;
   class IL1TriggerTowerTool;
@@ -70,20 +72,6 @@ private:
 
   typedef std::map<int, LVL1::TriggerTower*> TriggerTowerMap;
   
-  TH1F* book1F(std::string nam, std::string tit,
-                                    int nx, double xmin, double xmax);
-  TH2F* book2F(std::string nam, std::string tit,
-                                    int nx, const double* xbins,
-                                    int ny, double ymin, double ymax, bool to_register);
-  TProfile2D* bookProfile2Dbin(std::string name, std::string tit,
-									int nx, const double* xbins,
-									int ny, double ymin, double ymax, bool to_register);
-									
-  TH2F* bookEtaPhi(std::string nam, std::string tit, bool to_register);
-  TProfile2D* bookProfileEtaPhi(std::string nam, std::string tit, bool to_register);
-  TH2I* book2I(std::string nam, std::string tit,
-                                    int nx, double xmin, double xmax,
-                                    int ny, double ymin, double ymax);
   void  fillEventSample(int crate, int module);
 
   void simulateAndCompare(const TriggerTowerCollection* ttIn);
@@ -93,31 +81,19 @@ private:
   L1CaloCondSvc* m_l1CondSvc;
 
   ToolHandle<LVL1::IL1TriggerTowerTool> m_ttTool;
+  ToolHandle<TrigT1CaloHistogramTool> m_histTool;
       
   mutable MsgStream m_log;
   bool m_debug;
   bool m_onlineTest;
 
-  MonGroup* m_monGroup;
   std::string m_rootDir;
 
   /// Trigger Tower container StoreGate key
   std::string m_triggerTowerLocation;
 
-  /// Phi Units for eta/phi plots
-  std::string m_phiUnits;
-  /// Phi maximum in wanted units
-  double m_phiMax;
-  /// Phi scale to convert from radians to wanted units
-  double m_phiScale;
   /// Number of events
   int m_events;
-  /// Number of error event number samples to keep
-  int m_eventSamples;
-  /// Current event number
-  int m_eventNumber;
-  /// Sample event number counts
-  std::vector<int> m_sampleCounts;
   /// Number of events over which to sample pedestal
   int m_instantaneous;
 
@@ -156,8 +132,6 @@ private:
   TH2I* m_h_ppm_2d_LUT_MismatchEvents_cr2cr3;
   TH2I* m_h_ppm_2d_LUT_MismatchEvents_cr4cr5;
   TH2I* m_h_ppm_2d_LUT_MismatchEvents_cr6cr7;
-
-  void setLabelsCM(TH2* hist, bool xAxis = true, int first = 0);
   
  private:
   

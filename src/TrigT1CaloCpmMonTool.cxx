@@ -269,19 +269,8 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_histTool->setMonGroup(&monCMMout);
 
-  m_h_CMM_T_thresholds = m_histTool->book2F("cmm_2d_thresh_SumsWeighted",
-    "CMM-CP Hit Sums Thresholds Weighted;Sum (Local/Remote/Total)",
-  		          8, 0, 8, 16, 0, 16);
-  m_h_CMM_T_thresholds->GetXaxis()->SetBinLabel(1, "L0");
-  m_h_CMM_T_thresholds->GetXaxis()->SetBinLabel(2, "L1");
-  m_h_CMM_T_thresholds->GetXaxis()->SetBinLabel(3, "L2");
-  m_h_CMM_T_thresholds->GetXaxis()->SetBinLabel(4, "L3");
-  m_h_CMM_T_thresholds->GetXaxis()->SetBinLabel(5, "R0");
-  m_h_CMM_T_thresholds->GetXaxis()->SetBinLabel(6, "R1");
-  m_h_CMM_T_thresholds->GetXaxis()->SetBinLabel(7, "R2");
-  m_h_CMM_T_thresholds->GetXaxis()->SetBinLabel(8, "T");
-  //m_h_CMM_T_thresholds->GetXaxis()->SetLabelSize(0.05);
-  m_histTool->cpmThresholds(m_h_CMM_T_thresholds, 0, false);
+  m_h_CMM_T_thresholds = m_histTool->bookCPMSumVsThreshold(
+    "cmm_2d_thresh_SumsWeighted", "CMM-CP Hit Sums Thresholds Weighted");
 
   //  CMM error bits
 
@@ -299,45 +288,36 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_histTool->subStatus(m_h_CMM_status);
   m_histTool->numberPairs(m_h_CMM_status, 0, s_crates-1, 0, 1, 1, 0, false);
   
-  //  Error Overview
+  //  Error Overview and Summary
 
   m_histTool->setMonGroup(&monExpert);
 
   m_h_CP_overview = m_histTool->book2F("cpm_2d_ErrorOverview",
                            "CP Error Overview", 64, 0, 64,
 			    NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  m_histTool->cpmCrateModule(m_h_CP_overview);
-  m_h_CP_overview->GetXaxis()->SetBinLabel(1,  "CPM");
-  m_h_CP_overview->GetXaxis()->SetBinLabel(57, "CMM");
-  m_h_CP_overview->GetXaxis()->SetBinLabel(59, "1/0");
-  m_h_CP_overview->GetXaxis()->SetBinLabel(61, "2/0");
-  m_h_CP_overview->GetXaxis()->SetBinLabel(63, "3/0");
-  //m_h_CP_overview->GetXaxis()->SetTitleOffset(1.25);
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+EMParity,  "EM parity");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+EMLink,    "EM link");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+HadParity, "Had parity");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+HadLink,   "Had link");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CPMStatus, "CPM status");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+RoIParity, "RoI parity");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CMMParity, "CMM parity");
-  m_h_CP_overview->GetYaxis()->SetBinLabel(1+CMMStatus, "CMM status");
-
-  //  Error Summary
+  m_histTool->cpmCMMCrateModule(m_h_CP_overview);
 
   m_histTool->setMonGroup(&monShift);
 
   m_h_CP_errors = m_histTool->book1F("cpm_1d_ErrorSummary",
                          "CP Error Summary;;Events",
                           NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+EMParity,  "EM parity");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+EMLink,    "EM link");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+HadParity, "Had parity");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+HadLink,   "Had link");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CPMStatus, "CPM status");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+RoIParity, "RoI parity");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CMMParity, "CMM parity");
-  m_h_CP_errors->GetXaxis()->SetBinLabel(1+CMMStatus, "CMM status");
-  //m_h_CP_errors->GetXaxis()->SetLabelSize(0.06);
+
+  TH1*   hist = m_h_CP_overview;
+  TAxis* axis = hist->GetYaxis();
+  for (int i = 0; i < 2; ++i) {
+    axis->SetBinLabel(1+EMParity,  "EM parity");
+    axis->SetBinLabel(1+EMLink,    "EM link");
+    axis->SetBinLabel(1+HadParity, "Had parity");
+    axis->SetBinLabel(1+HadLink,   "Had link");
+    axis->SetBinLabel(1+CPMStatus, "CPM status");
+    axis->SetBinLabel(1+RoIParity, "RoI parity");
+    axis->SetBinLabel(1+CMMParity, "CMM parity");
+    axis->SetBinLabel(1+CMMStatus, "CMM status");
+    //axis->SetLabelSize(0.06);
+    hist = m_h_CP_errors;
+    axis = hist->GetXaxis();
+  }
 
   m_histTool->unsetMonGroup();
 

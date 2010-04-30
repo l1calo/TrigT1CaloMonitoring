@@ -85,19 +85,6 @@ private:
   typedef std::map<int, LVL1::CPMHits*>      CpmHitsMap;
   typedef std::map<int, LVL1::CMMCPHits*>    CmmCpHitsMap;
   
-  TH1F* book1F(const std::string& name, const std::string& title,
-                                        int nx, double xmin, double xmax);
-  TH2F* book2F(const std::string& name, const std::string& title,
-                                        int nx, double xmin, double xmax,
-                                        int ny, double ymin, double ymax);
-  TH2F* book2F(const std::string& name, const std::string& title,
-                                        int nx, const double* xbins,
-                                        int ny, double ymin, double ymax);
-  TH2I* book2I(const std::string& name, const std::string& title,
-                                        int nx, double xmin, double xmax,
-                                        int ny, double ymin, double ymax);
-  TH2F* bookEtaPhi(const std::string& name, const std::string& title,
-                                            bool isRoi = false);
   void  compare(const TriggerTowerMap& ttMap, const CpmTowerMap& cpMap,
                       ErrorVector& errors, bool overlap);
   void  compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
@@ -108,21 +95,7 @@ private:
                       ErrorVector& errorsCPM, ErrorVector& errorsCMM);
   void  compare(const CmmCpHitsMap& cmmSimMap, const CmmCpHitsMap& cmmMap,
                                           ErrorVector& errors, int selection);
-  void  fillEventSample(int err, int loc, bool isCpm);
-  void  setLabels(TH2* hist);
-  void  setLabelsCMCC(TH2* hist);
-  void  setLabelsCMS(TH2* hist);
-  void  setLabelsCMT(TH2* hist, bool isRoi = false);
-  void  setLabelsCPMFP(TH2* hist);
-  void  setLabelsYNUM(TH2* hist, int beg, int end);
-  void  setLabelsXNUM(TH2* hist, int beg, int end);
-  void  setLabelsCPM(TH2* hist, bool xAxis = true);
-  void  setLabelsMC(TH2* hist);
-  void  setLabelsMCLR(TH2* hist);
-  void  setLabelsSLR(TH1* hist);
-  void  setLabelsST(TH2* hist);
-  void  setLabelsSRLR(TH1* hist);
-  void  setLabelsSRT(TH2* hist);
+  void  setLabels(TH1* hist, bool xAxis = true);
   void  setupMap(const TriggerTowerCollection* coll, TriggerTowerMap& map);
   void  setupMap(const CpmTowerCollection* coll, CpmTowerMap& map);
   void  setupMap(const CpmRoiCollection* coll, CpmRoiMap& map);
@@ -145,7 +118,6 @@ private:
   mutable MsgStream m_log;
   bool m_debug;
 
-  MonGroup* m_monGroup;
   /// Root directory
   std::string m_rootDir;
 
@@ -164,8 +136,6 @@ private:
   /// ROD header container StoreGate key
   std::string m_rodHeaderLocation;
 
-  /// Phi scale to convert from radians to histogram units
-  double m_phiScale;
   /// Number of events
   int m_events;
   /// Simulation allowed flag
@@ -181,12 +151,6 @@ private:
   std::vector<int> m_ignoreTowersHad;
   /// CPM overlap tower container present
   bool m_overlapPresent;
-  /// Number of error event number samples to keep
-  int m_eventSamples;
-  /// Current event number
-  int m_eventNumber;
-  /// Sample event number counts
-  std::vector<int> m_sampleCounts;
 
   //=======================
   //   Match/Mismatch plots
