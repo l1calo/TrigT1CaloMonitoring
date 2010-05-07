@@ -47,16 +47,15 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   declareProperty("LUTHitMap_Thresh2",  m_TT_HitMap_Thresh2 = 7);
   declareProperty("LUTHitMap_ThreshMax",  m_TT_HitMap_ThreshMax = 10);
   declareProperty("LUTHitMap_LumiBlocks",  m_TT_HitMap_LumiBlocks = 10);
-  declareProperty("ADCPedestal",  m_TT_ADC_Pedestal = 35);
+  declareProperty("ADCPedestal",  m_TT_ADC_Pedestal = 32);
   declareProperty("ADCHitMap_Thresh",  m_TT_ADC_HitMap_Thresh = 15);
   declareProperty("DistPerChannel", m_TT_DistPerChannel=0);
   declareProperty("DistPerChannelAndTimeSlice", m_TT_DistPerChannelAndTimeSlice=0);
   declareProperty("MaxEnergyRange", m_MaxEnergyRange = 256) ;
   declareProperty("Offline", m_Offline = 1) ;
   declareProperty("ADCTimingPerChannel", m_TT_ADCTimingPerChannel=0);
-  // Next two cuts now average per timeslice
-  declareProperty("HADFADCCut",  m_HADFADCCut=8);
-  declareProperty("EMFADCCut",  m_EMFADCCut=8);
+  declareProperty("HADFADCCut",  m_HADFADCCut=40);
+  declareProperty("EMFADCCut",  m_EMFADCCut=40);
 
   declareProperty("PathInRootFile", m_PathInRootFile="L1Calo/PPM") ;
   declareProperty("ErrorPathInRootFile", m_ErrorPathInRootFile="L1Calo/PPM/Errors") ;
@@ -796,9 +795,11 @@ StatusCode PPrMon::fillHistograms()
 	  m_h_TT_emLUT_eta-> Fill((*TriggerTowerIterator)->eta(),1);
 	  m_histTool->fillPPMPhi(m_h_TT_emLUT_phi, (*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi());
 	  m_h_TT_emLUT->Fill(EmEnergy,1);
-          m_histTool->fillPPMEmEtaVsPhi(m_p_TT_HitMap_emLUT_etAv,(*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),EmEnergy);
-          // Bunch crossing and BCID bits
-          if (EmEnergy>5) m_h_TT_BCLUT->Fill(bunchCrossing);
+	  if (EmEnergy>5) {
+            m_histTool->fillPPMEmEtaVsPhi(m_p_TT_HitMap_emLUT_etAv,(*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),EmEnergy);
+            // Bunch crossing and BCID bits
+            m_h_TT_BCLUT->Fill(bunchCrossing);
+	  }
           m_h_TT_BCID->Fill((*TriggerTowerIterator)->emBCID(), EmEnergy);
 	}
 	 
@@ -831,9 +832,11 @@ StatusCode PPrMon::fillHistograms()
 	  m_h_TT_hadLUT_eta-> Fill((*TriggerTowerIterator)->eta(),1);
 	  m_histTool->fillPPMPhi(m_h_TT_hadLUT_phi, (*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi());
 	  m_h_TT_hadLUT->Fill(HadEnergy,1);
-          m_histTool->fillPPMHadEtaVsPhi(m_p_TT_HitMap_hadLUT_etAv,(*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),HadEnergy);
-          // Bunch crossing and BCID bits
-          if (HadEnergy>5) m_h_TT_BCLUT->Fill(bunchCrossing);
+	  if (HadEnergy>5) {
+            m_histTool->fillPPMHadEtaVsPhi(m_p_TT_HitMap_hadLUT_etAv,(*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),HadEnergy);
+            // Bunch crossing and BCID bits
+            m_h_TT_BCLUT->Fill(bunchCrossing);
+	  }
           m_h_TT_BCID->Fill((*TriggerTowerIterator)->hadBCID(), HadEnergy);
 	}
     
@@ -912,25 +915,19 @@ if (tslice<static_cast<int>(( (*TriggerTowerIterator)->emADC()).size()))
 	}
       */
 
-      if (emFADCSum>m_EMFADCCut)
-	{
-	  max = recTime((*TriggerTowerIterator)->emADC());
-	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
-	  if (max >= 0.) {
-	    m_histTool->fillPPMEmEtaVsPhi(m_h_TT_ADC_emTiming_signal,(*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max+1);
-	    m_h_dist_em_max->Fill(max);
-	  }
-	}
+      max = recTime((*TriggerTowerIterator)->emADC(), m_EMFADCCut);
+      //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
+      if (max >= 0.) {
+        m_histTool->fillPPMEmEtaVsPhi(m_h_TT_ADC_emTiming_signal,(*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max+1.);
+        m_h_dist_em_max->Fill(max);
+      }
 
-      if (hadFADCSum>m_HADFADCCut)
-	{
-	  max = recTime((*TriggerTowerIterator)->hadADC());
-	  //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
-	  if (max >= 0.) {
-	    m_histTool->fillPPMHadEtaVsPhi(m_h_TT_ADC_hadTiming_signal,(*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max+1);
-	    m_h_dist_had_max->Fill(max);
-	  }
-        }
+      max = recTime((*TriggerTowerIterator)->hadADC(), m_HADFADCCut);
+      //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
+      if (max >= 0.) {
+        m_histTool->fillPPMHadEtaVsPhi(m_h_TT_ADC_hadTiming_signal,(*TriggerTowerIterator)->eta(),(*TriggerTowerIterator)->phi(),max+1.);
+        m_h_dist_had_max->Fill(max);
+      }
 
       //------------------------ Signal shape profile ---------------------
 
@@ -1214,47 +1211,10 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBloc
 
 
 /*---------------------------------------------------------*/
-double PPrMon::recTime(const std::vector<int>& vFAdc) {
+double PPrMon::recTime(const std::vector<int>& vFAdc, int cut) {
 /*---------------------------------------------------------*/
 
-  /*
-  double x[3];
-  double y[3];
-  double binshift = 0.;
-  
-  int indmax=0;
-  int index=0;
-  std::vector<int>::const_iterator it = vFAdc.begin();
-  for(;it!=vFAdc.end();++it,++index) {
-    if(vFAdc[indmax]<*it) indmax=index;
-  }
-  
-  //cout<<"indmax: "<<indmax<<endl;
-  
-  double max = indmax+binshift;
-  
-  if (indmax!=0 && indmax!=(int)(vFAdc.size()-1)) {
-       
-    x[0] = indmax - 1 + binshift;  y[0] = vFAdc[indmax-1];
-    x[1] = indmax     + binshift; y[1] = vFAdc[indmax];
-    x[2] = indmax + 1 +binshift; y[2] = vFAdc[indmax+1];
-    
-
-    //This is a parabola fit function to find the maximum in ADC counts (asymmetric distribution) 
-    //Simplified: max = indmax+(y[0]-y[2])/(2*(y[0]+y[2]-2*y[1]))
- 
-    double a = ( (x[0]-x[2])*(y[1]-y[2]) - (x[1]-x[2])*(y[0]-y[2]) ) / (
-									(x[0]-x[2])*(x[1]*x[1]-x[2]*x[2]) - (x[1]-x[2])*(x[0]*x[0]-x[2]*x[2]) );
-    double b = ( (y[1]-y[2])*(x[0]*x[0]-x[2]*x[2]) -
-		 (y[0]-y[2])*(x[1]*x[1]-x[2]*x[2]) ) / (
-							(x[1]-x[2])*(x[0]*x[0]-x[2]*x[2]) - (x[0]-x[2])*(x[1]*x[1]-x[2]*x[2]) );
-    //double c = y[0] - b*x[0] - a*x[0]*x[0];
-    if (a != 0.) max = -b/(2*a);
-    
-  }
-  */
-
-  double max = -1.;
+  int max = -1;
   int slices = vFAdc.size();
   if (slices > 0) {
     max = 0.;
@@ -1263,12 +1223,28 @@ double PPrMon::recTime(const std::vector<int>& vFAdc) {
       if (vFAdc[sl] > maxAdc) {
         maxAdc = vFAdc[sl];
         max = sl;
-      } else if (vFAdc[sl] == maxAdc) max = -1.;
+      } else if (vFAdc[sl] == maxAdc) max = -1;
     }
-    if (maxAdc == 0) max = -1.;
+    if (maxAdc == 0) max = -1;
+  }
+  if (max >= 0) {
+    int slbeg = max - 2;
+    if (slbeg < 0) slbeg = 0;
+    int slend = max + 3;
+    if (slend > slices) slend = slices;
+    int sum = 0;
+    int min = 999999;
+    for (int sl = slbeg; sl < slend; ++sl) {
+      int val = vFAdc[sl];
+      if (val < m_TT_ADC_Pedestal) val = m_TT_ADC_Pedestal;
+      sum += val;
+      if (val < min) min = val;
+    }
+    sum -= (slend-slbeg)*min;
+    if (sum <= cut) max = -1;
   }
   
-  return max;
+  return double(max);
 }
   
 
@@ -1282,12 +1258,13 @@ int PPrMon::FADCSum(const std::vector<int>& vFAdc) {
   int FADCSum =0;
   int FADCMin=999999;
   for(;it!=vFAdc.end();++it) {
-    FADCSum+=*it;
-    if(*it<FADCMin)FADCMin=*it;
+    int val = *it;
+    if (val < m_TT_ADC_Pedestal) val = m_TT_ADC_Pedestal;
+    FADCSum+=val;
+    if(*it<FADCMin)FADCMin=val;
   }
 
   FADCSum-=vFAdc.size()*FADCMin; // pseudo pedestal subtraction...
-  FADCSum/=vFAdc.size();         // average per slice
   
   return FADCSum;
 }

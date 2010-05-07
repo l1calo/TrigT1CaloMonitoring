@@ -53,7 +53,7 @@ private:
   enum CaloPartitions { LArFCAL1C, LArEMECC, LArOverlapC, LArEMBC, LArEMBA, LArOverlapA, LArEMECA, LArFCAL1A,
                         LArFCAL23C, LArHECC, TileEBC, TileLBC, TileLBA, TileEBA, LArHECA, LArFCAL23A, MaxPartitions };
 
-  double recTime(const std::vector<int>& vFAdc);
+  double recTime(const std::vector<int>& vFAdc, int cut);
   int FADCSum(const std::vector<int>& vFAdc) ;
   int partition(int layer, double eta);
   std::string partitionName(int part);
