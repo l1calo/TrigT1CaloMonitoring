@@ -25,10 +25,11 @@ use EventInfo            	EventInfo-*	        Event
 use TrigT1CaloUtils             TrigT1CaloUtils-*       Trigger/TrigT1
 use TrigT1CaloEvent             TrigT1CaloEvent-*       Trigger/TrigT1
 use TrigT1Interfaces    	TrigT1Interfaces-*    	Trigger/TrigT1
-#use TrigT1CaloByteStream 	TrigT1CaloByteStream-* 	Trigger/TrigT1
 use TrigT1CaloToolInterfaces	TrigT1CaloToolInterfaces-* Trigger/TrigT1
 
+use TrigT1CaloCalibConditions   TrigT1CaloCalibConditions-* Trigger/TrigT1
 use TrigT1CaloCalibTools	TrigT1CaloCalibTools-*	Trigger/TrigT1
+use TrigT1CaloCondSvc           TrigT1CaloCondSvc-*     Trigger/TrigT1
 use CaloTriggerTool		CaloTriggerTool-*	Calorimeter		
 use TrigConfigSvc               TrigConfigSvc-*         Trigger/TrigConfiguration
 use TrigConfL1Data              TrigConfL1Data-*        Trigger/TrigConfiguration
