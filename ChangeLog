@@ -1,3 +1,7 @@
+2010-05-11  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-06-26
+        * Fix typo in PPrMon.cxx
+
 2010-05-10  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-25
         * Shrink eta bins to same size.
