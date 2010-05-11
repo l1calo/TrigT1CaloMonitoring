@@ -284,6 +284,8 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    double m_phiScaleJE;
    /// Number of Error Event Number Samples
    int m_eventSamples;
+   /// Shrink eta bins flag
+   bool m_shrinkEtaBins;
 
 };
 
