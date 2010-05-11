@@ -419,8 +419,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, b
             }
         }
       m_histTool->setMonGroup(&TT_HitMaps);
-      m_p_TT_HitMap_emLUT_etAv = m_histTool->bookProfilePPMEmEtaVsPhi("ppm_em_2d_etaPhi_tt_lut_AverageEt","EM Average LUT Et");
-      m_p_TT_HitMap_hadLUT_etAv = m_histTool->bookProfilePPMEmEtaVsPhi("ppm_had_2d_etaPhi_tt_lut_AverageEt","Had Average LUT Et");
+      m_p_TT_HitMap_emLUT_etAv = m_histTool->bookProfilePPMEmEtaVsPhi("ppm_em_2d_etaPhi_tt_lut_AverageEt","EM Average LUT Et for Et > 5");
+      m_p_TT_HitMap_hadLUT_etAv = m_histTool->bookProfilePPMHadEtaVsPhi("ppm_had_2d_etaPhi_tt_lut_AverageEt","Had Average LUT Et for Et > 5");
       
       //---------------------------- distribution of LUT peak per detector region -----------------------------
       m_h_TT_emLUT=LUTPeakDistribution_Booker.book1F("ppm_em_1d_tt_lut_Et","EM LUT: Distribution of Peak",m_MaxEnergyRange-1,1,m_MaxEnergyRange,"em LUT Peak [GeV]");
