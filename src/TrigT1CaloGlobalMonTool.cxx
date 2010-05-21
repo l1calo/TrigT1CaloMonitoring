@@ -9,15 +9,13 @@
 // ********************************************************************
 
 #include <sstream>
-#include <vector>
 
+#include "TAxis.h"
 #include "TH2F.h"
 
-#include "GaudiKernel/ITHistSvc.h"
-#include "StoreGate/StoreGateSvc.h"
+#include "GaudiKernel/MsgStream.h"
+#include "GaudiKernel/StatusCode.h"
 #include "SGTools/StlVectorClids.h"
-
-#include "AthenaMonitoring/AthenaMonManager.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloGlobalMonTool.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
@@ -27,12 +25,9 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
 				                 const std::string & name,
 				                 const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
-    m_storeGate("StoreGateSvc", name),
-    m_histTool("TrigT1CaloHistogramTool"),
-    m_log(msgSvc(), name), m_monGroup(0)
+    m_histTool("TrigT1CaloHistogramTool")
 /*---------------------------------------------------------*/
 {
-  declareInterface<IMonitorToolBase>(this); 
 
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
 
@@ -44,31 +39,28 @@ TrigT1CaloGlobalMonTool::~TrigT1CaloGlobalMonTool()
 {
 }
 
+#ifndef PACKAGE_VERSION
+#define PACKAGE_VERSION "unknown"
+#endif
+
 /*---------------------------------------------------------*/
 StatusCode TrigT1CaloGlobalMonTool:: initialize()
 /*---------------------------------------------------------*/
 {
-  m_log.setLevel(outputLevel());
+  msg(MSG::INFO) << "Initializing " << name() << " - package version "
+                 << PACKAGE_VERSION << endreq;
 
   StatusCode sc;
 
   sc = ManagedMonitorToolBase::initialize();
   if (sc.isFailure()) return sc;
-  
-  sc = m_storeGate.retrieve();
-  if( sc.isFailure() ) {
-    m_log << MSG::ERROR << "Unable to locate Service StoreGateSvc" << endreq;
-    return sc;
-  }
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloHistogramTool"
-                        << endreq;
-  return sc;
-}
-
-  m_log << MSG::INFO << "TrigT1CaloGlobalMonTool initialised" << endreq;
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+                    << endreq;
+    return sc;
+  }
 
   return StatusCode::SUCCESS;
 }
@@ -78,7 +70,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
                                            bool isNewLumiBlock, bool isNewRun)
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "bookHistograms entered" << endreq;
+  msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
 
   if( m_environment == AthenaMonManager::online ) {
     // book histograms that are only made in the online environment...
@@ -97,29 +89,31 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 
   // Global Error Overview
 
-  m_monGroup = &monGlobal;
+  m_histTool->setMonGroup(&monGlobal);
 
-  m_h_global = book2F("l1calo_2d_GlobalOverview",
+  m_h_global = m_histTool->book2F("l1calo_2d_GlobalOverview",
                       "L1Calo Global Error Overview",
 	              NumberOfGlobalErrors, 0, NumberOfGlobalErrors,
 		      14, 0, 14);
-  m_h_global->GetXaxis()->SetBinLabel(1+PPMDataStatus,   "PPMDataStatus");
-  m_h_global->GetXaxis()->SetBinLabel(1+PPMDataError,    "PPMDataError");
-  m_h_global->GetXaxis()->SetBinLabel(1+SubStatus,       "SubStatus");
-  m_h_global->GetXaxis()->SetBinLabel(1+Parity,          "Parity");
-  m_h_global->GetXaxis()->SetBinLabel(1+LinkDown,        "LinkDown");
-  m_h_global->GetXaxis()->SetBinLabel(1+RoIParity,       "RoIParity");
-  m_h_global->GetXaxis()->SetBinLabel(1+Transmission,    "Transmission");
-  m_h_global->GetXaxis()->SetBinLabel(1+Simulation,      "Simulation");
-  m_h_global->GetXaxis()->SetBinLabel(1+CMMSubStatus,    "CMMSubStatus");
-  m_h_global->GetXaxis()->SetBinLabel(1+GbCMMParity,     "CMMParity");
-  m_h_global->GetXaxis()->SetBinLabel(1+CMMTransmission, "CMMTransmission");
-  m_h_global->GetXaxis()->SetBinLabel(1+CMMSimulation,   "CMMSimulation");
-  m_h_global->GetXaxis()->SetBinLabel(1+RODStatus,       "RODStatus");
-  m_h_global->GetXaxis()->SetBinLabel(1+RODMissing,      "RODMissing");
-  m_h_global->GetXaxis()->SetBinLabel(1+ROBStatus,       "ROBStatus");
-  m_h_global->GetXaxis()->SetBinLabel(1+Unpacking,       "Unpacking");
+  TAxis* axis = m_h_global->GetXaxis();
+  axis->SetBinLabel(1+PPMDataStatus,   "PPMDataStatus");
+  axis->SetBinLabel(1+PPMDataError,    "PPMDataError");
+  axis->SetBinLabel(1+SubStatus,       "SubStatus");
+  axis->SetBinLabel(1+Parity,          "Parity");
+  axis->SetBinLabel(1+LinkDown,        "LinkDown");
+  axis->SetBinLabel(1+RoIParity,       "RoIParity");
+  axis->SetBinLabel(1+Transmission,    "Transmission");
+  axis->SetBinLabel(1+Simulation,      "Simulation");
+  axis->SetBinLabel(1+CMMSubStatus,    "CMMSubStatus");
+  axis->SetBinLabel(1+GbCMMParity,     "CMMParity");
+  axis->SetBinLabel(1+CMMTransmission, "CMMTransmission");
+  axis->SetBinLabel(1+CMMSimulation,   "CMMSimulation");
+  axis->SetBinLabel(1+RODStatus,       "RODStatus");
+  axis->SetBinLabel(1+RODMissing,      "RODMissing");
+  axis->SetBinLabel(1+ROBStatus,       "ROBStatus");
+  axis->SetBinLabel(1+Unpacking,       "Unpacking");
 
+  axis = m_h_global->GetYaxis();
   for (int crate = 0; crate < 14; ++crate) {
     int cr = crate;
     if (cr >= 12) cr -= 12;
@@ -127,12 +121,14 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
     std::string type = (crate < 8) ? "PP " : (crate < 12) ? "CP " : "JEP ";
     std::ostringstream cnum;
     cnum << type << cr;
-    m_h_global->GetYaxis()->SetBinLabel(crate+1, cnum.str().c_str());
+    axis->SetBinLabel(crate+1, cnum.str().c_str());
   }
+
+  m_histTool->unsetMonGroup();
 
   } // end if (isNewRun ...
 
-  m_log << MSG::DEBUG << "Leaving bookHistograms" << endreq;
+  msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
 
   return StatusCode::SUCCESS;
 }
@@ -141,7 +137,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "fillHistograms entered" << endreq;
+  msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
   StatusCode sc;
 
@@ -153,11 +149,11 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 
   // PPM Error data
   const ErrorVector* errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloPPMErrorVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloPPMErrorVector"); 
+  if (evtStore()->contains<ErrorVector>("L1CaloPPMErrorVector")) {
+    sc = evtStore()->retrieve(errTES, "L1CaloPPMErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
-    m_log << MSG::DEBUG << "No PPM error vector of expected size" << endreq;
+    msg(MSG::DEBUG) << "No PPM error vector of expected size" << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -170,11 +166,11 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 
   // Spare PPM Channels Error data
   errTES = 0;
-  if (m_storeGate->contains<ErrorVector>("L1CaloPPMSpareErrorVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloPPMSpareErrorVector"); 
+  if (evtStore()->contains<ErrorVector>("L1CaloPPMSpareErrorVector")) {
+    sc = evtStore()->retrieve(errTES, "L1CaloPPMSpareErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
-    m_log << MSG::DEBUG << "No PPMSpare error vector of expected size" << endreq;
+    msg(MSG::DEBUG) << "No PPMSpare error vector of expected size" << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -187,11 +183,11 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 
   // CPM and CPM CMM Error data
   errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloCPMErrorVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloCPMErrorVector"); 
+  if (evtStore()->contains<ErrorVector>("L1CaloCPMErrorVector")) {
+    sc = evtStore()->retrieve(errTES, "L1CaloCPMErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(cpmCrates)) {
-    m_log << MSG::DEBUG << "No CPM error vector of expected size" << endreq;
+    msg(MSG::DEBUG) << "No CPM error vector of expected size" << endreq;
   } else {
     for (int crate = 0; crate < cpmCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -210,11 +206,11 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 
   // JEM Error data
   errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloJEMErrorVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloJEMErrorVector"); 
+  if (evtStore()->contains<ErrorVector>("L1CaloJEMErrorVector")) {
+    sc = evtStore()->retrieve(errTES, "L1CaloJEMErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
-    m_log << MSG::DEBUG << "No JEM error vector of expected size" << endreq;
+    msg(MSG::DEBUG) << "No JEM error vector of expected size" << endreq;
   } else {
     for (int crate = 0; crate < jemCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -231,11 +227,11 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 
   // JEM CMM Error data
   errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloJEMCMMErrorVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloJEMCMMErrorVector"); 
+  if (evtStore()->contains<ErrorVector>("L1CaloJEMCMMErrorVector")) {
+    sc = evtStore()->retrieve(errTES, "L1CaloJEMCMMErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
-    m_log << MSG::DEBUG << "No JEM CMM error vector of expected size" << endreq;
+    msg(MSG::DEBUG) << "No JEM CMM error vector of expected size" << endreq;
   } else {
     for (int crate = 0; crate < jemCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -248,11 +244,11 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 
   // ROD Error data
   errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloRODErrorVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloRODErrorVector"); 
+  if (evtStore()->contains<ErrorVector>("L1CaloRODErrorVector")) {
+    sc = evtStore()->retrieve(errTES, "L1CaloRODErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(ppmCrates + cpmCrates + jemCrates)) {
-    m_log << MSG::DEBUG << "No ROD error vector of expected size" << endreq;
+    msg(MSG::DEBUG) << "No ROD error vector of expected size" << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates+cpmCrates+jemCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -268,11 +264,11 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 
   // PPM Mismatch data
   errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloPPMMismatchVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloPPMMismatchVector"); 
+  if (evtStore()->contains<ErrorVector>("L1CaloPPMMismatchVector")) {
+    sc = evtStore()->retrieve(errTES, "L1CaloPPMMismatchVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
-    m_log << MSG::DEBUG << "No PPM mismatch vector of expected size" << endreq;
+    msg(MSG::DEBUG) << "No PPM mismatch vector of expected size" << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -283,11 +279,11 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 
   // CPM Mismatch data
   errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloCPMMismatchVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloCPMMismatchVector"); 
+  if (evtStore()->contains<ErrorVector>("L1CaloCPMMismatchVector")) {
+    sc = evtStore()->retrieve(errTES, "L1CaloCPMMismatchVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(cpmCrates)) {
-    m_log << MSG::DEBUG << "No CPM mismatch vector of expected size" << endreq;
+    msg(MSG::DEBUG) << "No CPM mismatch vector of expected size" << endreq;
   } else {
     for (int crate = 0; crate < cpmCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -306,11 +302,11 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 
   // JEM Mismatch data
   errTES = 0; 
-  if (m_storeGate->contains<ErrorVector>("L1CaloJEMMismatchVector")) {
-    sc = m_storeGate->retrieve(errTES, "L1CaloJEMMismatchVector"); 
+  if (evtStore()->contains<ErrorVector>("L1CaloJEMMismatchVector")) {
+    sc = evtStore()->retrieve(errTES, "L1CaloJEMMismatchVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
-    m_log << MSG::DEBUG << "No JEM mismatch vector of expected size" << endreq;
+    msg(MSG::DEBUG) << "No JEM mismatch vector of expected size" << endreq;
   } else {
     for (int crate = 0; crate < jemCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -339,7 +335,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     }
   }
 
-  m_log << MSG::DEBUG << "Leaving fillHistograms" << endreq;
+  msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
 
   return StatusCode::SUCCESS;
 
@@ -350,28 +346,10 @@ StatusCode TrigT1CaloGlobalMonTool::procHistograms(bool isEndOfEventsBlock,
                                   bool isEndOfLumiBlock, bool isEndOfRun)
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "procHistograms entered" << endreq;
+  msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
   if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
   }
 
   return StatusCode::SUCCESS;
-}
-
-TH2F* TrigT1CaloGlobalMonTool::book2F(const std::string& name,
-                                   const std::string& title,
-                                   int nx, double xmin, double xmax,  
-	                           int ny, double ymin, double ymax)
-{		
-  TH2F *hist = new TH2F(name.c_str(), title.c_str(), nx, xmin, xmax,
-                                                     ny, ymin, ymax);
-  
-  if (m_monGroup->regHist(hist) != StatusCode::SUCCESS) {
-    m_log << MSG::WARNING << "Could not register histogram : " 
-	  << name << endreq;
-  }
-  hist->SetOption("colz");
-  hist->SetStats(kFALSE);
-  
-  return hist;
 }

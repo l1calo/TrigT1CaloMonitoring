@@ -8,20 +8,18 @@
 //
 // ********************************************************************
 
-#include <iomanip>
 #include <numeric>
-#include <sstream>
 #include <utility>
 
+#include "TAxis.h"
+#include "TH1.h"
 #include "TH1F.h"
 #include "TH2F.h"
+#include "TH2I.h"
 
-#include "CLHEP/Units/SystemOfUnits.h"
-#include "GaudiKernel/ITHistSvc.h"
-#include "StoreGate/StoreGateSvc.h"
+#include "GaudiKernel/MsgStream.h"
+#include "GaudiKernel/StatusCode.h"
 #include "SGTools/StlVectorClids.h"
-
-#include "AthenaMonitoring/AthenaMonManager.h"
 
 #include "TrigT1CaloEvent/CMMCPHits.h"
 #include "TrigT1CaloEvent/CPMHits.h"
@@ -51,13 +49,11 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
 				           const std::string & name,
 				           const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
-    m_storeGate("StoreGateSvc", name),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloHistogramTool"),
-    m_log(msgSvc(), name), m_events(0)
+    m_events(0)
 /*---------------------------------------------------------*/
 {
-  declareInterface<IMonitorToolBase>(this); 
 
   declareProperty("CPMTowerLocation",
                  m_cpmTowerLocation  = LVL1::TrigT1CaloDefs::CPMTowerLocation);
@@ -85,38 +81,35 @@ TrigT1CaloCpmMonTool::~TrigT1CaloCpmMonTool()
 {
 }
 
+#ifndef PACKAGE_VERSION
+#define PACKAGE_VERSION "unknown"
+#endif
+
 /*---------------------------------------------------------*/
 StatusCode TrigT1CaloCpmMonTool:: initialize()
 /*---------------------------------------------------------*/
 {
-  m_log.setLevel(outputLevel());
+  msg(MSG::INFO) << "Initializing " << name() << " - package version "
+                 << PACKAGE_VERSION << endreq;
 
   StatusCode sc;
 
   sc = ManagedMonitorToolBase::initialize();
   if (sc.isFailure()) return sc;
-  
-  sc = m_storeGate.retrieve();
-  if( sc.isFailure() ) {
-    m_log << MSG::ERROR << "Unable to locate Service StoreGateSvc" << endreq;
-    return sc;
-  }
 
   sc = m_errorTool.retrieve();
   if( sc.isFailure() ) {
-    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloMonErrorTool"
-                        << endreq;
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                    << endreq;
     return sc;
   }
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloHistogramTool"
-                        << endreq;
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+                    << endreq;
     return sc;
   }
-
-  m_log << MSG::INFO << "TrigT1CaloCpmMonTool initialised" << endreq;
 
   return StatusCode::SUCCESS;
 }
@@ -133,7 +126,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
                                            bool isNewLumiBlock, bool isNewRun)
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "bookHistograms entered" << endreq;
+  msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
 
   if( m_environment == AthenaMonManager::online ) {
     // book histograms that are only made in the online environment...
@@ -303,9 +296,15 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
                          "CP Error Summary;;Events",
                           NumberOfSummaryBins, 0, NumberOfSummaryBins);
 
+  m_histTool->setMonGroup(&monDetail);
+
+  m_h_CP_events = m_histTool->bookEventNumbers("cpm_2d_ErrorEventNumbers",
+                         "CP Error Event Numbers",
+			 NumberOfSummaryBins, 0, NumberOfSummaryBins);
+
   TH1*   hist = m_h_CP_overview;
   TAxis* axis = hist->GetYaxis();
-  for (int i = 0; i < 2; ++i) {
+  for (int i = 0; i < 3; ++i) {
     axis->SetBinLabel(1+EMParity,  "EM parity");
     axis->SetBinLabel(1+EMLink,    "EM link");
     axis->SetBinLabel(1+HadParity, "Had parity");
@@ -314,9 +313,13 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
     axis->SetBinLabel(1+RoIParity, "RoI parity");
     axis->SetBinLabel(1+CMMParity, "CMM parity");
     axis->SetBinLabel(1+CMMStatus, "CMM status");
-    //axis->SetLabelSize(0.06);
-    hist = m_h_CP_errors;
-    axis = hist->GetXaxis();
+    if (i == 0) {
+      hist = m_h_CP_errors;
+      axis = hist->GetXaxis();
+    } else {
+      hist = m_h_CP_events;
+      axis = hist->GetYaxis();
+    }
   }
 
   m_histTool->unsetMonGroup();
@@ -325,7 +328,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 
   } // end if (isNewRun ...
 
-  m_log << MSG::DEBUG << "Leaving bookHistograms" << endreq;
+  msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
 
   return StatusCode::SUCCESS;
 }
@@ -334,58 +337,58 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "fillHistograms entered" << endreq;
+  msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
   // Skip events believed to be corrupt
 
   if (m_errorTool->corrupt()) {
-    m_log << MSG::DEBUG << "Skipping corrupt event" << endreq;
+    msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
 
   //Retrieve Trigger Towers from SG
   const TriggerTowerCollection* triggerTowerTES = 0; 
-  StatusCode sc = m_storeGate->retrieve(triggerTowerTES,
+  StatusCode sc = evtStore()->retrieve(triggerTowerTES,
                                                      m_triggerTowerLocation); 
   if( sc.isFailure()  ||  !triggerTowerTES ) {
-    m_log << MSG::DEBUG<< "No Trigger Tower container found"<< endreq; 
+    msg(MSG::DEBUG) << "No Trigger Tower container found"<< endreq; 
   }
 
   //Retrieve Core CPM Towers from SG
   const CpmTowerCollection* cpmTowerTES = 0; 
-  sc = m_storeGate->retrieve(cpmTowerTES, m_cpmTowerLocation); 
+  sc = evtStore()->retrieve(cpmTowerTES, m_cpmTowerLocation); 
   if( sc.isFailure()  ||  !cpmTowerTES ) {
-    m_log << MSG::DEBUG<< "No Core CPM Tower container found"<< endreq; 
+    msg(MSG::DEBUG) << "No Core CPM Tower container found"<< endreq; 
   }
 
   //Retrieve Overlap CPM Towers from SG
   const CpmTowerCollection* cpmTowerOverlapTES = 0; 
-  if (m_storeGate->contains<CpmTowerCollection>(m_cpmTowerLocationOverlap)) {
-    sc = m_storeGate->retrieve(cpmTowerOverlapTES, m_cpmTowerLocationOverlap); 
+  if (evtStore()->contains<CpmTowerCollection>(m_cpmTowerLocationOverlap)) {
+    sc = evtStore()->retrieve(cpmTowerOverlapTES, m_cpmTowerLocationOverlap); 
   } else sc = StatusCode::FAILURE;
   if( sc.isFailure()  ||  !cpmTowerOverlapTES ) {
-    m_log << MSG::DEBUG<< "No Overlap CPM Tower container found"<< endreq; 
+    msg(MSG::DEBUG) << "No Overlap CPM Tower container found"<< endreq; 
   }
   
   //Retrieve CPM RoIs from SG
   const CpmRoiCollection* cpmRoiTES = 0;
-  sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocation);
+  sc = evtStore()->retrieve( cpmRoiTES, m_cpmRoiLocation);
   if( sc.isFailure()  ||  !cpmRoiTES ) {
-    m_log << MSG::DEBUG << "No CPM RoIs container found"<< endreq;
+    msg(MSG::DEBUG) << "No CPM RoIs container found"<< endreq;
   }
   
   //Retrieve CPM Hits from SG
   const CpmHitsCollection* cpmHitsTES = 0;
-  sc = m_storeGate->retrieve( cpmHitsTES, m_cpmHitsLocation);
+  sc = evtStore()->retrieve( cpmHitsTES, m_cpmHitsLocation);
   if( sc.isFailure()  ||  !cpmHitsTES ) {
-    m_log << MSG::DEBUG << "No CPM Hits container found"<< endreq; 
+    msg(MSG::DEBUG) << "No CPM Hits container found"<< endreq; 
   }
   
   //Retrieve CMM-CP Hits from SG
   const CmmCpHitsCollection* cmmCpHitsTES = 0;
-  sc = m_storeGate->retrieve( cmmCpHitsTES, m_cmmCpHitsLocation);
+  sc = evtStore()->retrieve( cmmCpHitsTES, m_cmmCpHitsLocation);
   if( sc.isFailure()  ||  !cmmCpHitsTES ) {
-    m_log << MSG::DEBUG << "No CMM-CP Hits container found"<< endreq; 
+    msg(MSG::DEBUG) << "No CMM-CP Hits container found"<< endreq; 
   }
 
   // Vectors for error overview bits;
@@ -774,20 +777,23 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         }
       }
     }
-    if (error) m_h_CP_errors->Fill(err);
+    if (error) {
+      m_h_CP_errors->Fill(err);
+      m_histTool->fillEventNumber(m_h_CP_events, err);
+    }
   }
   ++m_events;
 
   // Save error vector for global summary
 
   std::vector<int>* save = new std::vector<int>(crateErr);
-  sc = m_storeGate->record(save, "L1CaloCPMErrorVector");
+  sc = evtStore()->record(save, "L1CaloCPMErrorVector");
   if (sc != StatusCode::SUCCESS) {
-    m_log << MSG::ERROR << "Error recording CPM error vector in TES " << endreq;
+    msg(MSG::ERROR) << "Error recording CPM error vector in TES " << endreq;
     return sc;
   }
 
-  m_log << MSG::DEBUG << "Leaving fillHistograms" << endreq;
+  msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
 
   return StatusCode::SUCCESS;
 
@@ -798,7 +804,7 @@ StatusCode TrigT1CaloCpmMonTool::procHistograms(bool isEndOfEventsBlock,
                                   bool isEndOfLumiBlock, bool isEndOfRun)
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "procHistograms entered" << endreq;
+  msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
   if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
   }

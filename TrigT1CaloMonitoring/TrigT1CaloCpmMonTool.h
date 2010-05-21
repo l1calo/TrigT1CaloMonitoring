@@ -14,8 +14,6 @@
 #include <string>
 #include <vector>
 
-#include "GaudiKernel/MsgStream.h"
-#include "GaudiKernel/ServiceHandle.h"
 #include "GaudiKernel/ToolHandle.h"
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
@@ -23,7 +21,9 @@
 
 class TH1F;
 class TH2F;
-class StoreGateSvc;
+class TH2I;
+class StatusCode;
+
 class TrigT1CaloMonErrorTool;
 class TrigT1CaloHistogramTool;
 
@@ -78,10 +78,8 @@ private:
   static const int s_threshBits = 3;
   static const int s_threshMask = 0x7;
 
-  ServiceHandle<StoreGateSvc> m_storeGate;
   ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
   ToolHandle<TrigT1CaloHistogramTool> m_histTool;
-  mutable MsgStream m_log;
 
   /// Core CPM tower container StoreGate key
   std::string m_cpmTowerLocation;
@@ -173,6 +171,7 @@ private:
 
   TH1F* m_h_CP_errors;
   TH2F* m_h_CP_overview;
+  TH2I* m_h_CP_events;
 
 };
 

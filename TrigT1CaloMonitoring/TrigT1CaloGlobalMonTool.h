@@ -11,14 +11,14 @@
 #define TRIGT1CALOGLOBALMONTOOL_H
 
 #include <string>
+#include <vector>
 
-#include "GaudiKernel/MsgStream.h"
-#include "GaudiKernel/ServiceHandle.h"
+#include "GaudiKernel/ToolHandle.h"
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 
 class TH2F;
-class StoreGateSvc;
+class StatusCode;
 class TrigT1CaloHistogramTool;
 
 class TrigT1CaloGlobalMonTool: public ManagedMonitorToolBase
@@ -73,18 +73,10 @@ private:
 		      RODStatus, RODMissing, ROBStatus, Unpacking,
 		      NumberOfGlobalErrors };
 
-  typedef std::vector<int>            ErrorVector;
+  typedef std::vector<int> ErrorVector;
 
-  TH2F* book2F(const std::string& name, const std::string& title,
-                                    int nx, double xmin, double xmax,
-                                    int ny, double ymin, double ymax);
-
-  ServiceHandle<StoreGateSvc> m_storeGate;
   ToolHandle<TrigT1CaloHistogramTool> m_histTool;
-  mutable MsgStream m_log;
 
-  MonGroup* m_monGroup;
-  
   /// Root directory
   std::string m_rootDir;
 

@@ -1,7 +1,13 @@
+#include <cmath>
+#include <iomanip>
 #include <sstream>
 
+#include "TAxis.h"
+#include "TH1.h"
+#include "TH2.h"
 #include "TH1F.h"
 #include "TH2F.h"
+#include "TH2I.h"
 #include "TProfile.h"
 #include "TProfile2D.h"
 
@@ -16,6 +22,7 @@
 #include "TrigConfL1Data/L1DataDef.h"
 #include "TrigConfL1Data/Menu.h"
 #include "TrigConfL1Data/TriggerThreshold.h"
+#include "TrigConfigSvc/ILVL1ConfigSvc.h"
 #include "TrigT1CaloUtils/DataError.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
@@ -108,6 +115,24 @@ void TrigT1CaloHistogramTool::numberPairs(TH1* hist, int firstMin, int firstMax,
   }
 }
 
+// Label bins with number pairs without skipping bins when stepping
+
+void TrigT1CaloHistogramTool::numberPairs2(TH1* hist,
+               int firstMin, int firstMax,
+               int secondMin, int secondMax, int step, int offset, bool xAxis)
+{
+  TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  int bin = 1 + offset;
+  for (int first = firstMin; first <= firstMax; ++first) {
+    for (int second = secondMin; second <= secondMax; second += step) {
+      std::ostringstream cnum;
+      cnum << first << "/" << second;
+      axis->SetBinLabel(bin, cnum.str().c_str());
+      bin++;
+    }
+  }
+}
+
 // Label bins with numbers
 
 void TrigT1CaloHistogramTool::numbers(TH1* hist, int min, int max, int step,
@@ -160,7 +185,8 @@ bool TrigT1CaloHistogramTool::thresholdNames(const std::string& type,
     names.push_back(cnum.str());
   }
 
-  const std::vector<TrigConf::TriggerThreshold*>& thresholds(m_configSvc->ctpConfig()->menu()->thresholdVector());
+  const std::vector<TrigConf::TriggerThreshold*>&
+               thresholds(m_configSvc->ctpConfig()->menu()->thresholdVector());
   std::vector<TrigConf::TriggerThreshold*>::const_iterator it;
   for (it = thresholds.begin(); it != thresholds.end(); ++it) {
     const std::string thrType((*it)->type());
@@ -168,7 +194,7 @@ bool TrigT1CaloHistogramTool::thresholdNames(const std::string& type,
       if (thrType != def.emType() && thrType != def.tauType()) continue;
     } else if (thrType != type) continue;
     const int threshNum = (*it)->thresholdNumber();
-    if (threshNum < nthresh) {
+    if (threshNum >= 0 && threshNum < nthresh) {
       names[threshNum] = (*it)->name();
       found = true;
     }
@@ -338,6 +364,18 @@ void TrigT1CaloHistogramTool::ppmCrateModule(TH1* hist, int firstCrate,
   numberPairs(hist, firstCrate, lastCrate, 0, 15, step, offset, xAxis);
   TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
   axis->SetTitle("Crate/Module");
+}
+
+// Label bins with PPM error bit names
+
+void TrigT1CaloHistogramTool::ppmErrors(TH1* hist, int offset, bool xAxis)
+{
+  TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  const LVL1::DataError err(0);
+  for (int bit = 0; bit < 8; ++bit) {
+    axis->SetBinLabel(bit + 1 + offset,
+          (err.bitName(bit + LVL1::DataError::ChannelDisabled)).c_str());
+  }
 }
 
 //===========================================================================
@@ -707,6 +745,44 @@ TH2F* TrigT1CaloHistogramTool::bookJEMRoIEtaVsPhi(const std::string& name,
 //  Booking Utilities - PPM
 //===========================================================================
 
+// Book PPM Em eta
+
+TH1F* TrigT1CaloHistogramTool::bookPPMEmEta(const std::string name,
+                                            const std::string title)
+{
+  const int nxbins = 66;
+  const double xbins[nxbins+1] = {-4.9,-4.475,-4.050,-3.625,-3.2,-3.1,-2.9,
+                                  -2.7,-2.5,-2.4,-2.3,-2.2,-2.1,-2.0,-1.9,
+      		                  -1.8,-1.7,-1.6,-1.5,-1.4,-1.3,-1.2,-1.1,
+				  -1.0,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,
+				  -0.2,-0.1,0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,
+				  0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,
+				  1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.7,2.9,
+				  3.1,3.2,3.625,4.050,4.475,4.9};
+  TH1F* hist = book1F(name, title, nxbins, xbins);
+  hist->SetXTitle("eta");
+  return hist;
+}
+
+// Book PPM Had eta
+
+TH1F* TrigT1CaloHistogramTool::bookPPMHadEta(const std::string name,
+                                             const std::string title)
+{
+  const int nxbins = 62;
+  const double xbins[nxbins+1] = {-4.9,-4.050,-3.2,-3.1,-2.9,
+                                  -2.7,-2.5,-2.4,-2.3,-2.2,-2.1,-2.0,-1.9,
+      		                  -1.8,-1.7,-1.6,-1.5,-1.4,-1.3,-1.2,-1.1,
+				  -1.0,-0.9,-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,
+				  -0.2,-0.1,0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,
+				  0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,
+				  1.8,1.9,2.0,2.1,2.2,2.3,2.4,2.5,2.7,2.9,
+				  3.1,3.2,4.050,4.9};
+  TH1F* hist = book1F(name, title, nxbins, xbins);
+  hist->SetXTitle("eta");
+  return hist;
+}
+ 
 // Book PPM Em eta vs phi
 
 TH2F* TrigT1CaloHistogramTool::bookPPMEmEtaVsPhi(const std::string name,
@@ -870,8 +946,10 @@ void TrigT1CaloHistogramTool::fillEventNumber(TH2I* hist, double y)
 {
   const int biny  = hist->GetYaxis()->FindBin(y);
   const int nbins = hist->GetNbinsX();
+  int lastVal = 0;
   for (int binx = 1; binx <= nbins; ++binx) {
-    if (hist->GetBinContent(binx, biny) == 0.) {
+    const int val = hist->GetBinContent(binx, biny);
+    if (val == 0) {
       int eventNumber = 0;
       const EventInfo* evInfo = 0;
       StatusCode sc = evtStore()->retrieve(evInfo);
@@ -881,9 +959,9 @@ void TrigT1CaloHistogramTool::fillEventNumber(TH2I* hist, double y)
         const EventID* evID = evInfo->event_ID();
         if (evID) eventNumber = evID->event_number();
       }
-      hist->SetBinContent(binx, biny, eventNumber);
+      if (eventNumber != lastVal) hist->SetBinContent(binx, biny, eventNumber);
       break;
-    }
+    } else lastVal = val;
   }
 }
 

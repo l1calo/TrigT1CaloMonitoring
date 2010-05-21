@@ -13,8 +13,6 @@
 #include <string>
 #include <vector>
 
-#include "GaudiKernel/MsgStream.h"
-#include "GaudiKernel/ServiceHandle.h"
 #include "GaudiKernel/ToolHandle.h"
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
@@ -23,8 +21,11 @@
 class TH1;
 class TH1F;
 class TH2F;
-class StoreGateSvc;
+class TH2I;
+
+class StatusCode;
 class TrigT1CaloMonErrorTool;
+class TrigT1CaloHistogramTool;
 
 namespace LVL1 {
   class RODHeader;
@@ -60,23 +61,13 @@ private:
   typedef std::vector<unsigned int>   ROBErrorCollection;
   typedef std::vector<int>            ErrorVector;
   
-  TH1F* book1F(const std::string& name, const std::string& title,
-                                    int nx, double xmin, double xmax);
-  TH2F* book2F(const std::string& name, const std::string& title,
-                                    int nx, double xmin, double xmax,
-                                    int ny, double ymin, double ymax);
-  void setLabelsStatus(TH1* hist);
-  void setLabelsCSL(TH1* hist, bool xAxis, int firstBin, int lastBin,
-                                           int binIncr, int slinkIncr);
-  void setLabelsROBStatusGen(TH1* hist);
-  void setLabelsROBStatusSpec(TH1* hist);
-  void setLabelsUnpacking(TH1* hist);
+  void setLabelsStatus(TH1* hist, bool xAxis = true);
+  void setLabelsROBStatusGen(TH1* hist, bool xAxis = true);
+  void setLabelsROBStatusSpec(TH1* hist, bool xAxis = true);
+  void setLabelsUnpacking(TH1* hist, bool xAxis = true);
 
-  ServiceHandle<StoreGateSvc> m_storeGate;
   ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
-  mutable MsgStream m_log;
-
-  MonGroup* m_monGroup;
+  ToolHandle<TrigT1CaloHistogramTool> m_histTool;
 
   /// DAQ ROD header container StoreGate key
   std::string m_rodHeaderLocation;
@@ -132,6 +123,9 @@ private:
   TH1F* m_h_ROD_summary;
   TH1F* m_h_ROB_summary;
   TH1F* m_h_Unp_summary;
+  TH2I* m_h_ROD_events;
+  TH2I* m_h_ROB_events;
+  TH2I* m_h_Unp_events;
 
 };
 

@@ -8,21 +8,21 @@
 #include "AthenaBaseComps/AthAlgTool.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 
-#include "TH1.h"
-#include "TH2.h"
-
-#include "TrigConfigSvc/ILVL1ConfigSvc.h"
-
 class TH1;
 class TH2;
 class TH1F;
 class TH2F;
+class TH2I;
 class TProfile;
 class TProfile2D;
 
 class IInterface;
 class InterfaceID;
 class StatusCode;
+
+namespace TrigConf {
+  class ILVL1ConfigSvc;
+}
 
 /** Tool to provide histogramming utilities
  *
@@ -56,6 +56,10 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    void numberPairs(TH1* hist, int firstMin, int firstMax,
                                int secondMin, int secondMax,
 			       int step = 1, int offset = 0, bool xAxis = true);
+   /// Label bins with number pairs without skipping bins when stepping
+   void numberPairs2(TH1* hist, int firstMin, int firstMax,
+                               int secondMin, int secondMax,
+                               int step = 1, int offset = 0, bool xAxis = true);
    /// Label bins with numbers
    void numbers(TH1* hist, int min, int max, int step = 1, int offset = 0,
                                                            bool xAxis = true);
@@ -109,9 +113,10 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    ////////////////////////////////
 
    /// Label bins with PPM crate/module
-
    void ppmCrateModule(TH1* hist, int firstCrate, int lastCrate,
                                        int offset = 0, bool xAxis = true);
+   /// Label bins with PPM error bit names
+   void ppmErrors(TH1* hist, int offset = 0, bool xAxis = true);
 
    ////////////////////////////////
    // Booking Utilities - General
@@ -205,6 +210,10 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    // Booking Utilities - PPM
    ////////////////////////////////
 
+   /// Book PPM Em eta
+   TH1F* bookPPMEmEta(const std::string name,const std::string title);
+   /// Book PPM Had eta
+   TH1F* bookPPMHadEta(const std::string name,const std::string title);
    /// Book PPM Em eta vs phi
    TH2F* bookPPMEmEtaVsPhi(const std::string name, const std::string title);
    /// Book PPM Had eta vs phi
