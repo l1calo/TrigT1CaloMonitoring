@@ -306,14 +306,15 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   setLabelsStatus(m_h_ROD_events, false);
   m_h_ROD_events->GetYaxis()->SetBinLabel(1+TriggerType, "");
   m_h_ROD_events->GetYaxis()->SetBinLabel(1+LimitedRoI,  "");
-  m_h_ROD_events->GetYaxis()->SetBinLabel(1+NoPayload, "No Payload");
+  m_h_ROD_events->GetYaxis()->SetBinLabel(1+NoPayload,
+                                                  "#splitline{No}{Payload}");
 
   m_histTool->setMonGroup(&monROB);
 
   m_h_ROB_events = m_histTool->bookEventNumbers("rod_2d_RobErrorEventNumbers",
                          "ROB Status Error Event Numbers", 7, 0, 7);
   setLabelsROBStatusGen(m_h_ROB_events, false);
-  m_h_ROB_events->GetYaxis()->SetBinLabel(6, "OtherGeneric");
+  m_h_ROB_events->GetYaxis()->SetBinLabel(6, "#splitline{Other}{Generic}");
   m_h_ROB_events->GetYaxis()->SetBinLabel(7, "Specific");
 
   m_histTool->setMonGroup(&monUnpack);
@@ -699,16 +700,28 @@ StatusCode TrigT1CaloRodMonTool::procHistograms(bool isEndOfEventsBlock,
 void TrigT1CaloRodMonTool::setLabelsStatus(TH1* hist, bool xAxis)
 {
   TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
-  axis->SetBinLabel(1+GLink,         "GLinkError");
-  //axis->SetBinLabel(1+CMMParity,     "CMMParityError");
-  axis->SetBinLabel(1+LVDSLink,      "LVDSLinkError");
-  axis->SetBinLabel(1+FIFOOverflow,  "RODFIFOOverflow");
-  axis->SetBinLabel(1+DataTransport, "DataTransportError");
-  axis->SetBinLabel(1+Timeout,       "GLinkTimeout");
-  axis->SetBinLabel(1+BCNMismatch,   "BCNMismatch");
-  axis->SetBinLabel(1+TriggerType,   "TriggerTypeTimeout");
-  axis->SetBinLabel(1+LimitedRoI,    "LimitedRoISet");
-  axis->SetBinLabel(1+NoFragment,    "No ROD Fragment");
+  if (xAxis) {
+    axis->SetBinLabel(1+GLink,         "GLinkError");
+    //axis->SetBinLabel(1+CMMParity,     "CMMParityError");
+    axis->SetBinLabel(1+LVDSLink,      "LVDSLinkError");
+    axis->SetBinLabel(1+FIFOOverflow,  "RODFIFOOverflow");
+    axis->SetBinLabel(1+DataTransport, "DataTransportError");
+    axis->SetBinLabel(1+Timeout,       "GLinkTimeout");
+    axis->SetBinLabel(1+BCNMismatch,   "BCNMismatch");
+    axis->SetBinLabel(1+TriggerType,   "TriggerTypeTimeout");
+    axis->SetBinLabel(1+LimitedRoI,    "LimitedRoISet");
+    axis->SetBinLabel(1+NoFragment,    "No ROD Fragment");
+  } else {
+    axis->SetBinLabel(1+GLink,         "#splitline{GLink}{Error}");
+    axis->SetBinLabel(1+LVDSLink,      "#splitline{LVDSLink}{Error}");
+    axis->SetBinLabel(1+FIFOOverflow,  "#splitline{RODFIFO}{Overflow}");
+    axis->SetBinLabel(1+DataTransport, "#splitline{Data}{Transport}");
+    axis->SetBinLabel(1+Timeout,       "#splitline{GLink}{Timeout}");
+    axis->SetBinLabel(1+BCNMismatch,   "#splitline{BCN}{Mismatch}");
+    axis->SetBinLabel(1+TriggerType,   "#splitline{Trigger}{Timeout}");
+    axis->SetBinLabel(1+LimitedRoI,    "#splitline{Limited}{RoISet}");
+    axis->SetBinLabel(1+NoFragment,    "#splitline{No ROD}{Fragment}");
+  }
 }
 
 void TrigT1CaloRodMonTool::setLabelsROBStatusGen(TH1* hist, bool xAxis)
@@ -719,6 +732,10 @@ void TrigT1CaloRodMonTool::setLabelsROBStatusGen(TH1* hist, bool xAxis)
   axis->SetBinLabel(3,  "Timeout");
   axis->SetBinLabel(4,  "DataError");
   axis->SetBinLabel(5,  "Overflow");
+  if (!xAxis) {
+    axis->SetBinLabel(1,  "#splitline{BCID}{Check}");
+    axis->SetBinLabel(2,  "#splitline{EL1ID}{Check}");
+  }
 }
 
 void TrigT1CaloRodMonTool::setLabelsROBStatusSpec(TH1* hist, bool xAxis)

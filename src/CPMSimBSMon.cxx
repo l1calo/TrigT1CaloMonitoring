@@ -8,18 +8,16 @@
 //
 // ********************************************************************
 
-#include <iomanip>
-#include <sstream>
 #include <utility>
 #include <cmath>
 
+#include "TH1.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TH2I.h"
 
-#include "CLHEP/Units/SystemOfUnits.h"
-#include "GaudiKernel/ITHistSvc.h"
-#include "StoreGate/StoreGateSvc.h"
+#include "GaudiKernel/MsgStream.h"
+#include "GaudiKernel/StatusCode.h"
 #include "SGTools/StlVectorClids.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
@@ -50,16 +48,13 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
 			 const std::string & name,
 			 const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
-    m_storeGate("StoreGateSvc", name),
     m_emTauTool("LVL1::L1EmTauTools/L1EmTauTools"),
     m_cpHitsTool("LVL1::L1CPHitsTools/L1CPHitsTools"),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloHistogramTool"),
-    m_log(msgSvc(), name), m_debug(false), m_events(0)
+    m_debug(false), m_events(0)
 /*---------------------------------------------------------*/
 {
-  declareInterface<IMonitorToolBase>(this); 
-
   declareProperty("EmTauTool", m_emTauTool);
   declareProperty("CPHitsTool", m_cpHitsTool);
 
@@ -100,50 +95,50 @@ CPMSimBSMon::~CPMSimBSMon()
 {
 }
 
+#ifndef PACKAGE_VERSION
+#define PACKAGE_VERSION "unknown"
+#endif
+
 /*---------------------------------------------------------*/
 StatusCode CPMSimBSMon::initialize()
 /*---------------------------------------------------------*/
 {
-  m_log.setLevel(outputLevel());
-  m_debug = outputLevel() <= MSG::DEBUG;
+  msg(MSG::INFO) << "Initializing " << name() << " - package version "
+                 << PACKAGE_VERSION << endreq;
+
+  m_debug = msgLvl(MSG::DEBUG);
 
   StatusCode sc;
 
   sc = ManagedMonitorToolBase::initialize();
   if (sc.isFailure()) return sc;
 
-  sc = m_storeGate.retrieve();
-  if( sc.isFailure() ) {
-    m_log << MSG::ERROR << "Unable to locate Service StoreGateSvc" << endreq;
-    return sc;
-  }
-
   if (m_compareWithSim) {
 
     sc = m_emTauTool.retrieve();
     if( sc.isFailure() ) {
-      m_log << MSG::ERROR << "Unable to locate Tool L1EmTauTools" << endreq;
+      msg(MSG::ERROR) << "Unable to locate Tool L1EmTauTools" << endreq;
       return sc;
     }
 
     sc = m_cpHitsTool.retrieve();
     if( sc.isFailure() ) {
-      m_log << MSG::ERROR << "Unable to locate Tool L1CPHitsTools" << endreq;
+      msg(MSG::ERROR) << "Unable to locate Tool L1CPHitsTools" << endreq;
       return sc;
     }
   }
 
   sc = m_errorTool.retrieve();
   if( sc.isFailure() ) {
-    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloMonErrorTool"
-                        << endreq;
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                    << endreq;
     return sc;
   }
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloHistogramTool"
-                        << endreq;
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+                    << endreq;
     return sc;
   }
 
@@ -157,11 +152,9 @@ StatusCode CPMSimBSMon::initialize()
       const int thresh = *pos;
       if (thresh >= 0 && thresh < 16) m_roiMask |= (1 << thresh);
     }
-    m_log << MSG::INFO << "RoI comparison mask: " << MSG::hex
-          << m_roiMask << MSG::dec << endreq;
+    msg(MSG::INFO) << "RoI comparison mask: " << MSG::hex
+                   << m_roiMask << MSG::dec << endreq;
   }
-
-  m_log << MSG::INFO << "CPMSimBSMon initialised" << endreq;
 
   return StatusCode::SUCCESS;
 }
@@ -175,10 +168,10 @@ StatusCode CPMSimBSMon::finalize()
 
 /*---------------------------------------------------------*/
 StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
-                                           bool isNewLumiBlock, bool isNewRun)
+                                       bool isNewLumiBlock, bool isNewRun)
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "bookHistograms entered" << endreq;
+  msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
 
   if( m_environment == AthenaMonManager::online ) {
     // book histograms that are only made in the online environment...
@@ -441,7 +434,7 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   } // end if (isNewRun ...
 
-  m_log << MSG::DEBUG << "Leaving bookHistograms" << endreq;
+  msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
   
   return StatusCode::SUCCESS;
 }
@@ -450,12 +443,12 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 StatusCode CPMSimBSMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "fillHistograms entered" << endreq;
+  msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
   
   // Skip events believed to be corrupt
 
   if (m_errorTool->corrupt()) {
-    m_log << MSG::DEBUG << "Skipping corrupt event" << endreq;
+    msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
 
@@ -467,9 +460,9 @@ StatusCode CPMSimBSMon::fillHistograms()
   //Retrieve Trigger Towers from SG
   const TriggerTowerCollection* triggerTowerTES = 0; 
   if (m_compareTriggerTowers) {
-    sc = m_storeGate->retrieve(triggerTowerTES, m_triggerTowerLocation); 
+    sc = evtStore()->retrieve(triggerTowerTES, m_triggerTowerLocation); 
     if( sc.isFailure()  ||  !triggerTowerTES ) {
-      m_log << MSG::DEBUG<< "No Trigger Tower container found"<< endreq; 
+      msg(MSG::DEBUG) << "No Trigger Tower container found" << endreq; 
     }
   }
 
@@ -477,15 +470,15 @@ StatusCode CPMSimBSMon::fillHistograms()
   const CpmTowerCollection* cpmTowerTES = 0; 
   const CpmTowerCollection* cpmTowerOvTES = 0; 
   if (m_compareTriggerTowers || m_compareWithSim) {
-    sc = m_storeGate->retrieve(cpmTowerTES, m_cpmTowerLocation); 
+    sc = evtStore()->retrieve(cpmTowerTES, m_cpmTowerLocation); 
     if( sc.isFailure()  ||  !cpmTowerTES ) {
-      m_log << MSG::DEBUG<< "No Core CPM Tower container found"<< endreq; 
+      msg(MSG::DEBUG) << "No Core CPM Tower container found" << endreq; 
     }
-    if (m_storeGate->contains<CpmTowerCollection>(m_cpmTowerLocationOverlap)) {
-      sc = m_storeGate->retrieve(cpmTowerOvTES, m_cpmTowerLocationOverlap); 
+    if (evtStore()->contains<CpmTowerCollection>(m_cpmTowerLocationOverlap)) {
+      sc = evtStore()->retrieve(cpmTowerOvTES, m_cpmTowerLocationOverlap); 
     } else sc = StatusCode::FAILURE;
     if( sc.isFailure()  ||  !cpmTowerOvTES ) {
-      m_log << MSG::DEBUG<< "No Overlap CPM Tower container found"<< endreq; 
+      msg(MSG::DEBUG) << "No Overlap CPM Tower container found" << endreq; 
     }
   }
   m_overlapPresent = cpmTowerOvTES != 0;
@@ -494,31 +487,31 @@ StatusCode CPMSimBSMon::fillHistograms()
   const CpmRoiCollection* cpmRoiTES = 0;
   const RodHeaderCollection* rodTES = 0;
   if (m_compareWithSim) {
-    sc = m_storeGate->retrieve( cpmRoiTES, m_cpmRoiLocation);
+    sc = evtStore()->retrieve( cpmRoiTES, m_cpmRoiLocation);
     if( sc.isFailure()  ||  !cpmRoiTES ) {
-      m_log << MSG::DEBUG << "No DAQ CPM RoIs container found"<< endreq;
+      msg(MSG::DEBUG) << "No DAQ CPM RoIs container found" << endreq;
     } else {
-      if (m_storeGate->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
-        sc = m_storeGate->retrieve( rodTES, m_rodHeaderLocation);
+      if (evtStore()->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
+        sc = evtStore()->retrieve( rodTES, m_rodHeaderLocation);
       } else sc = StatusCode::FAILURE;
       if( sc.isFailure()  ||  !rodTES ) {
-        m_log << MSG::DEBUG << "No ROD Header container found"<< endreq;
+        msg(MSG::DEBUG) << "No ROD Header container found" << endreq;
       }
     }
   }
   
   //Retrieve CPM Hits from SG
   const CpmHitsCollection* cpmHitsTES = 0;
-  sc = m_storeGate->retrieve( cpmHitsTES, m_cpmHitsLocation);
+  sc = evtStore()->retrieve( cpmHitsTES, m_cpmHitsLocation);
   if( sc.isFailure()  ||  !cpmHitsTES ) {
-    m_log << MSG::DEBUG << "No CPM Hits container found"<< endreq; 
+    msg(MSG::DEBUG) << "No CPM Hits container found" << endreq; 
   }
   
   //Retrieve CMM-CP Hits from SG
   const CmmCpHitsCollection* cmmCpHitsTES = 0;
-  sc = m_storeGate->retrieve( cmmCpHitsTES, m_cmmCpHitsLocation);
+  sc = evtStore()->retrieve( cmmCpHitsTES, m_cmmCpHitsLocation);
   if( sc.isFailure()  ||  !cmmCpHitsTES ) {
-    m_log << MSG::DEBUG << "No CMM-CP Hits container found"<< endreq; 
+    msg(MSG::DEBUG) << "No CMM-CP Hits container found" << endreq; 
   }
   ++m_events;
 
@@ -674,14 +667,14 @@ StatusCode CPMSimBSMon::fillHistograms()
   // Save error vector for global summary
 
   ErrorVector* save = new ErrorVector(crateErr);
-  sc = m_storeGate->record(save, "L1CaloCPMMismatchVector");
+  sc = evtStore()->record(save, "L1CaloCPMMismatchVector");
   if (sc != StatusCode::SUCCESS) {
-    m_log << MSG::ERROR << "Error recording CPM mismatch vector in TES "
-          << endreq;
+    msg(MSG::ERROR) << "Error recording CPM mismatch vector in TES "
+                    << endreq;
     return sc;
   }
 
-  m_log << MSG::DEBUG << "Leaving fillHistograms" << endreq;
+  msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
 
   return StatusCode::SUCCESS;
 }
@@ -691,7 +684,7 @@ StatusCode CPMSimBSMon::procHistograms(bool isEndOfEventsBlock,
                                   bool isEndOfLumiBlock, bool isEndOfRun)
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "procHistograms entered" << endreq;
+  msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
   if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
   }
@@ -705,7 +698,7 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
                           const CpmTowerMap& cpMap, ErrorVector& errors,
 			  bool overlap)
 {
-  m_log << MSG::DEBUG << "Compare Trigger Towers and CPM Towers" << endreq;
+  msg(MSG::DEBUG) << "Compare Trigger Towers and CPM Towers" << endreq;
 
   const int nCrates = 4;
   const int nCPMs   = 14;
@@ -832,9 +825,9 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
 	hist2 = m_h_FpgaTowerDATnoSIM;
       }
       if (m_debug) {
-        m_log << MSG::DEBUG << " EMTowerMismatch key/eta/phi/crate/cpm/tt/cp: "
-              << key << "/" << eta << "/" << phi << "/" << crate << "/"
-	      << cpm << "/" << ttEm << "/" << cpEm << endreq;
+        msg(MSG::DEBUG) << " EMTowerMismatch key/eta/phi/crate/cpm/tt/cp: "
+                        << key << "/" << eta << "/" << phi << "/" << crate
+			<< "/" << cpm << "/" << ttEm << "/" << cpEm << endreq;
       }
     }
     if (hist1) m_histTool->fillCPMEtaVsPhi(hist1, eta, phi);
@@ -859,9 +852,9 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
 	hist2 = m_h_FpgaTowerDATnoSIM;
       }
       if (m_debug) {
-        m_log << MSG::DEBUG << " HadTowerMismatch key/eta/phi/crate/cpm/tt/cp: "
-              << key << "/" << eta << "/" << phi << "/" << crate << "/"
-	      << cpm << "/" << ttHad << "/" << cpHad << endreq;
+        msg(MSG::DEBUG) << " HadTowerMismatch key/eta/phi/crate/cpm/tt/cp: "
+                        << key << "/" << eta << "/" << phi << "/" << crate
+			<< "/" << cpm << "/" << ttHad << "/" << cpHad << endreq;
       }
     }
     if (hist1) m_histTool->fillCPMEtaVsPhi(hist1, eta, phi);
@@ -874,7 +867,7 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
 void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
                           const RodHeaderCollection* rods, ErrorVector& errors)
 {
-  m_log << MSG::DEBUG << "Compare Simulated RoIs with data" << endreq;
+  msg(MSG::DEBUG) << "Compare Simulated RoIs with data" << endreq;
 
   const int nCrates = 4;
   const int nCPMs = 14;
@@ -995,17 +988,17 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
     }
 
     if (m_debug) {
-      m_log << MSG::DEBUG << "DataHits/SimHits: ";
+      msg(MSG::DEBUG) << "DataHits/SimHits: ";
       for (int i = 15; i >= 0; --i) {
         int hit = (datHits >> i) & 0x1;
-        m_log << MSG::DEBUG << hit;
+        msg(MSG::DEBUG) << hit;
       }
-      m_log << MSG::DEBUG << "/";
+      msg(MSG::DEBUG) << "/";
       for (int i = 15; i >= 0; --i) {
         int hit = (simHits >> i) & 0x1;
-        m_log << MSG::DEBUG << hit;
+        msg(MSG::DEBUG) << hit;
       }
-      m_log << MSG::DEBUG << endreq;
+      msg(MSG::DEBUG) << endreq;
     }
   }
 }
@@ -1015,7 +1008,7 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
 void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
                                                        ErrorVector& errors)
 {
-  m_log << MSG::DEBUG << "Compare simulated CPM Hits with data" << endreq;
+  msg(MSG::DEBUG) << "Compare simulated CPM Hits with data" << endreq;
 
   const int maxKey = 0x7fffffff;
   CpmHitsMap::const_iterator simMapIter    = cpmSimMap.begin();
@@ -1132,7 +1125,7 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
 void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
                           ErrorVector& errorsCPM, ErrorVector& errorsCMM)
 {
-  m_log << MSG::DEBUG << "Compare CPM Hits and CMM Hits" << endreq;
+  msg(MSG::DEBUG) << "Compare CPM Hits and CMM Hits" << endreq;
 
   const int nCrates = 4;
   const int nCPMs = 14;
@@ -1263,8 +1256,8 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
                           const CmmCpHitsMap& cmmMap,
                           ErrorVector& errors, int selection)
 {
-  m_log << MSG::DEBUG << "Compare Simulated CMM Hit Sums and Data CMM Hit Sums"
-        << endreq;
+  msg(MSG::DEBUG) << "Compare Simulated CMM Hit Sums and Data CMM Hit Sums"
+                  << endreq;
 
   const bool local  = (selection == LVL1::CMMCPHits::LOCAL);
   const bool remote = (selection == LVL1::CMMCPHits::REMOTE_0);
@@ -1575,7 +1568,7 @@ void CPMSimBSMon::setupMap(const CmmCpHitsCollection* coll, CmmCpHitsMap& map)
 void CPMSimBSMon::simulate(const CpmTowerMap towers, const CpmTowerMap towersOv,
                                  CpmRoiCollection* rois)
 {
-  m_log << MSG::DEBUG << "Simulate CPM RoIs from CPM Towers" << endreq;
+  msg(MSG::DEBUG) << "Simulate CPM RoIs from CPM Towers" << endreq;
 
   // Process a crate at a time to use overlap data
   const int ncrates = 4;
@@ -1619,7 +1612,7 @@ void CPMSimBSMon::simulate(const CpmTowerMap towers, const CpmTowerMap towersOv,
 void CPMSimBSMon::simulate(const CpmRoiCollection* rois,
                                  CpmHitsCollection* hits)
 {
-  m_log << MSG::DEBUG << "Simulate CPM Hits from CPM RoIs" << endreq;
+  msg(MSG::DEBUG) << "Simulate CPM Hits from CPM RoIs" << endreq;
 
   m_cpHitsTool->formCPMHits(rois, hits);
 }
@@ -1627,7 +1620,7 @@ void CPMSimBSMon::simulate(const CpmRoiCollection* rois,
 void CPMSimBSMon::simulate(const CmmCpHitsCollection* hitsIn,
                                  CmmCpHitsCollection* hitsOut, int selection)
 {
-  m_log << MSG::DEBUG << "Simulate CMM Hit sums from CMM Hits" << endreq;
+  msg(MSG::DEBUG) << "Simulate CMM Hit sums from CMM Hits" << endreq;
 
   if (selection == LVL1::CMMCPHits::LOCAL) {
     m_cpHitsTool->formCMMCPHitsCrate(hitsIn, hitsOut);

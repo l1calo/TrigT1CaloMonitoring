@@ -1,26 +1,27 @@
 // ********************************************************************
 //
-// NAME:     TrigT1CaloMonTool.cxx
+// NAME:     PPrSpareMon.cxx
 // PACKAGE:  TrigT1CaloMonitoring  
 //
-// AUTHOR:   Johanna Fleckner (Johanna.Fleckner@uni-mainz.de)
+// AUTHOR:   Peter Faulkner
 //           
 //
 // ********************************************************************
 
-#include "GaudiKernel/MsgStream.h"
-#include "GaudiKernel/ITHistSvc.h"
-#include "GaudiKernel/ISvcLocator.h"
+#include "TH2.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TProfile2D.h"
 
-#include "TString.h"
+#include "GaudiKernel/MsgStream.h"
+#include "GaudiKernel/StatusCode.h"
 
 #include "StoreGate/StoreGateSvc.h"
 #include "SGTools/StlVectorClids.h"
-#include "CLHEP/Units/SystemOfUnits.h"
 
 #include "TrigT1CaloMonitoring/PPrSpareMon.h"
-#include "TrigT1CaloMonitoring/MonHelper.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
 
 #include "TrigT1CaloEvent/TriggerTower_ClassDEF.h"
 #include "TrigT1CaloEvent/TriggerTowerCollection.h"
@@ -29,21 +30,24 @@
 
 /*---------------------------------------------------------*/
 PPrSpareMon::PPrSpareMon(const std::string & type, const std::string & name,
-					 const IInterface* parent)
+					           const IInterface* parent)
   : ManagedMonitorToolBase ( type, name, parent ),
-    m_errorTool("TrigT1CaloMonErrorTool")
+    m_SliceNo(15),
+    m_errorTool("TrigT1CaloMonErrorTool"),
+    m_histTool("TrigT1CaloHistogramTool")
 /*---------------------------------------------------------*/
 {
-  declareProperty("BS_TriggerTowerContainer",  m_TriggerTowerContainerName = "TriggerTowersSpare");
+  declareProperty("BS_TriggerTowerContainer",
+                  m_TriggerTowerContainerName = "TriggerTowersSpare");
   declareProperty("ADCHitMap_Thresh",  m_TT_ADC_HitMap_Thresh = 40);
 
-  declareProperty("PathInRootFile", m_PathInRootFile="L1Calo/PPM/SpareChannels") ;
-  declareProperty("ErrorPathInRootFile", m_ErrorPathInRootFile="L1Calo/PPM/SpareChannels/Errors") ;
+  declareProperty("PathInRootFile",
+                  m_PathInRootFile="L1Calo/PPM/SpareChannels") ;
+  declareProperty("ErrorPathInRootFile",
+                  m_ErrorPathInRootFile="L1Calo/PPM/SpareChannels/Errors") ;
   declareProperty("OnlineTest", m_onlineTest = false,
                   "Test online code when running offline");
 
-  // Maximum possible number of ADC slices
-  m_SliceNo=15;
 }
 
 /*---------------------------------------------------------*/
@@ -52,11 +56,16 @@ PPrSpareMon::~PPrSpareMon()
 {
 }
 
+#ifndef PACKAGE_VERSION
+#define PACKAGE_VERSION "unknown"
+#endif
+
 /*---------------------------------------------------------*/
 StatusCode PPrSpareMon::initialize()
 /*---------------------------------------------------------*/
 {
-  MsgStream log( msgSvc(), name() );
+  msg(MSG::INFO) << "Initializing " << name() << " - package version "
+                 << PACKAGE_VERSION << endreq;
 
   StatusCode sc;
 
@@ -65,30 +74,26 @@ StatusCode PPrSpareMon::initialize()
 
   sc = m_errorTool.retrieve();
   if( sc.isFailure() ) {
-    log << MSG::ERROR << "Unable to locate Tool TrigT1CaloMonErrorTool"
-                      << endreq;
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                    << endreq;
     return sc;
   }
   return StatusCode::SUCCESS;
+
+  sc = m_histTool.retrieve();
+  if( sc.isFailure() ) {
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+                    << endreq;
+    return sc;
+  }
 }
 
 /*---------------------------------------------------------*/
-StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun )
+StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
+                                        bool isNewLumiBlock, bool isNewRun )
 /*---------------------------------------------------------*/
 {
-  MsgStream log( msgSvc(), name() );
-  log << MSG::DEBUG << "in PPrSpareMon::bookHistograms" << endreq;
-
-  /** get a handle of StoreGate for access to the Event Store */
-  StatusCode sc = service("StoreGateSvc", m_storeGate);
-  if (sc.isFailure()) 
-    {
-      log << MSG::ERROR
-	   << "Unable to retrieve pointer to StoreGateSvc"
-	   << endreq;
-      return sc;
-    }
-
+  msg(MSG::DEBUG) << "in PPrSpareMon::bookHistograms" << endreq;
 
   if( m_environment == AthenaMonManager::online ) {
     // book histograms that are only made in the online environment...
@@ -98,196 +103,130 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlo
     // book histograms that are only relevant for cosmics data...
   }
 
-
-  MonGroup TT_ADC( this, m_PathInRootFile+"/ADC", shift, run );
-  HistoBooker ADC_Booker(&TT_ADC, &log, "");
-
-  MonGroup TT_Error( this, m_ErrorPathInRootFile, shift, run );
-  HistoBooker Error_Booker(&TT_Error, &log, "");
-
-  MonGroup TT_ErrorDetail( this, m_ErrorPathInRootFile+"/Detail", expert, run );
-  HistoBooker ErrorDetail_Booker(&TT_ErrorDetail, &log, "");
-
   if ( isNewEventsBlock|| isNewLumiBlock) { }
 
-  if( isNewRun )
+  if( isNewRun ) {
 
-    //if( isNewEventsBlock || isNewLumiBlock ) 
-    {	
-      Helper Help;
+    MonGroup TT_ADC(this, m_PathInRootFile+"/ADC", shift, run);
+    MonGroup TT_Error(this, m_ErrorPathInRootFile, shift, run);
+    MonGroup TT_ErrorDetail(this, m_ErrorPathInRootFile+"/Detail", expert, run);
 
-      std::string name,title;
-      std::stringstream buffer;
-	
-	  
+    std::string name,title;
+    std::stringstream buffer;
 
-      //---------------------------- ADC Hitmaps for Triggered Timeslice -----------------------------
-    
+    //------------------- ADC Hitmaps for Triggered Timeslice ----------------
 
-      buffer.str("");
-      buffer<<m_TT_ADC_HitMap_Thresh;
+    m_histTool->setMonGroup(&TT_ADC);
 
-      title="Spare Channels Hit Map of FADC > "+ buffer.str() + " for Triggered Timeslice";
-      m_h_TT_HitMap_ADC=ADC_Booker.book2F("ppmspare_2d_tt_adc_HitMap",title,64,32.0,96.0,64,0.,64.,"crate/module","submodule/channel");
-      setHitmapLabels(m_h_TT_HitMap_ADC);
-      title="Spare Channels Profile Map of FADC for Triggered Timeslice";
-      m_p_TT_HitMap_ADC=ADC_Booker.bookProfile2D("ppmspare_2d_tt_adc_ProfileMap",title,64,32.0,96.0,64,0.,64.,"crate/module","submodule/channel");
-      setHitmapLabels(m_p_TT_HitMap_ADC);
+    buffer.str("");
+    buffer << m_TT_ADC_HitMap_Thresh;
 
+    title = "Spare Channels Hit Map of FADC > " + buffer.str()
+                                                + " for Triggered Timeslice";
+    m_h_TT_HitMap_ADC = m_histTool->bookPPMCrateModuleVsSubmoduleChannel(
+                         "ppmspare_2d_tt_adc_HitMap", title, 2, 5);
+    title = "Spare Channels Profile Map of FADC for Triggered Timeslice";
+    m_p_TT_HitMap_ADC = m_histTool->bookProfilePPMCrateModuleVsSubmoduleChannel(
+                         "ppmspare_2d_tt_adc_ProfileMap", title, 2, 5);
 
-      //-------------------------Summary of Errors-----------------------------------------------
+    //-------------------------Summary of Errors------------------------------
 
-      m_h_TT_Error=Error_Booker.book1F("ppmspare_1d_ErrorSummary","Spare Channels Summary of Errors",7,0.5,7.5,""); //without Ppm fw errors
+    m_histTool->setMonGroup(&TT_Error);
 
-      m_h_TT_Error->GetXaxis()->SetBinLabel(1, "GLinkParity");
-      m_h_TT_Error->GetXaxis()->SetBinLabel(2, "GLinkProtocol");
-      m_h_TT_Error->GetXaxis()->SetBinLabel(3, "FIFOOverflow");
-      m_h_TT_Error->GetXaxis()->SetBinLabel(4, "ModuleError");
-      m_h_TT_Error->GetXaxis()->SetBinLabel(5, "GLinkDown");
-      m_h_TT_Error->GetXaxis()->SetBinLabel(6, "GLinkTimeout");
-      m_h_TT_Error->GetXaxis()->SetBinLabel(7, "BCNMismatch");
+    m_h_TT_Error = m_histTool->book1F("ppmspare_1d_ErrorSummary",
+                   "Spare Channels Summary of SubStatus Errors", 8, 0., 8.);
+    m_histTool->subStatus(m_h_TT_Error);
 
-      //---------------------------- SubStatus Word errors -----------------------------
-      // divided in: crate, ROD status and PPm fw errors
+    m_h_TT_EventNumbers = m_histTool->bookEventNumbers(
+      "ppmspare_2d_ErrorEventNumbers",
+      "Spare Channels SubStatus Error Event Numbers", 8, 0., 8.);
+    m_histTool->subStatus(m_h_TT_EventNumbers, 0, false);
+    m_h_TT_ASICEventNumbers = m_histTool->bookEventNumbers(
+      "ppmspare_2d_ASICErrorEventNumbers",
+      " Spare Channels ASIC Error Field Event Numbers", 8, 0., 8.);
+    m_histTool->ppmErrors(m_h_TT_ASICEventNumbers, 0, false);
+
+    //---------------------- SubStatus Word errors ---------------------------
       
-       //L1Calo Substatus word
-      m_h_TT_error_Crate_25=Error_Booker.book2F("ppmspare_2d_Status25","Spare Channels: Errors from TT SubStatus Word (crates 2-5)",7,0.5,7.5,71,0.5,71.5,"","");
-            
-      m_h_TT_error_Crate_25->GetXaxis()->SetBinLabel(1, "GLinkParity");
-      m_h_TT_error_Crate_25->GetXaxis()->SetBinLabel(2, "GLinkProtocol");
-      m_h_TT_error_Crate_25->GetXaxis()->SetBinLabel(3, "FIFOOverflow");
-      m_h_TT_error_Crate_25->GetXaxis()->SetBinLabel(4, "ModuleError");
-      m_h_TT_error_Crate_25->GetXaxis()->SetBinLabel(5, "GLinkDown");
-      m_h_TT_error_Crate_25->GetXaxis()->SetBinLabel(6, "GLinkTimeout");
-      m_h_TT_error_Crate_25->GetXaxis()->SetBinLabel(7, "BCNMismatch");
-      m_h_TT_error_Crate_25->SetStats(kFALSE);
-      
+    //L1Calo Substatus word
+    m_h_TT_error_Crate_25 = m_histTool->bookPPMSubStatusVsCrateModule(
+      "ppmspare_2d_Status25",
+      "Spare Channels: Errors from TT SubStatus Word (crates 2-5)", 2, 5);
 
-      //error bit field from ASIC data
-      m_h_fwPpmError_Crate_25=Error_Booker.book2F("ppmspare_2d_ErrorField25","Spare Channels: Errors from ASIC error field (crates 2-5)",8,0.5,8.5,71,0.5,71.5,"","");
+    //error bit field from ASIC data
+    m_h_fwPpmError_Crate_25 = m_histTool->bookPPMErrorsVsCrateModule(
+      "ppmspare_2d_ErrorField25",
+      "Spare Channels: Errors from ASIC error field (crates 2-5)", 2, 5);
 
-      m_h_fwPpmError_Crate_25->GetXaxis()->SetBinLabel(1, "ChannelDisabled");
-      m_h_fwPpmError_Crate_25->GetXaxis()->SetBinLabel(2, "MCMAbsent");
-      m_h_fwPpmError_Crate_25->GetXaxis()->SetBinLabel(3, "Timeout");
-      m_h_fwPpmError_Crate_25->GetXaxis()->SetBinLabel(4, "ASICFull");
-      m_h_fwPpmError_Crate_25->GetXaxis()->SetBinLabel(5, "EventMismatch");
-      m_h_fwPpmError_Crate_25->GetXaxis()->SetBinLabel(6, "BunchMismatch");
-      m_h_fwPpmError_Crate_25->GetXaxis()->SetBinLabel(7, "FIFOCorrupt");
-      m_h_fwPpmError_Crate_25->GetXaxis()->SetBinLabel(8, "PinParity");
-      m_h_fwPpmError_Crate_25->SetStats(kFALSE);
+    m_histTool->setMonGroup(&TT_ErrorDetail);
 
-    
-      for (int i=1; i<17; i+=2)
-	{
-	  buffer.str("");
-	  buffer<<i-1;
-	  
-	  name = "PPM " + buffer.str();
-	  m_h_TT_error_Crate_25->GetYaxis()->SetBinLabel(i,    name.c_str());
-	  m_h_TT_error_Crate_25->GetYaxis()->SetBinLabel(i+18, name.c_str());
-	  m_h_TT_error_Crate_25->GetYaxis()->SetBinLabel(i+36, name.c_str());
-	  m_h_TT_error_Crate_25->GetYaxis()->SetBinLabel(i+54, name.c_str());
-
-	  m_h_fwPpmError_Crate_25->GetYaxis()->SetBinLabel(i,    name.c_str());
-	  m_h_fwPpmError_Crate_25->GetYaxis()->SetBinLabel(i+18, name.c_str());
-	  m_h_fwPpmError_Crate_25->GetYaxis()->SetBinLabel(i+36, name.c_str());
-	  m_h_fwPpmError_Crate_25->GetYaxis()->SetBinLabel(i+54, name.c_str());
-
-	}
-
-	  m_h_TT_error_Crate_25->GetYaxis()->SetBinLabel(17,    "Crate 2");
-	  m_h_TT_error_Crate_25->GetYaxis()->SetBinLabel(17+18, "Crate 3");
-	  m_h_TT_error_Crate_25->GetYaxis()->SetBinLabel(17+36, "Crate 4");
-	  m_h_TT_error_Crate_25->GetYaxis()->SetBinLabel(17+54, "Crate 5");
-
-	  m_h_fwPpmError_Crate_25->GetYaxis()->SetBinLabel(17,    "Crate 2");
-	  m_h_fwPpmError_Crate_25->GetYaxis()->SetBinLabel(17+18, "Crate 3");
-	  m_h_fwPpmError_Crate_25->GetYaxis()->SetBinLabel(17+36, "Crate 4");
-	  m_h_fwPpmError_Crate_25->GetYaxis()->SetBinLabel(17+54, "Crate 5");
-
-      m_h_ErrorDetails.clear();
-      std::vector<std::string> errNames;
-      errNames.push_back("Channel0Disabled");
-      errNames.push_back("Channel1Disabled");
-      errNames.push_back("Channel2Disabled");
-      errNames.push_back("Channel3Disabled");
-      errNames.push_back("MCMAbsent");
-      errNames.push_back("");
-      errNames.push_back("Timeout");
-      errNames.push_back("ASICFull");
-      errNames.push_back("EventMismatch");
-      errNames.push_back("BunchMismatch");
-      errNames.push_back("FIFOCorrupt");
-      errNames.push_back("PinParity");
-      for (int error = 0; error < 12; error+=2) 
-        {
-          for (int crate = 2; crate < 6; crate+=2)
-            {
-	      buffer.str("");
-	      buffer<<crate;
-	      std::string name = "ppmspare_2d_"+errNames[error]+errNames[error+1]+"Crate"+buffer.str();
-	      std::string title = "ASIC Errors "+errNames[error]+" "+errNames[error+1]+" for Crates "+buffer.str();
-	      buffer.str("");
-	      buffer<<(crate+1);
-	      name += buffer.str();
-	      title += "-"+buffer.str();
-	      TH2F* hist = 0;
-	      if (error != 4) hist = ErrorDetail_Booker.book2F(name,title,32,0,32,32,0,32,"MCM","Crate/Module");
-	      else            hist = ErrorDetail_Booker.book2F(name,title,16,0,16,32,0,32,"MCM","Crate/Module");
-	      m_h_ErrorDetails.push_back(hist);
-	      hist->SetStats(kFALSE);
-	      for (int mcm = 0; mcm < 16; mcm+=2)
-	        {
-		  if (mcm == 0)
-		    {
-		      hist->GetXaxis()->SetBinLabel(1, errNames[error].c_str());
-		      if (error != 4) hist->GetXaxis()->SetBinLabel(17, errNames[error+1].c_str());
-                    }
-                  else
-		    {
-		      buffer.str("");
-		      buffer<<mcm;
-		      hist->GetXaxis()->SetBinLabel(1+mcm, buffer.str().c_str());
-		      if (error != 4) hist->GetXaxis()->SetBinLabel(17+mcm, buffer.str().c_str());
-                    }
-                }
-              for (int cr = 0; cr < 2; ++cr)
-	        {
-		  for (int module = 0; module < 16; module+=2)
-		    {
-		      buffer.str("");
-		      buffer<<(cr+crate)<<"/"<<module;
-		      hist->GetYaxis()->SetBinLabel(1+cr*16+module, buffer.str().c_str());
-                    }
-                }
-            }
+    m_h_ErrorDetails.clear();
+    std::vector<std::string> errNames;
+    errNames.push_back("Channel0Disabled");
+    errNames.push_back("Channel1Disabled");
+    errNames.push_back("Channel2Disabled");
+    errNames.push_back("Channel3Disabled");
+    errNames.push_back("MCMAbsent");
+    errNames.push_back("");
+    errNames.push_back("Timeout");
+    errNames.push_back("ASICFull");
+    errNames.push_back("EventMismatch");
+    errNames.push_back("BunchMismatch");
+    errNames.push_back("FIFOCorrupt");
+    errNames.push_back("PinParity");
+    for (int error = 0; error < 12; error+=2) {
+      for (int crate = 2; crate < 6; crate+=2) {
+	buffer.str("");
+	buffer << crate;
+	name = "ppmspare_2d_"+errNames[error]+errNames[error+1]
+	                     +"Crate"+buffer.str();
+	title = "ASIC Errors "+errNames[error]+" "
+	                      +errNames[error+1]+" for Crates "+buffer.str();
+	buffer.str("");
+	buffer << (crate+1);
+	name += buffer.str();
+	title += "-"+buffer.str();
+	int nbins = (error != 4) ? 32 : 16;
+	TH2F* hist = m_histTool->book2F(name,title,nbins,0,nbins,32,0,32);
+	m_histTool->numbers(hist, 0, 16, 2);
+	TAxis* axis = hist->GetXaxis();
+	axis->SetBinLabel(1, errNames[error].c_str());
+	if (error != 4) {
+	  m_histTool->numbers(hist, 0, 16, 2, 16);
+	  axis->SetBinLabel(17, errNames[error+1].c_str());
         }
-
-	  
-      //---------------------------- number of triggered slice -----------------------------
-      m_h_TT_triggeredSlice=ADC_Booker.book1F("ppmspare_1d_tt_adc_TriggeredSlice","Spare Channels Number of the Triggered Slice",m_SliceNo,-0.5,m_SliceNo-0.5,"#Slice");
-      
-	}	
-
-  if ( isNewLumiBlock )
-    {
+	axis->SetTitle("MCM");
+	m_histTool->ppmCrateModule(hist, crate, crate+1, 0, false);
+	m_h_ErrorDetails.push_back(hist);
+      }
     }
+	  
+    //--------------------- number of triggered slice ------------------------
+    m_histTool->setMonGroup(&TT_ADC);
+    
+    m_h_TT_triggeredSlice = m_histTool->book1F(
+      "ppmspare_1d_tt_adc_TriggeredSlice",
+      "Spare Channels Number of the Triggered Slice", m_SliceNo, 0, m_SliceNo);
+    m_histTool->numbers(m_h_TT_triggeredSlice, 0, m_SliceNo-1);
+     
+    m_histTool->unsetMonGroup();
+  }	
+
+  if ( isNewLumiBlock ) { }
     
   return StatusCode::SUCCESS;
-	}
+}
 
 /*---------------------------------------------------------*/
 StatusCode PPrSpareMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  MsgStream log(msgSvc(), name());
-
-  log << MSG::DEBUG << "in fillHistograms()" << endreq;
+  msg(MSG::DEBUG) << "in fillHistograms()" << endreq;
 
   // Skip events believed to be corrupt
 
   if (m_errorTool->corrupt()) {
-    log << MSG::DEBUG << "Skipping corrupt event" << endreq;
+    msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
 
@@ -297,120 +236,130 @@ StatusCode PPrSpareMon::fillHistograms()
   //Retrieve TriggerTowers from SG
   StatusCode sc;
   const TriggerTowerCollection* TriggerTowerTES = 0; 
-  if (m_storeGate->contains<TriggerTowerCollection>(m_TriggerTowerContainerName)) {
-    sc = m_storeGate->retrieve(TriggerTowerTES, m_TriggerTowerContainerName); 
+  if (evtStore()->contains<TriggerTowerCollection>(m_TriggerTowerContainerName)) {
+    sc = evtStore()->retrieve(TriggerTowerTES, m_TriggerTowerContainerName); 
   } else sc = StatusCode::FAILURE;
-  if( sc.isFailure() ) 
-    {
-      log << MSG::DEBUG << "No TriggerTower found in TES at "<< m_TriggerTowerContainerName<< endreq ;
-      return StatusCode::SUCCESS;
+  if (sc.isFailure()) {
+    msg(MSG::DEBUG) << "No TriggerTower found in TES at "
+                    << m_TriggerTowerContainerName<< endreq ;
+    return StatusCode::SUCCESS;
+  }
+
+    
+  // =========================================================================
+  // ================= Container: TriggerTower ===============================
+  // =========================================================================
+
+  TriggerTowerCollection::const_iterator TriggerTowerIterator =
+                                                     TriggerTowerTES->begin(); 
+  TriggerTowerCollection::const_iterator TriggerTowerIteratorEnd =
+                                                     TriggerTowerTES->end(); 
+ 
+  for (; TriggerTowerIterator != TriggerTowerIteratorEnd;
+                                                     ++TriggerTowerIterator) {
+
+    //---------------------------- ADC HitMaps -------------------------------
+
+    double crateModule      = (*TriggerTowerIterator)->eta();
+    double submoduleChannel = (*TriggerTowerIterator)->phi();
+    int icm       = crateModule;
+    int isc       = submoduleChannel;
+    int crate     = icm/16;
+    int module    = icm%16;
+    int submodule = isc/4;
+    int channel   = isc%4;
+
+    if (crate < 2 || crate > 5) continue;
+    
+    const int adc = (*TriggerTowerIterator)->emADC()[
+                                         (*TriggerTowerIterator)->emADCPeak()];
+    if (adc > m_TT_ADC_HitMap_Thresh) {
+      m_h_TT_HitMap_ADC->Fill(crateModule-32., submoduleChannel, 1);
+    }
+    m_p_TT_HitMap_ADC->Fill(crateModule-32., submoduleChannel, adc);
+
+    //------------------------ SubStatus Word errors -------------------------
+
+    using LVL1::DataError;
+    DataError error((*TriggerTowerIterator)-> emError());
+   
+    //Summary
+
+    int ypos = module+(crate-2)*16;
+
+    for (int bit = 0; bit < 8; ++bit) {
+      if (error.get(bit + DataError::ChannelDisabled)) {
+        m_h_fwPpmError_Crate_25->Fill(bit, ypos);
+	m_histTool->fillEventNumber(m_h_TT_ASICEventNumbers, bit);
+      }
+      if (error.get(bit + DataError::GLinkParity)) {
+        m_h_TT_error_Crate_25->Fill(bit, ypos);
+	m_h_TT_Error->Fill(bit);
+	m_histTool->fillEventNumber(m_h_TT_EventNumbers, bit);
+      }
     }
 
-    
-  // =============================================================================================
-  // ================= Container: TriggerTower ===================================================
-  // =============================================================================================
+    // Detailed plots by MCM
+    ypos = (crate%2)*16+module;
+    const int index = (crate-2)/2;
+    if (error.get(DataError::ChannelDisabled)) {
+      m_h_ErrorDetails[(channel/2)*4+index]->Fill(
+                                               (channel%2)*16+submodule, ypos);
+    }
+    if (error.get(DataError::MCMAbsent)) {
+      m_h_ErrorDetails[4+index]->Fill(submodule, ypos);
+    }
+    if (error.get(DataError::Timeout)) {
+      m_h_ErrorDetails[6+index]->Fill(submodule, ypos);
+    }
+    if (error.get(DataError::ASICFull)) {
+      m_h_ErrorDetails[6+index]->Fill(16+submodule, ypos);
+    }
+    if (error.get(DataError::EventMismatch)) {
+      m_h_ErrorDetails[8+index]->Fill(submodule, ypos);
+    }
+    if (error.get(DataError::BunchMismatch)) {
+      m_h_ErrorDetails[8+index]->Fill(16+submodule, ypos);
+    }
+    if (error.get(DataError::FIFOCorrupt)) {
+      m_h_ErrorDetails[10+index]->Fill(submodule, ypos);
+    }
+    if (error.get(DataError::PinParity)) {
+      m_h_ErrorDetails[10+index]->Fill(16+submodule, ypos);
+    }
 
-  TriggerTowerCollection::const_iterator TriggerTowerIterator    = TriggerTowerTES->begin(); 
-  TriggerTowerCollection::const_iterator TriggerTowerIteratorEnd = TriggerTowerTES->end(); 
- 
-  for (; TriggerTowerIterator != TriggerTowerIteratorEnd; ++TriggerTowerIterator) 
-    {
-    
-	  
+    if (error.get(DataError::ChannelDisabled) ||
+        error.get(DataError::MCMAbsent)) overview[crate] |= 1;
 
-     //---------------------------- ADC HitMaps -----------------------------
+    if (error.get(DataError::Timeout)       ||
+        error.get(DataError::ASICFull)      ||
+        error.get(DataError::EventMismatch) ||
+	error.get(DataError::BunchMismatch) ||
+        error.get(DataError::FIFOCorrupt)   ||
+	error.get(DataError::PinParity)) overview[crate] |= (1 << 1);
 
-
-      double crateModule      = (*TriggerTowerIterator)->eta();
-      double submoduleChannel = (*TriggerTowerIterator)->phi();
-      const int adc = (*TriggerTowerIterator)->emADC()[(*TriggerTowerIterator)->emADCPeak()];
-      if (adc > m_TT_ADC_HitMap_Thresh) m_h_TT_HitMap_ADC->Fill(crateModule, submoduleChannel, 1);
-      m_p_TT_HitMap_ADC->Fill(crateModule, submoduleChannel, adc);
-    
-
-      //---------------------------- SubStatus Word errors -----------------------------
-
-      using LVL1::DataError;
-      DataError error((*TriggerTowerIterator)-> emError());
-
-      int icm       = crateModule;
-      int isc       = submoduleChannel;
-      int crate     = icm/16;
-      int module    = icm%16;
-      int submodule = isc/4;
-      int channel   = isc%4;
-   
-      //Summary
-
-      if (error.get(DataError::GLinkParity))   m_h_TT_Error->Fill(1);
-      if (error.get(DataError::GLinkProtocol)) m_h_TT_Error->Fill(2);
-      if (error.get(DataError::FIFOOverflow))  m_h_TT_Error->Fill(3);
-      if (error.get(DataError::ModuleError))   m_h_TT_Error->Fill(4);
-      if (error.get(DataError::GLinkDown))     m_h_TT_Error->Fill(5);
-      if (error.get(DataError::GLinkTimeout))  m_h_TT_Error->Fill(6);
-      if (error.get(DataError::BCNMismatch))   m_h_TT_Error->Fill(7);
-      
-
-	//---------------- per crate and module --------------------  m_h_TT_error_Crate_25
-      if (crate > 1 && crate < 6)
-        {
-          int ypos = (module+1)+((crate-2)*18);
-          if (error.get(DataError::ChannelDisabled)) m_h_fwPpmError_Crate_25->Fill(1,ypos);
-          if (error.get(DataError::MCMAbsent))       m_h_fwPpmError_Crate_25->Fill(2,ypos);
-          if (error.get(DataError::Timeout))         m_h_fwPpmError_Crate_25->Fill(3,ypos);
-          if (error.get(DataError::ASICFull))        m_h_fwPpmError_Crate_25->Fill(4,ypos);
-          if (error.get(DataError::EventMismatch))   m_h_fwPpmError_Crate_25->Fill(5,ypos);
-          if (error.get(DataError::BunchMismatch))   m_h_fwPpmError_Crate_25->Fill(6,ypos);
-          if (error.get(DataError::FIFOCorrupt))     m_h_fwPpmError_Crate_25->Fill(7,ypos);
-          if (error.get(DataError::PinParity))       m_h_fwPpmError_Crate_25->Fill(8,ypos);
-      		  
-          if (error.get(DataError::GLinkParity))     m_h_TT_error_Crate_25->Fill(1,ypos);
-          if (error.get(DataError::GLinkProtocol))   m_h_TT_error_Crate_25->Fill(2,ypos);
-          if (error.get(DataError::FIFOOverflow))    m_h_TT_error_Crate_25->Fill(3,ypos);
-          if (error.get(DataError::ModuleError))     m_h_TT_error_Crate_25->Fill(4,ypos);
-          if (error.get(DataError::GLinkDown))       m_h_TT_error_Crate_25->Fill(5,ypos);
-          if (error.get(DataError::GLinkTimeout))    m_h_TT_error_Crate_25->Fill(6,ypos);
-          if (error.get(DataError::BCNMismatch))     m_h_TT_error_Crate_25->Fill(7,ypos);
-
-          // Detailed plots by MCM
-          ypos = (crate%2)*16+module;
-          if (error.get(DataError::ChannelDisabled)) m_h_ErrorDetails[(channel/2)*4+(crate-2)/2]->Fill((channel%2)*16+submodule, ypos);
-          if (error.get(DataError::MCMAbsent))       m_h_ErrorDetails[4+(crate-2)/2]->Fill(submodule, ypos);
-          if (error.get(DataError::Timeout))         m_h_ErrorDetails[6+(crate-2)/2]->Fill(submodule, ypos);
-          if (error.get(DataError::ASICFull))        m_h_ErrorDetails[6+(crate-2)/2]->Fill(16+submodule, ypos);
-          if (error.get(DataError::EventMismatch))   m_h_ErrorDetails[8+(crate-2)/2]->Fill(submodule, ypos);
-          if (error.get(DataError::BunchMismatch))   m_h_ErrorDetails[8+(crate-2)/2]->Fill(16+submodule, ypos);
-          if (error.get(DataError::FIFOCorrupt))     m_h_ErrorDetails[10+(crate-2)/2]->Fill(submodule, ypos);
-          if (error.get(DataError::PinParity))       m_h_ErrorDetails[10+(crate-2)/2]->Fill(16+submodule, ypos);
-        }
-
-      if (error.get(DataError::ChannelDisabled) || error.get(DataError::MCMAbsent)) overview[crate] |= 1;
-
-      if (error.get(DataError::Timeout)       || error.get(DataError::ASICFull)      ||
-          error.get(DataError::EventMismatch) || error.get(DataError::BunchMismatch) ||
-          error.get(DataError::FIFOCorrupt)   || error.get(DataError::PinParity)) overview[crate] |= (1 << 1);
-
-      if (error.get(DataError::GLinkParity)  || error.get(DataError::GLinkProtocol) ||
-          error.get(DataError::FIFOOverflow) || error.get(DataError::ModuleError)   ||
-          error.get(DataError::GLinkDown)    || error.get(DataError::GLinkTimeout)  ||
-          error.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
+    if (error.get(DataError::GLinkParity)   ||
+        error.get(DataError::GLinkProtocol) ||
+        error.get(DataError::FIFOOverflow)  ||
+	error.get(DataError::ModuleError)   ||
+        error.get(DataError::GLinkDown)     ||
+	error.get(DataError::GLinkTimeout)  ||
+        error.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
      
-      // number of triggered slice
-      m_h_TT_triggeredSlice->Fill((*TriggerTowerIterator)->emADCPeak(),1);
+     // number of triggered slice
+     m_h_TT_triggeredSlice->Fill((*TriggerTowerIterator)->emADCPeak(),1);
 
-	}	     
+  }	     
      
   // Write overview vector to StoreGate
   //std::vector<int>* save = new std::vector<int>(overview);
   //sc = m_storeGate->record(save, "L1CaloPPMSpareErrorVector");
   //if (sc != StatusCode::SUCCESS)
   //  {
-  //    log << MSG::ERROR << "Error recording PPMSpare error vector in TES "
-  //        << endreq;
+  //    msg(MSG::ERROR) << "Error recording PPMSpare error vector in TES "
+  //                    << endreq;
   //    return sc;
   //  }
-
   
   return StatusCode::SUCCESS;
 }
@@ -418,35 +367,14 @@ StatusCode PPrSpareMon::fillHistograms()
 
    
 /*---------------------------------------------------------*/
-StatusCode PPrSpareMon::procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun )
+StatusCode PPrSpareMon::procHistograms( bool isEndOfEventsBlock,
+                                        bool isEndOfLumiBlock,
+					bool isEndOfRun )
 /*---------------------------------------------------------*/
 {
-  MsgStream mLog( msgSvc(), name() );
-  mLog << MSG::DEBUG << "in procHistograms" << endreq ;
+  msg(MSG::DEBUG) << "in procHistograms" << endreq ;
 
-  if( isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun ) 
-    {  
-    }
+  if( isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun ) { }
 	
   return StatusCode::SUCCESS;
-}
-
-
-/*---------------------------------------------------------*/
-void PPrSpareMon::setHitmapLabels(TH2* hist) {
-/*---------------------------------------------------------*/
-
-  for (int crate = 2; crate < 6; ++crate) {
-    for (int module = 0; module < 16; module+=4) {
-      std::ostringstream cnum;
-      cnum << crate << "/" << module;
-      hist->GetXaxis()->SetBinLabel((crate-2)*16 + module + 1, cnum.str().c_str());
-    }
-  }
-  for (int submodule = 0; submodule < 16; ++submodule) {
-    std::ostringstream cnum;
-    cnum << submodule << "/0";
-    hist->GetYaxis()->SetBinLabel(submodule*4 + 1, cnum.str().c_str());
-  }
-  hist->SetStats(kFALSE);
 }

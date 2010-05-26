@@ -314,26 +314,16 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     //---------------------------- SubStatus Word errors ---------------------
       
     //L1Calo Substatus word
-    m_h_TT_error_Crate_03 = m_histTool->book2F("ppm_2d_Status03",
-      "Errors from TT SubStatus Word (crates 0-3)", 8, 0., 8., 64, 0., 64.);
-    m_histTool->subStatus(m_h_TT_error_Crate_03);
-    m_histTool->ppmCrateModule(m_h_TT_error_Crate_03, 0, 3, 0, false);
-
-    m_h_TT_error_Crate_47 = m_histTool->book2F("ppm_2d_Status47",
-      "Errors from TT SubStatus Word (crates 4-7)", 8, 0., 8., 64, 0., 64.);
-    m_histTool->subStatus(m_h_TT_error_Crate_47);
-    m_histTool->ppmCrateModule(m_h_TT_error_Crate_47, 4, 7, 0, false);
+    m_h_TT_error_Crate_03 = m_histTool->bookPPMSubStatusVsCrateModule(
+      "ppm_2d_Status03", "Errors from TT SubStatus Word (crates 0-3)", 0, 3);
+    m_h_TT_error_Crate_47 = m_histTool->bookPPMSubStatusVsCrateModule(
+      "ppm_2d_Status47", "Errors from TT SubStatus Word (crates 4-7)", 4, 7);
 
     //error bit field from ASIC data
-    m_h_fwPpmError_Crate_03 = m_histTool->book2F("ppm_2d_ErrorField03",
-      "Errors from ASIC error field (crates 0-3)", 8, 0., 8., 64, 0., 64.);
-    m_histTool->ppmErrors(m_h_fwPpmError_Crate_03);
-    m_histTool->ppmCrateModule(m_h_fwPpmError_Crate_03, 0, 3, 0, false);
- 
-    m_h_fwPpmError_Crate_47 = m_histTool->book2F("ppm_2d_ErrorField47",
-      "Errors from ASIC error field (crates 4-7)", 8, 0., 8., 64, 0., 64.);
-    m_histTool->ppmErrors(m_h_fwPpmError_Crate_47);
-    m_histTool->ppmCrateModule(m_h_fwPpmError_Crate_47, 4, 7, 0, false);
+    m_h_fwPpmError_Crate_03 = m_histTool->bookPPMErrorsVsCrateModule(
+      "ppm_2d_ErrorField03", "Errors from ASIC error field (crates 0-3)", 0, 3);
+    m_h_fwPpmError_Crate_47 = m_histTool->bookPPMErrorsVsCrateModule(
+      "ppm_2d_ErrorField47", "Errors from ASIC error field (crates 4-7)", 4, 7);
 
     m_histTool->setMonGroup(&TT_ErrorDetail);
 

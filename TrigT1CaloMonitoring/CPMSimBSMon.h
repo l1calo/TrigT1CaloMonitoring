@@ -14,19 +14,16 @@
 #include <string>
 #include <vector>
 
-#include "GaudiKernel/MsgStream.h"
-#include "GaudiKernel/ServiceHandle.h"
 #include "GaudiKernel/ToolHandle.h"
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "DataModel/DataVector.h"
 
 class TH1;
-class TH2;
 class TH1F;
 class TH2F;
 class TH2I;
-class StoreGateSvc;
+class StatusCode;
 class TrigT1CaloMonErrorTool;
 class TrigT1CaloHistogramTool;
 
@@ -110,12 +107,10 @@ private:
   bool  ignoreTower(int layer, int key);
   LVL1::CPMTower* ttCheck(LVL1::CPMTower* tt, CpmTowerCollection* coll);
 
-  ServiceHandle<StoreGateSvc> m_storeGate;
   ToolHandle<LVL1::IL1EmTauTools> m_emTauTool;
   ToolHandle<LVL1::IL1CPHitsTools> m_cpHitsTool;
   ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
   ToolHandle<TrigT1CaloHistogramTool> m_histTool;
-  mutable MsgStream m_log;
   bool m_debug;
 
   /// Root directory

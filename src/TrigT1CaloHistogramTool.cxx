@@ -148,6 +148,24 @@ void TrigT1CaloHistogramTool::numbers(TH1* hist, int min, int max, int step,
   }
 }
 
+// Split long names for Y axis
+
+std::string TrigT1CaloHistogramTool::splitLine(const std::string& word,
+                                                                  bool xAxis)
+{
+  std::string newWord(word);
+  if (!xAxis && word.length() > 6) {
+    // split at last capital
+    std::string::size_type idx =
+                               word.find_last_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    if (idx != std::string::npos && idx != 0 && idx != word.length()-1) {
+      newWord = "#splitline{" + word.substr(0, idx) + "}{"
+                              + word.substr(idx) + "}";
+    }
+  }
+  return newWord;
+}
+
 // Label bins with sub-status error bit names
 
 void TrigT1CaloHistogramTool::subStatus(TH1* hist, int offset, bool xAxis)
@@ -155,8 +173,9 @@ void TrigT1CaloHistogramTool::subStatus(TH1* hist, int offset, bool xAxis)
   TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
   const LVL1::DataError err(0);
   for (int bit = 0; bit < 8; ++bit) {
-    axis->SetBinLabel(bit + 1 + offset,
-          (err.bitName(bit + LVL1::DataError::GLinkParity)).c_str());
+    std::string label(splitLine(err.bitName(bit +
+                                LVL1::DataError::GLinkParity), xAxis));
+    axis->SetBinLabel(bit + 1 + offset, label.c_str());
   }
 }
 
@@ -373,9 +392,20 @@ void TrigT1CaloHistogramTool::ppmErrors(TH1* hist, int offset, bool xAxis)
   TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
   const LVL1::DataError err(0);
   for (int bit = 0; bit < 8; ++bit) {
-    axis->SetBinLabel(bit + 1 + offset,
-          (err.bitName(bit + LVL1::DataError::ChannelDisabled)).c_str());
+    std::string label(splitLine(err.bitName(bit +
+                                LVL1::DataError::ChannelDisabled), xAxis));
+    axis->SetBinLabel(bit + 1 + offset, label.c_str());
   }
+}
+
+// Label bins with PPM submodule/channel
+
+void TrigT1CaloHistogramTool::ppmSubmoduleChannel(TH1* hist, int offset,
+                                                                 bool xAxis)
+{
+  numberPairs(hist, 0, 15, 0, 3, 4, offset, xAxis);
+  TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  axis->SetTitle("Submodule/Channel");
 }
 
 //===========================================================================
@@ -932,6 +962,59 @@ TH2I* TrigT1CaloHistogramTool::bookPPMEventVsCrateModule(
 {
   int nbins = (lastCrate-firstCrate+1)*16;
   TH2I* hist = bookEventNumbers(name, title, nbins, 0, nbins);
+  ppmCrateModule(hist, firstCrate, lastCrate, 0, false);
+  return hist;
+}
+
+// Book PPM Crate/Module vs Submodule/Channel
+
+TH2F* TrigT1CaloHistogramTool::bookPPMCrateModuleVsSubmoduleChannel(
+                const std::string& name, const std::string& title,
+                int firstCrate, int lastCrate)
+{
+  int nbins = (lastCrate-firstCrate+1)*16;
+  TH2F* hist = book2F(name, title, nbins, 0., nbins, 64, 0., 64.);
+  ppmCrateModule(hist, firstCrate, lastCrate);
+  ppmSubmoduleChannel(hist, 0, false);
+  return hist;
+}
+
+// Book PPM Crate/Module vs Submodule/Channel profile
+
+TProfile2D*
+  TrigT1CaloHistogramTool::bookProfilePPMCrateModuleVsSubmoduleChannel(
+                const std::string& name, const std::string& title,
+                int firstCrate, int lastCrate)
+{
+  int nbins = (lastCrate-firstCrate+1)*16;
+  TProfile2D* hist = bookProfile2D(name, title, nbins, 0., nbins, 64, 0., 64.);
+  ppmCrateModule(hist, firstCrate, lastCrate);
+  ppmSubmoduleChannel(hist, 0, false);
+  return hist;
+}
+
+// Book PPM SubStatus vs crate/module
+
+TH2F* TrigT1CaloHistogramTool::bookPPMSubStatusVsCrateModule(
+                const std::string& name, const std::string& title,
+		int firstCrate, int lastCrate)
+{
+  int nbins = (lastCrate-firstCrate+1)*16;
+  TH2F* hist = book2F(name, title, 8, 0., 8., nbins, 0., nbins);
+  subStatus(hist);
+  ppmCrateModule(hist, firstCrate, lastCrate, 0, false);
+  return hist;
+}
+
+// Book PPM ASIC errors vs crate/module
+
+TH2F* TrigT1CaloHistogramTool::bookPPMErrorsVsCrateModule(
+                const std::string& name, const std::string& title,
+		int firstCrate, int lastCrate)
+{
+  int nbins = (lastCrate-firstCrate+1)*16;
+  TH2F* hist = book2F(name, title, 8, 0., 8., nbins, 0., nbins);
+  ppmErrors(hist);
   ppmCrateModule(hist, firstCrate, lastCrate, 0, false);
   return hist;
 }

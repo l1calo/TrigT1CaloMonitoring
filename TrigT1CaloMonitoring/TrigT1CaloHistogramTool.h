@@ -63,6 +63,8 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    /// Label bins with numbers
    void numbers(TH1* hist, int min, int max, int step = 1, int offset = 0,
                                                            bool xAxis = true);
+   /// Split long names for Y axis
+   std::string splitLine(const std::string& word, bool xAxis = true);
    /// Label bins with sub-status error bit names
    void subStatus(TH1* hist, int offset = 0, bool xAxis = true);
    /// Get list of threshold names for given type
@@ -117,6 +119,9 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
                                        int offset = 0, bool xAxis = true);
    /// Label bins with PPM error bit names
    void ppmErrors(TH1* hist, int offset = 0, bool xAxis = true);
+
+   /// Label bins with PPM submodule/channel
+   void ppmSubmoduleChannel(TH1* hist, int offset = 0, bool xAxis = true);
 
    ////////////////////////////////
    // Booking Utilities - General
@@ -228,6 +233,22 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    TH2I* bookPPMEventVsCrateModule(const std::string& name,
                                    const std::string& title,
 				   int firstCrate, int lastCrate);
+   /// Book PPM Crate/Module vs Submodule/Channel
+   TH2F* bookPPMCrateModuleVsSubmoduleChannel(const std::string& name,
+                                              const std::string& title,
+					      int firstCrate, int lastCrate);
+   /// Book PPM Crate/Module vs Submodule/Channel profile
+   TProfile2D* bookProfilePPMCrateModuleVsSubmoduleChannel(
+                      const std::string& name, const std::string& title,
+		      int firstCrate, int lastCrate);
+   /// Book PPM SubStatus vs crate/module
+   TH2F* bookPPMSubStatusVsCrateModule(const std::string& name,
+                                       const std::string& title,
+				       int firstCrate, int lastCrate);
+   /// Book PPM ASIC errors vs crate/module
+   TH2F* bookPPMErrorsVsCrateModule(const std::string& name,
+                                    const std::string& title,
+				    int firstCrate, int lastCrate);
 
    ////////////////////////////////
    // Filling Utilities - General

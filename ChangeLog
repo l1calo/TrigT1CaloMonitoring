@@ -1,3 +1,8 @@
+2010-05-26  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-06-29
+        * More event number plots for hardware errors.
+        * More code tidying.
+
 2010-05-21  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-06-28
         * A couple of bug fixes.
