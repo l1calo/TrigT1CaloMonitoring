@@ -1,5 +1,6 @@
 #include <cmath>
 #include <iomanip>
+#include <set>
 #include <sstream>
 
 #include "TAxis.h"
@@ -24,6 +25,7 @@
 #include "TrigConfL1Data/TriggerThreshold.h"
 #include "TrigConfigSvc/ILVL1ConfigSvc.h"
 #include "TrigT1CaloUtils/DataError.h"
+#include "TrigT1CaloUtils/QuadLinear.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
 
@@ -236,6 +238,51 @@ void TrigT1CaloHistogramTool::thresholds(TH1* hist, const std::string& type,
   if (!found) axis->SetTitle("Threshold Number");
 }
 
+// Put threshold hit values into a string suitable for printing
+
+std::string TrigT1CaloHistogramTool::thresholdString(int val, int nThresh,
+                                                              int nBits)
+{
+  std::ostringstream cval;
+  int mask = (1 << nBits) - 1;
+  for (int thr = 0; thr < nThresh; ++thr) {
+    int hit = (val >> (nBits*thr)) & mask;
+    cval << hit;
+    if (thr != nThresh-1) cval << " ";
+  }
+  return cval.str();
+}
+
+// Flag which threshold hit values are non-zero and the same
+
+int TrigT1CaloHistogramTool::thresholdsSame(int val1, int val2,
+                                                      int nThresh, int nBits)
+{
+  int result = 0;
+  int mask = (1 << nBits) - 1;
+  for (int thr = 0; thr < nThresh; ++thr) {
+    int hit1 = (val1 >> (nBits*thr)) & mask;
+    int hit2 = (val2 >> (nBits*thr)) & mask;
+    if (hit1 && (hit1 == hit2)) result |= (1 << thr);
+  }
+  return result;
+}
+
+// Flag which threshold hit values are different
+
+int TrigT1CaloHistogramTool::thresholdsDiff(int val1, int val2,
+                                                      int nThresh, int nBits)
+{
+  int result = 0;
+  int mask = (1 << nBits) - 1;
+  for (int thr = 0; thr < nThresh; ++thr) {
+    int hit1 = (val1 >> (nBits*thr)) & mask;
+    int hit2 = (val2 >> (nBits*thr)) & mask;
+    if (hit1 != hit2) result |= (1 << thr);
+  }
+  return result;
+}
+
 //===========================================================================
 //  Labelling Utilities - CPM
 //===========================================================================
@@ -309,6 +356,29 @@ void TrigT1CaloHistogramTool::jemCrateModule(TH1* hist, int offset, bool xAxis)
   numberPairs(hist, 0, nCrates-1, 0, nJEMs-1, 2, offset, xAxis);
   TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
   axis->SetTitle("Crate/Module");
+}
+
+// Label bins with JEM/CMM crate/module
+
+void TrigT1CaloHistogramTool::jemCMMCrateModule(TH1* hist, int offset,
+                                                                    bool xAxis)
+{
+  jemCrateModule(hist, offset, xAxis);
+  TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  axis->SetBinLabel(1+offset,  "JEM");
+  axis->SetBinLabel(33+offset, "CMM");
+  axis->SetBinLabel(35+offset, "1/0");
+}
+
+// Label bins with JEM frame/local coord
+
+void TrigT1CaloHistogramTool::jemFrameLoc(TH1* hist, int offset, bool xAxis)
+{
+  const int nFrame = 8;
+  const int nLoc   = 4;
+  numberPairs(hist, 0, nFrame-1, 0, nLoc-1, 2, offset, xAxis);
+  TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  axis->SetTitle("Frame/Local Coord");
 }
 
 // Label bins with JEM RoI threshold names
@@ -650,8 +720,8 @@ TH2F* TrigT1CaloHistogramTool::bookCPMModuleVsCrate(
                 const std::string& name, const std::string& title)
 {
   TH2F *hist = book2F(name, title, 14, 1., 15., 4, 0., 4.);
-  numbers(hist, 1, 15);
-  numbers(hist, 0, 4, 1, 0, false);
+  numbers(hist, 1, 14);
+  numbers(hist, 0, 3, 1, 0, false);
   hist->GetXaxis()->SetTitle("Module");
   hist->GetYaxis()->SetTitle("Crate");
   return hist;
@@ -663,7 +733,7 @@ TH2F* TrigT1CaloHistogramTool::bookCPMModuleVsCrateCMM(
                 const std::string& name, const std::string& title)
 {
   TH2F *hist = book2F(name, title, 14, 1., 15., 8, 0., 8.);
-  numbers(hist, 1, 15);
+  numbers(hist, 1, 14);
   hist->GetXaxis()->SetTitle("Module");
   cpmCrateCMM(hist, 0, false);
   return hist;
@@ -731,6 +801,80 @@ TH2F* TrigT1CaloHistogramTool::bookCPMSumVsThreshold(const std::string& name,
 //  Booking Utilities - JEM
 //===========================================================================
 
+// Book JEM crate/module vs EX,Ey,Et
+
+TH2F* TrigT1CaloHistogramTool::bookJEMCrateModuleVsExEyEt(
+                             const std::string& name, const std::string& title)
+{
+  TH2F* hist = book2F(name, title, 32, 0., 32., 3, 0., 3.);
+  jemCrateModule(hist);
+  TAxis* axis = hist->GetYaxis();
+  axis->SetBinLabel(1, "Ex");
+  axis->SetBinLabel(2, "Ey");
+  axis->SetBinLabel(3, "Et");
+  return hist;
+}
+
+// Book JEM crate/module vs frame/local coord
+
+TH2F* TrigT1CaloHistogramTool::bookJEMCrateModuleVsFrameLoc(
+                             const std::string& name, const std::string& title)
+{
+  TH2F* hist = book2F(name, title, 32, 0., 32., 32, 0., 32.);
+  jemCrateModule(hist);
+  jemFrameLoc(hist, 0, false);
+  return hist;
+}
+
+// Book JEM crate/module vs thresholds
+
+TH2F* TrigT1CaloHistogramTool::bookJEMCrateModuleVsThresholds(
+                             const std::string& name, const std::string& title)
+{
+  TH2F* hist = book2F(name, title, 32, 0., 32., 16, 0., 16.);
+  jemCrateModule(hist);
+  jemThresholds(hist, 0, false);
+  return hist;
+}
+
+// Book JEM events with error/mismatch vs crate/module
+
+TH2I* TrigT1CaloHistogramTool::bookJEMEventVsCrateModule(
+                const std::string& name, const std::string& title)
+{
+  TH2I* hist = bookEventNumbers(name, title, 32, 0., 32.);
+  jemCrateModule(hist, 0, false);
+  return hist;
+}
+
+// Book JEM module Vs crate
+
+TH2F* TrigT1CaloHistogramTool::bookJEMModuleVsCrate(const std::string& name,
+                                                    const std::string& title)
+{
+  TH2F* hist = book2F(name, title, 16, 0., 16., 2, 0., 2.);
+  numbers(hist, 0, 15);
+  numbers(hist, 0, 1, 1, 0, false);
+  hist->SetXTitle("Module");
+  hist->SetYTitle("Crate");
+  return hist;
+}
+
+// Book JEM eta
+
+TH1F* TrigT1CaloHistogramTool::bookJEMEta(const std::string& name,
+                                          const std::string& title)
+{
+  const int nxbins = 32;
+  const double xbins[nxbins+1] = {-4.9,-3.2,-2.9,-2.7,-2.4,-2.2,-2.0,-1.8,-1.6,
+                                  -1.4,-1.2,-1.0,-0.8,-0.6,-0.4,-0.2,0.0,0.2,
+				  0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,
+				  2.7,2.9,3.2,4.9};
+  TH1F* hist = book1F(name, title, nxbins, xbins);
+  hist->SetXTitle("eta");
+  return hist;
+}
+
 // Book JEM eta vs phi
 
 TH2F* TrigT1CaloHistogramTool::bookJEMEtaVsPhi(const std::string& name,
@@ -769,6 +913,102 @@ TH2F* TrigT1CaloHistogramTool::bookJEMRoIEtaVsPhi(const std::string& name,
                                                   const std::string& title)
 {
   return bookJEMEtaVsPhi(name, title, true);
+}
+
+// Book JEM energy with bins matching QuadLinear encoding
+
+TH1F* TrigT1CaloHistogramTool::bookJEMQuadLinear(const std::string& name,
+                                                 const std::string& title,
+						 int scale)
+{
+  if (scale < 1) scale = 1;
+  const int eRange = 256;        //range of encoded value
+  const int dRange = 4096*scale; //range of decoded value
+  LVL1::QuadLinear expand;
+  std::set<int> sorted;
+  for (int i = 0; i < eRange; ++i) {
+    int val = expand.Expand(i);
+    if (val != 0) sorted.insert(val);
+  }
+  double binedges[eRange+2];
+  int nbins = (scale > 1) ? 1 : 0;
+  std::set<int>::const_iterator iter  = sorted.begin();
+  std::set<int>::const_iterator iterE = sorted.end();
+  for (; iter != iterE; ++iter) {
+    binedges[nbins] = (*iter)*scale;
+    ++nbins;
+  }
+  binedges[0] = 1;
+  //if (scale > 1) binedges[1] = scale;
+  binedges[nbins] = dRange;
+  TH1F* hist = book1F(name, title, nbins, binedges);
+  return hist;
+}
+
+// Book JEM main jet thresholds
+
+TH1F* TrigT1CaloHistogramTool::bookMainJetThresholds(const std::string& name,
+                                                     const std::string& title)
+{
+  int nbins = TrigConf::L1DataDef::max_J_Threshold_Number();
+  TH1F* hist = book1F(name, title, nbins, 0, nbins);
+  mainJetThresholds(hist);
+  return hist;
+}
+
+// Book JEM backward jet thresholds
+
+TH1F* TrigT1CaloHistogramTool::bookBackwardJetThresholds(
+                            const std::string& name, const std::string& title)
+{
+  int nbins = TrigConf::L1DataDef::max_JB_Threshold_Number();
+  TH1F* hist = book1F(name, title, nbins, 0, nbins);
+  backwardJetThresholds(hist);
+  return hist;
+}
+
+// Book JEM forward jet thresholds
+
+TH1F* TrigT1CaloHistogramTool::bookForwardJetThresholds(
+                            const std::string& name, const std::string& title)
+{
+  int nbins = TrigConf::L1DataDef::max_JF_Threshold_Number();
+  TH1F* hist = book1F(name, title, nbins, 0, nbins);
+  forwardJetThresholds(hist);
+  return hist;
+}
+
+// Book JEM JetEt thresholds
+
+TH1F* TrigT1CaloHistogramTool::bookJetEtThresholds(const std::string& name,
+                                                   const std::string& title)
+{
+  int nbins = TrigConf::L1DataDef::max_JE_Threshold_Number();
+  TH1F* hist = book1F(name, title, nbins, 0, nbins);
+  jetEtThresholds(hist);
+  return hist;
+}
+
+// Book JEM MissingEt thresholds
+
+TH1F* TrigT1CaloHistogramTool::bookMissingEtThresholds(const std::string& name,
+                                                       const std::string& title)
+{
+  int nbins = TrigConf::L1DataDef::max_XE_Threshold_Number();
+  TH1F* hist = book1F(name, title, nbins, 0, nbins);
+  missingEtThresholds(hist);
+  return hist;
+}
+
+// Book JEM SumEt thresholds
+
+TH1F* TrigT1CaloHistogramTool::bookSumEtThresholds(const std::string& name,
+                                                   const std::string& title)
+{
+  int nbins = TrigConf::L1DataDef::max_TE_Threshold_Number();
+  TH1F* hist = book1F(name, title, nbins, 0, nbins);
+  sumEtThresholds(hist);
+  return hist;
 }
 
 //===========================================================================
@@ -1045,6 +1285,48 @@ void TrigT1CaloHistogramTool::fillEventNumber(TH2I* hist, double y)
       if (eventNumber != lastVal) hist->SetBinContent(binx, biny, eventNumber);
       break;
     } else lastVal = val;
+  }
+}
+
+// Fill weighted thresholds 1D
+
+void TrigT1CaloHistogramTool::fillThresholds(TH1* hist, int val, int nThresh,
+                                                      int nBits, int offset)
+{
+  if (val) {
+    int mask = (1 << nBits) - 1;
+    for (int thr = 0; thr < nThresh; ++thr) {
+      int hit = (val >> (nBits*thr)) & mask;
+      if (hit) hist->Fill(thr + offset, hit);
+    }
+  }
+}
+
+// Fill weighted thresholds 2D, X axis
+
+void TrigT1CaloHistogramTool::fillThresholdsVsY(TH2* hist, int val, int y,
+                                          int nThresh, int nBits, int offset)
+{
+  if (val) {
+    int mask = (1 << nBits) - 1;
+    for (int thr = 0; thr < nThresh; ++thr) {
+      int hit = (val >> (nBits*thr)) & mask;
+      if (hit) hist->Fill(thr + offset, y, hit);
+    }
+  }
+} 
+
+// Fill weighted thresholds 2D, Y axis
+
+void TrigT1CaloHistogramTool::fillXVsThresholds(TH2* hist, int x, int val,
+                                          int nThresh, int nBits, int offset)
+{
+  if (val) {
+    int mask = (1 << nBits) - 1;
+    for (int thr = 0; thr < nThresh; ++thr) {
+      int hit = (val >> (nBits*thr)) & mask;
+      if (hit) hist->Fill(x, thr + offset, hit);
+    }
   }
 }
 

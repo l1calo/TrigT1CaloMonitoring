@@ -18,7 +18,7 @@
 #include "GaudiKernel/StatusCode.h"
 #include "SGTools/StlVectorClids.h"
 
-#include "AthenaMonitoring/IMonitorToolBase.h"
+#include "AthenaMonitoring/AthenaMonManager.h"
 
 #include "TrigT1CaloEvent/RODHeader.h"
 

@@ -19,6 +19,8 @@
 #include "StoreGate/StoreGateSvc.h"
 #include "SGTools/StlVectorClids.h"
 
+#include "AthenaMonitoring/AthenaMonManager.h"
+
 #include "TrigT1CaloMonitoring/PPrSpareMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
@@ -188,11 +190,11 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
 	title += "-"+buffer.str();
 	int nbins = (error != 4) ? 32 : 16;
 	TH2F* hist = m_histTool->book2F(name,title,nbins,0,nbins,32,0,32);
-	m_histTool->numbers(hist, 0, 16, 2);
+	m_histTool->numbers(hist, 0, 15, 2);
 	TAxis* axis = hist->GetXaxis();
 	axis->SetBinLabel(1, errNames[error].c_str());
 	if (error != 4) {
-	  m_histTool->numbers(hist, 0, 16, 2, 16);
+	  m_histTool->numbers(hist, 0, 15, 2, 16);
 	  axis->SetBinLabel(17, errNames[error+1].c_str());
         }
 	axis->SetTitle("MCM");

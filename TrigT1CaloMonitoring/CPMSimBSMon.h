@@ -104,7 +104,6 @@ private:
   void  simulate(const CmmCpHitsCollection* hitsIn,
                        CmmCpHitsCollection* hitsOut, int selection);
   int   fpga(int crate, double phi);
-  bool  ignoreTower(int layer, int key);
   LVL1::CPMTower* ttCheck(LVL1::CPMTower* tt, CpmTowerCollection* coll);
 
   ToolHandle<LVL1::IL1EmTauTools> m_emTauTool;
@@ -131,19 +130,6 @@ private:
   /// ROD header container StoreGate key
   std::string m_rodHeaderLocation;
 
-  /// Number of events
-  int m_events;
-  /// Simulation allowed flag
-  bool m_compareWithSim;
-  /// Allow TriggerTower comparisons flag
-  bool m_compareTriggerTowers;
-  /// RoI thresholds to compare
-  std::vector<int> m_roiThresh;
-  /// RoI thresholds mask for comparisons
-  unsigned int m_roiMask;
-  /// TriggerTowers to be ignored in simulation comparisons
-  std::vector<int> m_ignoreTowersEm;
-  std::vector<int> m_ignoreTowersHad;
   /// CPM overlap tower container present
   bool m_overlapPresent;
 
@@ -172,8 +158,6 @@ private:
   TH2F* m_h_FpgaTowerSIMneDAT;
   TH2F* m_h_FpgaTowerSIMnoDAT;
   TH2F* m_h_FpgaTowerDATnoSIM;
-  TH2F* m_h_IgnoreTowersEM;
-  TH2F* m_h_IgnoreTowersHad;
 
   // RoI
   TH2F* m_h_RoISIMeqDAT;

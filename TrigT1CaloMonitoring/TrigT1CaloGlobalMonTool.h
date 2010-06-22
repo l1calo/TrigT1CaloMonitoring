@@ -80,6 +80,11 @@ private:
   /// Root directory
   std::string m_rootDir;
 
+  /// Threshold histogram pre-booking flags
+  bool m_cpmThresh;
+  bool m_jemThresh;
+  bool m_cmmThresh;
+
   //=======================
   //   Global Overview plot
   //=======================

@@ -12,25 +12,28 @@
 #ifndef JEMMon_H
 #define JEMMon_H
 
-#include "GaudiKernel/StatusCode.h"
-#include "GaudiKernel/ToolHandle.h"
-#include "CLHEP/Units/SystemOfUnits.h"
+#include <string>
+#include <vector>
 
-#include "TH1.h"
-#include "TH2.h"
+#include "GaudiKernel/ToolHandle.h"
 
 #include "DataModel/DataVector.h"
-#include "TrigT1CaloEvent/JEMHits.h"
-#include "TrigT1CaloEvent/JEMEtSums.h"
-#include "TrigT1CaloEvent/JetElement.h"
 
-#include "AthenaMonitoring/AthenaMonManager.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
+
+class TH1F;
+class TH2F;
+class TH2I;
+
+class StatusCode;
 
 class TrigT1CaloMonErrorTool;
 class TrigT1CaloHistogramTool;
 
 namespace LVL1 {
+  class JEMHits;
+  class JEMEtSums;
+  class JetElement;
   class JEMRoI;
 }
 
@@ -38,26 +41,26 @@ namespace LVL1 {
 class JEMMon : public ManagedMonitorToolBase
 {
 public:
-        typedef DataVector<LVL1::JetElement> JECollection;
-        typedef DataVector<LVL1::JEMHits> JEMHitsCollection;
-	typedef DataVector<LVL1::JEMEtSums> JEMEtSumsCollection;
-	typedef DataVector<LVL1::JEMRoI> JemRoiCollection;
-       
 
-	JEMMon( const std::string & type, const std::string & name,
-	                 const IInterface* parent ); 
+   JEMMon( const std::string & type, const std::string & name,
+   	                             const IInterface* parent ); 
 
-	virtual ~JEMMon();
+   virtual ~JEMMon();
 
-	virtual StatusCode initialize();
-	virtual StatusCode bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun );
-	virtual StatusCode fillHistograms();
-	virtual StatusCode procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun );
+   virtual StatusCode initialize();
+   virtual StatusCode bookHistograms( bool isNewEventsBlock,
+	                              bool isNewLumiBlock, bool isNewRun );
+   virtual StatusCode fillHistograms();
+   virtual StatusCode procHistograms( bool isEndOfEventsBlock,
+	                              bool isEndOfLumiBlock, bool isEndOfRun );
 
-protected:
+private:
 
-   /** a handle on Store Gate for access to the Event Store */
-   StoreGateSvc* m_storeGate;
+   typedef DataVector<LVL1::JetElement> JECollection;
+   typedef DataVector<LVL1::JEMHits> JEMHitsCollection;
+   typedef DataVector<LVL1::JEMEtSums> JEMEtSumsCollection;
+   typedef DataVector<LVL1::JEMRoI> JemRoiCollection;
+
    // Tool to retrieve bytestream errors
    ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
    ToolHandle<TrigT1CaloHistogramTool> m_histTool;
@@ -67,12 +70,10 @@ protected:
    std::string m_JEMHitsLocation;
    std::string m_JEMEtSumsLocation;   
    std::string m_JEMRoILocation;
-   int m_SliceNo;
-   bool  m_EventNoInHisto;
-   int m_MaxEnergyRange;
-   bool m_Offline;
 
-   std::string m_DataType;   
+   int m_SliceNo;
+   int m_MaxEnergyRange;
+
    std::string m_PathInRootFile;   
    std::string m_ErrorPathInRootFile;
 
@@ -87,15 +88,15 @@ protected:
    // HitMaps
    TH2F* m_h_je_energy_emHitMap;
    TH2F* m_h_je_energy_hadHitMap;
-   std::map <int, TH2F*> m_h_je_emHitMap;
-   std::map <int, TH2F*> m_h_je_hadHitMap;
+   std::vector<TH2F*> m_h_je_emHitMap;
+   std::vector<TH2F*> m_h_je_hadHitMap;
 
    // error maps
    int m_NoEvents;
    TH2F* m_h_je_error;
    
-   // number of triggered slice -- not clear if still necessary
-   //TH1F* m_h_je_triggeredSlice;
+   // number of triggered slice
+   TH1F* m_h_je_triggeredSlice;
 
    // JEM Hits
    TH1F* m_h_JEMHits_MainHits;
@@ -112,14 +113,15 @@ protected:
    TH1F* m_h_JEMRoI_FwdHitsRight;
    TH1F* m_h_JEMRoI_FwdHitsLeft;
   
-   std::map <int, TH2F*> m_h_JEMRoI_MainThreshPerEtaPhi;
-   std::map <int, TH2F*> m_h_JEMRoI_FwdThreshPerEtaPhi;
+   std::vector<TH2F*> m_h_JEMRoI_MainThreshPerEtaPhi;
+   std::vector<TH2F*> m_h_JEMRoI_FwdThreshPerEtaPhi;
  
    // errors and saturation
    TH2F* m_h_JEMRoI_error;
    
    // Error Summary
    TH1F* m_h_JEM_ErrorSummary;
+   TH2I* m_h_JEM_Events;
 };
 
 

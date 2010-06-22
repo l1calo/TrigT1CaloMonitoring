@@ -14,8 +14,6 @@
 #include <string>
 #include <vector>
 
-#include "GaudiKernel/MsgStream.h"
-#include "GaudiKernel/ServiceHandle.h"
 #include "GaudiKernel/ToolHandle.h"
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
@@ -24,7 +22,7 @@
 class TH1F;
 class TH2F;
 class TH2I;
-class StoreGateSvc;
+class StatusCode;
 class TrigT1CaloMonErrorTool;
 class TrigT1CaloHistogramTool;
 
@@ -93,19 +91,6 @@ private:
   typedef std::map<int, LVL1::JEMEtSums*>    JemEtSumsMap;
   typedef std::map<int, LVL1::CMMEtSums*>    CmmEtSumsMap;
   
-  TH1F* book1F(const std::string& name, const std::string& title,
-                                        int nx, double xmin, double xmax);
-  TH2F* book2F(const std::string& name, const std::string& title,
-                                        int nx, double xmin, double xmax,
-                                        int ny, double ymin, double ymax);
-  TH2F* book2F(const std::string& name, const std::string& title,
-                                        int nx, const double* xbins,
-                                        int ny, double ymin, double ymax);
-  TH2I* book2I(const std::string& name, const std::string& title,
-                                        int nx, double xmin, double xmax,
-                                        int ny, double ymin, double ymax);
-  TH2F* bookEtaPhi(const std::string& name, const std::string& title,
-                                            bool isRoi = false);
   void  compare(const JetElementMap& jeSimMap, const JetElementMap& jeMap,
                       ErrorVector& errors, bool overlap);
   void  compare(const JemRoiMap& roiSimMap, const JemRoiMap& roiMap,
@@ -128,16 +113,8 @@ private:
                                               ErrorVector& errors);
   void  fillEventSample(int err, int loc, bool isJem);
   void  setLabels(TH2* hist);
-  void  setLabelsCMFC(TH2* hist);
-  void  setLabelsJMS(TH2* hist);
-  void  setLabelsCMT(TH2* hist);
-  void  setLabelsYNUM(TH2* hist, int beg, int end);
-  void  setLabelsXNUM(TH2* hist, int beg, int end);
-  void  setLabelsJEM(TH2* hist, bool xAxis = true);
-  void  setLabelsMC(TH2* hist);
   void  setLabelsSH(TH1* hist);
   void  setLabelsSHF(TH2* hist);
-  void  setLabelsJES(TH2* hist);
   void  setLabelsEnTot(TH2* hist);
   void  setLabelsEnTotThr(TH2* hist);
   void  setupMap(const JetElementCollection* coll, JetElementMap& map);
@@ -159,17 +136,14 @@ private:
   void  simulate(const CmmEtSumsCollection* sumsIn,
                        CmmEtSumsCollection* sumsOut, int selection);
 
-  ServiceHandle<StoreGateSvc>          m_storeGate;
   ToolHandle<LVL1::IL1JEPHitsTools>    m_jepHitsTool;
   ToolHandle<LVL1::IL1JetTools>        m_jetTool;
   ToolHandle<LVL1::IL1JetElementTools> m_jetElementTool;
   ToolHandle<LVL1::IL1JEPEtSumsTools>  m_etSumsTool;
   ToolHandle<TrigT1CaloMonErrorTool>   m_errorTool;
   ToolHandle<TrigT1CaloHistogramTool>  m_histTool;
-  mutable MsgStream m_log;
-  bool m_debug;
 
-  MonGroup* m_monGroup;
+  bool m_debug;
   std::string m_rootDir;
 
   /// Core Jet Element container StoreGate key
@@ -192,19 +166,6 @@ private:
   std::string m_triggerTowerLocation;
   /// ROD header container StoreGate key
   std::string m_rodHeaderLocation;
-
-  /// Phi scale to convert from radians to histogram units
-  double m_phiScale;
-  /// Number of events
-  int m_events;
-  /// Simulation allowed flag
-  bool m_compareWithSim;
-  /// Number of error event number samples to keep
-  int m_eventSamples;
-  /// Current event number
-  int m_eventNumber;
-  /// Sample event number counts
-  std::vector<int> m_sampleCounts;
 
   //=======================
   //   Match/Mismatch plots

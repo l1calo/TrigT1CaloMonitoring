@@ -21,6 +21,8 @@
 #include "GaudiKernel/StatusCode.h"
 #include "SGTools/StlVectorClids.h"
 
+#include "AthenaMonitoring/AthenaMonManager.h"
+
 #include "TrigT1CaloEvent/CMMCPHits.h"
 #include "TrigT1CaloEvent/CPMHits.h"
 #include "TrigT1CaloEvent/CPMTower.h"
@@ -578,16 +580,15 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       const int crate = (*crIterator)->crate();
       const int cpm   = (*crIterator)->cpm();
       int bin  = crate * s_modules + cpm - 1;
-      for (int thresh = 0; thresh < s_thresholds; ++thresh) {
-        const int hit = (hits >> thresh) & 0x1;
-        if (hit) {
-          m_h_RoI_thresholds->Fill(bin, thresh, 1.);
-	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_eta_phi, eta, phi);
-	  if (thresh < s_thresholds/2) {
-	    m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Em_eta_phi, eta, phi);
-	  } else {
-	    m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Tau_eta_phi, eta, phi);
-          }
+      if (hits) {
+        m_histTool->fillXVsThresholds(m_h_RoI_thresholds, bin, hits,
+                                                             s_thresholds, 1);
+        m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_eta_phi, eta, phi);
+	if (hits & 0xff) {
+	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Em_eta_phi, eta, phi);
+        }
+	if (hits & 0xff00 ) {
+	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Tau_eta_phi, eta, phi);
         }
       }
       const LVL1::DataError err((*crIterator)->error());
@@ -619,12 +620,11 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       const int peak   = (*chIterator)->peak();
       const int slices = ((*chIterator)->HitsVec0()).size();
       m_h_CPM_slices->Fill(crate*s_maxSlices + slices -1, peak, 1.);
-      for (int thresh = 0; thresh < s_thresholds/2; ++thresh) {
-        int hit0 = (hits0 >> thresh*s_threshBits) & s_threshMask;
-        int hit1 = (hits1 >> thresh*s_threshBits) & s_threshMask;
-        if (hit0) m_h_CPM_thresholds->Fill(bin, thresh,   hit0);
-        if (hit1) m_h_CPM_thresholds->Fill(bin, thresh+8, hit1);
-      }
+      const int nThresh = s_thresholds/2;
+      if (hits0) m_histTool->fillXVsThresholds(m_h_CPM_thresholds, bin, hits0,
+                                               nThresh, s_threshBits);
+      if (hits1) m_histTool->fillXVsThresholds(m_h_CPM_thresholds, bin, hits1,
+                                               nThresh, s_threshBits, nThresh);
       const unsigned int key = crate * s_modules + cpm;
       cpmMap.insert(std::make_pair(key, *chIterator));
     }
@@ -656,17 +656,13 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	if (dataId == LVL1::CMMCPHits::REMOTE_2) bin = s_crates + 2;
 	if (dataId == LVL1::CMMCPHits::TOTAL)    bin = s_crates + 3;
       }
-      for (int thresh = 0; thresh < s_thresholds/2; ++thresh) {
-        int hit0 = (hits0 >> thresh*s_threshBits) & s_threshMask;
-        int hit1 = (hits1 >> thresh*s_threshBits) & s_threshMask;
-        if (dataId <= s_modules) {
-          if (hit0) m_h_CMM_thresholds->Fill(bin, thresh,   hit0);
-          if (hit1) m_h_CMM_thresholds->Fill(bin, thresh+8, hit1);
-        } else {
-          if (hit0) m_h_CMM_T_thresholds->Fill(bin, thresh,   hit0);
-          if (hit1) m_h_CMM_T_thresholds->Fill(bin, thresh+8, hit1);
-        }
-      }
+      const int nThresh = s_thresholds/2;
+      TH2F* hist = (dataId <= s_modules) ? m_h_CMM_thresholds
+                                         : m_h_CMM_T_thresholds;
+      if (hits0) m_histTool->fillXVsThresholds(hist, bin, hits0, nThresh,
+                                                     s_threshBits);
+      if (hits1) m_histTool->fillXVsThresholds(hist, bin, hits1, nThresh,
+                                                     s_threshBits, nThresh);
       // Errors
       int error0 = (*cmIterator)->Error0();
       int error1 = (*cmIterator)->Error1();

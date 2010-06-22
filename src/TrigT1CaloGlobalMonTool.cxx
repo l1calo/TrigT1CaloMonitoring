@@ -17,6 +17,8 @@
 #include "GaudiKernel/StatusCode.h"
 #include "SGTools/StlVectorClids.h"
 
+#include "AthenaMonitoring/AthenaMonManager.h"
+
 #include "TrigT1CaloMonitoring/TrigT1CaloGlobalMonTool.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
 
@@ -30,6 +32,9 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
 {
 
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
+  declareProperty("BookCPMThresh", m_cpmThresh = false);
+  declareProperty("BookJEMThresh", m_jemThresh = false);
+  declareProperty("BookCMMThresh", m_cmmThresh = false);
 
 }
 
@@ -122,6 +127,92 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
     std::ostringstream cnum;
     cnum << type << cr;
     axis->SetBinLabel(crate+1, cnum.str().c_str());
+  }
+
+  // If running in RAW to ESD step prebook histograms which need threshold
+  // names for bin labels for those tools which run in ESD to AOD step.
+
+  if (m_cpmThresh) {
+    std::string dir1(m_rootDir + "/CPM");
+    std::string dir2(m_rootDir + "/CPM_CMM");
+    MonGroup monRoIs( this, dir1 + "/Output/RoI", expert, run );
+    MonGroup monCPMout( this, dir1 + "/Output/Thresholds", expert, run);
+    MonGroup monCMMin( this, dir2 + "/Input",  expert, run );
+    MonGroup monCMMout( this, dir2 + "/Output",  expert, run );
+    m_histTool->setMonGroup(&monRoIs);
+    TH2F* hist = m_histTool->bookCPMCrateModuleVsThreshold(
+                 "cpm_2d_roi_Thresholds", "CPM RoI Thresholds");
+    m_histTool->setMonGroup(&monCPMout);
+    hist = m_histTool->bookCPMCrateModuleVsThreshold(
+      "cpm_2d_thresh_Weighted", "CPM Hits Thresholds Weighted");
+    m_histTool->setMonGroup(&monCMMin);
+    hist = m_histTool->bookCPMCrateModuleVsThreshold(
+      "cmm_2d_thresh_Weighted", "CMM-CP Hits Thresholds Weighted");
+    m_histTool->setMonGroup(&monCMMout);
+    hist = m_histTool->bookCPMSumVsThreshold(
+      "cmm_2d_thresh_SumsWeighted", "CMM-CP Hit Sums Thresholds Weighted");
+  }
+  if (m_jemThresh) {
+    std::string dir1(m_rootDir + "/JEM");
+    MonGroup JEM_Thresholds(this, dir1 + "/Output/Thresholds", expert, run);
+    MonGroup JEM_RoI(this, dir1 + "/Output/RoI", shift, run);
+    m_histTool->setMonGroup(&JEM_Thresholds);
+    TH1F* hist = m_histTool->bookMainJetThresholds("jem_1d_thresh_MainHits",
+      "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ");
+    hist = m_histTool->bookForwardJetThresholds("jem_1d_thresh_FwdHitsRight",
+      "Fwd Right Jet Hit Multiplicity per Threshold  --  JEM DAQ");
+    hist = m_histTool->bookBackwardJetThresholds("jem_1d_thresh_FwdHitsLeft",
+      "Fwd Left Jet Hit Multiplicity per Threshold  --  JEM DAQ");
+    TH2F* hist2 = m_histTool->book2F("jem_2d_thresh_HitsPerJem",
+      "HitMap of Hits per JEM", 18, 0., 18., 32, 0., 32.);
+    m_histTool->jemThresholds(hist2);
+    hist2->GetXaxis()->SetBinLabel(17,"Sat(Main)");
+    hist2->GetXaxis()->SetBinLabel(18,"Sat(Fwd)");
+    m_histTool->jemCrateModule(hist2, 0, false);
+    m_histTool->setMonGroup(&JEM_RoI);
+    hist = m_histTool->bookMainJetThresholds("jem_1d_roi_MainHits",
+      "Main Jet Hit Multiplicity per Threshold  --  JEM RoI");
+    hist = m_histTool->bookForwardJetThresholds("jem_1d_roi_FwdHitsRight",
+      "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI");
+    hist = m_histTool->bookBackwardJetThresholds("jem_1d_roi_FwdHitsLeft",
+      "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI");
+  }
+  if (m_cmmThresh) {
+    std::string dir1(m_rootDir + "/JEM_CMM");
+    MonGroup CMM_inputThresh(this, dir1 + "/Input/Thresholds", expert, run);
+    MonGroup CMM_jet(this, dir1 + "/Output/Jet", expert, run);
+    MonGroup CMM_energy(this, dir1 + "/Output/Energy", expert, run);
+    MonGroup CMM_RoI(this, dir1 + "/Output/RoI", shift, run);
+    m_histTool->setMonGroup(&CMM_inputThresh);
+    TH1F* hist = m_histTool->bookMainJetThresholds("cmm_1d_thresh_MainHits",
+      "Main Jet Multiplicity per Threshold  --  CMM input");
+    hist = m_histTool->bookForwardJetThresholds("cmm_1d_thresh_FwdHitsRight",
+      "Forward Right Jet Multiplicity per Threshold  --  CMM input");
+    hist = m_histTool->bookBackwardJetThresholds( "cmm_1d_thresh_FwdHitsLeft",
+      "Forward Left Jet Multiplicity per Threshold  --  CMM input");
+    m_histTool->setMonGroup(&CMM_jet);
+    hist = m_histTool->bookMainJetThresholds("cmm_1d_thresh_TotalMainHits",
+      "Main Jet Multiplicity per Threshold  --  CMM DAQ");
+    hist = m_histTool->bookForwardJetThresholds(
+      "cmm_1d_thresh_TotalFwdHitsRight",
+      "Forward Right Jet Multiplicity per Threshold  --  CMM DAQ");
+    hist = m_histTool->bookBackwardJetThresholds(
+      "cmm_1d_thresh_TotalFwdHitsLeft",
+      "Forward Left Jet Multiplicity per Threshold  --  CMM DAQ");
+    hist = m_histTool->bookJetEtThresholds("cmm_1d_thresh_JetEtHits",
+      "JetEt Multiplicity per Threshold  --  CMM DAQ");
+    m_histTool->setMonGroup(&CMM_energy);
+    hist = m_histTool->bookMissingEtThresholds("cmm_1d_energy_MissingEtHits",
+      "MissingEt Multiplicity per Threshold  --  CMM DAQ");
+    hist = m_histTool->bookSumEtThresholds("cmm_1d_energy_SumEtHits",
+      "SumEt Multiplicity per Threshold  --  CMM DAQ");
+    m_histTool->setMonGroup(&CMM_RoI);
+    hist = m_histTool->bookJetEtThresholds("cmm_1d_roi_JetEtHits",
+      "JetEt Multiplicity per Threshold  --  CMM RoI");
+    hist = m_histTool->bookMissingEtThresholds("cmm_1d_roi_MissingEtHits",
+      "MissingEt Multiplicity per Threshold  --  CMM RoI");
+    hist = m_histTool->bookSumEtThresholds("cmm_1d_roi_SumEtHits",
+      "SumEt Multiplicity per Threshold  --  CMM RoI");
   }
 
   m_histTool->unsetMonGroup();

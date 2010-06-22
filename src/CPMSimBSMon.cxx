@@ -52,7 +52,7 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
     m_cpHitsTool("LVL1::L1CPHitsTools/L1CPHitsTools"),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloHistogramTool"),
-    m_debug(false), m_events(0)
+    m_debug(false)
 /*---------------------------------------------------------*/
 {
   declareProperty("EmTauTool", m_emTauTool);
@@ -76,17 +76,6 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
                  m_rodHeaderLocation = "RODHeaders");
 
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
-
-  declareProperty("CompareWithSimulation", m_compareWithSim = true,
-                  "Include the checks that run simulation tools");
-  declareProperty("CompareTriggerTowers", m_compareTriggerTowers = true,
-                  "Include TriggerTower/CPMTower comparison");
-  declareProperty("RoIThresholds", m_roiThresh,
-                  "RoI thresholds to compare, default 0-15");
-  declareProperty("IgnoreTowersEM", m_ignoreTowersEm,
-                  "EM TriggerTowers with known problems");
-  declareProperty("IgnoreTowersHad", m_ignoreTowersHad,
-                  "Had TriggerTowers with known problems");
 }
 
 /*---------------------------------------------------------*/
@@ -113,19 +102,16 @@ StatusCode CPMSimBSMon::initialize()
   sc = ManagedMonitorToolBase::initialize();
   if (sc.isFailure()) return sc;
 
-  if (m_compareWithSim) {
+  sc = m_emTauTool.retrieve();
+  if( sc.isFailure() ) {
+    msg(MSG::ERROR) << "Unable to locate Tool L1EmTauTools" << endreq;
+    return sc;
+  }
 
-    sc = m_emTauTool.retrieve();
-    if( sc.isFailure() ) {
-      msg(MSG::ERROR) << "Unable to locate Tool L1EmTauTools" << endreq;
-      return sc;
-    }
-
-    sc = m_cpHitsTool.retrieve();
-    if( sc.isFailure() ) {
-      msg(MSG::ERROR) << "Unable to locate Tool L1CPHitsTools" << endreq;
-      return sc;
-    }
+  sc = m_cpHitsTool.retrieve();
+  if( sc.isFailure() ) {
+    msg(MSG::ERROR) << "Unable to locate Tool L1CPHitsTools" << endreq;
+    return sc;
   }
 
   sc = m_errorTool.retrieve();
@@ -140,20 +126,6 @@ StatusCode CPMSimBSMon::initialize()
     msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
                     << endreq;
     return sc;
-  }
-
-  // RoI thresholds mask
-  if (m_roiThresh.empty()) m_roiMask = 0xffff;
-  else {
-    m_roiMask = 0;
-    std::vector<int>::const_iterator pos  = m_roiThresh.begin();
-    std::vector<int>::const_iterator posE = m_roiThresh.end();
-    for (; pos != posE; ++pos) {
-      const int thresh = *pos;
-      if (thresh >= 0 && thresh < 16) m_roiMask |= (1 << thresh);
-    }
-    msg(MSG::INFO) << "RoI comparison mask: " << MSG::hex
-                   << m_roiMask << MSG::dec << endreq;
   }
 
   return StatusCode::SUCCESS;
@@ -202,8 +174,6 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   // CPMTowers
 
   m_histTool->setMonGroup(&monCPMin);
-
-  if (m_compareTriggerTowers) {
 
   m_h_EMTowerSIMeqDAT = m_histTool->bookCPMEtaVsPhi(
     "cpm_em_2d_etaPhi_tt_PpmEqCore",
@@ -263,19 +233,6 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_h_FpgaTowerDATnoSIM = m_histTool->bookCPMCrateModuleVsFPGA(
     "cpm_2d_tt_CpmNoPpmFpga", "CPM Towers but no PPM Towers by FPGA");
 
-  if ( !m_ignoreTowersEm.empty() || !m_ignoreTowersHad.empty() ) {
-    m_h_IgnoreTowersEM = m_histTool->bookCPMEtaVsPhi(
-      "cpm_em_2d_etaPhi_tt_IgnoredTowers",
-      "EM Tower Mismatches in Ignore List");
-    m_h_IgnoreTowersHad = m_histTool->bookCPMEtaVsPhi(
-      "cpm_had_2d_etaPhi_tt_IgnoredTowers",
-      "Had Tower Mismatches in Ignore List");
-  }
-
-  } // end if (m_compareTriggerTowers)
-
-  if (m_compareWithSim) {
-
   // RoIs
 
   m_histTool->setMonGroup(&monRoIs);
@@ -324,8 +281,6 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_h_CPMHitsThreshSIMneDAT = m_histTool->bookCPMCrateModuleVsThreshold(
     "cpm_2d_thresh_ThreshSimNeData",
     "CPM Hits Data/Simulation Threshold Mismatches");
-
-  } // end if (m_compareWithSim)
 
   // CMMHits
 
@@ -394,22 +349,18 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   TH2I* hist = 0;
   m_sampleHists.clear();
   m_sampleHists.resize(6, hist);
-  if (m_compareTriggerTowers) {
-    hist = m_histTool->bookCPMEventVsCrateModule("cpm_em_2d_tt_MismatchEvents",
+  hist = m_histTool->bookCPMEventVsCrateModule("cpm_em_2d_tt_MismatchEvents",
                                      "CPM Towers EM Mismatch Event Numbers");
-    m_sampleHists[0] = hist;
-    hist = m_histTool->bookCPMEventVsCrateModule("cpm_had_2d_tt_MismatchEvents",
+  m_sampleHists[0] = hist;
+  hist = m_histTool->bookCPMEventVsCrateModule("cpm_had_2d_tt_MismatchEvents",
                                      "CPM Towers Had Mismatch Event Numbers");
-    m_sampleHists[1] = hist;
-  }
-  if (m_compareWithSim) {
-    hist = m_histTool->bookCPMEventVsCrateModule("cpm_2d_roi_MismatchEvents",
+  m_sampleHists[1] = hist;
+  hist = m_histTool->bookCPMEventVsCrateModule("cpm_2d_roi_MismatchEvents",
                                      "CPM RoIs Mismatch Event Numbers");
-    m_sampleHists[2] = hist;
-    hist = m_histTool->bookCPMEventVsCrateModule("cpm_2d_thresh_MismatchEvents",
+  m_sampleHists[2] = hist;
+  hist = m_histTool->bookCPMEventVsCrateModule("cpm_2d_thresh_MismatchEvents",
                                      "CPM Hits Mismatch Event Numbers");
-    m_sampleHists[3] = hist;
-  }
+  m_sampleHists[3] = hist;
 
   m_histTool->setMonGroup(&monEvent2);
 
@@ -430,8 +381,6 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   m_histTool->unsetMonGroup();
 
-  m_events = 0;
-
   } // end if (isNewRun ...
 
   msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
@@ -443,12 +392,12 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 StatusCode CPMSimBSMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
+  if (m_debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
   
   // Skip events believed to be corrupt
 
   if (m_errorTool->corrupt()) {
-    msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
+    if (m_debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
 
@@ -459,44 +408,38 @@ StatusCode CPMSimBSMon::fillHistograms()
 
   //Retrieve Trigger Towers from SG
   const TriggerTowerCollection* triggerTowerTES = 0; 
-  if (m_compareTriggerTowers) {
-    sc = evtStore()->retrieve(triggerTowerTES, m_triggerTowerLocation); 
-    if( sc.isFailure()  ||  !triggerTowerTES ) {
-      msg(MSG::DEBUG) << "No Trigger Tower container found" << endreq; 
-    }
+  sc = evtStore()->retrieve(triggerTowerTES, m_triggerTowerLocation); 
+  if( sc.isFailure()  ||  !triggerTowerTES ) {
+    msg(MSG::DEBUG) << "No Trigger Tower container found" << endreq; 
   }
 
   //Retrieve Core and Overlap CPM Towers from SG
   const CpmTowerCollection* cpmTowerTES = 0; 
   const CpmTowerCollection* cpmTowerOvTES = 0; 
-  if (m_compareTriggerTowers || m_compareWithSim) {
-    sc = evtStore()->retrieve(cpmTowerTES, m_cpmTowerLocation); 
-    if( sc.isFailure()  ||  !cpmTowerTES ) {
-      msg(MSG::DEBUG) << "No Core CPM Tower container found" << endreq; 
-    }
-    if (evtStore()->contains<CpmTowerCollection>(m_cpmTowerLocationOverlap)) {
-      sc = evtStore()->retrieve(cpmTowerOvTES, m_cpmTowerLocationOverlap); 
-    } else sc = StatusCode::FAILURE;
-    if( sc.isFailure()  ||  !cpmTowerOvTES ) {
-      msg(MSG::DEBUG) << "No Overlap CPM Tower container found" << endreq; 
-    }
+  sc = evtStore()->retrieve(cpmTowerTES, m_cpmTowerLocation); 
+  if( sc.isFailure()  ||  !cpmTowerTES ) {
+    msg(MSG::DEBUG) << "No Core CPM Tower container found" << endreq; 
+  }
+  if (evtStore()->contains<CpmTowerCollection>(m_cpmTowerLocationOverlap)) {
+    sc = evtStore()->retrieve(cpmTowerOvTES, m_cpmTowerLocationOverlap); 
+  } else sc = StatusCode::FAILURE;
+  if( sc.isFailure()  ||  !cpmTowerOvTES ) {
+    msg(MSG::DEBUG) << "No Overlap CPM Tower container found" << endreq; 
   }
   m_overlapPresent = cpmTowerOvTES != 0;
   
   //Retrieve CPM RoIs from SG
   const CpmRoiCollection* cpmRoiTES = 0;
   const RodHeaderCollection* rodTES = 0;
-  if (m_compareWithSim) {
-    sc = evtStore()->retrieve( cpmRoiTES, m_cpmRoiLocation);
-    if( sc.isFailure()  ||  !cpmRoiTES ) {
-      msg(MSG::DEBUG) << "No DAQ CPM RoIs container found" << endreq;
-    } else {
-      if (evtStore()->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
-        sc = evtStore()->retrieve( rodTES, m_rodHeaderLocation);
-      } else sc = StatusCode::FAILURE;
-      if( sc.isFailure()  ||  !rodTES ) {
-        msg(MSG::DEBUG) << "No ROD Header container found" << endreq;
-      }
+  sc = evtStore()->retrieve( cpmRoiTES, m_cpmRoiLocation);
+  if( sc.isFailure()  ||  !cpmRoiTES ) {
+    msg(MSG::DEBUG) << "No DAQ CPM RoIs container found" << endreq;
+  } else {
+    if (evtStore()->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
+      sc = evtStore()->retrieve( rodTES, m_rodHeaderLocation);
+    } else sc = StatusCode::FAILURE;
+    if( sc.isFailure()  ||  !rodTES ) {
+      msg(MSG::DEBUG) << "No ROD Header container found" << endreq;
     }
   }
   
@@ -513,7 +456,6 @@ StatusCode CPMSimBSMon::fillHistograms()
   if( sc.isFailure()  ||  !cmmCpHitsTES ) {
     msg(MSG::DEBUG) << "No CMM-CP Hits container found" << endreq; 
   }
-  ++m_events;
 
   // Maps to simplify comparisons
   
@@ -539,90 +481,74 @@ StatusCode CPMSimBSMon::fillHistograms()
   ErrorVector errorsCPM(vecsizeCpm);
   ErrorVector errorsCMM(vecsizeCmm);
 
-  if (m_compareTriggerTowers) {
+  // Compare Trigger Towers and CPM Towers from data
 
-    // Compare Trigger Towers and CPM Towers from data
-
-    bool overlap = false;
-    compare(ttMap, cpMap, errorsCPM, overlap);
-    if (m_overlapPresent) {
-      overlap = true;
-      compare(ttMap, ovMap, errorsCPM, overlap);
-    }
-
+  bool overlap = false;
+  compare(ttMap, cpMap, errorsCPM, overlap);
+  if (m_overlapPresent) {
+    overlap = true;
+    compare(ttMap, ovMap, errorsCPM, overlap);
   }
 
-  if (m_compareWithSim) {
+  // Compare RoIs simulated from CPM Towers with CPM RoIs from data
 
-    // Compare RoIs simulated from CPM Towers with CPM RoIs from data
-
-    CpmRoiCollection* cpmRoiSIM = 0;
-    if (cpmTowerTES || cpmTowerOvTES) {
-      cpmRoiSIM = new CpmRoiCollection;
-      simulate(cpMap, ovMap, cpmRoiSIM);
-    }
-    CpmRoiMap crSimMap;
-    setupMap(cpmRoiSIM, crSimMap);
-    compare(crSimMap, crMap, rodTES, errorsCPM);
-    crSimMap.clear();
-    delete cpmRoiSIM;
-
-    // Compare CPM Hits simulated from CPM RoIs with CPM Hits from data
-
-    CpmHitsCollection* cpmHitsSIM = 0;
-    if (cpmRoiTES) {
-      cpmHitsSIM = new CpmHitsCollection;
-      simulate(cpmRoiTES, cpmHitsSIM);
-    }
-    CpmHitsMap chSimMap;
-    setupMap(cpmHitsSIM, chSimMap);
-    compare(chSimMap, chMap, errorsCPM);
-    chSimMap.clear();
-    delete cpmHitsSIM;
-
+  CpmRoiCollection* cpmRoiSIM = 0;
+  if (cpmTowerTES || cpmTowerOvTES) {
+    cpmRoiSIM = new CpmRoiCollection;
+    simulate(cpMap, ovMap, cpmRoiSIM);
   }
+  CpmRoiMap crSimMap;
+  setupMap(cpmRoiSIM, crSimMap);
+  compare(crSimMap, crMap, rodTES, errorsCPM);
+  crSimMap.clear();
+  delete cpmRoiSIM;
+
+  // Compare CPM Hits simulated from CPM RoIs with CPM Hits from data
+
+  CpmHitsCollection* cpmHitsSIM = 0;
+  if (cpmRoiTES) {
+    cpmHitsSIM = new CpmHitsCollection;
+    simulate(cpmRoiTES, cpmHitsSIM);
+  }
+  CpmHitsMap chSimMap;
+  setupMap(cpmHitsSIM, chSimMap);
+  compare(chSimMap, chMap, errorsCPM);
+  chSimMap.clear();
+  delete cpmHitsSIM;
 
   // Compare CPM hits with CMM Hits from data
 
   compare(chMap, cmMap, errorsCPM, errorsCMM);
 
-  if (m_compareWithSim) {
+  // Compare Local sums simulated from CMM Hits with Local sums from data
 
-    // Compare Local sums simulated from CMM Hits with Local sums from data
-
-    CmmCpHitsCollection* cmmLocalSIM = 0;
-    if (cmmCpHitsTES) {
-      cmmLocalSIM = new CmmCpHitsCollection;
-      simulate(cmmCpHitsTES, cmmLocalSIM, LVL1::CMMCPHits::LOCAL);
-    }
-    CmmCpHitsMap cmmLocalSimMap;
-    setupMap(cmmLocalSIM, cmmLocalSimMap);
-    compare(cmmLocalSimMap, cmMap, errorsCMM, LVL1::CMMCPHits::LOCAL);
-    cmmLocalSimMap.clear();
-    delete cmmLocalSIM;
-
+  CmmCpHitsCollection* cmmLocalSIM = 0;
+  if (cmmCpHitsTES) {
+    cmmLocalSIM = new CmmCpHitsCollection;
+    simulate(cmmCpHitsTES, cmmLocalSIM, LVL1::CMMCPHits::LOCAL);
   }
+  CmmCpHitsMap cmmLocalSimMap;
+  setupMap(cmmLocalSIM, cmmLocalSimMap);
+  compare(cmmLocalSimMap, cmMap, errorsCMM, LVL1::CMMCPHits::LOCAL);
+  cmmLocalSimMap.clear();
+  delete cmmLocalSIM;
 
   // Compare Local sums with Remote sums from data
 
   compare(cmMap, cmMap, errorsCMM, LVL1::CMMCPHits::REMOTE_0);
 
-  if (m_compareWithSim) {
+  // Compare Total sums simulated from Remote sums with Total sums from data
 
-    // Compare Total sums simulated from Remote sums with Total sums from data
-
-    CmmCpHitsCollection* cmmTotalSIM = 0;
-    if (cmmCpHitsTES) {
-      cmmTotalSIM = new CmmCpHitsCollection;
-      simulate(cmmCpHitsTES, cmmTotalSIM, LVL1::CMMCPHits::TOTAL);
-    }
-    CmmCpHitsMap cmmTotalSimMap;
-    setupMap(cmmTotalSIM, cmmTotalSimMap);
-    compare(cmmTotalSimMap, cmMap, errorsCMM, LVL1::CMMCPHits::TOTAL);
-    cmmTotalSimMap.clear();
-    delete cmmTotalSIM;
-
+  CmmCpHitsCollection* cmmTotalSIM = 0;
+  if (cmmCpHitsTES) {
+    cmmTotalSIM = new CmmCpHitsCollection;
+    simulate(cmmCpHitsTES, cmmTotalSIM, LVL1::CMMCPHits::TOTAL);
   }
+  CmmCpHitsMap cmmTotalSimMap;
+  setupMap(cmmTotalSIM, cmmTotalSimMap);
+  compare(cmmTotalSimMap, cmMap, errorsCMM, LVL1::CMMCPHits::TOTAL);
+  cmmTotalSimMap.clear();
+  delete cmmTotalSIM;
 
   // Update error summary plots
 
@@ -674,7 +600,7 @@ StatusCode CPMSimBSMon::fillHistograms()
     return sc;
   }
 
-  msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
+  if (m_debug) msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
 
   return StatusCode::SUCCESS;
 }
@@ -698,7 +624,9 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
                           const CpmTowerMap& cpMap, ErrorVector& errors,
 			  bool overlap)
 {
-  msg(MSG::DEBUG) << "Compare Trigger Towers and CPM Towers" << endreq;
+  if (m_debug) {
+    msg(MSG::DEBUG) << "Compare Trigger Towers and CPM Towers" << endreq;
+  }
 
   const int nCrates = 4;
   const int nCPMs   = 14;
@@ -768,19 +696,6 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
       cpEm  = cp->emEnergy();
       cpHad = cp->hadEnergy();
       key = ttKey;
-    }
-    
-    // Check for known bad towers
-
-    if (ttEm != cpEm && ignoreTower(0, key)) {
-      m_histTool->fillCPMEtaVsPhi(m_h_IgnoreTowersEM, eta, phi);
-      ttEm = 0;
-      cpEm = 0;
-    }
-    if (ttHad != cpHad && ignoreTower(1, key)) {
-      m_histTool->fillCPMEtaVsPhi(m_h_IgnoreTowersHad, eta, phi);
-      ttHad = 0;
-      cpHad = 0;
     }
 
     if (!ttEm && !ttHad && !cpEm && !cpHad) continue;
@@ -867,7 +782,7 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
 void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
                           const RodHeaderCollection* rods, ErrorVector& errors)
 {
-  msg(MSG::DEBUG) << "Compare Simulated RoIs with data" << endreq;
+  if (m_debug) msg(MSG::DEBUG) << "Compare Simulated RoIs with data" << endreq;
 
   const int nCrates = 4;
   const int nCPMs = 14;
@@ -917,8 +832,6 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
       ++simMapIter;
       ++datMapIter;
     }
-    simHits &= m_roiMask;
-    datHits &= m_roiMask;
 
     if (!simHits && !datHits) continue;
 
@@ -977,28 +890,17 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
     if (hist1) hist1->Fill(locX, locY);
     if (hist2) m_histTool->fillCPMRoIEtaVsPhi(hist2, eta, phi);
 
-    for (int thr = 0; thr < 16; ++thr) {
-      if ( !((m_roiMask >> thr) & 0x1) ) continue;
-      const int thrDat = (datHits >> thr) & 0x1;
-      const int thrSim = (simHits >> thr) & 0x1;
-      if (thrDat || thrSim) {
-        if (thrDat == thrSim) m_h_RoIThreshSIMeqDAT->Fill(locX, thr);
-        else                  m_h_RoIThreshSIMneDAT->Fill(locX, thr);
-      }
-    }
+    const int nThresh = 16;
+    m_histTool->fillXVsThresholds(m_h_RoIThreshSIMeqDAT, locX,
+                                                datHits & simHits, nThresh, 1);
+    m_histTool->fillXVsThresholds(m_h_RoIThreshSIMneDAT, locX,
+                                                datHits ^ simHits, nThresh, 1);
 
     if (m_debug) {
-      msg(MSG::DEBUG) << "DataHits/SimHits: ";
-      for (int i = 15; i >= 0; --i) {
-        int hit = (datHits >> i) & 0x1;
-        msg(MSG::DEBUG) << hit;
-      }
-      msg(MSG::DEBUG) << "/";
-      for (int i = 15; i >= 0; --i) {
-        int hit = (simHits >> i) & 0x1;
-        msg(MSG::DEBUG) << hit;
-      }
-      msg(MSG::DEBUG) << endreq;
+      msg(MSG::DEBUG) << "DataHits/SimHits: "
+                      << m_histTool->thresholdString(datHits, nThresh) << " / "
+		      << m_histTool->thresholdString(simHits, nThresh)
+		      << endreq;
     }
   }
 }
@@ -1008,7 +910,9 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
 void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
                                                        ErrorVector& errors)
 {
-  msg(MSG::DEBUG) << "Compare simulated CPM Hits with data" << endreq;
+  if (m_debug) {
+    msg(MSG::DEBUG) << "Compare simulated CPM Hits with data" << endreq;
+  }
 
   const int maxKey = 0x7fffffff;
   CpmHitsMap::const_iterator simMapIter    = cpmSimMap.begin();
@@ -1099,24 +1003,20 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
     }
 
     const int nThresh = 8;
-    for (int thr = 0; thr < nThresh; ++thr) {
-      const int thr2 = thr + nThresh;
-      const int thrLen = 3;
-      const int shift = thrLen*thr;
-      const unsigned int thrMask = 0x7;
-      const unsigned int d0 = (datHits0 >> shift) & thrMask;
-      const unsigned int d1 = (datHits1 >> shift) & thrMask;
-      const unsigned int s0 = (simHits0 >> shift) & thrMask;
-      const unsigned int s1 = (simHits1 >> shift) & thrMask;
-      if (d0 || s0) {
-        if (d0 == s0) m_h_CPMHitsThreshSIMeqDAT->Fill(loc, thr);
-        else          m_h_CPMHitsThreshSIMneDAT->Fill(loc, thr);
-      }
-      if (d1 || s1) {
-        if (d1 == s1) m_h_CPMHitsThreshSIMeqDAT->Fill(loc, thr2);
-        else          m_h_CPMHitsThreshSIMneDAT->Fill(loc, thr2);
-      }
-    }
+    const int thrLen  = 3;
+    int same = m_histTool->thresholdsSame(datHits0, simHits0, nThresh, thrLen);
+    int diff = m_histTool->thresholdsDiff(datHits0, simHits0, nThresh, thrLen);
+    m_histTool->fillXVsThresholds(m_h_CPMHitsThreshSIMeqDAT, loc, same,
+                                                                  nThresh, 1);
+    m_histTool->fillXVsThresholds(m_h_CPMHitsThreshSIMneDAT, loc, diff,
+                                                                  nThresh, 1);
+    same = m_histTool->thresholdsSame(datHits1, simHits1, nThresh, thrLen);
+    diff = m_histTool->thresholdsDiff(datHits1, simHits1, nThresh, thrLen);
+    const int offset = nThresh;
+    m_histTool->fillXVsThresholds(m_h_CPMHitsThreshSIMeqDAT, loc, same,
+                                                          nThresh, 1, offset);
+    m_histTool->fillXVsThresholds(m_h_CPMHitsThreshSIMneDAT, loc, diff,
+                                                          nThresh, 1, offset);
   }
 }
 
@@ -1125,7 +1025,7 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
 void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
                           ErrorVector& errorsCPM, ErrorVector& errorsCMM)
 {
-  msg(MSG::DEBUG) << "Compare CPM Hits and CMM Hits" << endreq;
+  if (m_debug) msg(MSG::DEBUG) << "Compare CPM Hits and CMM Hits" << endreq;
 
   const int nCrates = 4;
   const int nCPMs = 14;
@@ -1229,24 +1129,20 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
     if (hist) hist->Fill(cpm, loc2+1);
 
     const int nThresh = 8;
-    for (int thr = 0; thr < nThresh; ++thr) {
-      const int thr2 = thr + nThresh;
-      const int thrLen = 3;
-      const int shift = thrLen*thr;
-      const unsigned int thrMask = 0x7;
-      const unsigned int d0 = (cmmHits0 >> shift) & thrMask;
-      const unsigned int d1 = (cmmHits1 >> shift) & thrMask;
-      const unsigned int s0 = (cpmHits0 >> shift) & thrMask;
-      const unsigned int s1 = (cpmHits1 >> shift) & thrMask;
-      if (d0 || s0) {
-        if (d0 == s0) m_h_CMMHitsThreshSIMeqDAT->Fill(loc, thr);
-        else          m_h_CMMHitsThreshSIMneDAT->Fill(loc, thr);
-      }
-      if (d1 || s1) {
-        if (d1 == s1) m_h_CMMHitsThreshSIMeqDAT->Fill(loc, thr2);
-        else          m_h_CMMHitsThreshSIMneDAT->Fill(loc, thr2);
-      }
-    }
+    const int thrLen  = 3;
+    int same = m_histTool->thresholdsSame(cmmHits0, cpmHits0, nThresh, thrLen);
+    int diff = m_histTool->thresholdsDiff(cmmHits0, cpmHits0, nThresh, thrLen);
+    m_histTool->fillXVsThresholds(m_h_CMMHitsThreshSIMeqDAT, loc, same,
+                                                                  nThresh, 1);
+    m_histTool->fillXVsThresholds(m_h_CMMHitsThreshSIMneDAT, loc, diff,
+                                                                  nThresh, 1);
+    same = m_histTool->thresholdsSame(cmmHits1, cpmHits1, nThresh, thrLen);
+    diff = m_histTool->thresholdsDiff(cmmHits1, cpmHits1, nThresh, thrLen);
+    const int offset = nThresh;
+    m_histTool->fillXVsThresholds(m_h_CMMHitsThreshSIMeqDAT, loc, same,
+                                                          nThresh, 1, offset);
+    m_histTool->fillXVsThresholds(m_h_CMMHitsThreshSIMneDAT, loc, diff,
+                                                          nThresh, 1, offset);
   }
 }
 
@@ -1376,24 +1272,22 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
 
       loc /= 2;
       const int nThresh = 8;
-      for (int thr = 0; thr < nThresh; ++thr) {
-        const int thr2 = thr + nThresh;
-        const int thrLen = 3;
-        const int shift = thrLen*thr;
-        const unsigned int thrMask = 0x7;
-        const unsigned int d0 = (cmmHits0 >> shift) & thrMask;
-        const unsigned int d1 = (cmmHits1 >> shift) & thrMask;
-        const unsigned int s0 = (cmmSimHits0 >> shift) & thrMask;
-        const unsigned int s1 = (cmmSimHits1 >> shift) & thrMask;
-	if (d0 || s0) {
-          if (d0 == s0) m_h_SumsThreshSIMeqDAT->Fill(loc, thr);
-          else          m_h_SumsThreshSIMneDAT->Fill(loc, thr);
-	}
-	if (d1 || s1) {
-          if (d1 == s1) m_h_SumsThreshSIMeqDAT->Fill(loc, thr2);
-          else          m_h_SumsThreshSIMneDAT->Fill(loc, thr2);
-        }
-      }
+      const int thrLen  = 3;
+      int same = m_histTool->thresholdsSame(cmmHits0, cmmSimHits0, nThresh,
+                                                                   thrLen);
+      int diff = m_histTool->thresholdsDiff(cmmHits0, cmmSimHits0, nThresh,
+                                                                   thrLen);
+      m_histTool->fillXVsThresholds(m_h_SumsThreshSIMeqDAT, loc, same,
+                                                                  nThresh, 1);
+      m_histTool->fillXVsThresholds(m_h_SumsThreshSIMneDAT, loc, diff,
+                                                                  nThresh, 1);
+      same = m_histTool->thresholdsSame(cmmHits1, cmmSimHits1, nThresh, thrLen);
+      diff = m_histTool->thresholdsDiff(cmmHits1, cmmSimHits1, nThresh, thrLen);
+      const int offset = nThresh;
+      m_histTool->fillXVsThresholds(m_h_SumsThreshSIMeqDAT, loc, same,
+                                                          nThresh, 1, offset);
+      m_histTool->fillXVsThresholds(m_h_SumsThreshSIMneDAT, loc, diff,
+                                                          nThresh, 1, offset);
     } else {
       if (dataId == LVL1::CMMCPHits::LOCAL) {
         if (crate != nCrates-1) {
@@ -1450,24 +1344,20 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
 
       loc /= 2;
       const int nThresh = 8;
-      for (int thr = 0; thr < nThresh; ++thr) {
-        const int thr2 = thr + nThresh;
-        const int thrLen = 3;
-        const int shift = thrLen*thr;
-        const unsigned int thrMask = 0x7;
-	const unsigned int d0 = (hd0 >> shift) & thrMask;
-	const unsigned int s0 = (hs0 >> shift) & thrMask;
-	const unsigned int d1 = (hd1 >> shift) & thrMask;
-	const unsigned int s1 = (hs1 >> shift) & thrMask;
-	if (d0 || s0) {
-          if (d0 == s0) m_h_SumsThreshSIMeqDAT->Fill(loc, thr);
-          else          m_h_SumsThreshSIMneDAT->Fill(loc, thr);
-	}
-	if (d1 || s1) {
-          if (d1 == s1) m_h_SumsThreshSIMeqDAT->Fill(loc, thr2);
-          else          m_h_SumsThreshSIMneDAT->Fill(loc, thr2);
-        }
-      }
+      const int thrLen  = 3;
+      int same = m_histTool->thresholdsSame(hd0, hs0, nThresh, thrLen);
+      int diff = m_histTool->thresholdsDiff(hd0, hs0, nThresh, thrLen);
+      m_histTool->fillXVsThresholds(m_h_SumsThreshSIMeqDAT, loc, same,
+                                                                  nThresh, 1);
+      m_histTool->fillXVsThresholds(m_h_SumsThreshSIMneDAT, loc, diff,
+                                                                  nThresh, 1);
+      same = m_histTool->thresholdsSame(hd1, hs1, nThresh, thrLen);
+      diff = m_histTool->thresholdsDiff(hd1, hs1, nThresh, thrLen);
+      const int offset = nThresh;
+      m_histTool->fillXVsThresholds(m_h_SumsThreshSIMeqDAT, loc, same,
+                                                          nThresh, 1, offset);
+      m_histTool->fillXVsThresholds(m_h_SumsThreshSIMneDAT, loc, diff,
+                                                          nThresh, 1, offset);
     }
   }
 }
@@ -1484,7 +1374,6 @@ void CPMSimBSMon::setLabels(TH1* hist, bool xAxis)
   axis->SetBinLabel(1+LocalSumMismatch, "#splitline{Local}{Sums}");
   axis->SetBinLabel(1+RemoteSumMismatch,"#splitline{Remote}{Sums}");
   axis->SetBinLabel(1+TotalSumMismatch, "#splitline{Total}{Sums}");
-  //axis->SetLabelSize(0.045);
 }
 
 void CPMSimBSMon::setupMap(const TriggerTowerCollection* coll,
@@ -1568,7 +1457,7 @@ void CPMSimBSMon::setupMap(const CmmCpHitsCollection* coll, CmmCpHitsMap& map)
 void CPMSimBSMon::simulate(const CpmTowerMap towers, const CpmTowerMap towersOv,
                                  CpmRoiCollection* rois)
 {
-  msg(MSG::DEBUG) << "Simulate CPM RoIs from CPM Towers" << endreq;
+  if (m_debug) msg(MSG::DEBUG) << "Simulate CPM RoIs from CPM Towers" << endreq;
 
   // Process a crate at a time to use overlap data
   const int ncrates = 4;
@@ -1612,7 +1501,7 @@ void CPMSimBSMon::simulate(const CpmTowerMap towers, const CpmTowerMap towersOv,
 void CPMSimBSMon::simulate(const CpmRoiCollection* rois,
                                  CpmHitsCollection* hits)
 {
-  msg(MSG::DEBUG) << "Simulate CPM Hits from CPM RoIs" << endreq;
+  if (m_debug) msg(MSG::DEBUG) << "Simulate CPM Hits from CPM RoIs" << endreq;
 
   m_cpHitsTool->formCPMHits(rois, hits);
 }
@@ -1620,7 +1509,8 @@ void CPMSimBSMon::simulate(const CpmRoiCollection* rois,
 void CPMSimBSMon::simulate(const CmmCpHitsCollection* hitsIn,
                                  CmmCpHitsCollection* hitsOut, int selection)
 {
-  msg(MSG::DEBUG) << "Simulate CMM Hit sums from CMM Hits" << endreq;
+  if (m_debug) msg(MSG::DEBUG) << "Simulate CMM Hit sums from CMM Hits"
+                               << endreq;
 
   if (selection == LVL1::CMMCPHits::LOCAL) {
     m_cpHitsTool->formCMMCPHitsCrate(hitsIn, hitsOut);
@@ -1637,24 +1527,6 @@ int CPMSimBSMon::fpga(int crate, double phi)
   const double phiBase = M_PI/2. * double(crate);
   const int phiBin = int(floor((phi - phiBase) / phiGran)) + 2;
   return 2 * (phiBin/2);
-}
-
-// Test for tower in ignore list
-
-bool CPMSimBSMon::ignoreTower(int layer, int key)
-{
-  bool ignore = false;
-  const std::vector<int>* list = (layer == 0) ? &m_ignoreTowersEm
-                                              : &m_ignoreTowersHad;
-  std::vector<int>::const_iterator iter  = list->begin();
-  std::vector<int>::const_iterator iterE = list->end();
-  for (; iter != iterE; ++iter) {
-    if (key == *iter) {
-      ignore = true;
-      break;
-    }
-  }
-  return ignore;
 }
 
 // Return a tower with zero energy if parity bit is set

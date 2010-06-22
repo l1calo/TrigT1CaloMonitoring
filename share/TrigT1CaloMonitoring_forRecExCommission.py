@@ -3,10 +3,6 @@ if not 'DQMonFlags' in dir():
     print "TrigT1CaloMonitoring_forRecExCommission.py: DQMonFlags not yet imported - I import them now"
     from AthenaMonitoring.DQMonFlags import DQMonFlags
 
-CompareWithSimulation=False
-if (globalflags.DataSource() == "data") :
-    CompareWithSimulation=True
-    
 # On Tier0 select monitoring tools according to processing step
 if DQMonFlags.monManEnvironment() == 'tier0Raw':
     # Tier0 RAWtoESD step
@@ -57,8 +53,7 @@ if l1caloESDMon:
         PathInRootFile = "L1Calo/PPM",
         ErrorPathInRootFile = "L1Calo/PPM/Errors",
         EventPathInRootFile = "L1Calo/Overview",
-        #OutputLevel = VERBOSE,
-        #OutputLevel = INFO,
+        #OutputLevel = DEBUG
         )
     ToolSvc += L1PPrMonTool
     L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
@@ -87,8 +82,7 @@ if l1caloRawMon:
         ADCHitMap_Thresh = 40,
         PathInRootFile = "L1Calo/PPM/SpareChannels",
         ErrorPathInRootFile = "L1Calo/PPM/SpareChannels/Errors",
-        #OutputLevel = VERBOSE,
-        #OutputLevel = INFO,
+        #OutputLevel = DEBUG
         )
     ToolSvc += L1PPrSpareMonTool
     L1CaloMan.AthenaMonTools += [ L1PPrSpareMonTool ]
@@ -103,9 +97,8 @@ if l1caloESDMon:
 
     #------------------------------------ JEM ----------------------------------------
     from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import JEMMon
-    BS_L1JEMMonTool = JEMMon(
-        name = "BS_L1JEMMonTool",
-        TypeOfData = "BS",  #BS or Sim data?
+    L1JEMMonTool = JEMMon(
+        name = "L1JEMMonTool",
         JetElementLocation = "JetElements",
         JEMHitsLocation = "JEMHits",
         JEMEtSumsLocation = "JEMEtSums",
@@ -113,28 +106,24 @@ if l1caloESDMon:
         MaxEnergyRange = 1024,
         PathInRootFile = "L1Calo/JEM",
         ErrorPathInRootFile = "L1Calo/JEM/Errors/Hardware",
-        Offline = Offline,
-        #OutputLevel = VERBOSE,
+        #OutputLevel = DEBUG
         )
-    ToolSvc += BS_L1JEMMonTool
-    L1CaloMan.AthenaMonTools += [ BS_L1JEMMonTool ]
+    ToolSvc += L1JEMMonTool
+    L1CaloMan.AthenaMonTools += [ L1JEMMonTool ]
 
     #----------------------------------- CMM ------------------------------------------
     from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import CMMMon
-    BS_L1CMMMonTool = CMMMon (
-        name = "BS_L1CMMMonTool",
-        TypeOfData = "BS",  #BS or Sim data?
+    L1CMMMonTool = CMMMon (
+        name = "L1CMMMonTool",
         CMMJetHitsLocation = "CMMJetHits",
         CMMEtSumsLocation = "CMMEtSums",
         CMMRoILocation = "CMMRoIs",
-        MaxEnergyRange = 32767,
         PathInRootFile = "L1Calo/JEM_CMM",
         ErrorPathInRootFile = "L1Calo/JEM_CMM/Errors/Hardware",
-        Offline = Offline,
-        #OutputLevel = VERBOSE,
+        #OutputLevel = DEBUG
         )
-    ToolSvc += BS_L1CMMMonTool
-    L1CaloMan.AthenaMonTools += [ BS_L1CMMMonTool ]
+    ToolSvc += L1CMMMonTool
+    L1CaloMan.AthenaMonTools += [ L1CMMMonTool ]
 
 if l1caloRawMon and globalflags.DataSource() == "data":
 
@@ -144,7 +133,7 @@ if l1caloRawMon and globalflags.DataSource() == "data":
         JEPHitsTool = "LVL1::L1JEPHitsTools/L1JEPHitsTools_Mon",
         JetTool = "LVL1::L1JetTools/L1JetTools_Mon",
         JEPEtSumsTool = "LVL1::L1JEPEtSumsTools/L1JEPEtSumsTools_Mon",
-        CompareWithSimulation = CompareWithSimulation)
+        )
     ToolSvc += JEPSimBSMonTool
     L1CaloMan.AthenaMonTools += [ JEPSimBSMonTool ]
     #ToolSvc.JEPSimBSMonTool.OutputLevel = DEBUG
@@ -192,7 +181,7 @@ if l1caloRawMon and globalflags.DataSource() == "data":
     from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import CPMSimBSMon
     CPMSimBSMonTool = CPMSimBSMon("CPMSimBSMonTool",
                               EmTauTool = "LVL1::L1EmTauTools/L1EmTauTools_Mon",
-                              CompareWithSimulation = CompareWithSimulation)
+                              )
     ToolSvc += CPMSimBSMonTool
     L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
     #ToolSvc.CPMSimBSMonTool.OutputLevel = DEBUG
@@ -220,9 +209,17 @@ if globalflags.DataSource() == "data":
     #=================================================================================
     from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import TrigT1CaloGlobalMonTool
     if l1caloRawMon:
-        L1GlobalMonTool = TrigT1CaloGlobalMonTool ( name = "L1GlobalMonTool" )
+        prebookThresh = not l1caloESDMon
+        L1GlobalMonTool = TrigT1CaloGlobalMonTool ( name = "L1GlobalMonTool",
+	                                            BookCPMThresh = prebookThresh,
+						    BookJEMThresh = prebookThresh,
+						    BookCMMThresh = prebookThresh,
+						    #OutputLevel = DEBUG
+                                                  )
     else:
-        L1GlobalMonTool = TrigT1CaloGlobalMonTool ( name = "L1GlobalESDMonTool" )
+        L1GlobalMonTool = TrigT1CaloGlobalMonTool ( name = "L1GlobalESDMonTool",
+	                                            #OutputLevel = DEBUG
+						  )
     ToolSvc += L1GlobalMonTool
     L1CaloMan.AthenaMonTools += [ L1GlobalMonTool ]
 

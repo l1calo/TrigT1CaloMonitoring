@@ -12,20 +12,24 @@
 #ifndef CMMMon_H
 #define CMMMon_H
 
-#include "GaudiKernel/StatusCode.h"
-#include "GaudiKernel/ToolHandle.h"
-#include "CLHEP/Units/SystemOfUnits.h"
+#include <string>
 
-#include "TH1.h"
-#include "TH2.h"
+#include "GaudiKernel/ToolHandle.h"
 
 #include "DataModel/DataVector.h"
-#include "TrigT1CaloEvent/CMMJetHits.h"
-#include "TrigT1CaloEvent/CMMEtSums.h"
 
-
-#include "AthenaMonitoring/AthenaMonManager.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
+
+class TH1F;
+class TH2F;
+class TH2I;
+
+class StatusCode;
+
+namespace LVL1 {
+  class CMMJetHits;
+  class CMMEtSums;
+}
 
 class TrigT1CaloMonErrorTool;
 class TrigT1CaloHistogramTool;
@@ -33,26 +37,24 @@ class TrigT1CaloHistogramTool;
 class CMMMon : public ManagedMonitorToolBase
 {
 public:
-/*         typedef DataVector<const LVL1::CMMJetHits*> pCMMJetHitsCollection; */
-        typedef DataVector<LVL1::CMMJetHits> CMMJetHitsCollection;
-        typedef DataVector<const LVL1::CMMJetHits> cCMMJetHitsCollection;
-        typedef DataVector<LVL1::CMMEtSums> CMMEtSumsCollection;
+
+   typedef DataVector<LVL1::CMMJetHits> CMMJetHitsCollection;
+   typedef DataVector<LVL1::CMMEtSums>  CMMEtSumsCollection;
   
+   CMMMon( const std::string & type, const std::string & name,
+	                             const IInterface* parent ); 
 
-	CMMMon( const std::string & type, const std::string & name,
-	                 const IInterface* parent ); 
+   virtual ~CMMMon();
 
-	virtual ~CMMMon();
+   virtual StatusCode initialize();
+   virtual StatusCode bookHistograms( bool isNewEventsBlock,
+                                      bool isNewLumiBlock, bool isNewRun );
+   virtual StatusCode fillHistograms();
+   virtual StatusCode procHistograms( bool isEndOfEventsBlock,
+                                      bool isEndOfLumiBlock, bool isEndOfRun );
 
-	virtual StatusCode initialize();
-	virtual StatusCode bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock, bool isNewRun );
-	virtual StatusCode fillHistograms();
-	virtual StatusCode procHistograms( bool isEndOfEventsBlock, bool isEndOfLumiBlock, bool isEndOfRun );
+private:
 
-protected:
-
-   /** a handle on Store Gate for access to the Event Store */
-   StoreGateSvc* m_storeGate;
    // Tool to retrieve bytestream errors
    ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
    ToolHandle<TrigT1CaloHistogramTool> m_histTool;
@@ -62,15 +64,10 @@ protected:
    std::string m_CMMEtSumsLocation;
    std::string m_CMMRoILocation;
 
-   std::string m_DataType;   
    std::string m_PathInRootFile;   
    std::string m_ErrorPathInRootFile;
-   int m_NoEvents;
-   int m_MaxEnergyRange;
-   bool m_Offline;
 
-
-  /** Histos */   
+   /** Histos */   
    // CMM Jet Hits
    TH1F* m_h_CMMJetHits_MainJets;
    TH1F* m_h_CMMJetHits_FwdJetsRight;
@@ -109,6 +106,7 @@ protected:
    TH1F* m_h_CMMRoI_error;
    TH1F* m_h_CMM_ErrorSummary;
    TH1F* m_h_TriggeredSlice;	  
+   TH2I* m_h_CMM_Events;
 };
 
 

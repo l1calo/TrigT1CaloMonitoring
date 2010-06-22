@@ -73,6 +73,12 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    /// Label bins with threshold names
    void thresholds(TH1* hist, const std::string& type, int offset = 0,
                                                        bool xAxis = true);
+   /// Put threshold hit values into a string suitable for printing
+   std::string thresholdString(int val, int nThresh, int nBits = 1);
+   /// Flag which threshold hit values are non-zero and the same
+   int thresholdsSame(int val1, int val2, int nThresh, int nBits);
+   ///  Flag which threshold hit values are different
+   int thresholdsDiff(int val1, int val2, int nThresh, int nBits);
 
    ////////////////////////////////
    // Labelling Utilities - CPM
@@ -95,6 +101,10 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
 
    /// Label bins with JEM crate/module
    void jemCrateModule(TH1* hist, int offset = 0, bool xAxis = true);
+   /// Label bins with JEM/CMM crate/module
+   void jemCMMCrateModule(TH1* hist, int offset = 0, bool xAxis = true);
+   /// Label bins with JEM frame/local coord
+   void jemFrameLoc(TH1* hist, int offset = 0, bool xAxis = true);
    /// Label bins with JEM RoI threshold names
    void jemThresholds(TH1* hist, int offset = 0, bool xAxis = true);
    /// Label bins with Main Jet threshold names
@@ -205,11 +215,47 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    // Booking Utilities - JEM
    ////////////////////////////////
 
+   /// Book JEM crate/module vs EX,Ey,Et
+   TH2F* bookJEMCrateModuleVsExEyEt(const std::string& name,
+                                    const std::string& title);
+   /// Book JEM crate/module vs frame/local coord
+   TH2F* bookJEMCrateModuleVsFrameLoc(const std::string& name,
+                                      const std::string& title);
+   /// Book JEM crate/module vs thresholds
+   TH2F* bookJEMCrateModuleVsThresholds(const std::string& name,
+                                        const std::string& title);
+   /// Book JEM events with error/mismatch vs crate/module
+   TH2I* bookJEMEventVsCrateModule(const std::string& name,
+                                   const std::string& title);
+   /// Book JEM module Vs crate
+   TH2F* bookJEMModuleVsCrate(const std::string& name,
+                              const std::string& title);
+   /// Book JEM eta
+   TH1F* bookJEMEta(const std::string& name, const std::string& title);
    /// Book JEM eta vs phi
    TH2F* bookJEMEtaVsPhi(const std::string& name, const std::string& title,
                                                        bool isRoi = false);
    /// Book JEM RoI eta vs phi
    TH2F* bookJEMRoIEtaVsPhi(const std::string& name, const std::string& title);
+   /// Book JEM energy with bins matching QuadLinear encoding
+   TH1F* bookJEMQuadLinear(const std::string& name, const std::string& title,
+                                                               int scale = 1);
+   /// Book JEM main jet thresholds
+   TH1F* bookMainJetThresholds(const std::string& name,
+                               const std::string& title);
+   /// Book JEM backward jet thresholds
+   TH1F* bookBackwardJetThresholds(const std::string& name,
+                                   const std::string& title);
+   /// Book JEM forward jet thresholds
+   TH1F* bookForwardJetThresholds(const std::string& name,
+                                  const std::string& title);
+   /// Book JEM JetEt thresholds
+   TH1F* bookJetEtThresholds(const std::string& name, const std::string& title);
+   /// Book JEM MissingEt thresholds
+   TH1F* bookMissingEtThresholds(const std::string& name,
+                                 const std::string& title);
+   /// Book JEM SumEt thresholds
+   TH1F* bookSumEtThresholds(const std::string& name, const std::string& title);
 
    ////////////////////////////////
    // Booking Utilities - PPM
@@ -256,6 +302,16 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
 
    /// Fill Error/Mismatch event number
    void fillEventNumber(TH2I* hist, double y);
+
+   /// Fill weighted thresholds 1D
+   void fillThresholds(TH1* hist, int val, int nThresh, int nBits,
+                                                        int offset = 0);
+   /// Fill weighted thresholds 2D, X axis
+   void fillThresholdsVsY(TH2* hist, int val, int y, int nThresh, int nBits,
+                                                               int offset = 0);
+   /// Fill weighted thresholds 2D, Y axis
+   void fillXVsThresholds(TH2* hist, int x, int val, int nThresh, int nBits,
+                                                               int offset = 0);
 
    ////////////////////////////////
    // Filling Utilities - CPM
