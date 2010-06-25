@@ -52,6 +52,8 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    // Labelling Utilities - General
    ////////////////////////////////
 
+   /// Return int/double pair as a string
+   std::string intDoubleString(int num, double val, int precision = 2);
    /// Label bins with number pairs
    void numberPairs(TH1* hist, int firstMin, int firstMax,
                                int secondMin, int secondMax,
@@ -189,8 +191,7 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    TH2F* bookCPMCrateModuleVsThreshold(const std::string& name,
                                        const std::string& title);
    /// Book CPM eta vs phi
-   TH2F* bookCPMEtaVsPhi(const std::string& name, const std::string& title,
-                                                       bool isRoi = false);
+   TH2F* bookCPMEtaVsPhi(const std::string& name, const std::string& title);
    /// Book CPM RoI eta vs phi
    TH2F* bookCPMRoIEtaVsPhi(const std::string& name, const std::string& title);
    /// Book CPM events with error/mismatch vs crate/module
@@ -233,8 +234,7 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    /// Book JEM eta
    TH1F* bookJEMEta(const std::string& name, const std::string& title);
    /// Book JEM eta vs phi
-   TH2F* bookJEMEtaVsPhi(const std::string& name, const std::string& title,
-                                                       bool isRoi = false);
+   TH2F* bookJEMEtaVsPhi(const std::string& name, const std::string& title);
    /// Book JEM RoI eta vs phi
    TH2F* bookJEMRoIEtaVsPhi(const std::string& name, const std::string& title);
    /// Book JEM energy with bins matching QuadLinear encoding

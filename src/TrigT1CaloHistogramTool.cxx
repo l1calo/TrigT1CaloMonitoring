@@ -99,6 +99,18 @@ StatusCode TrigT1CaloHistogramTool::finalize()
 //  Labelling Utilities - General
 //===========================================================================
 
+// Return int/double pair as a string
+
+std::string TrigT1CaloHistogramTool::intDoubleString(int num, double val,
+                                                              int precision)
+{
+  std::ostringstream cnum;
+  cnum << num << "/" 
+       << std::setiosflags(std::ios::fixed | std::ios::showpoint)
+       << std::setprecision(precision) << val;
+  return cnum.str();
+}
+
 // Label bins with number pairs
 
 void TrigT1CaloHistogramTool::numberPairs(TH1* hist, int firstMin, int firstMax,
@@ -675,24 +687,29 @@ TH2F* TrigT1CaloHistogramTool::bookCPMCrateModuleVsThreshold(
 // Book CPM eta vs phi
 
 TH2F* TrigT1CaloHistogramTool::bookCPMEtaVsPhi(const std::string& name,
-                                       const std::string& title, bool isRoi)
+                                               const std::string& title)
 {
-  // We use phi range 0-64 so tick marks correspond to the bins
-  const double phiBin     = M_PI/32.;
-  const double halfPhiBin = M_PI/64.;
-  const double xmin = (isRoi) ? -2.45 : -2.5;
-  const double xmax = (isRoi) ?  2.55 :  2.5;
-  TH2F* hist = book2F(name, title, 50, xmin, xmax, 64, 0., 64.);
-  hist->SetXTitle("eta");
-  for (int chan = 0; chan < 64; chan += 4 ) {
-    const double rad = (isRoi) ? (chan + 1)*phiBin : chan*phiBin + halfPhiBin;
-    std::ostringstream cnum;
-    cnum << chan << "/"
-         << std::setiosflags(std::ios::fixed | std::ios::showpoint)
-         << std::setprecision(2) << rad;
-    hist->GetYaxis()->SetBinLabel(chan+1, cnum.str().c_str());
+  TH2F*  hist = 0;
+  TAxis* axis = 0;
+  if (m_shrinkEtaBins) {
+    hist = bookPPMEmEtaVsPhi(name, title);
+    axis = hist->GetXaxis();
+    for (int bin = 1; bin <= 8; ++bin) {
+      axis->SetBinLabel(bin,    "+");
+      axis->SetBinLabel(bin+58, "+");
+    }
+  } else {
+    hist = book2F(name, title, 50, -2.5, 2.5, 64, 0., 64.);
+    hist->SetXTitle("eta");
+    const double phiBin     = M_PI/32.;
+    const double halfPhiBin = M_PI/64.;
+    axis = hist->GetYaxis();
+    for (int chan = 0; chan < 64; chan += 4 ) {
+      const double rad = chan*phiBin + halfPhiBin;
+      axis->SetBinLabel(chan+1, intDoubleString(chan, rad).c_str());
+    }
+    axis->SetBinLabel(64, "phi");
   }
-  hist->GetYaxis()->SetBinLabel(64, "phi");
   return hist;
 }
 
@@ -701,7 +718,33 @@ TH2F* TrigT1CaloHistogramTool::bookCPMEtaVsPhi(const std::string& name,
 TH2F* TrigT1CaloHistogramTool::bookCPMRoIEtaVsPhi(const std::string& name,
                                                   const std::string& title)
 {
-  return bookCPMEtaVsPhi(name, title, true);
+  TH2F*  hist = 0;
+  TAxis* axis = 0;
+  if (m_shrinkEtaBins) {
+    hist = book2F(name, title, 66, -3.3, 3.3, 64, 0., 64.);
+    axis = hist->GetXaxis();
+    for (int ch = -24; ch < 26; ch+=4) {
+      int chan = ch;
+      const double eta = (chan/10.);
+      axis->SetBinLabel(chan+33, intDoubleString(chan, eta).c_str());
+    }
+    for (int bin = 1; bin <= 8; ++bin) {
+      axis->SetBinLabel(bin,    "+");
+      axis->SetBinLabel(bin+58, "+");
+    }
+  } else {
+    hist = book2F(name, title, 50, -2.45, 2.55, 64, 0., 64.);
+    hist->SetXTitle("eta");
+  }
+  const double phiBin = M_PI/32.;
+  axis = hist->GetYaxis();
+  for (int chan = 0; chan < 64; chan += 4 ) {
+    const double rad = (chan + 1)*phiBin;
+    axis->SetBinLabel(chan+1, intDoubleString(chan, rad).c_str());
+  }
+  if (m_shrinkEtaBins) axis->SetBinLabel(64, "etaVphi");
+  else                 axis->SetBinLabel(64, "phi");
+  return hist;
 }
 
 // Book CPM events with error/mismatch vs crate/module
@@ -878,32 +921,41 @@ TH1F* TrigT1CaloHistogramTool::bookJEMEta(const std::string& name,
 // Book JEM eta vs phi
 
 TH2F* TrigT1CaloHistogramTool::bookJEMEtaVsPhi(const std::string& name,
-                                       const std::string& title, bool isRoi)
+                                               const std::string& title)
 {
-  // We use phi range 0-32 so tick marks correspond to the bins
+  TH2F*  hist = 0;
+  TAxis* axis = 0;
+  if (m_shrinkEtaBins) {
+    hist = book2F(name, title, 32, -3.2, 3.2, 32, 0., 32.);
+    axis = hist->GetXaxis();
+    for (int ch = -11; ch < 12; ch+=2) {
+      int chan = ch;
+      if (chan >= -1) ++chan;
+      const double eta = chan/5. + 0.1;
+      axis->SetBinLabel(chan+17, intDoubleString(chan, eta).c_str());
+    }
+    axis->SetBinLabel(2, "-15/-3.05");
+    axis->SetBinLabel(4, "-13/-2.55");
+    axis->SetBinLabel(29, "12/2.55");
+    axis->SetBinLabel(31, "14/3.05");
+  } else {
+    const int nxbins = 32;
+    const double xbins[nxbins+1] = {-4.9,-3.2,-2.9,-2.7,-2.4,-2.2,-2.0,-1.8,
+                                    -1.6,-1.4,-1.2,-1.0,-0.8,-0.6,-0.4,-0.2,
+				    0.0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,
+				    2.0,2.2,2.4,2.7,2.9,3.2,4.9};
+    hist = book2F(name, title, nxbins, xbins, 32, 0., 32.);
+    hist->SetXTitle("eta");
+  }
+  axis = hist->GetYaxis();
   const double phiBin     = M_PI/16.;
   const double halfPhiBin = M_PI/32.;
-  const int nxbins = 32;
-  const double xbins[nxbins+1] = {-4.9,-3.2,-2.9,-2.7,-2.4,-2.2,-2.0,-1.8,-1.6,
-                                  -1.4,-1.2,-1.0,-0.8,-0.6,-0.4,-0.2,0.0,0.2,
-				  0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4,
-				  2.7,2.9,3.2,4.9};
-  const double xbinsRoi[nxbins+1] = {-4.0,-3.05,-2.8,-2.55,-2.3,-2.1,-1.9,-1.7,
-                                     -1.5,-1.3,-1.1,-0.9,-0.7,-0.5,-0.3,-0.1,
-				     0.1,0.3,0.5,0.7,0.9,1.1,1.3,1.5,1.7,1.9,
-				     2.1,2.3,2.55,2.8,3.05,4.0,4.95};
-  TH2F* hist = (isRoi) ? book2F(name, title, nxbins, xbinsRoi, 32, 0., 32.)
-                       : book2F(name, title, nxbins, xbins,    32, 0., 32.);
-  hist->SetXTitle("eta");
   for (int chan = 0; chan < 32; chan += 2 ) {
-    const double rad = (isRoi) ? (chan + 1)*phiBin : chan*phiBin + halfPhiBin;
-    std::ostringstream cnum;
-    cnum << chan << "/"
-         << std::setiosflags(std::ios::fixed | std::ios::showpoint)
-	 << std::setprecision(2) << rad;
-    hist->GetYaxis()->SetBinLabel(chan+1, cnum.str().c_str());
+    const double rad = chan*phiBin + halfPhiBin;
+    axis->SetBinLabel(chan+1, intDoubleString(chan, rad).c_str());
   }
-  hist->GetYaxis()->SetBinLabel(32, "phi");
+  if (m_shrinkEtaBins) axis->SetBinLabel(32, "etaVphi");
+  else                 axis->SetBinLabel(32, "phi");
   return hist;
 }
 
@@ -912,7 +964,39 @@ TH2F* TrigT1CaloHistogramTool::bookJEMEtaVsPhi(const std::string& name,
 TH2F* TrigT1CaloHistogramTool::bookJEMRoIEtaVsPhi(const std::string& name,
                                                   const std::string& title)
 {
-  return bookJEMEtaVsPhi(name, title, true);
+  TH2F*  hist = 0;
+  TAxis* axis = 0;
+  if (m_shrinkEtaBins) {
+    hist = book2F(name, title, 32, -3.2, 3.2, 32, 0., 32.);
+    axis = hist->GetXaxis();
+    for (int ch = -10; ch < 12; ch+=2) {
+      int chan = ch;
+      const double eta = chan/5.;
+      axis->SetBinLabel(chan+16, intDoubleString(chan, eta).c_str());
+    }
+    axis->SetBinLabel(2, "-14/-2.95");
+    axis->SetBinLabel(4, "-12/-2.45");
+    axis->SetBinLabel(28, "12/2.45");
+    axis->SetBinLabel(30, "14/2.95");
+    axis->SetBinLabel(32, "16/4.05");
+  } else {
+    const int nxbins = 32;
+    const double xbins[nxbins+1] = {-4.0,-3.05,-2.8,-2.55,-2.3,-2.1,-1.9,-1.7,
+                                    -1.5,-1.3,-1.1,-0.9,-0.7,-0.5,-0.3,-0.1,
+  				    0.1,0.3,0.5,0.7,0.9,1.1,1.3,1.5,1.7,1.9,
+				    2.1,2.3,2.55,2.8,3.05,4.0,4.95};
+    hist = book2F(name, title, nxbins, xbins, 32, 0., 32.);
+    hist->SetXTitle("eta");
+  }
+  axis = hist->GetYaxis();
+  const double phiBin = M_PI/16.;
+  for (int chan = 0; chan < 32; chan += 2 ) {
+    const double rad = (chan + 1)*phiBin;
+    axis->SetBinLabel(chan+1, intDoubleString(chan, rad).c_str());
+  }
+  if (m_shrinkEtaBins) axis->SetBinLabel(32, "etaVphi");
+  else                 axis->SetBinLabel(32, "phi");
+  return hist;
 }
 
 // Book JEM energy with bins matching QuadLinear encoding
@@ -1067,11 +1151,7 @@ TH2F* TrigT1CaloHistogramTool::bookPPMEmEtaVsPhi(const std::string name,
       int chan = ch;
       if (chan >= -1) ++chan;
       const double eta = (chan/10.)+0.05;
-      std::ostringstream cnum;
-      cnum << chan << "/" 
-           << std::setiosflags(std::ios::fixed | std::ios::showpoint)
-           << std::setprecision(2) << eta;
-      axis->SetBinLabel(chan+34, cnum.str().c_str());
+      axis->SetBinLabel(chan+34, intDoubleString(chan, eta).c_str());
     }
     axis->SetBinLabel(1, "-49/-4.69");
     axis->SetBinLabel(5, "-32/-3.15");
@@ -1096,11 +1176,7 @@ TH2F* TrigT1CaloHistogramTool::bookPPMEmEtaVsPhi(const std::string name,
   const double halfPhiBin = M_PI/64.;
   for (int chan = 0; chan < 64; chan += 4 ) {
     const double rad = chan*phiBin + halfPhiBin;
-    std::ostringstream cnum;
-    cnum << chan << "/"
-         << std::setiosflags(std::ios::fixed | std::ios::showpoint)
-         << std::setprecision(2) << rad;
-    axis->SetBinLabel(chan+1, cnum.str().c_str());
+    axis->SetBinLabel(chan+1, intDoubleString(chan, rad).c_str());
   }
   if (m_shrinkEtaBins) axis->SetBinLabel(64, "etaVphi");
   else                 axis->SetBinLabel(64, "phi");
@@ -1138,11 +1214,7 @@ TProfile2D* TrigT1CaloHistogramTool::bookProfilePPMEmEtaVsPhi(
       int chan = ch;
       if (chan >= -1) ++chan;
       const double eta = (chan/10.)+0.05;
-      std::ostringstream cnum;
-      cnum << chan << "/" 
-           << std::setiosflags(std::ios::fixed | std::ios::showpoint)
-           << std::setprecision(2) << eta;
-      axis->SetBinLabel(chan+34, cnum.str().c_str());
+      axis->SetBinLabel(chan+34, intDoubleString(chan, eta).c_str());
     }
     axis->SetBinLabel(1, "-49/-4.69");
     axis->SetBinLabel(5, "-32/-3.15");
@@ -1167,11 +1239,7 @@ TProfile2D* TrigT1CaloHistogramTool::bookProfilePPMEmEtaVsPhi(
   const double halfPhiBin = M_PI/64.;
   for (int chan = 0; chan < 64; chan += 4 ) {
     const double rad = chan*phiBin + halfPhiBin;
-    std::ostringstream cnum;
-    cnum << chan << "/"
-         << std::setiosflags(std::ios::fixed | std::ios::showpoint)
-         << std::setprecision(2) << rad;
-    axis->SetBinLabel(chan+1, cnum.str().c_str());
+    axis->SetBinLabel(chan+1, intDoubleString(chan, rad).c_str());
   }
   if (m_shrinkEtaBins) axis->SetBinLabel(64, "etaVphi");
   else                 axis->SetBinLabel(64, "phi");
@@ -1349,7 +1417,9 @@ void TrigT1CaloHistogramTool::fillCPMRoIEtaVsPhi(TH2* hist, double eta,
                                                  double phi, double weight)
 {
   const double phiMod = phi * m_phiScaleTT - 0.5;
-  hist->Fill(eta, phiMod, weight);
+  double etaMod = eta;
+  if (m_shrinkEtaBins) etaMod -= 0.05;
+  hist->Fill(etaMod, phiMod, weight);
 }
 
 //===========================================================================
@@ -1362,11 +1432,21 @@ void TrigT1CaloHistogramTool::fillJEMEtaVsPhi(TH2* hist, double eta,
                                               double phi, double weight)
 {
   const double phiMod = phi * m_phiScaleJE;
+  double etaMod = eta;
+  double absEta = fabs(eta);
+  if (m_shrinkEtaBins && absEta > 2.4) {
+    int offset = 1;
+    if      (absEta > 3.2) offset = 4;
+    else if (absEta > 2.9) offset = 3;
+    else if (absEta > 2.7) offset = 2;
+    etaMod = 2.3 + 0.2*offset;
+    if (eta < 0.) etaMod = -etaMod;
+  }
   if (eta < -3.2 || eta > 3.2) {
     // Fill two bins for FCAL
-    hist->Fill(eta, phiMod + 0.5, weight);
-    hist->Fill(eta, phiMod - 0.5, weight);
-  } else hist->Fill(eta, phiMod, weight);
+    hist->Fill(etaMod, phiMod + 0.5, weight);
+    hist->Fill(etaMod, phiMod - 0.5, weight);
+  } else hist->Fill(etaMod, phiMod, weight);
 }
 
 // Fill JEM RoI eta vs phi
@@ -1375,9 +1455,24 @@ void TrigT1CaloHistogramTool::fillJEMRoIEtaVsPhi(TH2* hist, double eta,
                                                  double phi, double weight)
 {
   const double phiMod = phi * m_phiScaleJE - 0.5;
+  double etaMod = eta;
+  double absEta = fabs(eta);
+  if (m_shrinkEtaBins && absEta > 2.3) {
+    int offset = 1;
+    if      (absEta > 4.0)  offset = 5;
+    else if (absEta > 3.05) offset = 4;
+    else if (absEta > 2.8)  offset = 3;
+    else if (absEta > 2.55) offset = 2;
+    etaMod = 2.2 + 0.2*offset;
+    if (eta < 0.) etaMod = -etaMod;
+  }
+  const double etaShift = (m_shrinkEtaBins) ? 0.1 : 0.;
   // JEPRoIDecoder returns eta=3.9 for both of the two forwardmost bins
-  if (eta > 3.8 && eta < 4.0) hist->Fill(4.05, phiMod, weight);
-  hist->Fill(eta, phiMod, weight);
+  if (eta > 3.8 && eta < 4.0) {
+    const double eta2 = (m_shrinkEtaBins) ? 3.2 : 4.05;
+    hist->Fill(eta2 - etaShift, phiMod, weight);
+  }
+  hist->Fill(etaMod - etaShift, phiMod, weight);
 }
 
 // Fill JEM phi allowing for granularity varying with eta
