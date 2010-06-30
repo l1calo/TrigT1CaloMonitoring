@@ -218,18 +218,26 @@ bool TrigT1CaloHistogramTool::thresholdNames(const std::string& type,
     names.push_back(cnum.str());
   }
 
-  const std::vector<TrigConf::TriggerThreshold*>&
-               thresholds(m_configSvc->ctpConfig()->menu()->thresholdVector());
-  std::vector<TrigConf::TriggerThreshold*>::const_iterator it;
-  for (it = thresholds.begin(); it != thresholds.end(); ++it) {
-    const std::string thrType((*it)->type());
-    if (type == def.emType() || type == def.tauType()) {
-      if (thrType != def.emType() && thrType != def.tauType()) continue;
-    } else if (thrType != type) continue;
-    const int threshNum = (*it)->thresholdNumber();
-    if (threshNum >= 0 && threshNum < nthresh) {
-      names[threshNum] = (*it)->name();
-      found = true;
+  if (m_configSvc) {
+    const TrigConf::CTPConfig* ctpConf = m_configSvc->ctpConfig();
+    if (ctpConf) {
+      const TrigConf::Menu* ctpMenu = ctpConf->menu();
+      if (ctpMenu) {
+        const std::vector<TrigConf::TriggerThreshold*>&
+  	                            thresholds(ctpMenu->thresholdVector());
+        std::vector<TrigConf::TriggerThreshold*>::const_iterator it;
+        for (it = thresholds.begin(); it != thresholds.end(); ++it) {
+          const std::string thrType((*it)->type());
+          if (type == def.emType() || type == def.tauType()) {
+            if (thrType != def.emType() && thrType != def.tauType()) continue;
+          } else if (thrType != type) continue;
+          const int threshNum = (*it)->thresholdNumber();
+          if (threshNum >= 0 && threshNum < nthresh) {
+            names[threshNum] = (*it)->name();
+            found = true;
+          }
+        }
+      }
     }
   }
   return found;
