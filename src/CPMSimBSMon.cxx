@@ -11,10 +11,10 @@
 #include <utility>
 #include <cmath>
 
-#include "TH1.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH2I.h"
+#include "LWHists/LWHist.h"
+#include "LWHists/TH1F_LW.h"
+#include "LWHists/TH2F_LW.h"
+#include "LWHists/TH2I_LW.h"
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
@@ -41,7 +41,7 @@
 
 #include "TrigT1CaloMonitoring/CPMSimBSMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 
 /*---------------------------------------------------------*/
 CPMSimBSMon::CPMSimBSMon(const std::string & type, 
@@ -51,7 +51,7 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
     m_emTauTool("LVL1::L1EmTauTools/L1EmTauTools"),
     m_cpHitsTool("LVL1::L1CPHitsTools/L1CPHitsTools"),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloHistogramTool"),
+    m_histTool("TrigT1CaloLWHistogramTool"),
     m_debug(false)
 /*---------------------------------------------------------*/
 {
@@ -123,7 +123,7 @@ StatusCode CPMSimBSMon::initialize()
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloLWHistogramTool"
                     << endreq;
     return sc;
   }
@@ -346,7 +346,7 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   m_histTool->setMonGroup(&monEvent1);
 
-  TH2I* hist = 0;
+  TH2I_LW* hist = 0;
   m_sampleHists.clear();
   m_sampleHists.resize(6, hist);
   hist = m_histTool->bookCPMEventVsCrateModule("cpm_em_2d_tt_MismatchEvents",
@@ -721,8 +721,8 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
     }
     const int loc2 = fpga(crate, phiFPGA);
 
-    TH2F* hist1 = 0;
-    TH2F* hist2 = 0;
+    TH2F_LW* hist1 = 0;
+    TH2F_LW* hist2 = 0;
     if (ttEm && ttEm == cpEm) { // non-zero match
       errors[loc] |= bitEm;
       hist1 = (overlap) ? m_h_EMTowerOvSIMeqDAT : m_h_EMTowerSIMeqDAT;
@@ -868,8 +868,8 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
     const double eta = coord.eta();
     const double phi = coord.phi();
 
-    TH2F* hist1 = 0;
-    TH2F* hist2 = 0;
+    TH2F_LW* hist1 = 0;
+    TH2F_LW* hist2 = 0;
     if (simHits == datHits) {
       errors[locX] |= bit;
       hist1 = m_h_RoISIMeqDAT;
@@ -1104,7 +1104,7 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
     if (cpmHits0 != cmmHits0 || cpmHits1 != cmmHits1)
                                             errorsCPM[loc+cpmBins] |= bit;
 
-    TH2F* hist = 0;
+    TH2F_LW* hist = 0;
     if (cpmHits1 && cpmHits1 == cmmHits1) { // hits1==>cmm 0
       errorsCMM[loc2] |= bit;
       hist = m_h_CMMHitsSIMeqDAT;
@@ -1246,7 +1246,7 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
       const int cmmBins = nCrates * nCMMs;
       const int bit = (local) ? (1 << LocalSumMismatch)
                               : (1 << TotalSumMismatch);
-      TH1F* hist1 = 0;
+      TH1F_LW* hist1 = 0;
       if (cmmSimHits1 && cmmSimHits1 == cmmHits1) {
         errors[loc] |= bit;
 	hist1 = m_h_SumsSIMeqDAT;
@@ -1256,7 +1256,7 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
 	else if (!cmmHits1)          hist1 = m_h_SumsSIMnoDAT;
 	else                         hist1 = m_h_SumsDATnoSIM;
       }
-      TH1F* hist0 = 0;
+      TH1F_LW* hist0 = 0;
       if (cmmSimHits0 && cmmSimHits0 == cmmHits0) {
         errors[loc+1] |= bit;
 	hist0 = m_h_SumsSIMeqDAT;
@@ -1318,7 +1318,7 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
 
       if (!hd0 && !hd1 && !hs0 && !hs1) continue;
 
-      TH1F* hist1 = 0;
+      TH1F_LW* hist1 = 0;
       if (hs1 && hs1 == hd1) {
         errors[loc] |= bit;
 	hist1 = m_h_SumsSIMeqDAT;
@@ -1328,7 +1328,7 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
 	else if (!hd1)  hist1 = m_h_SumsSIMnoDAT;
 	else            hist1 = m_h_SumsDATnoSIM;
       }
-      TH1F* hist0 = 0;
+      TH1F_LW* hist0 = 0;
       if (hs0 && hs0 == hd0) {
         errors[loc+1] |= bit;
 	hist0 = m_h_SumsSIMeqDAT;
@@ -1362,9 +1362,9 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
   }
 }
 
-void CPMSimBSMon::setLabels(TH1* hist, bool xAxis)
+void CPMSimBSMon::setLabels(LWHist* hist, bool xAxis)
 {
-  TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  LWHist::LWHistAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
   // Simulation steps in red (#color[2]) depend on Trigger Menu
   axis->SetBinLabel(1+EMTowerMismatch,  "EM tt");
   axis->SetBinLabel(1+HadTowerMismatch, "Had tt");

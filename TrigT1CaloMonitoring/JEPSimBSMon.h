@@ -19,12 +19,13 @@
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "DataModel/DataVector.h"
 
-class TH1F;
-class TH2F;
-class TH2I;
+class LWHist;
+class TH1F_LW;
+class TH2F_LW;
+class TH2I_LW;
 class StatusCode;
 class TrigT1CaloMonErrorTool;
-class TrigT1CaloHistogramTool;
+class TrigT1CaloLWHistogramTool;
 
 namespace LVL1 {
   class CMMEtSums;
@@ -112,11 +113,11 @@ private:
   void  compare(const CmmEtSumsMap& cmmMap, const LVL1::CMMRoI* cmmRoi,
                                               ErrorVector& errors);
   void  fillEventSample(int err, int loc, bool isJem);
-  void  setLabels(TH2* hist);
-  void  setLabelsSH(TH1* hist);
-  void  setLabelsSHF(TH2* hist);
-  void  setLabelsEnTot(TH2* hist);
-  void  setLabelsEnTotThr(TH2* hist);
+  void  setLabels(LWHist* hist);
+  void  setLabelsSH(LWHist* hist);
+  void  setLabelsSHF(LWHist* hist);
+  void  setLabelsEnTot(LWHist* hist);
+  void  setLabelsEnTotThr(LWHist* hist);
   void  setupMap(const JetElementCollection* coll, JetElementMap& map);
   void  setupMap(const JemRoiCollection* coll, JemRoiMap& map);
   void  setupMap(const JemHitsCollection* coll, JemHitsMap& map);
@@ -136,12 +137,12 @@ private:
   void  simulate(const CmmEtSumsCollection* sumsIn,
                        CmmEtSumsCollection* sumsOut, int selection);
 
-  ToolHandle<LVL1::IL1JEPHitsTools>    m_jepHitsTool;
-  ToolHandle<LVL1::IL1JetTools>        m_jetTool;
-  ToolHandle<LVL1::IL1JetElementTools> m_jetElementTool;
-  ToolHandle<LVL1::IL1JEPEtSumsTools>  m_etSumsTool;
-  ToolHandle<TrigT1CaloMonErrorTool>   m_errorTool;
-  ToolHandle<TrigT1CaloHistogramTool>  m_histTool;
+  ToolHandle<LVL1::IL1JEPHitsTools>      m_jepHitsTool;
+  ToolHandle<LVL1::IL1JetTools>          m_jetTool;
+  ToolHandle<LVL1::IL1JetElementTools>   m_jetElementTool;
+  ToolHandle<LVL1::IL1JEPEtSumsTools>    m_etSumsTool;
+  ToolHandle<TrigT1CaloMonErrorTool>     m_errorTool;
+  ToolHandle<TrigT1CaloLWHistogramTool>  m_histTool;
 
   bool m_debug;
   std::string m_rootDir;
@@ -172,86 +173,86 @@ private:
   //=======================
 
   // Jet Elements
-  TH2F* m_h_EMEleSIMeqDAT;
-  TH2F* m_h_EMEleSIMneDAT;
-  TH2F* m_h_EMEleSIMnoDAT;
-  TH2F* m_h_EMEleDATnoSIM;
-  TH2F* m_h_HadEleSIMeqDAT;
-  TH2F* m_h_HadEleSIMneDAT;
-  TH2F* m_h_HadEleSIMnoDAT;
-  TH2F* m_h_HadEleDATnoSIM;
-  TH2F* m_h_EMEleOvSIMeqDAT;
-  TH2F* m_h_EMEleOvSIMneDAT;
-  TH2F* m_h_EMEleOvSIMnoDAT;
-  TH2F* m_h_EMEleOvDATnoSIM;
-  TH2F* m_h_HadEleOvSIMeqDAT;
-  TH2F* m_h_HadEleOvSIMneDAT;
-  TH2F* m_h_HadEleOvSIMnoDAT;
-  TH2F* m_h_HadEleOvDATnoSIM;
+  TH2F_LW* m_h_EMEleSIMeqDAT;
+  TH2F_LW* m_h_EMEleSIMneDAT;
+  TH2F_LW* m_h_EMEleSIMnoDAT;
+  TH2F_LW* m_h_EMEleDATnoSIM;
+  TH2F_LW* m_h_HadEleSIMeqDAT;
+  TH2F_LW* m_h_HadEleSIMneDAT;
+  TH2F_LW* m_h_HadEleSIMnoDAT;
+  TH2F_LW* m_h_HadEleDATnoSIM;
+  TH2F_LW* m_h_EMEleOvSIMeqDAT;
+  TH2F_LW* m_h_EMEleOvSIMneDAT;
+  TH2F_LW* m_h_EMEleOvSIMnoDAT;
+  TH2F_LW* m_h_EMEleOvDATnoSIM;
+  TH2F_LW* m_h_HadEleOvSIMeqDAT;
+  TH2F_LW* m_h_HadEleOvSIMneDAT;
+  TH2F_LW* m_h_HadEleOvSIMnoDAT;
+  TH2F_LW* m_h_HadEleOvDATnoSIM;
 
   // RoIs
-  TH2F* m_h_RoISIMeqDAT;
-  TH2F* m_h_RoISIMneDAT;
-  TH2F* m_h_RoISIMnoDAT;
-  TH2F* m_h_RoIDATnoSIM;
-  TH2F* m_h_RoIThreshSIMeqDAT;
-  TH2F* m_h_RoIThreshSIMneDAT;
-  TH2F* m_h_RoIEtaPhiSIMeqDAT;
-  TH2F* m_h_RoIEtaPhiSIMneDAT;
-  TH2F* m_h_RoIEtaPhiSIMnoDAT;
-  TH2F* m_h_RoIEtaPhiDATnoSIM;
+  TH2F_LW* m_h_RoISIMeqDAT;
+  TH2F_LW* m_h_RoISIMneDAT;
+  TH2F_LW* m_h_RoISIMnoDAT;
+  TH2F_LW* m_h_RoIDATnoSIM;
+  TH2F_LW* m_h_RoIThreshSIMeqDAT;
+  TH2F_LW* m_h_RoIThreshSIMneDAT;
+  TH2F_LW* m_h_RoIEtaPhiSIMeqDAT;
+  TH2F_LW* m_h_RoIEtaPhiSIMneDAT;
+  TH2F_LW* m_h_RoIEtaPhiSIMnoDAT;
+  TH2F_LW* m_h_RoIEtaPhiDATnoSIM;
 
   // JEM Hits
-  TH2F* m_h_JEMHitsSIMeqDAT;
-  TH2F* m_h_JEMHitsSIMneDAT;
-  TH2F* m_h_JEMHitsSIMnoDAT;
-  TH2F* m_h_JEMHitsDATnoSIM;
-  TH2F* m_h_JEMHitsThreshSIMeqDAT;
-  TH2F* m_h_JEMHitsThreshSIMneDAT;
+  TH2F_LW* m_h_JEMHitsSIMeqDAT;
+  TH2F_LW* m_h_JEMHitsSIMneDAT;
+  TH2F_LW* m_h_JEMHitsSIMnoDAT;
+  TH2F_LW* m_h_JEMHitsDATnoSIM;
+  TH2F_LW* m_h_JEMHitsThreshSIMeqDAT;
+  TH2F_LW* m_h_JEMHitsThreshSIMneDAT;
 
   // CMM-Jet Hits
-  TH2F* m_h_CMMHitsSIMeqDAT;
-  TH2F* m_h_CMMHitsSIMneDAT;
-  TH2F* m_h_CMMHitsSIMnoDAT;
-  TH2F* m_h_CMMHitsDATnoSIM;
-  TH2F* m_h_CMMHitsThreshSIMeqDAT;
-  TH2F* m_h_CMMHitsThreshSIMneDAT;
+  TH2F_LW* m_h_CMMHitsSIMeqDAT;
+  TH2F_LW* m_h_CMMHitsSIMneDAT;
+  TH2F_LW* m_h_CMMHitsSIMnoDAT;
+  TH2F_LW* m_h_CMMHitsDATnoSIM;
+  TH2F_LW* m_h_CMMHitsThreshSIMeqDAT;
+  TH2F_LW* m_h_CMMHitsThreshSIMneDAT;
 
   // CMM-Jet Hit Sums
-  TH1F* m_h_SumsSIMeqDAT;
-  TH1F* m_h_SumsSIMneDAT;
-  TH1F* m_h_SumsSIMnoDAT;
-  TH1F* m_h_SumsDATnoSIM;
-  TH2F* m_h_SumsThreshSIMeqDAT;
-  TH2F* m_h_SumsThreshSIMneDAT;
+  TH1F_LW* m_h_SumsSIMeqDAT;
+  TH1F_LW* m_h_SumsSIMneDAT;
+  TH1F_LW* m_h_SumsSIMnoDAT;
+  TH1F_LW* m_h_SumsDATnoSIM;
+  TH2F_LW* m_h_SumsThreshSIMeqDAT;
+  TH2F_LW* m_h_SumsThreshSIMneDAT;
 
   // JEMEtSums
-  TH2F* m_h_jemEtSumsSIMeqDAT;
-  TH2F* m_h_jemEtSumsSIMneDAT;
-  TH2F* m_h_jemEtSumsSIMnoDAT;
-  TH2F* m_h_jemEtSumsDATnoSIM;
+  TH2F_LW* m_h_jemEtSumsSIMeqDAT;
+  TH2F_LW* m_h_jemEtSumsSIMneDAT;
+  TH2F_LW* m_h_jemEtSumsSIMnoDAT;
+  TH2F_LW* m_h_jemEtSumsDATnoSIM;
 
   // CMMEtSums
-  TH2F* m_h_cmmEtSumsSIMeqDAT;
-  TH2F* m_h_cmmEtSumsSIMneDAT;
-  TH2F* m_h_cmmEtSumsSIMnoDAT;
-  TH2F* m_h_cmmEtSumsDATnoSIM;
+  TH2F_LW* m_h_cmmEtSumsSIMeqDAT;
+  TH2F_LW* m_h_cmmEtSumsSIMneDAT;
+  TH2F_LW* m_h_cmmEtSumsSIMnoDAT;
+  TH2F_LW* m_h_cmmEtSumsDATnoSIM;
 
   // Energy Crate/System sums
-  TH2F* m_h_EnSumsSIMeqDAT;
-  TH2F* m_h_EnSumsSIMneDAT;
-  TH2F* m_h_EnSumsSIMnoDAT;
-  TH2F* m_h_EnSumsDATnoSIM;
-  TH2F* m_h_EnSumsThreshSIMeqDAT;
-  TH2F* m_h_EnSumsThreshSIMneDAT;
+  TH2F_LW* m_h_EnSumsSIMeqDAT;
+  TH2F_LW* m_h_EnSumsSIMneDAT;
+  TH2F_LW* m_h_EnSumsSIMnoDAT;
+  TH2F_LW* m_h_EnSumsDATnoSIM;
+  TH2F_LW* m_h_EnSumsThreshSIMeqDAT;
+  TH2F_LW* m_h_EnSumsThreshSIMneDAT;
 
   // Summary
-  TH2F* m_h_JEPeqSIM;
-  TH2F* m_h_JEPneSIM;
-  TH1F* m_h_JEPneSIMSummary;
+  TH2F_LW* m_h_JEPeqSIM;
+  TH2F_LW* m_h_JEPneSIM;
+  TH1F_LW* m_h_JEPneSIMSummary;
 
   // Mismatch Event Number Samples
-  std::vector<TH2I*> m_sampleHists;
+  std::vector<TH2I_LW*> m_sampleHists;
 
 };
 

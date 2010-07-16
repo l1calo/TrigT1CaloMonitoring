@@ -8,11 +8,10 @@
 //
 // ********************************************************************
 
-#include "TAxis.h"
-#include "TH1.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH2I.h"
+#include "LWHists/LWHist.h"
+#include "LWHists/TH1F_LW.h"
+#include "LWHists/TH2F_LW.h"
+#include "LWHists/TH2I_LW.h"
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
@@ -24,7 +23,7 @@
 
 #include "TrigT1CaloMonitoring/TrigT1CaloRodMonTool.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 
 /*---------------------------------------------------------*/
 TrigT1CaloRodMonTool::TrigT1CaloRodMonTool(const std::string & type, 
@@ -32,7 +31,7 @@ TrigT1CaloRodMonTool::TrigT1CaloRodMonTool(const std::string & type,
 				           const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloHistogramTool")
+    m_histTool("TrigT1CaloLWHistogramTool")
 /*---------------------------------------------------------*/
 {
 
@@ -79,7 +78,7 @@ StatusCode TrigT1CaloRodMonTool:: initialize()
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloLWHistogramTool"
                     << endreq;
     return sc;
   }
@@ -338,7 +337,8 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 StatusCode TrigT1CaloRodMonTool::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
+  const bool debug = msgLvl(MSG::DEBUG);
+  if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
   const bool online = m_onlineTest ||
                      (m_environment == AthenaMonManager::online);
@@ -362,7 +362,8 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
       sc = evtStore()->retrieve(rodTES, m_rodHeaderLocation); 
     } else sc = StatusCode::FAILURE;
     if( sc.isFailure()  ||  !rodTES ) {
-      msg(MSG::DEBUG) << "No DAQ ROD Header container found"<< endreq; 
+      if (debug) msg(MSG::DEBUG) << "No DAQ ROD Header container found"
+                                 << endreq; 
     }
 
     //Retrieve CP RoIB ROD Headers from SG
@@ -371,7 +372,8 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
       sc = evtStore()->retrieve(cpRoibTES, m_cpRoibRodHeaderLocation); 
     } else sc = StatusCode::FAILURE;
     if( sc.isFailure()  ||  !cpRoibTES ) {
-      msg(MSG::DEBUG) << "No CP RoIB ROD Header container found"<< endreq; 
+      if (debug) msg(MSG::DEBUG) << "No CP RoIB ROD Header container found"
+                                 << endreq; 
     }
 
     //Retrieve JEP RoIB ROD Headers from SG
@@ -380,7 +382,8 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
       sc = evtStore()->retrieve(jepRoibTES, m_jepRoibRodHeaderLocation); 
     } else sc = StatusCode::FAILURE;
     if( sc.isFailure()  ||  !jepRoibTES ) {
-      msg(MSG::DEBUG) << "No JEP RoIB ROD Header container found"<< endreq; 
+      if (debug) msg(MSG::DEBUG) << "No JEP RoIB ROD Header container found"
+                                 << endreq; 
     }
 
     //=============================================
@@ -416,7 +419,7 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
         m_sumPayloads1[pos] += nData;
         m_sumPayloads2[pos] += nData;
         // Status bits
-        TH2F* hist = m_h_ROD_PP_stat;
+        TH2F_LW* hist = m_h_ROD_PP_stat;
         int val = pos;
         if (pos >= 72) {
           hist = m_h_ROD_RoI_stat;
@@ -500,48 +503,38 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
       if (i >= 72) {
         if (i%2 == 0) {
           int bin = (i-72)/2 + 9;
-          m_h_ROD_RoI->SetBinContent(bin, average1);
-	  m_h_ROD_RoI->SetBinError(bin, error1);
+          m_h_ROD_RoI->SetBinContentAndError(bin, average1, error1);
 	  if (online) {
-            m_h_ROD_RoI->SetBinContent(13+bin, average2);
-	    m_h_ROD_RoI->SetBinError(13+bin, error2);
+	    m_h_ROD_RoI->SetBinContentAndError(13+bin, average2, error2);
           }
         }
       } else if (i >= 56) {
         if (i%2 == 0) {
           int bin = (i-56)/2 + 1;
-          m_h_ROD_RoI->SetBinContent(bin, average1);
-	  m_h_ROD_RoI->SetBinError(bin, error1);
+          m_h_ROD_RoI->SetBinContentAndError(bin, average1, error1);
 	  if (online) {
-            m_h_ROD_RoI->SetBinContent(13+bin, average2);
-	    m_h_ROD_RoI->SetBinError(13+bin, error2);
+            m_h_ROD_RoI->SetBinContentAndError(13+bin, average2, error2);
           }
         }
       } else if (i >= 48) {
         int bin = i-48 + 1;
-        m_h_ROD_JEP->SetBinContent(bin, average1);
-        m_h_ROD_JEP->SetBinError(bin, error1);
+        m_h_ROD_JEP->SetBinContentAndError(bin, average1, error1);
         if (online) {
-          m_h_ROD_JEP->SetBinContent(9+bin, average2);
-          m_h_ROD_JEP->SetBinError(9+bin, error2);
+          m_h_ROD_JEP->SetBinContentAndError(9+bin, average2, error2);
         }
       } else if (i >= 32) {
         if (i%2 == 0) {
           int bin = (i-32)/2 + 1;
-          m_h_ROD_CP->SetBinContent(bin, average1);
-	  m_h_ROD_CP->SetBinError(bin, error1);
+          m_h_ROD_CP->SetBinContentAndError(bin, average1, error1);
 	  if (online) {
-            m_h_ROD_CP->SetBinContent(9+bin, average2);
-	    m_h_ROD_CP->SetBinError(9+bin, error2);
+            m_h_ROD_CP->SetBinContentAndError(9+bin, average2, error2);
           }
         }
       } else {
         int bin = i + 1;
-        m_h_ROD_PP->SetBinContent(bin, average1);
-        m_h_ROD_PP->SetBinError(bin, error1);
+        m_h_ROD_PP->SetBinContentAndError(bin, average1, error1);
         if (online) {
-          m_h_ROD_PP->SetBinContent(33+bin, average2);
-          m_h_ROD_PP->SetBinError(33+bin, error2);
+          m_h_ROD_PP->SetBinContentAndError(33+bin, average2, error2);
         }
       }
     }
@@ -550,7 +543,7 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
 
     for (int pos = 0; pos < 80; ++pos) {
       if (noFragmentFlags[pos] || (pos < 56 && noPayloadFlags[pos])) {
-        TH2F* hist = m_h_ROD_PP_stat;
+        TH2F_LW* hist = m_h_ROD_PP_stat;
         int val = pos;
         int crate = pos/4;
         if (crate > 13) crate -= 6;
@@ -587,8 +580,10 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   const ROBErrorCollection* errVecTES = 0;
   sc = m_errorTool->retrieve(errVecTES);
   if( sc.isFailure()  ||  !errVecTES ) {
-    msg(MSG::DEBUG) << "No ROB Status and Unpacking Error vector found"
-                    << endreq;
+    if (debug) {
+      msg(MSG::DEBUG) << "No ROB Status and Unpacking Error vector found"
+                      << endreq;
+    }
   }
 
   // Update ROB Status and Unpacking Errors
@@ -610,9 +605,9 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
 	unsigned int err = *robIter;
 	++robIter;
 	if (err == 0) continue;
-        TH2F* hist1 = m_h_ROD_PP_robgen;
-        TH2F* hist2 = m_h_ROD_PP_robspec;
-	TH2F* hist3 = m_h_ROD_PP_unp;
+        TH2F_LW* hist1 = m_h_ROD_PP_robgen;
+        TH2F_LW* hist2 = m_h_ROD_PP_robspec;
+	TH2F_LW* hist3 = m_h_ROD_PP_unp;
         int val = pos;
         if (pos >= 56) {
           hist1 = m_h_ROD_RoI_robgen;
@@ -678,7 +673,7 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
     return sc;
   }
 
-  msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
+  if (debug) msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
 
   return StatusCode::SUCCESS;
 
@@ -697,9 +692,9 @@ StatusCode TrigT1CaloRodMonTool::procHistograms(bool isEndOfEventsBlock,
   return StatusCode::SUCCESS;
 }
 
-void TrigT1CaloRodMonTool::setLabelsStatus(TH1* hist, bool xAxis)
+void TrigT1CaloRodMonTool::setLabelsStatus(LWHist* hist, bool xAxis)
 {
-  TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  LWHist::LWHistAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
   if (xAxis) {
     axis->SetBinLabel(1+GLink,         "GLinkError");
     //axis->SetBinLabel(1+CMMParity,     "CMMParityError");
@@ -724,9 +719,9 @@ void TrigT1CaloRodMonTool::setLabelsStatus(TH1* hist, bool xAxis)
   }
 }
 
-void TrigT1CaloRodMonTool::setLabelsROBStatusGen(TH1* hist, bool xAxis)
+void TrigT1CaloRodMonTool::setLabelsROBStatusGen(LWHist* hist, bool xAxis)
 {
-  TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  LWHist::LWHistAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
   axis->SetBinLabel(1,  "BCIDCheck");
   axis->SetBinLabel(2,  "EL1IDCheck");
   axis->SetBinLabel(3,  "Timeout");
@@ -738,9 +733,9 @@ void TrigT1CaloRodMonTool::setLabelsROBStatusGen(TH1* hist, bool xAxis)
   }
 }
 
-void TrigT1CaloRodMonTool::setLabelsROBStatusSpec(TH1* hist, bool xAxis)
+void TrigT1CaloRodMonTool::setLabelsROBStatusSpec(LWHist* hist, bool xAxis)
 {
-  TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  LWHist::LWHistAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
   axis->SetBinLabel(1,  "TrigTypeSync");
   axis->SetBinLabel(2,  "FragmentSize");
   axis->SetBinLabel(3,  "DataBlock");
@@ -759,9 +754,9 @@ void TrigT1CaloRodMonTool::setLabelsROBStatusSpec(TH1* hist, bool xAxis)
   axis->SetBinLabel(16, "Discard");
 }
 
-void TrigT1CaloRodMonTool::setLabelsUnpacking(TH1* hist, bool xAxis)
+void TrigT1CaloRodMonTool::setLabelsUnpacking(LWHist* hist, bool xAxis)
 {
-  TAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  LWHist::LWHistAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
   axis->SetBinLabel(1,  "DuplicateROB");
   axis->SetBinLabel(2,  "RODSourceID");
   axis->SetBinLabel(3,  "RODnstatus");

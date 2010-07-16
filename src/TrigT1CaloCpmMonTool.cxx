@@ -11,11 +11,10 @@
 #include <numeric>
 #include <utility>
 
-#include "TAxis.h"
-#include "TH1.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH2I.h"
+#include "LWHists/LWHist.h"
+#include "LWHists/TH1F_LW.h"
+#include "LWHists/TH2F_LW.h"
+#include "LWHists/TH2I_LW.h"
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
@@ -37,7 +36,7 @@
 
 #include "TrigT1CaloMonitoring/TrigT1CaloCpmMonTool.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 
 const int TrigT1CaloCpmMonTool::s_crates;
 const int TrigT1CaloCpmMonTool::s_modules;
@@ -52,7 +51,7 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
 				           const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloHistogramTool"),
+    m_histTool("TrigT1CaloLWHistogramTool"),
     m_events(0)
 /*---------------------------------------------------------*/
 {
@@ -108,7 +107,7 @@ StatusCode TrigT1CaloCpmMonTool:: initialize()
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloLWHistogramTool"
                     << endreq;
     return sc;
   }
@@ -304,8 +303,8 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
                          "CP Error Event Numbers",
 			 NumberOfSummaryBins, 0, NumberOfSummaryBins);
 
-  TH1*   hist = m_h_CP_overview;
-  TAxis* axis = hist->GetYaxis();
+  LWHist* hist = m_h_CP_overview;
+  LWHist::LWHistAxis* axis = hist->GetYaxis();
   for (int i = 0; i < 3; ++i) {
     axis->SetBinLabel(1+EMParity,  "EM parity");
     axis->SetBinLabel(1+EMLink,    "EM link");
@@ -657,8 +656,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	if (dataId == LVL1::CMMCPHits::TOTAL)    bin = s_crates + 3;
       }
       const int nThresh = s_thresholds/2;
-      TH2F* hist = (dataId <= s_modules) ? m_h_CMM_thresholds
-                                         : m_h_CMM_T_thresholds;
+      TH2F_LW* hist = (dataId <= s_modules) ? m_h_CMM_thresholds
+                                            : m_h_CMM_T_thresholds;
       if (hits0) m_histTool->fillXVsThresholds(hist, bin, hits0, nThresh,
                                                      s_threshBits);
       if (hits1) m_histTool->fillXVsThresholds(hist, bin, hits1, nThresh,

@@ -19,13 +19,13 @@
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "DataModel/DataVector.h"
 
-class TH1F;
-class TH2F;
-class TH2I;
+class TH1F_LW;
+class TH2F_LW;
+class TH2I_LW;
 class StatusCode;
 
 class TrigT1CaloMonErrorTool;
-class TrigT1CaloHistogramTool;
+class TrigT1CaloLWHistogramTool;
 
 namespace LVL1 {
   class CPMTower;
@@ -78,8 +78,8 @@ private:
   static const int s_threshBits = 3;
   static const int s_threshMask = 0x7;
 
-  ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
-  ToolHandle<TrigT1CaloHistogramTool> m_histTool;
+  ToolHandle<TrigT1CaloMonErrorTool>    m_errorTool;
+  ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
 
   /// Core CPM tower container StoreGate key
   std::string m_cpmTowerLocation;
@@ -106,72 +106,72 @@ private:
   //   Timeslice plots
   //=======================
 
-  TH2F* m_h_CPM_slices;
-  TH2F* m_h_CMM_slices;
-  TH2F* m_h_PP_CP_slice;
-  TH2F* m_h_CP_CM_slice;
+  TH2F_LW* m_h_CPM_slices;
+  TH2F_LW* m_h_CMM_slices;
+  TH2F_LW* m_h_PP_CP_slice;
+  TH2F_LW* m_h_CP_CM_slice;
 
   //=============================================
   //   CPM Tower - Trigger Tower plots
   //=============================================
 
   // TriggerTower plots
-  TH2F* m_h_TT_Em_eta_phi;
-  TH2F* m_h_TT_Had_eta_phi;
+  TH2F_LW* m_h_TT_Em_eta_phi;
+  TH2F_LW* m_h_TT_Had_eta_phi;
   // CPMTower plots
-  TH1F* m_h_CT_Em_Et;  
-  TH1F* m_h_CT_Had_Et;
-  TH1F* m_h_CT_Em_eta;
-  TH1F* m_h_CT_Had_eta;
-  TH1F* m_h_CT_Em_phi;
-  TH1F* m_h_CT_Had_phi;
-  TH2F* m_h_CT_Em_eta_phi;
-  TH2F* m_h_CT_Had_eta_phi;
-  TH2F* m_h_CT_Em_eta_phi_w;
-  TH2F* m_h_CT_Had_eta_phi_w;
+  TH1F_LW* m_h_CT_Em_Et;  
+  TH1F_LW* m_h_CT_Had_Et;
+  TH1F_LW* m_h_CT_Em_eta;
+  TH1F_LW* m_h_CT_Had_eta;
+  TH1F_LW* m_h_CT_Em_phi;
+  TH1F_LW* m_h_CT_Had_phi;
+  TH2F_LW* m_h_CT_Em_eta_phi;
+  TH2F_LW* m_h_CT_Had_eta_phi;
+  TH2F_LW* m_h_CT_Em_eta_phi_w;
+  TH2F_LW* m_h_CT_Had_eta_phi_w;
   // Errors
-  TH2F* m_h_CT_Em_parity;
-  TH2F* m_h_CT_Had_parity;
-  TH2F* m_h_CT_Em_link;
-  TH2F* m_h_CT_Had_link;
-  TH2F* m_h_CT_status;
+  TH2F_LW* m_h_CT_Em_parity;
+  TH2F_LW* m_h_CT_Had_parity;
+  TH2F_LW* m_h_CT_Em_link;
+  TH2F_LW* m_h_CT_Had_link;
+  TH2F_LW* m_h_CT_status;
 
   //=============================================
   //  CPM RoIs
   //=============================================
 
-  TH2F* m_h_RoI_thresholds;
-  TH2F* m_h_RoI_eta_phi;
-  TH2F* m_h_RoI_Em_eta_phi;
-  TH2F* m_h_RoI_Tau_eta_phi;
+  TH2F_LW* m_h_RoI_thresholds;
+  TH2F_LW* m_h_RoI_eta_phi;
+  TH2F_LW* m_h_RoI_Em_eta_phi;
+  TH2F_LW* m_h_RoI_Tau_eta_phi;
   // Tower saturation
-  TH2F* m_h_RoI_Saturation;
+  TH2F_LW* m_h_RoI_Saturation;
   // Parity errors
-  TH2F* m_h_RoI_Parity;
+  TH2F_LW* m_h_RoI_Parity;
 
   //=============================================
   //  CPM Hits
   //=============================================
 
-  TH2F* m_h_CPM_thresholds;
+  TH2F_LW* m_h_CPM_thresholds;
 
   //=============================================
   //  CMM-CP Hits
   //=============================================
 
-  TH2F* m_h_CMM_thresholds;
-  TH2F* m_h_CMM_T_thresholds;
+  TH2F_LW* m_h_CMM_thresholds;
+  TH2F_LW* m_h_CMM_T_thresholds;
   // Errors
-  TH2F* m_h_CMM_parity;
-  TH2F* m_h_CMM_status;
+  TH2F_LW* m_h_CMM_parity;
+  TH2F_LW* m_h_CMM_status;
 
   //=============================================
   //  Error summary
   //=============================================
 
-  TH1F* m_h_CP_errors;
-  TH2F* m_h_CP_overview;
-  TH2I* m_h_CP_events;
+  TH1F_LW* m_h_CP_errors;
+  TH2F_LW* m_h_CP_overview;
+  TH2I_LW* m_h_CP_events;
 
 };
 

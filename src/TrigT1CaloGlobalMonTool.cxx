@@ -10,8 +10,9 @@
 
 #include <sstream>
 
-#include "TAxis.h"
-#include "TH2F.h"
+#include "LWHists/LWHist.h"
+#include "LWHists/TH1F_LW.h"
+#include "LWHists/TH2F_LW.h"
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
@@ -20,14 +21,14 @@
 #include "AthenaMonitoring/AthenaMonManager.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloGlobalMonTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 
 /*---------------------------------------------------------*/
 TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type, 
 				                 const std::string & name,
 				                 const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
-    m_histTool("TrigT1CaloHistogramTool")
+    m_histTool("TrigT1CaloLWHistogramTool")
 /*---------------------------------------------------------*/
 {
 
@@ -100,7 +101,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
                       "L1Calo Global Error Overview",
 	              NumberOfGlobalErrors, 0, NumberOfGlobalErrors,
 		      14, 0, 14);
-  TAxis* axis = m_h_global->GetXaxis();
+  LWHist::LWHistAxis* axis = m_h_global->GetXaxis();
   axis->SetBinLabel(1+PPMDataStatus,   "PPMDataStatus");
   axis->SetBinLabel(1+PPMDataError,    "PPMDataError");
   axis->SetBinLabel(1+SubStatus,       "SubStatus");
@@ -140,8 +141,8 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
     MonGroup monCMMin( this, dir2 + "/Input",  expert, run );
     MonGroup monCMMout( this, dir2 + "/Output",  expert, run );
     m_histTool->setMonGroup(&monRoIs);
-    TH2F* hist = m_histTool->bookCPMCrateModuleVsThreshold(
-                 "cpm_2d_roi_Thresholds", "CPM RoI Thresholds");
+    TH2F_LW* hist = m_histTool->bookCPMCrateModuleVsThreshold(
+                    "cpm_2d_roi_Thresholds", "CPM RoI Thresholds");
     m_histTool->setMonGroup(&monCPMout);
     hist = m_histTool->bookCPMCrateModuleVsThreshold(
       "cpm_2d_thresh_Weighted", "CPM Hits Thresholds Weighted");
@@ -157,13 +158,13 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
     MonGroup JEM_Thresholds(this, dir1 + "/Output/Thresholds", expert, run);
     MonGroup JEM_RoI(this, dir1 + "/Output/RoI", shift, run);
     m_histTool->setMonGroup(&JEM_Thresholds);
-    TH1F* hist = m_histTool->bookMainJetThresholds("jem_1d_thresh_MainHits",
+    TH1F_LW* hist = m_histTool->bookMainJetThresholds("jem_1d_thresh_MainHits",
       "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ");
     hist = m_histTool->bookForwardJetThresholds("jem_1d_thresh_FwdHitsRight",
       "Fwd Right Jet Hit Multiplicity per Threshold  --  JEM DAQ");
     hist = m_histTool->bookBackwardJetThresholds("jem_1d_thresh_FwdHitsLeft",
       "Fwd Left Jet Hit Multiplicity per Threshold  --  JEM DAQ");
-    TH2F* hist2 = m_histTool->book2F("jem_2d_thresh_HitsPerJem",
+    TH2F_LW* hist2 = m_histTool->book2F("jem_2d_thresh_HitsPerJem",
       "HitMap of Hits per JEM", 18, 0., 18., 32, 0., 32.);
     m_histTool->jemThresholds(hist2);
     hist2->GetXaxis()->SetBinLabel(17,"Sat(Main)");
@@ -184,7 +185,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
     MonGroup CMM_energy(this, dir1 + "/Output/Energy", expert, run);
     MonGroup CMM_RoI(this, dir1 + "/Output/RoI", shift, run);
     m_histTool->setMonGroup(&CMM_inputThresh);
-    TH1F* hist = m_histTool->bookMainJetThresholds("cmm_1d_thresh_MainHits",
+    TH1F_LW* hist = m_histTool->bookMainJetThresholds("cmm_1d_thresh_MainHits",
       "Main Jet Multiplicity per Threshold  --  CMM input");
     hist = m_histTool->bookForwardJetThresholds("cmm_1d_thresh_FwdHitsRight",
       "Forward Right Jet Multiplicity per Threshold  --  CMM input");
@@ -228,7 +229,8 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
+  bool debug = msgLvl(MSG::DEBUG);
+  if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
   StatusCode sc;
 
@@ -244,7 +246,8 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     sc = evtStore()->retrieve(errTES, "L1CaloPPMErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
-    msg(MSG::DEBUG) << "No PPM error vector of expected size" << endreq;
+    if (debug) msg(MSG::DEBUG) << "No PPM error vector of expected size"
+                               << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -261,7 +264,8 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     sc = evtStore()->retrieve(errTES, "L1CaloPPMSpareErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
-    msg(MSG::DEBUG) << "No PPMSpare error vector of expected size" << endreq;
+    if (debug) msg(MSG::DEBUG) << "No PPMSpare error vector of expected size"
+                               << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -278,7 +282,8 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     sc = evtStore()->retrieve(errTES, "L1CaloCPMErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(cpmCrates)) {
-    msg(MSG::DEBUG) << "No CPM error vector of expected size" << endreq;
+    if (debug) msg(MSG::DEBUG) << "No CPM error vector of expected size"
+                               << endreq;
   } else {
     for (int crate = 0; crate < cpmCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -301,7 +306,8 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     sc = evtStore()->retrieve(errTES, "L1CaloJEMErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
-    msg(MSG::DEBUG) << "No JEM error vector of expected size" << endreq;
+    if (debug) msg(MSG::DEBUG) << "No JEM error vector of expected size"
+                               << endreq;
   } else {
     for (int crate = 0; crate < jemCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -322,7 +328,8 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     sc = evtStore()->retrieve(errTES, "L1CaloJEMCMMErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
-    msg(MSG::DEBUG) << "No JEM CMM error vector of expected size" << endreq;
+    if (debug) msg(MSG::DEBUG) << "No JEM CMM error vector of expected size"
+                               << endreq;
   } else {
     for (int crate = 0; crate < jemCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -339,7 +346,8 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     sc = evtStore()->retrieve(errTES, "L1CaloRODErrorVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(ppmCrates + cpmCrates + jemCrates)) {
-    msg(MSG::DEBUG) << "No ROD error vector of expected size" << endreq;
+    if (debug) msg(MSG::DEBUG) << "No ROD error vector of expected size"
+                               << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates+cpmCrates+jemCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -359,7 +367,8 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     sc = evtStore()->retrieve(errTES, "L1CaloPPMMismatchVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
-    msg(MSG::DEBUG) << "No PPM mismatch vector of expected size" << endreq;
+    if (debug) msg(MSG::DEBUG) << "No PPM mismatch vector of expected size"
+                               << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -374,7 +383,8 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     sc = evtStore()->retrieve(errTES, "L1CaloCPMMismatchVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(cpmCrates)) {
-    msg(MSG::DEBUG) << "No CPM mismatch vector of expected size" << endreq;
+    if (debug) msg(MSG::DEBUG) << "No CPM mismatch vector of expected size"
+                               << endreq;
   } else {
     for (int crate = 0; crate < cpmCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -397,7 +407,8 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     sc = evtStore()->retrieve(errTES, "L1CaloJEMMismatchVector"); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
-    msg(MSG::DEBUG) << "No JEM mismatch vector of expected size" << endreq;
+    if (debug) msg(MSG::DEBUG) << "No JEM mismatch vector of expected size"
+                               << endreq;
   } else {
     for (int crate = 0; crate < jemCrates; ++crate) {
       int err = (*errTES)[crate];
@@ -426,7 +437,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     }
   }
 
-  msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
+  if (debug) msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
 
   return StatusCode::SUCCESS;
 

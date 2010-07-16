@@ -10,10 +10,10 @@
 
 #include <utility>
 
-#include "TAxis.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH2I.h"
+#include "LWHists/LWHist.h"
+#include "LWHists/TH1F_LW.h"
+#include "LWHists/TH2F_LW.h"
+#include "LWHists/TH2I_LW.h"
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
@@ -42,7 +42,7 @@
 
 #include "TrigT1CaloMonitoring/JEPSimBSMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 
 
 /*---------------------------------------------------------*/
@@ -55,12 +55,10 @@ JEPSimBSMon::JEPSimBSMon(const std::string & type,
     m_jetElementTool("LVL1::L1JetElementTools/L1JetElementTools"),
     m_etSumsTool("LVL1::L1JEPEtSumsTools/L1JEPEtSumsTools"),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloHistogramTool"),
+    m_histTool("TrigT1CaloLWHistogramTool"),
     m_debug(false)
 /*---------------------------------------------------------*/
 {
-  declareInterface<IMonitorToolBase>(this); 
-
   declareProperty("JEPHitsTool", m_jepHitsTool);
   declareProperty("JetTool", m_jetTool);
   declareProperty("JetElementTool", m_jetElementTool);
@@ -151,7 +149,7 @@ StatusCode JEPSimBSMon:: initialize()
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloLWHistogramTool"
                     << endreq;
     return sc;
   }
@@ -407,7 +405,7 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_h_JEPneSIMSummary = m_histTool->book1F("jem_1d_SimNeDataSummary",
    "JEP Transmission/Comparison with Simulation Mismatch Summary;;Events",
     NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  TAxis* axis = m_h_JEPneSIMSummary->GetXaxis();
+  LWHist::LWHistAxis* axis = m_h_JEPneSIMSummary->GetXaxis();
   axis->SetBinLabel(1+EMElementMismatch,    "EM je");
   axis->SetBinLabel(1+HadElementMismatch,   "Had je");
   axis->SetBinLabel(1+RoIMismatch,          "RoIs");
@@ -431,7 +429,7 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   m_histTool->setMonGroup(&monEvent1);
 
-  TH2I* hist = 0;
+  TH2I_LW* hist = 0;
   m_sampleHists.clear();
   m_sampleHists.resize(9, hist);
   hist = m_histTool->bookJEMEventVsCrateModule(
@@ -925,8 +923,8 @@ void JEPSimBSMon::compare(const JetElementMap& jeSimMap,
 	    << " eta/phi: " << eta << "/" << phi
 	    << endreq;
     }
-    TH2F* hist1 = 0;
-    TH2F* hist2 = 0;
+    TH2F_LW* hist1 = 0;
+    TH2F_LW* hist2 = 0;
     if (overlap) {
       if (simEm && simEm == datEm)              hist1 = m_h_EMEleOvSIMeqDAT;
       if (simEm && datEm && simEm != datEm)     hist1 = m_h_EMEleOvSIMneDAT;
@@ -1077,8 +1075,8 @@ void JEPSimBSMon::compare(const JemRoiMap& roiSimMap,
     if (forward && eta > 0.0 && frame > 3) eta = (local%2) ? 4.05 : 3.2;
     const double phi = coord.phi();
 
-    TH2F* hist1 = 0;
-    TH2F* hist2 = 0;
+    TH2F_LW* hist1 = 0;
+    TH2F_LW* hist2 = 0;
     if (simHits == datHits) {
       errors[locX] |= bit;
       hist1 = m_h_RoISIMeqDAT;
@@ -1186,7 +1184,7 @@ void JEPSimBSMon::compare(const JemHitsMap& jemSimMap,
     const int loc = crate * 16 + jem;
     const int jemBins = 2 * 16;
     const int bit = (1 << JEMHitsMismatch);
-    TH2F* hist = 0;
+    TH2F_LW* hist = 0;
     if (simHits == datHits) {
       errors[loc] |= bit;
       hist = m_h_JEMHitsSIMeqDAT;
@@ -1294,7 +1292,7 @@ void JEPSimBSMon::compare(const JemHitsMap& jemMap,
     const int jemBins = 2 * 16;
     const int cmmBins = 2 * 2;
     const int bit = (1 << CMMJetHitsMismatch);
-    TH2F* hist = 0;
+    TH2F_LW* hist = 0;
     if (jemHits == cmmHits) {
       errorsJEM[loc]  |= bit;
       errorsCMM[loc2] |= bit;
@@ -1438,7 +1436,7 @@ void JEPSimBSMon::compare(const CmmJetHitsMap& cmmSimMap,
       const int bit = (local) ? (1 << LocalJetMismatch)
                               : (total) ? (1 << TotalJetMismatch)
 			                : (1 << JetEtMismatch);
-      TH1F* hist = 0;
+      TH1F_LW* hist = 0;
       if (cmmSimHits == cmmHits) {
         errors[loc] |= bit;
 	hist = m_h_SumsSIMeqDAT;
@@ -1487,7 +1485,7 @@ void JEPSimBSMon::compare(const CmmJetHitsMap& cmmSimMap,
     const int cmmBins = 2 * 2;
     const int bit = (1 << RemoteJetMismatch);
 
-    TH1F* hist = 0;
+    TH1F_LW* hist = 0;
     if (hitsSimMain && hitsSimMain == hitsDatMain) {
       errors[loc] |= bit;
       hist = m_h_SumsSIMeqDAT;
@@ -1555,7 +1553,7 @@ void JEPSimBSMon::compare(const CmmJetHitsMap& cmmMap,
     const int loc = crate * 2 + 1;
     const int cmmBins = 2 * 2;
     const int bit = (1 << JetEtRoIMismatch);
-    TH1F* hist = 0;
+    TH1F_LW* hist = 0;
     if (etMap == etRoi) {
       errors[loc] |= bit;
       hist = m_h_SumsSIMeqDAT;
@@ -1668,7 +1666,7 @@ void JEPSimBSMon::compare(const JemEtSumsMap& jemSimMap,
             << datEt << "/" << datEx << "/" << datEy << ", "
 	    << simEt << "/" << simEx << "/" << simEy << endreq;
     }
-    TH2F* hist = 0;
+    TH2F_LW* hist = 0;
     if (simEx && simEx == datEx) hist = m_h_jemEtSumsSIMeqDAT;
     else if (simEx != datEx) {
       if (simEx && datEx) hist = m_h_jemEtSumsSIMneDAT;
@@ -1785,7 +1783,7 @@ void JEPSimBSMon::compare(const JemEtSumsMap& jemMap,
       errorsJEM[loc+jemBins]  |= bit;
       errorsCMM[loc2+cmmBins] |= bit;
     }
-    TH2F* hist = 0;
+    TH2F_LW* hist = 0;
     if (jemEx && jemEx == cmmEx) hist = m_h_cmmEtSumsSIMeqDAT;
     else if (jemEx != cmmEx) {
       if (jemEx && cmmEx) hist = m_h_cmmEtSumsSIMneDAT;
@@ -1952,7 +1950,7 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
       } else errors[loc+cmmBins] |= bit;
       const int loc1 = (local) ? crate : 3;
       if (local || total) {
-        TH2F* hist = 0;
+        TH2F_LW* hist = 0;
 	if (cmmSimEx && cmmSimEx == cmmEx) hist = m_h_EnSumsSIMeqDAT;
 	else if (cmmSimEx != cmmEx) {
 	  if (cmmSimEx && cmmEx) hist = m_h_EnSumsSIMneDAT;
@@ -1978,7 +1976,7 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
 	if (hist) hist->Fill(loc1, 2);
       } else {
         const int loc2 = (dataId == LVL1::CMMEtSums::SUM_ET_MAP) ? 3 : 4;
-        TH2F* hist = 0;
+        TH2F_LW* hist = 0;
 	if (cmmSimEt && cmmSimEt == cmmEt) hist = m_h_EnSumsSIMeqDAT;
 	else if (cmmSimEt != cmmEt) {
 	  if (cmmSimEt && cmmEt) hist = m_h_EnSumsSIMneDAT;
@@ -2024,7 +2022,7 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
     if (localEt == remoteEt && localEx == remoteEx && localEy == remoteEy) {
       errors[loc] |= bit;
     } else errors[loc+cmmBins] |= bit;
-    TH2F* hist = 0;
+    TH2F_LW* hist = 0;
     if (localEx && localEx == remoteEx) hist = m_h_EnSumsSIMeqDAT;
     else if (localEx != remoteEx) {
       if (localEx && remoteEx) hist = m_h_EnSumsSIMneDAT;
@@ -2108,7 +2106,7 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmMap,
     if (sumEtMap == sumEtRoi && missEtMap == missEtRoi &&
         et == etRoi && ex == exRoi && ey == eyRoi) errors[loc] |= bit;
     else errors[loc+cmmBins] |= bit;
-    TH2F* hist = 0;
+    TH2F_LW* hist = 0;
     if (ex && ex == exRoi) hist = m_h_EnSumsSIMeqDAT;
     else if (ex != exRoi) {
       if (ex && exRoi) hist = m_h_EnSumsSIMneDAT;
@@ -2188,11 +2186,11 @@ void JEPSimBSMon::fillEventSample(int err, int loc, bool isJem)
   if (m_sampleHists[hist]) m_histTool->fillEventNumber(m_sampleHists[hist], y);
 }
 
-void JEPSimBSMon::setLabels(TH2* hist)
+void JEPSimBSMon::setLabels(LWHist* hist)
 {
   m_histTool->jemCMMCrateModule(hist);
   // Simulation steps in red (#color[2]) depend on Trigger Menu
-  TAxis* axis = hist->GetYaxis();
+  LWHist::LWHistAxis* axis = hist->GetYaxis();
   axis->SetBinLabel(1+EMElementMismatch,    "EM je");
   axis->SetBinLabel(1+HadElementMismatch,   "Had je");
   axis->SetBinLabel(1+RoIMismatch,          "#color[2]{RoIs}");
@@ -2213,9 +2211,9 @@ void JEPSimBSMon::setLabels(TH2* hist)
   axis->SetBinLabel(1+EnergyRoIMismatch,    "Engy RoIs");
 }
 
-void JEPSimBSMon::setLabelsSH(TH1* hist)
+void JEPSimBSMon::setLabelsSH(LWHist* hist)
 {
-  TAxis* axis = hist->GetXaxis();
+  LWHist::LWHistAxis* axis = hist->GetXaxis();
   axis->SetBinLabel(1, "Local0");
   axis->SetBinLabel(2, "Local1");
   axis->SetBinLabel(3, "Remote");
@@ -2224,16 +2222,16 @@ void JEPSimBSMon::setLabelsSH(TH1* hist)
   axis->SetBinLabel(6, "JetEt RoI");
 }
 
-void JEPSimBSMon::setLabelsSHF(TH2* hist)
+void JEPSimBSMon::setLabelsSHF(LWHist* hist)
 {
   setLabelsSH(hist);
   m_histTool->jemThresholds(hist, 0, false);
   m_histTool->jetEtThresholds(hist, 16, false);
 }
 
-void JEPSimBSMon::setLabelsEnTot(TH2* hist)
+void JEPSimBSMon::setLabelsEnTot(LWHist* hist)
 {
-  TAxis* axis = hist->GetXaxis();
+  LWHist::LWHistAxis* axis = hist->GetXaxis();
   axis->SetBinLabel(1, "Local0");
   axis->SetBinLabel(2, "Local1");
   axis->SetBinLabel(3, "Remote");
@@ -2247,9 +2245,9 @@ void JEPSimBSMon::setLabelsEnTot(TH2* hist)
   axis->SetBinLabel(5, "MissingEt");
 }
 
-void JEPSimBSMon::setLabelsEnTotThr(TH2* hist)
+void JEPSimBSMon::setLabelsEnTotThr(LWHist* hist)
 {
-  TAxis* axis = hist->GetXaxis();
+  LWHist::LWHistAxis* axis = hist->GetXaxis();
   axis->SetBinLabel(1, "SumEt");
   axis->SetBinLabel(2, "SumEt RoI");
   axis->SetBinLabel(3, "MissingEt");

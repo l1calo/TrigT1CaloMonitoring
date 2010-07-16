@@ -16,13 +16,14 @@
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "GaudiKernel/ToolHandle.h"
 
-class TH1F;
-class TH2F;
-class TProfile2D;
+class TH1F_LW;
+class TH2F_LW;
+class TH2I_LW;
+class TProfile2D_LW;
 class StatusCode;
 
 class TrigT1CaloMonErrorTool;
-class TrigT1CaloHistogramTool;
+class TrigT1CaloLWHistogramTool;
 
 class PPrSpareMon: public ManagedMonitorToolBase
 {
@@ -53,23 +54,23 @@ private:
   std::string m_EventPathInRootFile;
      
   // Tool to retrieve bytestream errors
-  ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
-  ToolHandle<TrigT1CaloHistogramTool> m_histTool;
+  ToolHandle<TrigT1CaloMonErrorTool>    m_errorTool;
+  ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
 
   //ADC Hitmaps per TimeSlice
-  TH2F* m_h_TT_HitMap_ADC;
-  TProfile2D* m_p_TT_HitMap_ADC;
+  TH2F_LW* m_h_TT_HitMap_ADC;
+  TProfile2D_LW* m_p_TT_HitMap_ADC;
 
   // error
-  TH1F* m_h_TT_Error; // Error summary
-  TH2F* m_h_TT_error_Crate_25; // just ROD sub-status word
-  TH2F* m_h_fwPpmError_Crate_25;
-  std::vector<TH2F*> m_h_ErrorDetails; //ASIC errors by MCM
-  TH2I* m_h_TT_EventNumbers;
-  TH2I* m_h_TT_ASICEventNumbers;
+  TH1F_LW* m_h_TT_Error; // Error summary
+  TH2F_LW* m_h_TT_error_Crate_25; // just ROD sub-status word
+  TH2F_LW* m_h_fwPpmError_Crate_25;
+  std::vector<TH2F_LW*> m_h_ErrorDetails; //ASIC errors by MCM
+  TH2I_LW* m_h_TT_EventNumbers;
+  TH2I_LW* m_h_TT_ASICEventNumbers;
 
   // number of triggered slice
-  TH1F* m_h_TT_triggeredSlice;
+  TH1F_LW* m_h_TT_triggeredSlice;
    
 };
 

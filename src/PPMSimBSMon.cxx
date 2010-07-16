@@ -8,33 +8,27 @@
 //
 // ********************************************************************
 
-#include <sstream>
-#include <utility>
 #include <cmath>
-#include "SGTools/StlVectorClids.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH2I.h"
-#include "TProfile2D.h"
-#include "TString.h"
 
-#include "CLHEP/Units/SystemOfUnits.h"
-#include "GaudiKernel/ITHistSvc.h"
-#include "GaudiKernel/ISvcLocator.h"
-#include "GaudiKernel/IToolSvc.h"
-#include "StoreGate/StoreGateSvc.h"
+#include "LWHists/TH2F_LW.h"
+#include "LWHists/TH2I_LW.h"
+#include "LWHists/TProfile2D_LW.h"
+
+#include "GaudiKernel/MsgStream.h"
+#include "GaudiKernel/StatusCode.h"
+#include "SGTools/StlVectorClids.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
-#include "TrigT1CaloUtils/CoordToHardware.h"
 #include "TrigT1CaloEvent/TriggerTower.h"
 #include "TrigT1CaloUtils/TriggerTowerKey.h"
 #include "TrigT1CaloToolInterfaces/IL1TriggerTowerTool.h"
-#include "TrigT1Interfaces/Coordinate.h"
-#include "TrigT1Interfaces/CoordinateRange.h"
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
+#include "TrigT1CaloCondSvc/L1CaloCondSvc.h"
+#include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
+#include "TrigT1CaloCalibConditions/L1CaloPprLutContainer.h"
 #include "TrigT1CaloCalibConditions/L1CaloPprLut.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 
 #include "TrigT1CaloMonitoring/PPMSimBSMon.h"
 
@@ -43,16 +37,12 @@ PPMSimBSMon::PPMSimBSMon(const std::string & type,
 			 const std::string & name,
 			 const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
-    m_storeGate("StoreGateSvc", name),
-    m_l1CondSvc(0),
+    m_l1CondSvc("L1CaloCondSvc", name),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"), 
-    m_histTool("TrigT1CaloHistogramTool"),
-    m_log(msgSvc(), name), m_debug(false),
-    m_events(0)
+    m_histTool("TrigT1CaloLWHistogramTool"),
+    m_debug(false), m_events(0)
 /*---------------------------------------------------------*/
 {
-  declareInterface<IMonitorToolBase>(this); 
-
   declareProperty("TriggerTowerLocation",
                  m_triggerTowerLocation =
 		  LVL1::TrigT1CaloDefs::TriggerTowerLocation);
@@ -70,50 +60,40 @@ PPMSimBSMon::~PPMSimBSMon()
 {
 }
 
+#ifndef PACKAGE_VERSION
+#define PACKAGE_VERSION "unknown"
+#endif
+
 /*---------------------------------------------------------*/
 StatusCode PPMSimBSMon:: initialize()
 /*---------------------------------------------------------*/
 {
-  m_log.setLevel(outputLevel());
-  m_debug = outputLevel() <= MSG::DEBUG;
+  msg(MSG::INFO) << "Initializing " << name() << " - package version "
+                 << PACKAGE_VERSION << endreq;
+  m_debug = msgLvl(MSG::DEBUG);
 
   StatusCode sc;
 
   sc = ManagedMonitorToolBase::initialize();
   if (sc.isFailure()) return sc;
 
-  sc = m_storeGate.retrieve();
-  if( sc.isFailure() ) {
-    m_log << MSG::ERROR << "Unable to locate Service StoreGateSvc" << endreq;
-    return sc;
-  }
-
-  sc = service("L1CaloCondSvc", m_l1CondSvc);
+  sc = m_l1CondSvc.retrieve();
   if(sc.isFailure()){
-    m_log << MSG::WARNING << "Could not retrieve L1CaloCondSvc" << endreq;
+    msg(MSG::WARNING) << "Could not retrieve L1CaloCondSvc" << endreq;
   }
 
   sc = m_ttTool.retrieve();
   if( sc.isFailure() ) {
-    m_log << MSG::ERROR << "Unable to locate Tool L1TriggerTowerTool" << endreq;
+    msg(MSG::ERROR) << "Unable to locate Tool L1TriggerTowerTool" << endreq;
     return sc;
   }
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    m_log << MSG::ERROR << "Unable to locate Tool TrigT1CaloHistogramTool"
-                        << endreq;
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloLWHistogramTool"
+                    << endreq;
     return sc;
   }
-
-  //sc = service("L1CaloCondSvc", m_l1CondSvc);
-  //if(sc.isFailure()){
-  //  m_log << MSG::WARNING << "Could not retrieve L1CaloCondSvc" << endreq;
-  // }
-  
-  //===========
-
-  m_log << MSG::INFO << "PPMSimBSMon initialised" << endreq;
 
   return StatusCode::SUCCESS;
 
@@ -126,21 +106,12 @@ StatusCode PPMSimBSMon:: finalize()
   return StatusCode::SUCCESS;
 }
 
-// /*---------------------------------------------------------*/
-// StatusCode PPMSimBSMon::retrieveConditions(bool isNewEventsBlock,
-//                                        bool isNewLumiBlock, bool isNewRun)
-// /*---------------------------------------------------------*/
-// {
-
- 
-// }
-
 /*---------------------------------------------------------*/
 StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
                                        bool isNewLumiBlock, bool isNewRun)
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "bookHistograms entered" << endreq;
+  msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
 
   if( m_environment == AthenaMonManager::online ) {
     // book histograms that are only made in the online environment...
@@ -157,19 +128,18 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
     
     m_LutContainer = 0;
     if (m_l1CondSvc) {
-      if(m_debug) m_log << MSG::DEBUG << "Retrieving Conditions Containers " << endreq;
+      msg(MSG::DEBUG) << "Retrieving Conditions Containers " << endreq;
       
       StatusCode sc = m_l1CondSvc->retrieve(m_LutContainer);
       if (sc.isFailure()) {
-	m_log << MSG::WARNING << "Could not retrieve LutContainer " << endreq;
+	msg(MSG::WARNING) << "Could not retrieve LutContainer " << endreq;
 	return sc;
       }
-      if (m_debug) m_log << MSG::DEBUG << "Retrieved LutContainer " << endreq;
-     }
+      msg(MSG::DEBUG) << "Retrieved LutContainer " << endreq;
+    }
     
     else {
-      m_log << MSG::WARNING << "Could not retrieve Conditions Containers" << endreq;
-    
+      msg(MSG::WARNING) << "Could not retrieve Conditions Containers" << endreq;
     }
     
     
@@ -294,7 +264,7 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 
   } // end if (isNewRun ...
 
-  m_log << MSG::DEBUG << "Leaving bookHistograms" << endreq;
+  msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
   
   return StatusCode::SUCCESS;
 }
@@ -303,15 +273,15 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
 StatusCode PPMSimBSMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "fillHistograms entered" << endreq;
+  if (m_debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
   StatusCode sc;
 
   //Retrieve Trigger Towers from SG
   const TriggerTowerCollection* triggerTowerTES = 0; 
-  sc = m_storeGate->retrieve(triggerTowerTES, m_triggerTowerLocation); 
+  sc = evtStore()->retrieve(triggerTowerTES, m_triggerTowerLocation); 
   if( sc.isFailure()  ||  !triggerTowerTES ) {
-    m_log << MSG::DEBUG<< "No Trigger Tower container found"<< endreq; 
+    if (m_debug) msg(MSG::DEBUG) << "No Trigger Tower container found"<< endreq; 
   }
   ++m_events;
 
@@ -323,56 +293,56 @@ StatusCode PPMSimBSMon::fillHistograms()
 
 
   if ((m_environment == AthenaMonManager::online || m_onlineTest) && (m_events%int(0.5*m_instantaneous)==0)) {
-    double worst_value;
-    int worst_bin;
-    int worst_min = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetMinimumBin();
-    double worst_min_value = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_min);
-    int worst_max = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetMaximumBin();
-    double worst_max_value = m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_max);
-    if(fabs(worst_min_value)>fabs(worst_max_value)){
-      worst_value = worst_min_value;
-      worst_bin = worst_min;
+    double worst_value, minValue, maxValue;
+    int worst_binx, worst_biny, minBinx, minBiny, maxBinx, maxBiny;
+    m_histTool->getMinMaxBin(m_h_ppm_em_2d_etaPhi_tt_ped_instavg,
+                       minBinx, minBiny, maxBinx, maxBiny, minValue, maxValue);
+    if(fabs(minValue) > fabs(maxValue)){
+      worst_value = minValue;
+      worst_binx  = minBinx;
+      worst_biny  = minBiny;
     }
     else {
-      worst_value = worst_max_value;
-      worst_bin = worst_max;
+      worst_value = maxValue;
+      worst_binx  = maxBinx;
+      worst_biny  = maxBiny;
     }
-    if(fabs(worst_value)>fabs(m_h_ppm_em_2d_etaPhi_tt_ped_worstavg->GetBinContent(worst_bin))) {
+    if(fabs(worst_value)>fabs(m_h_ppm_em_2d_etaPhi_tt_ped_worstavg->GetBinContent(worst_binx, worst_biny))) {
       m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_worstavg,
-                                      worst_bin,worst_value);
+                                      worst_binx, worst_biny, worst_value);
     }
-    m_h_ppm_em_2d_etaPhi_tt_ped_instavg->Reset();
-    m_h_ppm_em_2d_etaPhi_tt_ped_instavg->Add(m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B);
+    m_histTool->replaceContents(m_h_ppm_em_2d_etaPhi_tt_ped_instavg,
+                                m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B);
     m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->Reset();
-    m_h_ppm_em_2d_etaPhi_tt_ped_instrms->Reset();
-    m_h_ppm_em_2d_etaPhi_tt_ped_instrms->Add(m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B);
+    m_histTool->replaceContents(m_h_ppm_em_2d_etaPhi_tt_ped_instrms,
+                                m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B);
     m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B->Reset();	    
     
-    worst_min = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetMinimumBin();
-    worst_min_value = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_min);
-    worst_max = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetMaximumBin();
-    worst_max_value = m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinContent(worst_max);
-    if(fabs(worst_min_value)>fabs(worst_max_value)){
-      worst_value = worst_min_value;
-      worst_bin = worst_min;
+    m_histTool->getMinMaxBin(m_h_ppm_had_2d_etaPhi_tt_ped_instavg,
+                       minBinx, minBiny, maxBinx, maxBiny, minValue, maxValue);
+    if(fabs(minValue) > fabs(maxValue)){
+      worst_value = minValue;
+      worst_binx  = minBinx;
+      worst_biny  = minBiny;
     }
     else {
-      worst_value = worst_max_value;
-      worst_bin = worst_max;
+      worst_value = maxValue;
+      worst_binx  = maxBinx;
+      worst_biny  = maxBiny;
     }
-    if(fabs(worst_value)>fabs(m_h_ppm_had_2d_etaPhi_tt_ped_worstavg->GetBinContent(worst_bin))) {
+    if(fabs(worst_value)>fabs(m_h_ppm_had_2d_etaPhi_tt_ped_worstavg->GetBinContent(worst_binx, worst_biny))) {
       m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_worstavg,
-                                       worst_bin,worst_value);
+                                       worst_binx, worst_biny, worst_value);
     }
-    m_h_ppm_had_2d_etaPhi_tt_ped_instavg->Reset();
-    m_h_ppm_had_2d_etaPhi_tt_ped_instavg->Add(m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B);
+    m_histTool->replaceContents(m_h_ppm_had_2d_etaPhi_tt_ped_instavg,
+                                m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B);
     m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->Reset();
-    m_h_ppm_had_2d_etaPhi_tt_ped_instrms->Reset();
-    m_h_ppm_had_2d_etaPhi_tt_ped_instrms->Add(m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B);
+    m_histTool->replaceContents(m_h_ppm_had_2d_etaPhi_tt_ped_instrms,
+                                m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B);
     m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B->Reset();
   }
   
-  m_log << MSG::DEBUG << "Leaving fillHistograms" << endreq;
+  if (m_debug) msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
 
   return StatusCode::SUCCESS;
 }
@@ -382,9 +352,18 @@ StatusCode PPMSimBSMon::procHistograms(bool isEndOfEventsBlock,
                                   bool isEndOfLumiBlock, bool isEndOfRun)
 /*---------------------------------------------------------*/
 {
-  m_log << MSG::DEBUG << "procHistograms entered" << endreq;
+  msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
-  if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
+  if (isEndOfEventsBlock || isEndOfLumiBlock) {
+  }
+
+  if (isEndOfRun) {
+    if(m_onlineTest || m_environment == AthenaMonManager::online) {
+      LWHist::safeDelete(m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B);
+      LWHist::safeDelete(m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B);
+      LWHist::safeDelete(m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B);
+      LWHist::safeDelete(m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B);
+    }
   }
 
   return StatusCode::SUCCESS;
@@ -392,7 +371,7 @@ StatusCode PPMSimBSMon::procHistograms(bool isEndOfEventsBlock,
 
 void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 {
-  m_log << MSG::DEBUG << "Simulate LUT data from FADC data" << endreq;
+  if (m_debug) msg(MSG::DEBUG) << "Simulate LUT data from FADC data" << endreq;
 
   StatusCode sc = m_ttTool->retrieveConditions();
   if (sc.isFailure()) return;
@@ -475,9 +454,9 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
       if (em_LUT) {
 	em_offset   = em_LUT->pedMean();
       } 
-      else if (m_debug) m_log << MSG::DEBUG << "::lut: No L1CaloPprLut found" << endreq;
+      else if (m_debug) msg(MSG::DEBUG) << "::lut: No L1CaloPprLut found" << endreq;
     } 
-    else if (m_debug) m_log << MSG::DEBUG << "::lut: No LUT Container retrieved" << endreq;
+    else if (m_debug) msg(MSG::DEBUG) << "::lut: No LUT Container retrieved" << endreq;
 
     bool em_notSignal = (datEm==0 && !(m_ttTool->disabledChannel(em_coolId)));
 
@@ -488,9 +467,9 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
       if (had_LUT) {
 	had_offset   = had_LUT->pedMean();
       } 
-      else if (m_debug) m_log << MSG::DEBUG << "::lut: No L1CaloPprLut found" << endreq;
+      else if (m_debug) msg(MSG::DEBUG) << "::lut: No L1CaloPprLut found" << endreq;
     } 
-    else if (m_debug) m_log << MSG::DEBUG << "::lut: No LUT Container retrieved" << endreq;
+    else if (m_debug) msg(MSG::DEBUG) << "::lut: No LUT Container retrieved" << endreq;
 
     bool had_notSignal = (datHad==0 && !(m_ttTool->disabledChannel(had_coolId)));
     
@@ -498,7 +477,6 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     const double phi = tt->phi();
   
     int tt_accept = 1;
-    int bin = 0;
 
     for(int i=0; i<emSlices; i++) {
       if(em_notSignal) {
@@ -521,21 +499,26 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	                          eta, phi, ((tt->emADC()).at(i)-em_offset));
 	  }
 	  
-	  bin = m_histTool->findBinPPMEmEtaVsPhi(
-	                    m_h_ppm_em_2d_etaPhi_tt_ped_runavg, eta, phi);
+          int binx = 0;
+          int biny = 0;
+	  m_histTool->findBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_runavg,
+	                                                 eta, phi, binx, biny);
+	  double entries = 0.;
+	  double val = 0.;
+	  double rms = 0.;
+	  m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
+	                                                             val, rms);
 	  m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_runrms,
-	    bin, m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinError(bin),
-	    m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinError(bin)/
-	      sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinEntries(bin)));
+	                                binx, biny, rms, rms/sqrt(2.*entries));
 	  if (m_environment == AthenaMonManager::online || m_onlineTest) {
+	    m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinInfo(binx, biny, entries,
+	                                                             val, rms);
 	    m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_instrms,
-	      bin, m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinError(bin),
-	      m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinError(bin)/
-	        sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinEntries(bin)));
+	                                binx, biny, rms, rms/sqrt(2.*entries));
+	    m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinInfo(binx, biny,
+	                                                    entries, val, rms);
 	    m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B,
-	      bin, m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin),
-	      m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin)/
-	        sqrt(2*m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->GetBinEntries(bin)));
+	                                binx, biny, rms, rms/sqrt(2.*entries));
 	    
 	  }
 	}	 
@@ -564,22 +547,26 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	    m_histTool->fillPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B,
 	                          eta, phi, ((tt->hadADC()).at(i)-had_offset));
 	  }
-	  bin = m_histTool->findBinPPMHadEtaVsPhi(
-	                    m_h_ppm_had_2d_etaPhi_tt_ped_runavg, eta, phi);
+          int binx = 0;
+          int biny = 0;
+	  m_histTool->findBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_runavg,
+	                                                 eta, phi, binx, biny);
+	  double entries = 0.;
+	  double val = 0.;
+	  double rms = 0.;
+	  m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
+	                                                             val, rms);
 	  m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_runrms,
-	    bin, m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinError(bin),
-	    m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinError(bin)/
-	      sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinEntries(bin)));
-
-	  if (m_environment == AthenaMonManager::online || m_onlineTest) {	  
+	                                binx, biny, rms, rms/sqrt(2.*entries));
+	  if (m_environment == AthenaMonManager::online || m_onlineTest) {
+	    m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinInfo(binx, biny,
+	                                                    entries, val, rms);
 	    m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_instrms,
-	      bin, m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinError(bin),
-	      m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinError(bin)/
-	        sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinEntries(bin)));
+	                                binx, biny, rms, rms/sqrt(2.*entries));
+	    m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinInfo(binx, biny,
+	                                                    entries, val, rms);
 	    m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B,
-	      bin, m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin),
-	      m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinError(bin)/
-	        sqrt(2*m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->GetBinEntries(bin)));
+	                                binx, biny, rms, rms/sqrt(2.*entries));
 	  
 	  }
 	}
@@ -593,7 +580,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     int em_mismatch = 0;
     int had_mismatch = 0;
     
-    TH2F* hist1 = 0;
+    TH2F_LW* hist1 = 0;
     if (simEm && simEm == datEm) { // non-zero match
       hist1 = m_h_ppm_em_2d_etaPhi_tt_lut_SimEqData;
     } else if (simEm != datEm) {  // mis-match
@@ -608,7 +595,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	hist1 = m_h_ppm_em_2d_etaPhi_tt_lut_DataNoSim;
       }
       if (m_debug) {
-        m_log << MSG::DEBUG << " EMTowerMismatch eta/phi/sim/dat: "
+        msg(MSG::DEBUG) << " EMTowerMismatch eta/phi/sim/dat: "
               << eta << "/" << phi << "/" << simEm << "/" << datEm << endreq;
       }
     }
@@ -638,7 +625,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	hist1 = m_h_ppm_had_2d_etaPhi_tt_lut_DataNoSim;
       }
       if (m_debug) {
-        m_log << MSG::DEBUG << " HadTowerMismatch eta/phi/sim/dat: "
+        msg(MSG::DEBUG) << " HadTowerMismatch eta/phi/sim/dat: "
               << eta << "/" << phi << "/" << simHad << "/" << datHad << endreq;
       }
     }
@@ -656,10 +643,10 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
   }    
     
   ErrorVector* save = new ErrorVector(crateError);
-  sc = m_storeGate->record(save, "L1CaloPPMMismatchVector");
+  sc = evtStore()->record(save, "L1CaloPPMMismatchVector");
   if (sc.isFailure()) {
-    m_log << MSG::ERROR << "Error recording PPM mismatch vector in TES "
-	  << endreq;
+    msg(MSG::ERROR) << "Error recording PPM mismatch vector in TES "
+	            << endreq;
   }
   
   m_ttTool->setDebug(true);
@@ -668,8 +655,8 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 
 void PPMSimBSMon::fillEventSample(int crate, int module)
 {
-  int y = module + 16*(crate%2);;
-  TH2I* hist = 0;
+  int y = module + 16*(crate%2);
+  TH2I_LW* hist = 0;
   if     (crate==0 || crate==1) hist = m_h_ppm_2d_LUT_MismatchEvents_cr0cr1;
   else if(crate==2 || crate==3) hist = m_h_ppm_2d_LUT_MismatchEvents_cr2cr3;
   else if(crate==4 || crate==5) hist = m_h_ppm_2d_LUT_MismatchEvents_cr4cr5;

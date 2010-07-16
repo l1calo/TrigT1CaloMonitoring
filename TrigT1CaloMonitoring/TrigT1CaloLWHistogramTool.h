@@ -1,5 +1,5 @@
-#ifndef TRIGT1CALOBYTESTREAM_TRIGT1CALOHISTOGRAMTOOL_H
-#define TRIGT1CALOBYTESTREAM_TRIGT1CALOHISTOGRAMTOOL_H
+#ifndef TRIGT1CALOBYTESTREAM_TRIGT1CALOLWHISTOGRAMTOOL_H
+#define TRIGT1CALOBYTESTREAM_TRIGT1CALOLWHISTOGRAMTOOL_H
 
 #include <string>
 #include <vector>
@@ -8,13 +8,14 @@
 #include "AthenaBaseComps/AthAlgTool.h"
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 
-class TH1;
-class TH2;
-class TH1F;
-class TH2F;
-class TH2I;
-class TProfile;
-class TProfile2D;
+class LWHist;
+class LWHist1D;
+class LWHist2D;
+class TH1F_LW;
+class TH2F_LW;
+class TH2I_LW;
+class TProfile_LW;
+class TProfile2D_LW;
 
 class IInterface;
 class InterfaceID;
@@ -25,16 +26,17 @@ namespace TrigConf {
 }
 
 /** Tool to provide histogramming utilities
+ *  Now uses Light Weight Histogram classes
  *
  *  @author Peter Faulkner
  */
 
-class TrigT1CaloHistogramTool : public AthAlgTool {
+class TrigT1CaloLWHistogramTool : public AthAlgTool {
 
  public:
-   TrigT1CaloHistogramTool(const std::string& type, const std::string& name,
-                           const IInterface* parent);
-   virtual ~TrigT1CaloHistogramTool();
+   TrigT1CaloLWHistogramTool(const std::string& type, const std::string& name,
+                             const IInterface* parent);
+   virtual ~TrigT1CaloLWHistogramTool();
 
    /// AlgTool InterfaceID
    static const InterfaceID& interfaceID();
@@ -55,25 +57,25 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    /// Return int/double pair as a string
    std::string intDoubleString(int num, double val, int precision = 2);
    /// Label bins with number pairs
-   void numberPairs(TH1* hist, int firstMin, int firstMax,
-                               int secondMin, int secondMax,
-			       int step = 1, int offset = 0, bool xAxis = true);
+   void numberPairs(LWHist* hist, int firstMin, int firstMax,
+                    int secondMin, int secondMax, int step = 1,
+		    int offset = 0, bool xAxis = true);
    /// Label bins with number pairs without skipping bins when stepping
-   void numberPairs2(TH1* hist, int firstMin, int firstMax,
-                               int secondMin, int secondMax,
-                               int step = 1, int offset = 0, bool xAxis = true);
+   void numberPairs2(LWHist* hist, int firstMin, int firstMax,
+                     int secondMin, int secondMax, int step = 1,
+		     int offset = 0, bool xAxis = true);
    /// Label bins with numbers
-   void numbers(TH1* hist, int min, int max, int step = 1, int offset = 0,
+   void numbers(LWHist* hist, int min, int max, int step = 1, int offset = 0,
                                                            bool xAxis = true);
    /// Split long names for Y axis
    std::string splitLine(const std::string& word, bool xAxis = true);
    /// Label bins with sub-status error bit names
-   void subStatus(TH1* hist, int offset = 0, bool xAxis = true);
+   void subStatus(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Get list of threshold names for given type
    bool thresholdNames(const std::string& type,
                              std::vector<std::string>& names);
    /// Label bins with threshold names
-   void thresholds(TH1* hist, const std::string& type, int offset = 0,
+   void thresholds(LWHist* hist, const std::string& type, int offset = 0,
                                                        bool xAxis = true);
    /// Put threshold hit values into a string suitable for printing
    std::string thresholdString(int val, int nThresh, int nBits = 1);
@@ -87,129 +89,129 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    ////////////////////////////////
 
    /// Label bins with CPM chip/local coordinate
-   void cpmChipLocalCoord(TH1* hist, int offset = 0, bool xAxis = true);
+   void cpmChipLocalCoord(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with CPM/CMM crate/module
-   void cpmCMMCrateModule(TH1* hist, int offset = 0, bool xAxis = true);
+   void cpmCMMCrateModule(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with CPM crate/CMM
-   void cpmCrateCMM(TH1* hist, int offset = 0, bool xAxis = true);
+   void cpmCrateCMM(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with CPM crate/module
-   void cpmCrateModule(TH1* hist, int offset = 0, bool xAxis = true);
+   void cpmCrateModule(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with CPM RoI threshold names
-   void cpmThresholds(TH1* hist, int offset = 0, bool xAxis = true);
+   void cpmThresholds(LWHist* hist, int offset = 0, bool xAxis = true);
 
    ////////////////////////////////
    // Labelling Utilities - JEM
    ////////////////////////////////
 
    /// Label bins with JEM crate/module
-   void jemCrateModule(TH1* hist, int offset = 0, bool xAxis = true);
+   void jemCrateModule(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with JEM/CMM crate/module
-   void jemCMMCrateModule(TH1* hist, int offset = 0, bool xAxis = true);
+   void jemCMMCrateModule(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with JEM frame/local coord
-   void jemFrameLoc(TH1* hist, int offset = 0, bool xAxis = true);
+   void jemFrameLoc(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with JEM RoI threshold names
-   void jemThresholds(TH1* hist, int offset = 0, bool xAxis = true);
+   void jemThresholds(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with Main Jet threshold names
-   void mainJetThresholds(TH1* hist, int offset = 0, bool xAxis = true);
+   void mainJetThresholds(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with Backward Jet threshold names
-   void backwardJetThresholds(TH1* hist, int offset = 0, bool xAxis = true);
+   void backwardJetThresholds(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with Forward Jet threshold names
-   void forwardJetThresholds(TH1* hist, int offset = 0, bool xAxis = true);
+   void forwardJetThresholds(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with JetEt threshold names
-   void jetEtThresholds(TH1* hist, int offset = 0, bool xAxis = true);
+   void jetEtThresholds(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with MissingEt threshold names
-   void missingEtThresholds(TH1* hist, int offset = 0, bool xAxis = true);
+   void missingEtThresholds(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with SumEt threshold names
-   void sumEtThresholds(TH1* hist, int offset = 0, bool xAxis = true);
+   void sumEtThresholds(LWHist* hist, int offset = 0, bool xAxis = true);
 
    ////////////////////////////////
    // Labelling Utilities - PPM
    ////////////////////////////////
 
    /// Label bins with PPM crate/module
-   void ppmCrateModule(TH1* hist, int firstCrate, int lastCrate,
+   void ppmCrateModule(LWHist* hist, int firstCrate, int lastCrate,
                                        int offset = 0, bool xAxis = true);
    /// Label bins with PPM error bit names
-   void ppmErrors(TH1* hist, int offset = 0, bool xAxis = true);
+   void ppmErrors(LWHist* hist, int offset = 0, bool xAxis = true);
 
    /// Label bins with PPM submodule/channel
-   void ppmSubmoduleChannel(TH1* hist, int offset = 0, bool xAxis = true);
+   void ppmSubmoduleChannel(LWHist* hist, int offset = 0, bool xAxis = true);
 
    ////////////////////////////////
    // Booking Utilities - General
    ////////////////////////////////
 
    /// Book and register a 1D histogram
-   TH1F* book1F(const std::string& name, const std::string& title,
+   TH1F_LW* book1F(const std::string& name, const std::string& title,
                                          int nx, double xmin, double xmax);
    /// Book and register a 1D histogram with variable width bins
-   TH1F* book1F(const std::string& name, const std::string& title,
+   TH1F_LW* book1F(const std::string& name, const std::string& title,
                                          int nx, const double* xbins);
    /// Book and register a 1D profile histogram
-   TProfile* bookProfile(const std::string& name, const std::string& title,
+   TProfile_LW* bookProfile(const std::string& name, const std::string& title,
                                          int nx, double xmin, double xmax);
    /// Book and register a 1D profile histogram with variable width bins
-   TProfile* bookProfile(const std::string& name, const std::string& title,
+   TProfile_LW* bookProfile(const std::string& name, const std::string& title,
                                          int nx, const double* xbins);
    /// Book and register a 2D histogram
-   TH2F* book2F(const std::string& name, const std::string& title,
+   TH2F_LW* book2F(const std::string& name, const std::string& title,
                                          int nx, double xmin, double xmax,
 		                         int ny, double ymin, double ymax);
    /// Book and register a 2D histogram with variable width bins
-   TH2F* book2F(const std::string& name, const std::string& title,
+   TH2F_LW* book2F(const std::string& name, const std::string& title,
                                          int nx, const double* xbins,
 					 int ny, double ymin, double ymax);
    /// Book and register a 2D histogram of integers displayed as text
-   TH2I* book2I(const std::string& name, const std::string& title,
+   TH2I_LW* book2I(const std::string& name, const std::string& title,
                                          int nx, double xmin, double xmax,
 					 int ny, double ymin, double ymax);
    /// Book and register a 2D profile histogram
-   TProfile2D* bookProfile2D(const std::string& name, const std::string& title,
+   TProfile2D_LW* bookProfile2D(const std::string& name, const std::string& title,
                                          int nx, double xmin, double xmax,
 					 int ny, double ymin, double ymax);
    /// Book and register a 2D profile histogram with variable width bins
-   TProfile2D* bookProfile2D(const std::string& name, const std::string& title,
+   TProfile2D_LW* bookProfile2D(const std::string& name, const std::string& title,
                                          int nx, const double* xbins,
 					 int ny, double ymin, double ymax);
    /// Book and register a 2D histogram containing event numbers as bin contents
-   TH2I* bookEventNumbers(const std::string& name, const std::string& title,
+   TH2I_LW* bookEventNumbers(const std::string& name, const std::string& title,
                                          int ny, double ymin, double ymax);
    /// Register a histogram
-   void registerHist(TH1* hist);
+   void registerHist(LWHist* hist);
 
    ////////////////////////////////
    // Booking Utilities - CPM
    ////////////////////////////////
 
    /// Book CPM crate/module vs chip/local coordinate
-   TH2F* bookCPMCrateModuleVsChipLocalCoord(const std::string& name,
+   TH2F_LW* bookCPMCrateModuleVsChipLocalCoord(const std::string& name,
                                             const std::string& title);
    /// Book CPM crate/module vs FPGA
-   TH2F* bookCPMCrateModuleVsFPGA(const std::string& name,
+   TH2F_LW* bookCPMCrateModuleVsFPGA(const std::string& name,
                                   const std::string& title);
    /// Book CPM crate/module vs thresholds
-   TH2F* bookCPMCrateModuleVsThreshold(const std::string& name,
+   TH2F_LW* bookCPMCrateModuleVsThreshold(const std::string& name,
                                        const std::string& title);
    /// Book CPM eta vs phi
-   TH2F* bookCPMEtaVsPhi(const std::string& name, const std::string& title);
+   TH2F_LW* bookCPMEtaVsPhi(const std::string& name, const std::string& title);
    /// Book CPM RoI eta vs phi
-   TH2F* bookCPMRoIEtaVsPhi(const std::string& name, const std::string& title);
+   TH2F_LW* bookCPMRoIEtaVsPhi(const std::string& name, const std::string& title);
    /// Book CPM events with error/mismatch vs crate/module
-   TH2I* bookCPMEventVsCrateModule(const std::string& name,
+   TH2I_LW* bookCPMEventVsCrateModule(const std::string& name,
                                    const std::string& title);
    /// Book CPM module vs crate
-   TH2F* bookCPMModuleVsCrate(const std::string& name,
+   TH2F_LW* bookCPMModuleVsCrate(const std::string& name,
                               const std::string& title);
    /// Book CPM module vs crate/CMM
-   TH2F* bookCPMModuleVsCrateCMM(const std::string& name,
+   TH2F_LW* bookCPMModuleVsCrateCMM(const std::string& name,
                                  const std::string& title);
    /// Book CPM sub-status errors vs crate/module
-   TH2F* bookCPMSubStatusVsCrateModule(const std::string& name,
+   TH2F_LW* bookCPMSubStatusVsCrateModule(const std::string& name,
                                        const std::string& title);
    /// Book CPM Sum/CMM
-   TH1F* bookCPMSumCMM(const std::string& name,const std::string& title);
+   TH1F_LW* bookCPMSumCMM(const std::string& name,const std::string& title);
    /// Book CPM Sum vs Threshold
-   TH2F* bookCPMSumVsThreshold(const std::string& name,
+   TH2F_LW* bookCPMSumVsThreshold(const std::string& name,
                                const std::string& title);
 
    ////////////////////////////////
@@ -217,82 +219,82 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    ////////////////////////////////
 
    /// Book JEM crate/module vs EX,Ey,Et
-   TH2F* bookJEMCrateModuleVsExEyEt(const std::string& name,
+   TH2F_LW* bookJEMCrateModuleVsExEyEt(const std::string& name,
                                     const std::string& title);
    /// Book JEM crate/module vs frame/local coord
-   TH2F* bookJEMCrateModuleVsFrameLoc(const std::string& name,
+   TH2F_LW* bookJEMCrateModuleVsFrameLoc(const std::string& name,
                                       const std::string& title);
    /// Book JEM crate/module vs thresholds
-   TH2F* bookJEMCrateModuleVsThresholds(const std::string& name,
+   TH2F_LW* bookJEMCrateModuleVsThresholds(const std::string& name,
                                         const std::string& title);
    /// Book JEM events with error/mismatch vs crate/module
-   TH2I* bookJEMEventVsCrateModule(const std::string& name,
+   TH2I_LW* bookJEMEventVsCrateModule(const std::string& name,
                                    const std::string& title);
    /// Book JEM module Vs crate
-   TH2F* bookJEMModuleVsCrate(const std::string& name,
+   TH2F_LW* bookJEMModuleVsCrate(const std::string& name,
                               const std::string& title);
    /// Book JEM eta
-   TH1F* bookJEMEta(const std::string& name, const std::string& title);
+   TH1F_LW* bookJEMEta(const std::string& name, const std::string& title);
    /// Book JEM eta vs phi
-   TH2F* bookJEMEtaVsPhi(const std::string& name, const std::string& title);
+   TH2F_LW* bookJEMEtaVsPhi(const std::string& name, const std::string& title);
    /// Book JEM RoI eta vs phi
-   TH2F* bookJEMRoIEtaVsPhi(const std::string& name, const std::string& title);
+   TH2F_LW* bookJEMRoIEtaVsPhi(const std::string& name, const std::string& title);
    /// Book JEM energy with bins matching QuadLinear encoding
-   TH1F* bookJEMQuadLinear(const std::string& name, const std::string& title,
+   TH1F_LW* bookJEMQuadLinear(const std::string& name, const std::string& title,
                                                                int scale = 1);
    /// Book JEM main jet thresholds
-   TH1F* bookMainJetThresholds(const std::string& name,
+   TH1F_LW* bookMainJetThresholds(const std::string& name,
                                const std::string& title);
    /// Book JEM backward jet thresholds
-   TH1F* bookBackwardJetThresholds(const std::string& name,
+   TH1F_LW* bookBackwardJetThresholds(const std::string& name,
                                    const std::string& title);
    /// Book JEM forward jet thresholds
-   TH1F* bookForwardJetThresholds(const std::string& name,
+   TH1F_LW* bookForwardJetThresholds(const std::string& name,
                                   const std::string& title);
    /// Book JEM JetEt thresholds
-   TH1F* bookJetEtThresholds(const std::string& name, const std::string& title);
+   TH1F_LW* bookJetEtThresholds(const std::string& name, const std::string& title);
    /// Book JEM MissingEt thresholds
-   TH1F* bookMissingEtThresholds(const std::string& name,
+   TH1F_LW* bookMissingEtThresholds(const std::string& name,
                                  const std::string& title);
    /// Book JEM SumEt thresholds
-   TH1F* bookSumEtThresholds(const std::string& name, const std::string& title);
+   TH1F_LW* bookSumEtThresholds(const std::string& name, const std::string& title);
 
    ////////////////////////////////
    // Booking Utilities - PPM
    ////////////////////////////////
 
    /// Book PPM Em eta
-   TH1F* bookPPMEmEta(const std::string name,const std::string title);
+   TH1F_LW* bookPPMEmEta(const std::string name,const std::string title);
    /// Book PPM Had eta
-   TH1F* bookPPMHadEta(const std::string name,const std::string title);
+   TH1F_LW* bookPPMHadEta(const std::string name,const std::string title);
    /// Book PPM Em eta vs phi
-   TH2F* bookPPMEmEtaVsPhi(const std::string name, const std::string title);
+   TH2F_LW* bookPPMEmEtaVsPhi(const std::string name, const std::string title);
    /// Book PPM Had eta vs phi
-   TH2F* bookPPMHadEtaVsPhi(const std::string name, const std::string title);
+   TH2F_LW* bookPPMHadEtaVsPhi(const std::string name, const std::string title);
    /// Book PPM Em eta vs phi profile
-   TProfile2D* bookProfilePPMEmEtaVsPhi(const std::string name,
+   TProfile2D_LW* bookProfilePPMEmEtaVsPhi(const std::string name,
                                         const std::string title);
    /// Book PPM Had eta vs phi profile
-   TProfile2D* bookProfilePPMHadEtaVsPhi(const std::string name,
+   TProfile2D_LW* bookProfilePPMHadEtaVsPhi(const std::string name,
                                          const std::string title);
    /// Book PPM events with error/mismatch vs crate/module
-   TH2I* bookPPMEventVsCrateModule(const std::string& name,
+   TH2I_LW* bookPPMEventVsCrateModule(const std::string& name,
                                    const std::string& title,
 				   int firstCrate, int lastCrate);
    /// Book PPM Crate/Module vs Submodule/Channel
-   TH2F* bookPPMCrateModuleVsSubmoduleChannel(const std::string& name,
+   TH2F_LW* bookPPMCrateModuleVsSubmoduleChannel(const std::string& name,
                                               const std::string& title,
 					      int firstCrate, int lastCrate);
    /// Book PPM Crate/Module vs Submodule/Channel profile
-   TProfile2D* bookProfilePPMCrateModuleVsSubmoduleChannel(
+   TProfile2D_LW* bookProfilePPMCrateModuleVsSubmoduleChannel(
                       const std::string& name, const std::string& title,
 		      int firstCrate, int lastCrate);
    /// Book PPM SubStatus vs crate/module
-   TH2F* bookPPMSubStatusVsCrateModule(const std::string& name,
+   TH2F_LW* bookPPMSubStatusVsCrateModule(const std::string& name,
                                        const std::string& title,
 				       int firstCrate, int lastCrate);
    /// Book PPM ASIC errors vs crate/module
-   TH2F* bookPPMErrorsVsCrateModule(const std::string& name,
+   TH2F_LW* bookPPMErrorsVsCrateModule(const std::string& name,
                                     const std::string& title,
 				    int firstCrate, int lastCrate);
 
@@ -300,63 +302,82 @@ class TrigT1CaloHistogramTool : public AthAlgTool {
    // Filling Utilities - General
    ////////////////////////////////
 
+   /// Get Minimum and Maximun bins and contents of 2D histogram
+   bool getMinMaxBin(LWHist2D* hist, int& minBinx, int& minBiny,
+              int& maxBinx, int& maxBiny, double& minValue, double& maxValue);
+   /// Get Minimum and Maximun bins and contents of 2D Profile histogram
+   bool getMinMaxBin(TProfile2D_LW* hist, int& minBinx, int& minBiny,
+              int& maxBinx, int& maxBiny, double& minValue, double& maxValue);
    /// Fill Error/Mismatch event number
-   void fillEventNumber(TH2I* hist, double y);
-
+   void fillEventNumber(LWHist2D* hist, double y);
    /// Fill weighted thresholds 1D
-   void fillThresholds(TH1* hist, int val, int nThresh, int nBits,
-                                                        int offset = 0);
+   void fillThresholds(LWHist1D* hist, int val, int nThresh, int nBits,
+                                                             int offset = 0);
    /// Fill weighted thresholds 2D, X axis
-   void fillThresholdsVsY(TH2* hist, int val, int y, int nThresh, int nBits,
-                                                               int offset = 0);
+   void fillThresholdsVsY(LWHist2D* hist, int val, int y, int nThresh,
+                                                   int nBits, int offset = 0);
    /// Fill weighted thresholds 2D, Y axis
-   void fillXVsThresholds(TH2* hist, int x, int val, int nThresh, int nBits,
-                                                               int offset = 0);
+   void fillXVsThresholds(LWHist2D* hist, int x, int val, int nThresh,
+                                                 int nBits, int offset = 0);
+   /// Replace the contents of one 2D histogram with those of another
+   void replaceContents(LWHist2D* histTo, LWHist2D* histFrom);
+   /// Replace the contents of one 2D Profile histogram with those of another
+   void replaceContents(TProfile2D_LW* histTo, TProfile2D_LW* histFrom);
 
    ////////////////////////////////
    // Filling Utilities - CPM
    ////////////////////////////////
 
    /// Fill CPM eta vs phi
-   void fillCPMEtaVsPhi(TH2* hist, double eta, double phi, double weight = 1.);
+   void fillCPMEtaVsPhi(LWHist2D* hist, double eta, double phi,
+                                                    double weight = 1.);
    /// Fill CPM RoI eta vs phi
-   void fillCPMRoIEtaVsPhi(TH2* hist, double eta, double phi,
-                                                            double weight = 1.);
+   void fillCPMRoIEtaVsPhi(LWHist2D* hist, double eta, double phi,
+                                                       double weight = 1.);
 
    ////////////////////////////////
    // Filling Utilities - JEM
    ////////////////////////////////
 
    ///Fill JEM eta vs phi
-   void fillJEMEtaVsPhi(TH2* hist, double eta, double phi, double weight = 1.);
+   void fillJEMEtaVsPhi(LWHist2D* hist, double eta, double phi,
+                                                    double weight = 1.);
    /// Fill JEM RoI eta vs phi
-   void fillJEMRoIEtaVsPhi(TH2* hist, double eta, double phi,
-                                                            double weight = 1.);
+   void fillJEMRoIEtaVsPhi(LWHist2D* hist, double eta, double phi,
+                                                       double weight = 1.);
    /// Fill JEM phi allowing for granularity varying with eta
-   void fillJEMPhi(TH1* hist, double eta, double phi, double weight = 1.);
+   void fillJEMPhi(LWHist1D* hist, double eta, double phi, double weight = 1.);
 
    ////////////////////////////////
    // Filling Utilities - PPM
    ////////////////////////////////
 
    /// Fill PPM Em eta vs phi
-   void fillPPMEmEtaVsPhi(TH2* hist, double eta, double phi,
-                                                            double weight = 1.);
+   void fillPPMEmEtaVsPhi(LWHist2D* hist, double eta, double phi,
+                                                      double weight = 1.);
    /// Fill PPM Had eta vs phi
-   void fillPPMHadEtaVsPhi(TH2* hist, double eta, double phi,
+   void fillPPMHadEtaVsPhi(LWHist2D* hist, double eta, double phi,
+                                                       double weight = 1.);
+   /// Fill PPM Em eta vs phi profile
+   void fillPPMEmEtaVsPhi(TProfile2D_LW* hist, double eta, double phi,
+                                                           double weight = 1.);
+   /// Fill PPM Had eta vs phi profile
+   void fillPPMHadEtaVsPhi(TProfile2D_LW* hist, double eta, double phi,
                                                             double weight = 1.);
    /// Fill PPM phi allowing for granularity varying with eta
-   void fillPPMPhi(TH1* hist, double eta, double phi, double weight = 1.);
+   void fillPPMPhi(LWHist1D* hist, double eta, double phi, double weight = 1.);
    /// Find bin in Em eta vs phi
-   int findBinPPMEmEtaVsPhi(TH2* hist, double eta, double phi);
+   void findBinPPMEmEtaVsPhi(LWHist* hist, double eta, double phi,
+                                           int& binx, int& biny);
    /// Find bin in Had eta vs phi
-   int findBinPPMHadEtaVsPhi(TH2* hist, double eta, double phi);
+   void findBinPPMHadEtaVsPhi(LWHist* hist, double eta, double phi,
+                                            int& binx, int& biny);
    /// Set bin content and optionally error in Em eta vs phi
-   void setBinPPMEmEtaVsPhi(TH2* hist, int bin, double content,
-                                                double error = -1.);
+   void setBinPPMEmEtaVsPhi(LWHist2D* hist, int binx, int biny,
+                                         double content, double error = -1.);
    /// Set bin content and optionally error in Had eta vs phi
-   void setBinPPMHadEtaVsPhi(TH2* hist, int bin, double content,
-                                                 double error = -1.);
+   void setBinPPMHadEtaVsPhi(LWHist2D* hist, int binx, int biny,
+                                         double content, double error = -1.);
 
  private:
 

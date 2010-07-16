@@ -19,13 +19,13 @@
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "DataModel/DataVector.h"
 
-class TH1;
-class TH1F;
-class TH2F;
-class TH2I;
+class LWHist;
+class TH1F_LW;
+class TH2F_LW;
+class TH2I_LW;
 class StatusCode;
 class TrigT1CaloMonErrorTool;
-class TrigT1CaloHistogramTool;
+class TrigT1CaloLWHistogramTool;
 
 namespace LVL1 {
   class CPAlgorithm;
@@ -92,7 +92,7 @@ private:
                       ErrorVector& errorsCPM, ErrorVector& errorsCMM);
   void  compare(const CmmCpHitsMap& cmmSimMap, const CmmCpHitsMap& cmmMap,
                                           ErrorVector& errors, int selection);
-  void  setLabels(TH1* hist, bool xAxis = true);
+  void  setLabels(LWHist* hist, bool xAxis = true);
   void  setupMap(const TriggerTowerCollection* coll, TriggerTowerMap& map);
   void  setupMap(const CpmTowerCollection* coll, CpmTowerMap& map);
   void  setupMap(const CpmRoiCollection* coll, CpmRoiMap& map);
@@ -106,10 +106,10 @@ private:
   int   fpga(int crate, double phi);
   LVL1::CPMTower* ttCheck(LVL1::CPMTower* tt, CpmTowerCollection* coll);
 
-  ToolHandle<LVL1::IL1EmTauTools> m_emTauTool;
-  ToolHandle<LVL1::IL1CPHitsTools> m_cpHitsTool;
-  ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
-  ToolHandle<TrigT1CaloHistogramTool> m_histTool;
+  ToolHandle<LVL1::IL1EmTauTools>       m_emTauTool;
+  ToolHandle<LVL1::IL1CPHitsTools>      m_cpHitsTool;
+  ToolHandle<TrigT1CaloMonErrorTool>    m_errorTool;
+  ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
   bool m_debug;
 
   /// Root directory
@@ -138,70 +138,70 @@ private:
   //=======================
 
   // CPM Towers
-  TH2F* m_h_EMTowerSIMeqDAT;
-  TH2F* m_h_EMTowerSIMneDAT;
-  TH2F* m_h_EMTowerSIMnoDAT;
-  TH2F* m_h_EMTowerDATnoSIM;
-  TH2F* m_h_HadTowerSIMeqDAT;
-  TH2F* m_h_HadTowerSIMneDAT;
-  TH2F* m_h_HadTowerSIMnoDAT;
-  TH2F* m_h_HadTowerDATnoSIM;
-  TH2F* m_h_EMTowerOvSIMeqDAT;
-  TH2F* m_h_EMTowerOvSIMneDAT;
-  TH2F* m_h_EMTowerOvSIMnoDAT;
-  TH2F* m_h_EMTowerOvDATnoSIM;
-  TH2F* m_h_HadTowerOvSIMeqDAT;
-  TH2F* m_h_HadTowerOvSIMneDAT;
-  TH2F* m_h_HadTowerOvSIMnoDAT;
-  TH2F* m_h_HadTowerOvDATnoSIM;
-  TH2F* m_h_FpgaTowerSIMeqDAT;
-  TH2F* m_h_FpgaTowerSIMneDAT;
-  TH2F* m_h_FpgaTowerSIMnoDAT;
-  TH2F* m_h_FpgaTowerDATnoSIM;
+  TH2F_LW* m_h_EMTowerSIMeqDAT;
+  TH2F_LW* m_h_EMTowerSIMneDAT;
+  TH2F_LW* m_h_EMTowerSIMnoDAT;
+  TH2F_LW* m_h_EMTowerDATnoSIM;
+  TH2F_LW* m_h_HadTowerSIMeqDAT;
+  TH2F_LW* m_h_HadTowerSIMneDAT;
+  TH2F_LW* m_h_HadTowerSIMnoDAT;
+  TH2F_LW* m_h_HadTowerDATnoSIM;
+  TH2F_LW* m_h_EMTowerOvSIMeqDAT;
+  TH2F_LW* m_h_EMTowerOvSIMneDAT;
+  TH2F_LW* m_h_EMTowerOvSIMnoDAT;
+  TH2F_LW* m_h_EMTowerOvDATnoSIM;
+  TH2F_LW* m_h_HadTowerOvSIMeqDAT;
+  TH2F_LW* m_h_HadTowerOvSIMneDAT;
+  TH2F_LW* m_h_HadTowerOvSIMnoDAT;
+  TH2F_LW* m_h_HadTowerOvDATnoSIM;
+  TH2F_LW* m_h_FpgaTowerSIMeqDAT;
+  TH2F_LW* m_h_FpgaTowerSIMneDAT;
+  TH2F_LW* m_h_FpgaTowerSIMnoDAT;
+  TH2F_LW* m_h_FpgaTowerDATnoSIM;
 
   // RoI
-  TH2F* m_h_RoISIMeqDAT;
-  TH2F* m_h_RoISIMneDAT;
-  TH2F* m_h_RoISIMnoDAT;
-  TH2F* m_h_RoIDATnoSIM;
-  TH2F* m_h_RoIThreshSIMeqDAT;
-  TH2F* m_h_RoIThreshSIMneDAT;
-  TH2F* m_h_RoIEtaPhiSIMeqDAT;
-  TH2F* m_h_RoIEtaPhiSIMneDAT;
-  TH2F* m_h_RoIEtaPhiSIMnoDAT;
-  TH2F* m_h_RoIEtaPhiDATnoSIM;
+  TH2F_LW* m_h_RoISIMeqDAT;
+  TH2F_LW* m_h_RoISIMneDAT;
+  TH2F_LW* m_h_RoISIMnoDAT;
+  TH2F_LW* m_h_RoIDATnoSIM;
+  TH2F_LW* m_h_RoIThreshSIMeqDAT;
+  TH2F_LW* m_h_RoIThreshSIMneDAT;
+  TH2F_LW* m_h_RoIEtaPhiSIMeqDAT;
+  TH2F_LW* m_h_RoIEtaPhiSIMneDAT;
+  TH2F_LW* m_h_RoIEtaPhiSIMnoDAT;
+  TH2F_LW* m_h_RoIEtaPhiDATnoSIM;
 
   // CPM Hits
-  TH2F* m_h_CPMHitsSIMeqDAT;
-  TH2F* m_h_CPMHitsSIMneDAT;
-  TH2F* m_h_CPMHitsSIMnoDAT;
-  TH2F* m_h_CPMHitsDATnoSIM;
-  TH2F* m_h_CPMHitsThreshSIMeqDAT;
-  TH2F* m_h_CPMHitsThreshSIMneDAT;
+  TH2F_LW* m_h_CPMHitsSIMeqDAT;
+  TH2F_LW* m_h_CPMHitsSIMneDAT;
+  TH2F_LW* m_h_CPMHitsSIMnoDAT;
+  TH2F_LW* m_h_CPMHitsDATnoSIM;
+  TH2F_LW* m_h_CPMHitsThreshSIMeqDAT;
+  TH2F_LW* m_h_CPMHitsThreshSIMneDAT;
 
   // CMM-CP Hits
-  TH2F* m_h_CMMHitsSIMeqDAT;
-  TH2F* m_h_CMMHitsSIMneDAT;
-  TH2F* m_h_CMMHitsSIMnoDAT;
-  TH2F* m_h_CMMHitsDATnoSIM;
-  TH2F* m_h_CMMHitsThreshSIMeqDAT;
-  TH2F* m_h_CMMHitsThreshSIMneDAT;
+  TH2F_LW* m_h_CMMHitsSIMeqDAT;
+  TH2F_LW* m_h_CMMHitsSIMneDAT;
+  TH2F_LW* m_h_CMMHitsSIMnoDAT;
+  TH2F_LW* m_h_CMMHitsDATnoSIM;
+  TH2F_LW* m_h_CMMHitsThreshSIMeqDAT;
+  TH2F_LW* m_h_CMMHitsThreshSIMneDAT;
 
   // CMM-CP Hit Sums
-  TH1F* m_h_SumsSIMeqDAT;
-  TH1F* m_h_SumsSIMneDAT;
-  TH1F* m_h_SumsSIMnoDAT;
-  TH1F* m_h_SumsDATnoSIM;
-  TH2F* m_h_SumsThreshSIMeqDAT;
-  TH2F* m_h_SumsThreshSIMneDAT;
+  TH1F_LW* m_h_SumsSIMeqDAT;
+  TH1F_LW* m_h_SumsSIMneDAT;
+  TH1F_LW* m_h_SumsSIMnoDAT;
+  TH1F_LW* m_h_SumsDATnoSIM;
+  TH2F_LW* m_h_SumsThreshSIMeqDAT;
+  TH2F_LW* m_h_SumsThreshSIMneDAT;
   
   // Summary
-  TH2F* m_h_CPeqSIM;
-  TH2F* m_h_CPneSIM;
-  TH1F* m_h_CPneSIMSummary;
+  TH2F_LW* m_h_CPeqSIM;
+  TH2F_LW* m_h_CPneSIM;
+  TH1F_LW* m_h_CPneSIMSummary;
 
   // Mismatch Event Number Samples
-  std::vector<TH2I*> m_sampleHists;
+  std::vector<TH2I_LW*> m_sampleHists;
 
 };
 

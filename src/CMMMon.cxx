@@ -12,9 +12,10 @@
 #include <cmath>
 #include <vector>
 
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH2I.h"
+#include "LWHists/LWHist.h"
+#include "LWHists/TH1F_LW.h"
+#include "LWHists/TH2F_LW.h"
+#include "LWHists/TH2I_LW.h"
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
@@ -24,7 +25,7 @@
 
 #include "TrigT1CaloMonitoring/CMMMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 
 #include "TrigT1CaloEvent/CMMJetHits.h"
 #include "TrigT1CaloEvent/CMMEtSums.h"
@@ -45,7 +46,7 @@ CMMMon::CMMMon( const std::string & type, const std::string & name,
 		const IInterface* parent )
   : ManagedMonitorToolBase( type, name, parent ),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloHistogramTool")
+    m_histTool("TrigT1CaloLWHistogramTool")
 /*---------------------------------------------------------*/
 {
   // This is how you declare the parameters to Gaudi so that
@@ -94,7 +95,7 @@ StatusCode CMMMon::initialize()
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloLWHistogramTool"
                     << endreq;
     return sc;
   }
@@ -215,8 +216,8 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
     m_h_CMMEnergy_error = m_histTool->book2F("cmm_2d_energy_Status",
       "Errors from CMM Energy SubStatus Word", 9, 0., 9., 36, 0., 36.);
     m_histTool->jemCMMCrateModule(m_h_CMMEnergy_error, 0, false);
-    TH2F*  hist = m_h_CMMJet_error;
-    TAxis* axis = m_h_CMMJet_error->GetXaxis();
+    TH2F_LW*  hist = m_h_CMMJet_error;
+    LWHist::LWHistAxis* axis = m_h_CMMJet_error->GetXaxis();
     for (int i = 0; i < 2; ++i) {
       axis->SetBinLabel(1, "Parity");
       axis->SetBinLabel(3, "GLinkParity");
@@ -330,8 +331,8 @@ StatusCode CMMMon::fillHistograms()
       m_histTool->fillThresholds(m_h_CMMJetHits_JEM_MainHits, jetHits, 8,
                                                                        nBits);
       if (forward) {
-        TH1F* hist = (dataID%8 == 0) ? m_h_CMMJetHits_JEM_FwdHitsLeft
-	                             : m_h_CMMJetHits_JEM_FwdHitsRight;
+        TH1F_LW* hist = (dataID%8 == 0) ? m_h_CMMJetHits_JEM_FwdHitsLeft
+	                                : m_h_CMMJetHits_JEM_FwdHitsRight;
         m_histTool->fillThresholds(hist, (jetHits >> 16), 4, nBits);
       }
 
@@ -483,7 +484,7 @@ StatusCode CMMMon::fillHistograms()
     if ((dataID == LVL1::CMMEtSums::MISSING_ET_MAP ||
          dataID == LVL1::CMMEtSums::SUM_ET_MAP) && crate == 1) {
       int nHits  = (dataID == LVL1::CMMEtSums::MISSING_ET_MAP) ? 8 : 4;
-      TH1F* hist = (dataID == LVL1::CMMEtSums::MISSING_ET_MAP)
+      TH1F_LW* hist = (dataID == LVL1::CMMEtSums::MISSING_ET_MAP)
                        ? m_h_CMMEtSums_MissingEtMap : m_h_CMMEtSums_SumEtMap;
       m_histTool->fillThresholds(hist, rawEt, nHits, 1);
 

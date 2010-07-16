@@ -2,7 +2,7 @@
 #include "TrigT1CaloMonitoring/TrigT1CaloRodMonTool.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloGlobalMonTool.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 #include "TrigT1CaloMonitoring/CPMSimBSMon.h"
 #include "TrigT1CaloMonitoring/JEPSimBSMon.h"
 #include "TrigT1CaloMonitoring/PPrMon.h"
@@ -17,7 +17,7 @@ DECLARE_TOOL_FACTORY(TrigT1CaloCpmMonTool )
 DECLARE_TOOL_FACTORY(TrigT1CaloRodMonTool )
 DECLARE_TOOL_FACTORY(TrigT1CaloGlobalMonTool )
 DECLARE_TOOL_FACTORY(TrigT1CaloMonErrorTool )
-DECLARE_TOOL_FACTORY(TrigT1CaloHistogramTool )
+DECLARE_TOOL_FACTORY(TrigT1CaloLWHistogramTool )
 DECLARE_TOOL_FACTORY(CPMSimBSMon)
 DECLARE_TOOL_FACTORY(JEPSimBSMon)
 DECLARE_TOOL_FACTORY(PPrMon)
@@ -31,7 +31,7 @@ DECLARE_FACTORY_ENTRIES(TrigT1CaloMonitoring) {
   DECLARE_ALGTOOL(TrigT1CaloRodMonTool );
   DECLARE_ALGTOOL(TrigT1CaloGlobalMonTool );
   DECLARE_ALGTOOL(TrigT1CaloMonErrorTool );
-  DECLARE_ALGTOOL(TrigT1CaloHistogramTool );
+  DECLARE_ALGTOOL(TrigT1CaloLWHistogramTool );
   DECLARE_ALGTOOL(CPMSimBSMon);
   DECLARE_ALGTOOL(JEPSimBSMon);
   DECLARE_ALGTOOL(PPrMon);

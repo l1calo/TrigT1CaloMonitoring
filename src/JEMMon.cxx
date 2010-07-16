@@ -13,10 +13,10 @@
 #include <set>
 #include <sstream>
 
-#include "TAxis.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH2I.h"
+#include "LWHists/LWHist.h"
+#include "LWHists/TH1F_LW.h"
+#include "LWHists/TH2F_LW.h"
+#include "LWHists/TH2I_LW.h"
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
@@ -26,7 +26,7 @@
 
 #include "TrigT1CaloMonitoring/JEMMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 
 #include "TrigT1CaloEvent/JEMHits.h"
 #include "TrigT1CaloEvent/JEMEtSums.h"
@@ -46,7 +46,7 @@ JEMMon::JEMMon( const std::string & type, const std::string & name,
 		const IInterface* parent )
   : ManagedMonitorToolBase( type, name, parent ),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloHistogramTool")
+    m_histTool("TrigT1CaloLWHistogramTool")
 /*---------------------------------------------------------*/
 {
   // This is how you declare the parameters to Gaudi so that
@@ -102,7 +102,7 @@ StatusCode JEMMon::initialize()
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloLWHistogramTool"
                     << endreq;
     return sc;
   }
@@ -201,7 +201,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 
     m_h_je_error = m_histTool->book2F("jem_2d_Status",
       "Error reports from JEM SubStatus Word", 11, 0., 11., 32, 0., 32.);
-    TAxis* axis = m_h_je_error->GetXaxis();
+    LWHist::LWHistAxis* axis = m_h_je_error->GetXaxis();
     axis->SetBinLabel(1, "EM Parity");
     axis->SetBinLabel(2, "HAD Parity");
     axis->SetBinLabel(3, "Link down (em)");
@@ -491,8 +491,8 @@ StatusCode JEMMon::fillHistograms()
     if (forward) {
       int fwdHits   = jetHits >> 16;
       int offset    = (module%8 == 0) ? 8 : 12;
-      TH1F* fwdHist = (module%8 == 0) ? m_h_JEMHits_FwdHitsLeft
-                                      : m_h_JEMHits_FwdHitsRight;
+      TH1F_LW* fwdHist = (module%8 == 0) ? m_h_JEMHits_FwdHitsLeft
+                                         : m_h_JEMHits_FwdHitsRight;
       m_histTool->fillThresholds(fwdHist, fwdHits, 4, nBits);
       m_histTool->fillThresholdsVsY(m_h_JEMDAQ_Hits_Map, fwdHits, ypos, 4,
                                                                 nBits, offset);
@@ -581,7 +581,7 @@ StatusCode JEMMon::fillHistograms()
     double phi = coordRange.phi();
       
     int nHits = 8;
-    TH1F* hist = m_h_JEMRoI_MainHits;
+    TH1F_LW* hist = m_h_JEMRoI_MainHits;
     if (forward) {
       nHits = 4;
       hist = (module%8 == 0) ? m_h_JEMRoI_FwdHitsLeft : m_h_JEMRoI_FwdHitsRight;
@@ -591,8 +591,8 @@ StatusCode JEMMon::fillHistograms()
     for (int thr = 0; thr < nHits; ++thr) {
       int hit = (roiHits >> thr) & 0x1;
       if (hit) {
-        TH2F* hist2 = (forward) ? m_h_JEMRoI_FwdThreshPerEtaPhi[thr]
-	                        : m_h_JEMRoI_MainThreshPerEtaPhi[thr];
+        TH2F_LW* hist2 = (forward) ? m_h_JEMRoI_FwdThreshPerEtaPhi[thr]
+	                           : m_h_JEMRoI_MainThreshPerEtaPhi[thr];
         m_histTool->fillJEMRoIEtaVsPhi(hist2, eta, phi, 1.);
       }
     }

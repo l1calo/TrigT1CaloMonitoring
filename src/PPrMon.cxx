@@ -14,12 +14,12 @@
 #include "GaudiKernel/StatusCode.h"
 #include "SGTools/StlVectorClids.h"
 
-#include "TAxis.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TH2I.h"
-#include "TProfile.h"
-#include "TProfile2D.h"
+#include "LWHists/LWHist.h"
+#include "LWHists/TH1F_LW.h"
+#include "LWHists/TH2F_LW.h"
+#include "LWHists/TH2I_LW.h"
+#include "LWHists/TProfile_LW.h"
+#include "LWHists/TProfile2D_LW.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
@@ -28,7 +28,7 @@
 
 #include "TrigT1CaloMonitoring/PPrMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 #include "TrigT1CaloToolInterfaces/IL1TriggerTowerTool.h"
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
 #include "TrigConfigSvc/ILVL1ConfigSvc.h"
@@ -44,7 +44,7 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   : ManagedMonitorToolBase ( type, name, parent ),
     m_SliceNo(15),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloHistogramTool"),
+    m_histTool("TrigT1CaloLWHistogramTool"),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool")
 /*---------------------------------------------------------*/
 {
@@ -99,7 +99,7 @@ StatusCode PPrMon::initialize()
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloLWHistogramTool"
                     << endreq;
     return sc;
   }
@@ -220,7 +220,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh) {
         buffer.str("");
         buffer << thresh;
-	TH2F* hist = m_histTool->bookPPMEmEtaVsPhi(
+	TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(
 	       "ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer.str(),
 	       "#eta - #phi Map of EM LUT > "+buffer.str());
 	m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
@@ -243,7 +243,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	  if (block == 0) buffer << thresh << ", Current Lumi-block";
 	  else            buffer << thresh << ", Lumi-block -" << block;
 	  std::string title = "#eta - #phi Map of EM LUT > "+buffer.str();
-	  TH2F* hist = m_histTool->bookPPMEmEtaVsPhi(name, title);
+	  TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(name, title);
 	  m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
 	  title = "#eta - #phi Map of Had LUT > "+buffer.str();
 	  buffer.str("");
@@ -287,7 +287,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       0xdec, 0, 0xdec);
     m_h_TT_BCID = m_histTool->book2F("ppm_2d_tt_lut_BcidBits",
       "PPM: Bits of BCID Logic Word Vs. LUT", 8, 0., 8., 256, 0., 256.);
-    TAxis* axis = m_h_TT_BCID->GetXaxis();
+    LWHist::LWHistAxis* axis = m_h_TT_BCID->GetXaxis();
     axis->SetBinLabel(1, "none");
     axis->SetBinLabel(2, "extBC only");
     axis->SetBinLabel(3, "satBC only");
@@ -356,9 +356,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	name += buffer.str();
 	title += "-"+buffer.str();
 	int nbins = (error != 4) ? 32 : 16;
-	TH2F* hist = m_histTool->book2F(name,title,nbins,0,nbins,32,0,32);
+	TH2F_LW* hist = m_histTool->book2F(name,title,nbins,0,nbins,32,0,32);
 	m_histTool->numbers(hist, 0, 15, 2);
-	TAxis* axis = hist->GetXaxis();
+	LWHist::LWHistAxis* axis = hist->GetXaxis();
 	axis->SetBinLabel(1, errNames[error].c_str());
 	if (error != 4) {
 	  m_histTool->numbers(hist, 0, 15, 2, 16);
@@ -400,24 +400,26 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       // Current lumi copied to lumi-1 and so on
       for (int block = m_TT_HitMap_LumiBlocks-1; block >= 0; --block) {
 	for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh) {
-	  TH2F* hist1 = m_h_TT_HitMap_emLUT_Thresh[
+	  TH2F_LW* hist1 = m_h_TT_HitMap_emLUT_Thresh[
 	                           (block+1)*m_TT_HitMap_ThreshMax + thresh];
-	  TH2F* hist2 = m_h_TT_HitMap_emLUT_Thresh[
+	  TH2F_LW* hist2 = m_h_TT_HitMap_emLUT_Thresh[
 	                           (block+2)*m_TT_HitMap_ThreshMax + thresh];
-	  TH2F* hist3 = m_h_TT_HitMap_hadLUT_Thresh[
+	  TH2F_LW* hist3 = m_h_TT_HitMap_hadLUT_Thresh[
 	                           (block+1)*m_TT_HitMap_ThreshMax + thresh];
-	  TH2F* hist4 = m_h_TT_HitMap_hadLUT_Thresh[
+	  TH2F_LW* hist4 = m_h_TT_HitMap_hadLUT_Thresh[
 	                           (block+2)*m_TT_HitMap_ThreshMax + thresh];
 	  hist2->Reset();
 	  hist4->Reset();
-	  for (int binx = 1; binx <= hist1->GetNbinsX(); ++binx) {
-	    for (int biny = 1; biny <= hist1->GetNbinsY(); biny++) {
-	      double val = hist1->GetBinContent(binx, biny);
-	      if (val) hist2->SetBinContent(binx, biny, val);
-	      val = hist3->GetBinContent(binx, biny);
-	      if (val) hist4->SetBinContent(binx, biny, val);
-            }
-          }
+	  unsigned ix, iy;
+	  double content, error;
+	  hist1->resetActiveBinLoop();
+	  while (hist1->getNextActiveBin(ix, iy, content, error)) {
+	    if (content > 0.) hist2->SetBinContent(ix, iy, content);
+	  }
+	  hist3->resetActiveBinLoop();
+	  while (hist3->getNextActiveBin(ix, iy, content, error)) {
+	    if (content > 0.) hist4->SetBinContent(ix, iy, content);
+	  }
 	  if (block == 0) {
             hist1->Reset();
 	    hist3->Reset();
@@ -436,7 +438,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh) {
         buffer.str("");
 	buffer << thresh;
-	TH2F* hist = m_histTool->bookPPMEmEtaVsPhi(
+	TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(
 	  "ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer.str(),
 	  "#eta - #phi Map of EM LUT > "+buffer.str());
 	m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
@@ -457,13 +459,14 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 StatusCode PPrMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  msg(MSG::DEBUG) << "in fillHistograms()" << endreq;
+  const bool debug = msgLvl(MSG::DEBUG);
+  if (debug) msg(MSG::DEBUG) << "in fillHistograms()" << endreq;
 
   // Skip events believed to be corrupt
 
   if (m_errorTool->corrupt()) {
     m_h_NumberEvents->Fill(1.);
-    msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
+    if (debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
   m_h_NumberEvents->Fill(0.);  
@@ -477,8 +480,8 @@ StatusCode PPrMon::fillHistograms()
   StatusCode sc = evtStore()->retrieve(TriggerTowerTES,
                                                 m_TriggerTowerContainerName); 
   if (sc.isFailure()) {
-    msg(MSG::DEBUG) << "No TriggerTower found in TES at "
-                    << m_TriggerTowerContainerName << endreq ;
+    if (debug) msg(MSG::DEBUG) << "No TriggerTower found in TES at "
+                               << m_TriggerTowerContainerName << endreq ;
     return StatusCode::SUCCESS;
   }
 
@@ -487,7 +490,7 @@ StatusCode PPrMon::fillHistograms()
   const EventInfo* evInfo = 0;
   sc = evtStore()->retrieve(evInfo);
   if (sc.isFailure()) {
-    msg(MSG::DEBUG) << "No EventInfo found" << endreq;
+    if (debug) msg(MSG::DEBUG) << "No EventInfo found" << endreq;
   } else {
     const EventID* evID = evInfo->event_ID();
     if (evID) bunchCrossing = evID->bunch_crossing_id();

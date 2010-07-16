@@ -17,16 +17,16 @@
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "GaudiKernel/ToolHandle.h"
 
-class TH1F;
-class TH2F;
-class TH2I;
-class TProfile;
-class TProfile2D;
+class TH1F_LW;
+class TH2F_LW;
+class TH2I_LW;
+class TProfile_LW;
+class TProfile2D_LW;
 
 class StatusCode;
 
 class TrigT1CaloMonErrorTool;
-class TrigT1CaloHistogramTool;
+class TrigT1CaloLWHistogramTool;
 
 namespace LVL1 {
   class IL1TriggerTowerTool;
@@ -76,58 +76,58 @@ private:
   std::string m_EventPathInRootFile;
      
   // Tool to retrieve bytestream errors
-  ToolHandle<TrigT1CaloMonErrorTool>    m_errorTool;
-  ToolHandle<TrigT1CaloHistogramTool>   m_histTool;
-  ToolHandle<LVL1::IL1TriggerTowerTool> m_ttTool; 
+  ToolHandle<TrigT1CaloMonErrorTool>      m_errorTool;
+  ToolHandle<TrigT1CaloLWHistogramTool>   m_histTool;
+  ToolHandle<LVL1::IL1TriggerTowerTool>   m_ttTool; 
 
-  TH2F* m_h_TT_HitMap_emADC_00100;
-  TH2F* m_h_TT_HitMap_hadADC_00100;
-  TH1F* m_h_dist_had_max;
-  TH1F* m_h_dist_em_max;
+  TH2F_LW* m_h_TT_HitMap_emADC_00100;
+  TH2F_LW* m_h_TT_HitMap_hadADC_00100;
+  TH1F_LW* m_h_dist_had_max;
+  TH1F_LW* m_h_dist_em_max;
 
-  TProfile2D* m_p_TT_HitMap_emADC_00100;
-  TProfile2D* m_p_TT_HitMap_hadADC_00100;
+  TProfile2D_LW* m_p_TT_HitMap_emADC_00100;
+  TProfile2D_LW* m_p_TT_HitMap_hadADC_00100;
 
   //timing HitMaps
-  TProfile2D* m_h_TT_ADC_emTiming_signal;
-  TProfile2D* m_h_TT_ADC_hadTiming_signal;
+  TProfile2D_LW* m_h_TT_ADC_emTiming_signal;
+  TProfile2D_LW* m_h_TT_ADC_hadTiming_signal;
   
-  std::vector<TProfile*> m_h_TT_SignalProfile;
+  std::vector<TProfile_LW*> m_h_TT_SignalProfile;
 
   //LUT Hitmaps per threshold
-  std::vector<TH2F*> m_h_TT_HitMap_emLUT_Thresh;
-  std::vector<TH2F*> m_h_TT_HitMap_hadLUT_Thresh;
-  TProfile2D* m_p_TT_HitMap_emLUT_etAv;
-  TProfile2D* m_p_TT_HitMap_hadLUT_etAv;
+  std::vector<TH2F_LW*> m_h_TT_HitMap_emLUT_Thresh;
+  std::vector<TH2F_LW*> m_h_TT_HitMap_hadLUT_Thresh;
+  TProfile2D_LW* m_p_TT_HitMap_emLUT_etAv;
+  TProfile2D_LW* m_p_TT_HitMap_hadLUT_etAv;
 
   //distribution of LUT peak per detector region
-  TH1F* m_h_TT_emLUT;
-  TH1F* m_h_TT_emLUT_eta;
-  TH1F* m_h_TT_emLUT_phi;
+  TH1F_LW* m_h_TT_emLUT;
+  TH1F_LW* m_h_TT_emLUT_eta;
+  TH1F_LW* m_h_TT_emLUT_phi;
 
-  TH1F* m_h_TT_hadLUT; 
-  TH1F* m_h_TT_hadLUT_eta;
-  TH1F* m_h_TT_hadLUT_phi;
+  TH1F_LW* m_h_TT_hadLUT; 
+  TH1F_LW* m_h_TT_hadLUT_eta;
+  TH1F_LW* m_h_TT_hadLUT_phi;
 
-  TH1F* m_h_TT_BCLUT;
-  TH2F* m_h_TT_BCID;
+  TH1F_LW* m_h_TT_BCLUT;
+  TH2F_LW* m_h_TT_BCID;
    
   // error
   int m_NoEvents;
-  TH1F* m_h_TT_Error; // Error summary
-  TH2F* m_h_TT_error_Crate_03; // just ROD sub-status word
-  TH2F* m_h_TT_error_Crate_47; //just ROD sub-status word
-  TH2F* m_h_fwPpmError_Crate_03; //not implemented yet
-  TH2F* m_h_fwPpmError_Crate_47; //      "  
-  std::vector<TH2F*> m_h_ErrorDetails; //ASIC errors by MCM
-  TH2I* m_h_TT_EventNumbers;
-  TH2I* m_h_TT_ASICEventNumbers;
+  TH1F_LW* m_h_TT_Error; // Error summary
+  TH2F_LW* m_h_TT_error_Crate_03; // just ROD sub-status word
+  TH2F_LW* m_h_TT_error_Crate_47; //just ROD sub-status word
+  TH2F_LW* m_h_fwPpmError_Crate_03; //not implemented yet
+  TH2F_LW* m_h_fwPpmError_Crate_47; //      "  
+  std::vector<TH2F_LW*> m_h_ErrorDetails; //ASIC errors by MCM
+  TH2I_LW* m_h_TT_EventNumbers;
+  TH2I_LW* m_h_TT_ASICEventNumbers;
 
   // number of triggered slice
-  TH1F* m_h_TT_triggeredSlice_em;
-  TH1F* m_h_TT_triggeredSlice_had;
+  TH1F_LW* m_h_TT_triggeredSlice_em;
+  TH1F_LW* m_h_TT_triggeredSlice_had;
    
-  TH1F* m_h_NumberEvents;  
+  TH1F_LW* m_h_NumberEvents;  
 };
 
 #endif

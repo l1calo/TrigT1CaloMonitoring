@@ -3,20 +3,21 @@ package TrigT1CaloMonitoring
 author Johanna Fleckner
 
 use AtlasPolicy         	AtlasPolicy-*
-use AtlasCLHEP          	AtlasCLHEP-00-*       	External
+#use AtlasCLHEP          	AtlasCLHEP-00-*       	External
 use GaudiInterface      	GaudiInterface-*      	External
 #use DataCollection       	DataCollection-*       	External
-use StoreGate           	StoreGate-*           	Control
+#use StoreGate           	StoreGate-*           	Control
 use SGTools                     SGTools-*               Control
 use AthenaBaseComps             AthenaBaseComps-*       Control
 use AthenaMonitoring    	AthenaMonitoring-* 	Control
 use DataModel 			DataModel-*		Control 
-use Identifier 			Identifier-*		DetectorDescription
+#use Identifier 			Identifier-*		DetectorDescription
 
-use AtlasDoxygen		AtlasDoxygen-00-*	Tools
-use AtlasROOT			AtlasROOT-02-*		External
+#use AtlasDoxygen		AtlasDoxygen-00-*	Tools
+#use AtlasROOT			AtlasROOT-02-*		External
+use LWHists                     LWHists-*               Tools
 
-use CaloIdentifier      	CaloIdentifier-00-*   	Calorimeter
+#use CaloIdentifier      	CaloIdentifier-00-*   	Calorimeter
 
 use EventInfo            	EventInfo-*	        Event
 
@@ -28,9 +29,9 @@ use TrigT1Interfaces    	TrigT1Interfaces-*    	Trigger/TrigT1
 use TrigT1CaloToolInterfaces	TrigT1CaloToolInterfaces-* Trigger/TrigT1
 
 use TrigT1CaloCalibConditions   TrigT1CaloCalibConditions-* Trigger/TrigT1
-use TrigT1CaloCalibTools	TrigT1CaloCalibTools-*	Trigger/TrigT1
+#use TrigT1CaloCalibTools	TrigT1CaloCalibTools-*	Trigger/TrigT1
 use TrigT1CaloCondSvc           TrigT1CaloCondSvc-*     Trigger/TrigT1
-use CaloTriggerTool		CaloTriggerTool-*	Calorimeter		
+#use CaloTriggerTool		CaloTriggerTool-*	Calorimeter		
 use TrigConfigSvc               TrigConfigSvc-*         Trigger/TrigConfiguration
 use TrigConfL1Data              TrigConfL1Data-*        Trigger/TrigConfiguration
 

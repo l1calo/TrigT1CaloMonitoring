@@ -17,9 +17,9 @@
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 
-class TH2F;
+class TH2F_LW;
 class StatusCode;
-class TrigT1CaloHistogramTool;
+class TrigT1CaloLWHistogramTool;
 
 class TrigT1CaloGlobalMonTool: public ManagedMonitorToolBase
 {
@@ -75,7 +75,7 @@ private:
 
   typedef std::vector<int> ErrorVector;
 
-  ToolHandle<TrigT1CaloHistogramTool> m_histTool;
+  ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
 
   /// Root directory
   std::string m_rootDir;
@@ -89,7 +89,7 @@ private:
   //   Global Overview plot
   //=======================
 
-  TH2F* m_h_global;
+  TH2F_LW* m_h_global;
 
 };
 

@@ -18,14 +18,14 @@
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "DataModel/DataVector.h"
 
-class TH1;
-class TH1F;
-class TH2F;
-class TH2I;
+class LWHist;
+class TH1F_LW;
+class TH2F_LW;
+class TH2I_LW;
 
 class StatusCode;
 class TrigT1CaloMonErrorTool;
-class TrigT1CaloHistogramTool;
+class TrigT1CaloLWHistogramTool;
 
 namespace LVL1 {
   class RODHeader;
@@ -61,13 +61,13 @@ private:
   typedef std::vector<unsigned int>   ROBErrorCollection;
   typedef std::vector<int>            ErrorVector;
   
-  void setLabelsStatus(TH1* hist, bool xAxis = true);
-  void setLabelsROBStatusGen(TH1* hist, bool xAxis = true);
-  void setLabelsROBStatusSpec(TH1* hist, bool xAxis = true);
-  void setLabelsUnpacking(TH1* hist, bool xAxis = true);
+  void setLabelsStatus(LWHist* hist, bool xAxis = true);
+  void setLabelsROBStatusGen(LWHist* hist, bool xAxis = true);
+  void setLabelsROBStatusSpec(LWHist* hist, bool xAxis = true);
+  void setLabelsUnpacking(LWHist* hist, bool xAxis = true);
 
-  ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
-  ToolHandle<TrigT1CaloHistogramTool> m_histTool;
+  ToolHandle<TrigT1CaloMonErrorTool>    m_errorTool;
+  ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
 
   /// DAQ ROD header container StoreGate key
   std::string m_rodHeaderLocation;
@@ -94,38 +94,38 @@ private:
   //   Payload plots
   //=======================
 
-  TH1F* m_h_ROD_PP;
-  TH1F* m_h_ROD_CP;
-  TH1F* m_h_ROD_JEP;
-  TH1F* m_h_ROD_RoI;
+  TH1F_LW* m_h_ROD_PP;
+  TH1F_LW* m_h_ROD_CP;
+  TH1F_LW* m_h_ROD_JEP;
+  TH1F_LW* m_h_ROD_RoI;
 
   //=======================
   //   Status bit plots
   //=======================
 
-  TH2F* m_h_ROD_PP_stat;
-  TH2F* m_h_ROD_CPJEP_stat;
-  TH2F* m_h_ROD_RoI_stat;
-  TH2F* m_h_ROD_PP_robgen;
-  TH2F* m_h_ROD_CPJEP_robgen;
-  TH2F* m_h_ROD_RoI_robgen;
-  TH2F* m_h_ROD_PP_robspec;
-  TH2F* m_h_ROD_CPJEP_robspec;
-  TH2F* m_h_ROD_RoI_robspec;
-  TH2F* m_h_ROD_PP_unp;
-  TH2F* m_h_ROD_CPJEP_unp;
-  TH2F* m_h_ROD_RoI_unp;
+  TH2F_LW* m_h_ROD_PP_stat;
+  TH2F_LW* m_h_ROD_CPJEP_stat;
+  TH2F_LW* m_h_ROD_RoI_stat;
+  TH2F_LW* m_h_ROD_PP_robgen;
+  TH2F_LW* m_h_ROD_CPJEP_robgen;
+  TH2F_LW* m_h_ROD_RoI_robgen;
+  TH2F_LW* m_h_ROD_PP_robspec;
+  TH2F_LW* m_h_ROD_CPJEP_robspec;
+  TH2F_LW* m_h_ROD_RoI_robspec;
+  TH2F_LW* m_h_ROD_PP_unp;
+  TH2F_LW* m_h_ROD_CPJEP_unp;
+  TH2F_LW* m_h_ROD_RoI_unp;
 
   //=======================
   //   Summary plots
   //=======================
 
-  TH1F* m_h_ROD_summary;
-  TH1F* m_h_ROB_summary;
-  TH1F* m_h_Unp_summary;
-  TH2I* m_h_ROD_events;
-  TH2I* m_h_ROB_events;
-  TH2I* m_h_Unp_events;
+  TH1F_LW* m_h_ROD_summary;
+  TH1F_LW* m_h_ROB_summary;
+  TH1F_LW* m_h_Unp_summary;
+  TH2I_LW* m_h_ROD_events;
+  TH2I_LW* m_h_ROB_events;
+  TH2I_LW* m_h_Unp_events;
 
 };
 

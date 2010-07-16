@@ -20,9 +20,9 @@
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 
-class TH1F;
-class TH2F;
-class TH2I;
+class TH1F_LW;
+class TH2F_LW;
+class TH2I_LW;
 
 class StatusCode;
 
@@ -32,7 +32,7 @@ namespace LVL1 {
 }
 
 class TrigT1CaloMonErrorTool;
-class TrigT1CaloHistogramTool;
+class TrigT1CaloLWHistogramTool;
 
 class CMMMon : public ManagedMonitorToolBase
 {
@@ -56,8 +56,8 @@ public:
 private:
 
    // Tool to retrieve bytestream errors
-   ToolHandle<TrigT1CaloMonErrorTool> m_errorTool;
-   ToolHandle<TrigT1CaloHistogramTool> m_histTool;
+   ToolHandle<TrigT1CaloMonErrorTool>    m_errorTool;
+   ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
 
    /** location of data */
    std::string m_CMMJetHitsLocation;
@@ -69,44 +69,44 @@ private:
 
    /** Histos */   
    // CMM Jet Hits
-   TH1F* m_h_CMMJetHits_MainJets;
-   TH1F* m_h_CMMJetHits_FwdJetsRight;
-   TH1F* m_h_CMMJetHits_FwdJetsLeft;
-   TH1F* m_h_CMMJetHits_EtMap;
+   TH1F_LW* m_h_CMMJetHits_MainJets;
+   TH1F_LW* m_h_CMMJetHits_FwdJetsRight;
+   TH1F_LW* m_h_CMMJetHits_FwdJetsLeft;
+   TH1F_LW* m_h_CMMJetHits_EtMap;
    // JEM Hits
-   TH1F* m_h_CMMJetHits_JEM_MainHits;
-   TH1F* m_h_CMMJetHits_JEM_FwdHitsRight;
-   TH1F* m_h_CMMJetHits_JEM_FwdHitsLeft;
-   TH1F* m_h_CMMJetHits_JEM_Crate0ParityError;
-   TH1F* m_h_CMMJetHits_JEM_Crate1ParityError;
+   TH1F_LW* m_h_CMMJetHits_JEM_MainHits;
+   TH1F_LW* m_h_CMMJetHits_JEM_FwdHitsRight;
+   TH1F_LW* m_h_CMMJetHits_JEM_FwdHitsLeft;
+   TH1F_LW* m_h_CMMJetHits_JEM_Crate0ParityError;
+   TH1F_LW* m_h_CMMJetHits_JEM_Crate1ParityError;
 
    // CMM Et Sums
-   TH1F* m_h_CMMEtSums_Ex;
-   TH1F* m_h_CMMEtSums_Ey;
-   TH1F* m_h_CMMEtSums_Et;
-   TH1F* m_h_CMMEtSums_MissingEtMap;
-   TH1F* m_h_CMMEtSums_SumEtMap;
+   TH1F_LW* m_h_CMMEtSums_Ex;
+   TH1F_LW* m_h_CMMEtSums_Ey;
+   TH1F_LW* m_h_CMMEtSums_Et;
+   TH1F_LW* m_h_CMMEtSums_MissingEtMap;
+   TH1F_LW* m_h_CMMEtSums_SumEtMap;
    // JEM Et Sums
-   TH1F*  m_h_CMMEtSums_JEM_Ex;
-   TH1F*  m_h_CMMEtSums_JEM_Ey;
-   TH1F*  m_h_CMMEtSums_JEM_Et; 
+   TH1F_LW*  m_h_CMMEtSums_JEM_Ex;
+   TH1F_LW*  m_h_CMMEtSums_JEM_Ey;
+   TH1F_LW*  m_h_CMMEtSums_JEM_Et; 
 
    // CMM RoI
-   TH1F* m_h_CMMRoI_JetEtHits;
-   TH1F* m_h_CMMRoI_SumEtHits;
-   TH1F* m_h_CMMRoI_MissingEtHits;
+   TH1F_LW* m_h_CMMRoI_JetEtHits;
+   TH1F_LW* m_h_CMMRoI_SumEtHits;
+   TH1F_LW* m_h_CMMRoI_MissingEtHits;
 
-   TH1F* m_h_CMMRoI_Ex;
-   TH1F* m_h_CMMRoI_Ey;
-   TH1F* m_h_CMMRoI_Et;
+   TH1F_LW* m_h_CMMRoI_Ex;
+   TH1F_LW* m_h_CMMRoI_Ey;
+   TH1F_LW* m_h_CMMRoI_Et;
 
    //errors
-   TH2F* m_h_CMMJet_error;
-   TH2F* m_h_CMMEnergy_error;
-   TH1F* m_h_CMMRoI_error;
-   TH1F* m_h_CMM_ErrorSummary;
-   TH1F* m_h_TriggeredSlice;	  
-   TH2I* m_h_CMM_Events;
+   TH2F_LW* m_h_CMMJet_error;
+   TH2F_LW* m_h_CMMEnergy_error;
+   TH1F_LW* m_h_CMMRoI_error;
+   TH1F_LW* m_h_CMM_ErrorSummary;
+   TH1F_LW* m_h_TriggeredSlice;	  
+   TH2I_LW* m_h_CMM_Events;
 };
 
 

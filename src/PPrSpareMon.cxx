@@ -8,22 +8,21 @@
 //
 // ********************************************************************
 
-#include "TH2.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TProfile2D.h"
+#include "LWHists/LWHist.h"
+#include "LWHists/TH1F_LW.h"
+#include "LWHists/TH2F_LW.h"
+#include "LWHists/TH2I_LW.h"
+#include "LWHists/TProfile2D_LW.h"
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
-
-#include "StoreGate/StoreGateSvc.h"
 #include "SGTools/StlVectorClids.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
 #include "TrigT1CaloMonitoring/PPrSpareMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloHistogramTool.h"
+#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 
 #include "TrigT1CaloEvent/TriggerTower_ClassDEF.h"
 #include "TrigT1CaloEvent/TriggerTowerCollection.h"
@@ -36,7 +35,7 @@ PPrSpareMon::PPrSpareMon(const std::string & type, const std::string & name,
   : ManagedMonitorToolBase ( type, name, parent ),
     m_SliceNo(15),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloHistogramTool")
+    m_histTool("TrigT1CaloLWHistogramTool")
 /*---------------------------------------------------------*/
 {
   declareProperty("BS_TriggerTowerContainer",
@@ -84,7 +83,7 @@ StatusCode PPrSpareMon::initialize()
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
-    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloLWHistogramTool"
                     << endreq;
     return sc;
   }
@@ -189,9 +188,9 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
 	name += buffer.str();
 	title += "-"+buffer.str();
 	int nbins = (error != 4) ? 32 : 16;
-	TH2F* hist = m_histTool->book2F(name,title,nbins,0,nbins,32,0,32);
+	TH2F_LW* hist = m_histTool->book2F(name,title,nbins,0,nbins,32,0,32);
 	m_histTool->numbers(hist, 0, 15, 2);
-	TAxis* axis = hist->GetXaxis();
+	LWHist::LWHistAxis* axis = hist->GetXaxis();
 	axis->SetBinLabel(1, errNames[error].c_str());
 	if (error != 4) {
 	  m_histTool->numbers(hist, 0, 15, 2, 16);
@@ -223,12 +222,13 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
 StatusCode PPrSpareMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  msg(MSG::DEBUG) << "in fillHistograms()" << endreq;
+  const bool debug = msgLvl(MSG::DEBUG);
+  if (debug) msg(MSG::DEBUG) << "in fillHistograms()" << endreq;
 
   // Skip events believed to be corrupt
 
   if (m_errorTool->corrupt()) {
-    msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
+    if (debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
 
@@ -242,8 +242,8 @@ StatusCode PPrSpareMon::fillHistograms()
     sc = evtStore()->retrieve(TriggerTowerTES, m_TriggerTowerContainerName); 
   } else sc = StatusCode::FAILURE;
   if (sc.isFailure()) {
-    msg(MSG::DEBUG) << "No TriggerTower found in TES at "
-                    << m_TriggerTowerContainerName<< endreq ;
+    if (debug) msg(MSG::DEBUG) << "No TriggerTower found in TES at "
+                               << m_TriggerTowerContainerName<< endreq ;
     return StatusCode::SUCCESS;
   }
 
@@ -355,7 +355,7 @@ StatusCode PPrSpareMon::fillHistograms()
      
   // Write overview vector to StoreGate
   //std::vector<int>* save = new std::vector<int>(overview);
-  //sc = m_storeGate->record(save, "L1CaloPPMSpareErrorVector");
+  //sc = evtStore()->record(save, "L1CaloPPMSpareErrorVector");
   //if (sc != StatusCode::SUCCESS)
   //  {
   //    msg(MSG::ERROR) << "Error recording PPMSpare error vector in TES "
