@@ -1,4 +1,8 @@
 2010-07-26  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-07-02
+        * Fix merge method for event number histograms.
+
+2010-07-26  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-07-01
         * Fix compiler warning in PPrSpareMon.cxx.
 

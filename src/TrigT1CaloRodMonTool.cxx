@@ -110,11 +110,14 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   std::string dir1(m_rootDir + "/ROD");
   MonGroup monShift ( this, dir1, shift, run );
   MonGroup monExpert( this, dir1, expert, run );
+  MonGroup monEvents( this, dir1, expert, run, "", "eventSample" );
   MonGroup monAverage( this, dir1, expert, run, "", "weightedAverage" );
   MonGroup monROB( this, dir1 + "/ROBStatus", expert, run );
+  MonGroup monROBEvents( this, dir1 + "/ROBStatus", expert, run, "",
+                                                        "eventSample" );
   MonGroup monUnpack( this, dir1 + "/Unpacking", expert, run );
-  std::string dir2(m_rootDir + "/Overview/Errors");
-  MonGroup monGlobal( this, dir2, shift, run );
+  MonGroup monUnpackEvents( this, dir1 + "/Unpacking", expert, run, "",
+                                                        "eventSample" );
 
   //  Payload Averages
 
@@ -299,6 +302,8 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   //  Error event numbers
 
+  m_histTool->setMonGroup(&monEvents);
+
   m_h_ROD_events = m_histTool->bookEventNumbers("rod_2d_ErrorEventNumbers",
                          "ROD Error Event Numbers",
 			 NumberOfStatusBins, 0, NumberOfStatusBins);
@@ -308,7 +313,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_ROD_events->GetYaxis()->SetBinLabel(1+NoPayload,
                                                   "#splitline{No}{Payload}");
 
-  m_histTool->setMonGroup(&monROB);
+  m_histTool->setMonGroup(&monROBEvents);
 
   m_h_ROB_events = m_histTool->bookEventNumbers("rod_2d_RobErrorEventNumbers",
                          "ROB Status Error Event Numbers", 7, 0, 7);
@@ -316,7 +321,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_ROB_events->GetYaxis()->SetBinLabel(6, "#splitline{Other}{Generic}");
   m_h_ROB_events->GetYaxis()->SetBinLabel(7, "Specific");
 
-  m_histTool->setMonGroup(&monUnpack);
+  m_histTool->setMonGroup(&monUnpackEvents);
 
   m_h_Unp_events = m_histTool->bookEventNumbers(
                          "rod_2d_UnpackErrorEventNumbers",

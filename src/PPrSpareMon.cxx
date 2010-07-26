@@ -111,6 +111,8 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
 
     MonGroup TT_ADC(this, m_PathInRootFile+"/ADC", shift, run);
     MonGroup TT_Error(this, m_ErrorPathInRootFile, shift, run);
+    MonGroup TT_ErrorEvents(this, m_ErrorPathInRootFile, expert, run, "",
+                                                                "eventSample" );
     MonGroup TT_ErrorDetail(this, m_ErrorPathInRootFile+"/Detail", expert, run);
 
     std::string name,title;
@@ -139,15 +141,6 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
                    "Spare Channels Summary of SubStatus Errors", 8, 0., 8.);
     m_histTool->subStatus(m_h_TT_Error);
 
-    m_h_TT_EventNumbers = m_histTool->bookEventNumbers(
-      "ppmspare_2d_ErrorEventNumbers",
-      "Spare Channels SubStatus Error Event Numbers", 8, 0., 8.);
-    m_histTool->subStatus(m_h_TT_EventNumbers, 0, false);
-    m_h_TT_ASICEventNumbers = m_histTool->bookEventNumbers(
-      "ppmspare_2d_ASICErrorEventNumbers",
-      " Spare Channels ASIC Error Field Event Numbers", 8, 0., 8.);
-    m_histTool->ppmErrors(m_h_TT_ASICEventNumbers, 0, false);
-
     //---------------------- SubStatus Word errors ---------------------------
       
     //L1Calo Substatus word
@@ -159,6 +152,17 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
     m_h_fwPpmError_Crate_25 = m_histTool->bookPPMErrorsVsCrateModule(
       "ppmspare_2d_ErrorField25",
       "Spare Channels: Errors from ASIC error field (crates 2-5)", 2, 5);
+
+    m_histTool->setMonGroup(&TT_ErrorEvents);
+
+    m_h_TT_EventNumbers = m_histTool->bookEventNumbers(
+      "ppmspare_2d_ErrorEventNumbers",
+      "Spare Channels SubStatus Error Event Numbers", 8, 0., 8.);
+    m_histTool->subStatus(m_h_TT_EventNumbers, 0, false);
+    m_h_TT_ASICEventNumbers = m_histTool->bookEventNumbers(
+      "ppmspare_2d_ASICErrorEventNumbers",
+      " Spare Channels ASIC Error Field Event Numbers", 8, 0., 8.);
+    m_histTool->ppmErrors(m_h_TT_ASICEventNumbers, 0, false);
 
     m_histTool->setMonGroup(&TT_ErrorDetail);
 

@@ -145,6 +145,8 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   MonGroup monShift( this, dir1 + "/Errors/Hardware", shift, run );
   MonGroup monExpert( this, dir1 + "/Errors/Hardware", expert, run );
   MonGroup monDetail( this, dir1 + "/Errors/Hardware/Detail", expert, run );
+  MonGroup monEvents( this, dir1 + "/Errors/Hardware/Detail", expert, run, "",
+                                                               "eventSample" );
   MonGroup monCPMin( this, dir1 + "/Input", expert, run );
   MonGroup monRoIs( this, dir1 + "/Output/RoI", expert, run );
   MonGroup monCPMout( this, dir1 + "/Output/Thresholds", expert, run);
@@ -297,7 +299,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
                          "CP Error Summary;;Events",
                           NumberOfSummaryBins, 0, NumberOfSummaryBins);
 
-  m_histTool->setMonGroup(&monDetail);
+  m_histTool->setMonGroup(&monEvents);
 
   m_h_CP_events = m_histTool->bookEventNumbers("cpm_2d_ErrorEventNumbers",
                          "CP Error Event Numbers",

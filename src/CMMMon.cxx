@@ -130,6 +130,8 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
     MonGroup CMM_energy( this, m_PathInRootFile+"/Output/Energy", expert, run );
     MonGroup CMM_RoI( this, m_PathInRootFile+"/Output/RoI", shift, run );
     MonGroup CMM_transmission( this, m_ErrorPathInRootFile, shift, run );
+    MonGroup CMM_errorEvents( this, m_ErrorPathInRootFile, expert, run, "",
+                                                                "eventSample" );
 
     m_histTool->setMonGroup(&CMM_inputThresh);
 
@@ -254,6 +256,9 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
     m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(1,"CMM Status");
     m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(2,"Parity flags");
     m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(3,"Other");
+
+    m_histTool->setMonGroup(&CMM_errorEvents);
+
     m_h_CMM_Events = m_histTool->bookEventNumbers("cmm_2d_ErrorEventNumbers",
       "JEM-CMM Error Event Numbers", 3, 0., 3.);
     m_h_CMM_Events->GetYaxis()->SetBinLabel(1,"#splitline{CMM}{Status}");

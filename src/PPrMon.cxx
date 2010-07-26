@@ -142,6 +142,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     MonGroup TT_LUTPeakDist(this, m_PathInRootFile+"/LUT/Distributions",
                                                                   shift, run);
     MonGroup TT_Error(this, m_ErrorPathInRootFile, shift, run);
+    MonGroup TT_ErrorEvents(this, m_ErrorPathInRootFile, expert, run, "",
+                                                                 "eventSample");
     MonGroup TT_ErrorDetail(this, m_ErrorPathInRootFile+"/Detail", expert, run);
     MonGroup NoEvents(this, m_EventPathInRootFile, expert, run);
 
@@ -305,14 +307,6 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
                                     "Summary of SubStatus Errors", 8, 0., 8.);
     m_histTool->subStatus(m_h_TT_Error);
 
-    m_h_TT_EventNumbers = m_histTool->bookEventNumbers(
-      "ppm_2d_ErrorEventNumbers", "SubStatus Error Event Numbers", 8, 0., 8.);
-    m_histTool->subStatus(m_h_TT_EventNumbers, 0, false);
-    m_h_TT_ASICEventNumbers = m_histTool->bookEventNumbers(
-      "ppm_2d_ASICErrorEventNumbers", "ASIC Error Field Event Numbers",
-                                                                   8, 0., 8.);
-    m_histTool->ppmErrors(m_h_TT_ASICEventNumbers, 0, false);
-
     //---------------------------- SubStatus Word errors ---------------------
       
     //L1Calo Substatus word
@@ -326,6 +320,16 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       "ppm_2d_ErrorField03", "Errors from ASIC error field (crates 0-3)", 0, 3);
     m_h_fwPpmError_Crate_47 = m_histTool->bookPPMErrorsVsCrateModule(
       "ppm_2d_ErrorField47", "Errors from ASIC error field (crates 4-7)", 4, 7);
+
+    m_histTool->setMonGroup(&TT_ErrorEvents);
+
+    m_h_TT_EventNumbers = m_histTool->bookEventNumbers(
+      "ppm_2d_ErrorEventNumbers", "SubStatus Error Event Numbers", 8, 0., 8.);
+    m_histTool->subStatus(m_h_TT_EventNumbers, 0, false);
+    m_h_TT_ASICEventNumbers = m_histTool->bookEventNumbers(
+      "ppm_2d_ASICErrorEventNumbers", "ASIC Error Field Event Numbers",
+                                                                   8, 0., 8.);
+    m_histTool->ppmErrors(m_h_TT_ASICEventNumbers, 0, false);
 
     m_histTool->setMonGroup(&TT_ErrorDetail);
 

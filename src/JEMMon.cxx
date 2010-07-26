@@ -137,6 +137,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
                                                                  expert, run);
     MonGroup JEM_RoI(this, m_PathInRootFile+"/Output/RoI", shift, run);
     MonGroup JEM_Error(this, m_ErrorPathInRootFile, shift, run );
+    MonGroup JEM_ErrorEvents(this, m_ErrorPathInRootFile, expert, run, "",
+                                                               "eventSample" );
 
     //-------------------------- JetElements histos --------------------------
 
@@ -303,6 +305,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
     axis->SetBinLabel(1, "Jet element errors");
     axis->SetBinLabel(2, "Status errors");
     axis->SetBinLabel(3, "Jet RoI errors");
+
+    m_histTool->setMonGroup(&JEM_ErrorEvents);
 
     m_h_JEM_Events = m_histTool->bookEventNumbers("jem_2d_ErrorEventNumbers",
       "JEM Error Event Numbers", 3, 0., 3.);
