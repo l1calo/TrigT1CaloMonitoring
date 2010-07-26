@@ -79,7 +79,6 @@ StatusCode PPrSpareMon::initialize()
                     << endreq;
     return sc;
   }
-  return StatusCode::SUCCESS;
 
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
@@ -87,6 +86,8 @@ StatusCode PPrSpareMon::initialize()
                     << endreq;
     return sc;
   }
+
+  return StatusCode::SUCCESS;
 }
 
 /*---------------------------------------------------------*/
