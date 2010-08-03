@@ -14,7 +14,7 @@ use DataModel 			DataModel-*		Control
 #use Identifier 			Identifier-*		DetectorDescription
 
 #use AtlasDoxygen		AtlasDoxygen-00-*	Tools
-#use AtlasROOT			AtlasROOT-02-*		External
+use AtlasROOT			AtlasROOT-*		External
 use LWHists                     LWHists-*               Tools
 
 #use CaloIdentifier      	CaloIdentifier-00-*   	Calorimeter

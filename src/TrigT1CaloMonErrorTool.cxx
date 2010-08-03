@@ -2,7 +2,6 @@
 #include "GaudiKernel/IInterface.h"
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
-#include "StoreGate/StoreGateSvc.h"
 #include "SGTools/StlVectorClids.h"
 #include "DataModel/DataVector.h"
 

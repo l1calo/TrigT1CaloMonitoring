@@ -1,3 +1,7 @@
+2010-08-03  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-07-03
+        * Fix checkreq warnings.
+
 2010-07-26  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-07-02
         * Fix merge method for event number histograms.
