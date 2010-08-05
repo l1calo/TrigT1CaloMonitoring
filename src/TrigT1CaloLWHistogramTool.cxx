@@ -394,6 +394,18 @@ void TrigT1CaloLWHistogramTool::jemCMMCrateModule(LWHist* hist, int offset,
   axis->SetBinLabel(35+offset, "1/0");
 }
 
+// Label bins with JEM crate/CMM
+
+void TrigT1CaloLWHistogramTool::jemCrateCMM(LWHist* hist, int offset,
+                                                          bool xAxis)
+{
+  const int nCrates = 2;
+  const int nCMMs   = 2;
+  numberPairs(hist, 0, nCrates-1, 0, nCMMs-1, 1, offset, xAxis);
+  LWHist::LWHistAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  axis->SetTitle("Crate/CMM");
+}
+
 // Label bins with JEM frame/local coord
 
 void TrigT1CaloLWHistogramTool::jemFrameLoc(LWHist* hist, int offset,
@@ -1097,6 +1109,29 @@ TH1F_LW* TrigT1CaloLWHistogramTool::bookSumEtThresholds(
   int nbins = TrigConf::L1DataDef::max_TE_Threshold_Number();
   TH1F_LW* hist = book1F(name, title, nbins, 0, nbins);
   sumEtThresholds(hist);
+  return hist;
+}
+
+// Book JEM sub-status errors vs crate/module
+
+TH2F_LW* TrigT1CaloLWHistogramTool::bookJEMSubStatusVsCrateModule(
+                            const std::string& name, const std::string& title)
+{
+  TH2F_LW* hist = book2F(name, title, 8, 0., 8., 32, 0., 32.);
+  subStatus(hist);
+  jemCrateModule(hist, 0, false);
+  return hist;
+}
+
+// Book JEM sub-status errors vs crate
+
+TH2F_LW* TrigT1CaloLWHistogramTool::bookJEMSubStatusVsCrate(
+                            const std::string& name, const std::string& title)
+{
+  TH2F_LW* hist = book2F(name, title, 8, 0., 8., 2, 0., 2.);
+  subStatus(hist);
+  numbers(hist, 0, 1, 1, 0, false);
+  hist->SetYTitle("Crate");
   return hist;
 }
 

@@ -484,7 +484,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	    m_histTool->fillCPMEtaVsPhi(m_h_CT_Em_link, eta, phi);
 	    errorsCPM[loc] |= (1 << EMLink);
           }
-	  const int status = error >> LVL1::DataError::GLinkParity;
+	  const int status = (error >> LVL1::DataError::GLinkParity) & 0xff;
 	  if (status) {
 	    for (int bit = 0; bit < 8; ++bit) {
 	      if ((status >> bit) & 0x1) m_h_CT_status->Fill(bit, loc);

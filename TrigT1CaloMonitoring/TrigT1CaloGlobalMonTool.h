@@ -50,7 +50,8 @@ private:
                    CPMRoIParity, CMMCPParity, CMMCPStatus };
   enum JEMErrors { JEMEMParity, JEMHadParity, JEMEMLink, JEMHadLink, JEMStatus,
                    JEMRoIParity };
-  enum CMMErrors { JEMCMMStatus, JEMCMMParity };
+  enum CMMErrors { JEMCMMJetStatus, JEMCMMEnergyStatus, JEMCMMJetParity,
+                   JEMCMMEnergyParity, JEMCMMRoIParity};
   enum RODErrors { GLink, /*CMMParity,*/ LVDSLink, FIFOOverflow, DataTransport,
                    Timeout, BCNMismatch, TriggerType, NoPayload, NoFragment,
 	           ROBStatusError, UnpackingError };

@@ -23,6 +23,7 @@
 class TH1F_LW;
 class TH2F_LW;
 class TH2I_LW;
+class TProfile2D_LW;
 
 class StatusCode;
 
@@ -55,6 +56,11 @@ public:
 
 private:
 
+   enum SummaryErrors { JetStatus, EnergyStatus, JetParity, EnergyParity,
+                        RoIParity, NumberOfSummaryBins };
+   enum RoIParityErrors { ExParity, EyParity, EtParity, JetEtParity,
+                          NumberOfRoIParityBins };
+
    // Tool to retrieve bytestream errors
    ToolHandle<TrigT1CaloMonErrorTool>    m_errorTool;
    ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
@@ -86,6 +92,7 @@ private:
    TH1F_LW* m_h_CMMEtSums_Et;
    TH1F_LW* m_h_CMMEtSums_MissingEtMap;
    TH1F_LW* m_h_CMMEtSums_SumEtMap;
+   TProfile2D_LW* m_h_CMMEtSums_Overflow;
    // JEM Et Sums
    TH1F_LW*  m_h_CMMEtSums_JEM_Ex;
    TH1F_LW*  m_h_CMMEtSums_JEM_Ey;
@@ -103,6 +110,8 @@ private:
    //errors
    TH2F_LW* m_h_CMMJet_error;
    TH2F_LW* m_h_CMMEnergy_error;
+   TH2F_LW* m_h_CMMJet_parity;
+   TH2F_LW* m_h_CMMEnergy_parity;
    TH1F_LW* m_h_CMMRoI_error;
    TH1F_LW* m_h_CMM_ErrorSummary;
    TH1F_LW* m_h_TriggeredSlice;	  

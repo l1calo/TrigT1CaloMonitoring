@@ -16,6 +16,7 @@
 #include "LWHists/TH1F_LW.h"
 #include "LWHists/TH2F_LW.h"
 #include "LWHists/TH2I_LW.h"
+#include "LWHists/TProfile2D_LW.h"
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
@@ -129,7 +130,8 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
     MonGroup CMM_jet( this, m_PathInRootFile+"/Output/Jet", expert, run );
     MonGroup CMM_energy( this, m_PathInRootFile+"/Output/Energy", expert, run );
     MonGroup CMM_RoI( this, m_PathInRootFile+"/Output/RoI", shift, run );
-    MonGroup CMM_transmission( this, m_ErrorPathInRootFile, shift, run );
+    MonGroup CMM_error( this, m_ErrorPathInRootFile, shift, run );
+    MonGroup CMM_errorDetail( this, m_ErrorPathInRootFile, expert, run );
     MonGroup CMM_errorEvents( this, m_ErrorPathInRootFile, expert, run, "",
                                                                 "eventSample" );
 
@@ -186,6 +188,16 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       "E_{y}^{CMM}  --  CMM DAQ;Ey [GeV]", 8);
     m_h_CMMEtSums_Et = m_histTool->bookJEMQuadLinear("cmm_1d_energy_TotalEt",
       "SumE_{t}^{CMM}  --  CMM DAQ;Et [GeV]", 8);
+    m_h_CMMEtSums_Overflow = m_histTool->bookProfile2D("cmm_2d_energy_Overflow",
+      "CMM Energy Overflow Rates", 3, 0., 3., 3, 0., 3.);
+    LWHist::LWHistAxis* axis = m_h_CMMEtSums_Overflow->GetXaxis();
+    axis->SetBinLabel(1, "Ex");
+    axis->SetBinLabel(2, "Ey");
+    axis->SetBinLabel(3, "Et");
+    axis = m_h_CMMEtSums_Overflow->GetYaxis();
+    axis->SetBinLabel(1, "Remote");
+    axis->SetBinLabel(2, "Local");
+    axis->SetBinLabel(3, "Total");
 
     //--------------------------- CMM output to RoI --------------------------
 
@@ -210,60 +222,63 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 
     //---------------------------- S-Link errors -----------------------------
 
-    m_histTool->setMonGroup(&CMM_transmission);
+    m_histTool->setMonGroup(&CMM_errorDetail);
 
-    m_h_CMMJet_error = m_histTool->book2F("cmm_2d_thresh_Status",
-      "Errors from CMM Jet SubStatus Word", 9, 0., 9., 36, 0., 36.);
-    m_histTool->jemCMMCrateModule(m_h_CMMJet_error, 0, false);
-    m_h_CMMEnergy_error = m_histTool->book2F("cmm_2d_energy_Status",
-      "Errors from CMM Energy SubStatus Word", 9, 0., 9., 36, 0., 36.);
-    m_histTool->jemCMMCrateModule(m_h_CMMEnergy_error, 0, false);
-    TH2F_LW*  hist = m_h_CMMJet_error;
-    LWHist::LWHistAxis* axis = m_h_CMMJet_error->GetXaxis();
-    for (int i = 0; i < 2; ++i) {
-      axis->SetBinLabel(1, "Parity");
-      axis->SetBinLabel(3, "GLinkParity");
-      axis->SetBinLabel(4, "GLinkProtocol");
-      axis->SetBinLabel(5, "BCNMismatch");
-      axis->SetBinLabel(6, "FIFOOverflow");
-      axis->SetBinLabel(7, "ModuleError");
-      axis->SetBinLabel(8, "GLinkDown");
-      axis->SetBinLabel(9, "GLinkTimeout");
-      hist = m_h_CMMEnergy_error;
-      axis = m_h_CMMEnergy_error->GetXaxis();
-    }
+    m_h_CMMJet_error = m_histTool->bookJEMSubStatusVsCrate(
+      "cmm_2d_thresh_Status", "Errors from CMM Jet SubStatus Word");
+    m_h_CMMEnergy_error = m_histTool->bookJEMSubStatusVsCrate(
+      "cmm_2d_energy_Status", "Errors from CMM Energy SubStatus Word");
+    m_h_CMMJet_parity = m_histTool->book2F("cmm_2d_thresh_Parity",
+      "CMM Jet Parity Errors;Module or Remote;Crate", 18, 0., 18., 2, 0., 2.);
+    m_histTool->numbers(m_h_CMMJet_parity, 0, 15);
+    m_h_CMMJet_parity->GetXaxis()->SetBinLabel(17, "Main");
+    m_h_CMMJet_parity->GetXaxis()->SetBinLabel(18, "Fwd");
+    m_histTool->numbers(m_h_CMMJet_parity, 0, 1, 1, 0, false);
+    m_h_CMMEnergy_parity = m_histTool->book2F("cmm_2d_energy_Parity",
+      "CMM Energy Parity Errors;Module or Remote;Crate",
+      19, 0., 19., 2, 0., 2.);
+    m_histTool->numbers(m_h_CMMEnergy_parity, 0, 15);
+    m_h_CMMEnergy_parity->GetXaxis()->SetBinLabel(17, "Ex");
+    m_h_CMMEnergy_parity->GetXaxis()->SetBinLabel(18, "Ey");
+    m_h_CMMEnergy_parity->GetXaxis()->SetBinLabel(19, "Et");
+    m_histTool->numbers(m_h_CMMEnergy_parity, 0, 1, 1, 0, false);
 
     m_h_CMMRoI_error = m_histTool->book1F("cmm_1d_roi_Parity", 
-      "CMM RoI Parity and Overflow", 8, 0., 8.);
+      "CMM RoI Parity Errors",
+      NumberOfRoIParityBins, 0., NumberOfRoIParityBins);
     axis = m_h_CMMRoI_error->GetXaxis();
-    axis->SetBinLabel(1, "Parity (Ex)");
-    axis->SetBinLabel(2, "Parity (Ey, #SigmaEtMap)");
-    axis->SetBinLabel(3, "Parity (Et,Et_{Miss}Map)");
-    axis->SetBinLabel(4, "Parity (JetEtMap)");
-    axis->SetBinLabel(5, "Comp of #slice");
-    axis->SetBinLabel(6, "Overflow (Ex)");
-    axis->SetBinLabel(7, "Overflow (Ey)");
-    axis->SetBinLabel(8, "Overflow (Et)");
+    axis->SetBinLabel(1+ExParity,    "Ex");
+    axis->SetBinLabel(1+EyParity,    "Ey, SumEt");
+    axis->SetBinLabel(1+EtParity,    "Et, MissingEt");
+    axis->SetBinLabel(1+JetEtParity, "JetEt");
 
     m_h_TriggeredSlice = m_histTool->book1F("cmm_1d_TriggeredSlices",
       "Comparison of CMM Jet and Energy triggered slice numbers;Difference",
       5, 0., 5.);
     m_histTool->numbers(m_h_TriggeredSlice, 0, 4);
 
+    m_histTool->setMonGroup(&CMM_error);
+
     //Error Summary for all CMMs in system
     m_h_CMM_ErrorSummary = m_histTool->book1F("cmm_1d_ErrorSummary",
-      "Error Summary of CMM Jet, Energy and RoI path", 3, 0., 3.);
-    m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(1,"CMM Status");
-    m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(2,"Parity flags");
-    m_h_CMM_ErrorSummary->GetXaxis()->SetBinLabel(3,"Other");
+      "Error Summary of CMM Jet, Energy and RoI path",
+      NumberOfSummaryBins, 0., NumberOfSummaryBins);
 
     m_histTool->setMonGroup(&CMM_errorEvents);
 
     m_h_CMM_Events = m_histTool->bookEventNumbers("cmm_2d_ErrorEventNumbers",
-      "JEM-CMM Error Event Numbers", 3, 0., 3.);
-    m_h_CMM_Events->GetYaxis()->SetBinLabel(1,"#splitline{CMM}{Status}");
-    m_h_CMM_Events->GetYaxis()->SetBinLabel(2,"#splitline{Parity}{flags}");
-    m_h_CMM_Events->GetYaxis()->SetBinLabel(3,"Other");
+      "JEM-CMM Error Event Numbers",
+      NumberOfSummaryBins, 0., NumberOfSummaryBins);
+
+    axis = m_h_CMM_ErrorSummary->GetXaxis();
+    for (int i = 0; i < 2; ++i) {
+      axis->SetBinLabel(1+JetStatus,    "Jet status");
+      axis->SetBinLabel(1+EnergyStatus, "Energy status");
+      axis->SetBinLabel(1+JetParity,    "Jet parity");
+      axis->SetBinLabel(1+EnergyParity, "Energy parity");
+      axis->SetBinLabel(1+RoIParity,    "RoI parity");
+      axis = m_h_CMM_Events->GetYaxis();
+    }
   }
   
   return StatusCode::SUCCESS;
@@ -314,9 +329,9 @@ StatusCode CMMMon::fillHistograms()
   // Step over all cells
   for (it_CMMJetHits = CMMJetHits->begin(); it_CMMJetHits != CMMJetHits->end();
                                                           ++it_CMMJetHits) {	  
-    int crate = (*it_CMMJetHits)-> crate();
-    int dataID = (*it_CMMJetHits)-> dataID();
-    unsigned int jetHits = (*it_CMMJetHits)-> Hits();
+    const int crate  = (*it_CMMJetHits)-> crate();
+    const int dataID = (*it_CMMJetHits)-> dataID();
+    const unsigned int jetHits = (*it_CMMJetHits)-> Hits();
 
     if (debug) {
       msg(MSG::DEBUG) << "CMMJetHits Crate: " << crate
@@ -384,36 +399,29 @@ StatusCode CMMMon::fillHistograms()
 	  
     //Error summary plots
     //substatus word
-    if (err.get(DataError::GLinkParity) || err.get(DataError::GLinkProtocol) ||
-        err.get(DataError::BCNMismatch) || err.get(DataError::FIFOOverflow)  ||
-	err.get(DataError::ModuleError) || err.get(DataError::GLinkDown)     ||
-        err.get(DataError::GLinkTimeout)) {
-      m_h_CMM_ErrorSummary->Fill(0.);
-      m_histTool->fillEventNumber(m_h_CMM_Events, 0.);
-      overview[crate] |= 1;
+    const int status = (err.error() >> LVL1::DataError::GLinkParity) & 0xff;
+    if (status) {
+      for (int bit = 0; bit < 8; ++bit) {
+        if ((status >> bit) & 0x1) m_h_CMMJet_error->Fill(bit, crate);
+      }
+      m_h_CMM_ErrorSummary->Fill(JetStatus);
+      m_histTool->fillEventNumber(m_h_CMM_Events, JetStatus);
+      overview[crate] |= (1 << JetStatus);
     }
 
-    int ypos = 32+crate*2+1;
     if (dataID < 16 || dataID == LVL1::CMMJetHits::REMOTE_MAIN
                     || dataID == LVL1::CMMJetHits::REMOTE_FORWARD) {
       // Parity
       if (err.get(DataError::Parity)) {
-        if (dataID < 16) ypos = crate*16+dataID;
-	m_h_CMMJet_error->Fill(0., ypos);
-	m_h_CMM_ErrorSummary->Fill(1);
-	m_histTool->fillEventNumber(m_h_CMM_Events, 1);
-	overview[crate] |= (1 << 1);
+        int xpos = (dataID < 16) ? dataID
+	                         : (dataID == LVL1::CMMJetHits::REMOTE_MAIN)
+				   ? 16 : 17;
+	m_h_CMMJet_parity->Fill(xpos, crate);
+	m_h_CMM_ErrorSummary->Fill(JetParity);
+	m_histTool->fillEventNumber(m_h_CMM_Events, JetParity);
+	overview[crate] |= (1 << JetParity);
       }
     }
-  
-    // set L1CaloSubStatus for both Crate and System CMM
-    if (err.get(DataError::GLinkParity))   m_h_CMMJet_error->Fill(2,ypos);
-    if (err.get(DataError::GLinkProtocol)) m_h_CMMJet_error->Fill(3,ypos);
-    if (err.get(DataError::BCNMismatch))   m_h_CMMJet_error->Fill(4,ypos);
-    if (err.get(DataError::FIFOOverflow))  m_h_CMMJet_error->Fill(5,ypos);
-    if (err.get(DataError::ModuleError))   m_h_CMMJet_error->Fill(6,ypos);
-    if (err.get(DataError::GLinkDown))     m_h_CMMJet_error->Fill(7,ypos);
-    if (err.get(DataError::GLinkTimeout))  m_h_CMMJet_error->Fill(8,ypos);
 
   }
   
@@ -513,42 +521,51 @@ StatusCode CMMMon::fillHistograms()
     // -----------------------------------------------------------------------
     //Error summary plots
     //substatus word
+    DataError exerr(exError);
+    DataError eyerr(eyError);
     DataError eterr(etError);
-    if (eterr.get(DataError::GLinkParity)   ||
-        eterr.get(DataError::GLinkProtocol) ||
-	eterr.get(DataError::BCNMismatch)   ||
-        eterr.get(DataError::FIFOOverflow)  ||
-	eterr.get(DataError::ModuleError)   ||
-	eterr.get(DataError::GLinkDown)     ||
-	eterr.get(DataError::GLinkTimeout)) {
-      m_h_CMM_ErrorSummary->Fill(0.);
-      m_histTool->fillEventNumber(m_h_CMM_Events, 0.);
-      overview[crate] |= 1;
+    const int status = (eterr.error() >> LVL1::DataError::GLinkParity) & 0xff;
+    if (status) {
+      for (int bit = 0; bit < 8; ++bit) {
+        if ((status >> bit) & 0x1) m_h_CMMEnergy_error->Fill(bit, crate);
+      }
+      m_h_CMM_ErrorSummary->Fill(EnergyStatus);
+      m_histTool->fillEventNumber(m_h_CMM_Events, EnergyStatus);
+      overview[crate] |= (1 << EnergyStatus);
     }
 
-    int ypos = 32+crate*2;
-    if (dataID < 16 || dataID == LVL1::CMMEtSums::REMOTE){
+    if (dataID < 16 || dataID == LVL1::CMMEtSums::REMOTE) {
       // Parity
-      DataError exerr(exError);
-      DataError eyerr(eyError);
       if (eterr.get(DataError::Parity) || exerr.get(DataError::Parity) ||
           eyerr.get(DataError::Parity)) {
-        if (dataID < 16) ypos = crate*16+dataID;
-	m_h_CMMEnergy_error->Fill(0., ypos);
-	m_h_CMM_ErrorSummary->Fill(1);
-	m_histTool->fillEventNumber(m_h_CMM_Events, 1);
-	overview[crate] |= (1 << 1);
+        if (dataID < 16) m_h_CMMEnergy_parity->Fill(dataID, crate);
+	else {
+	  if (exerr.get(DataError::Parity)) {
+	    m_h_CMMEnergy_parity->Fill(16, crate);
+	  }
+	  if (eyerr.get(DataError::Parity)) {
+	    m_h_CMMEnergy_parity->Fill(17, crate);
+          }
+	  if (eterr.get(DataError::Parity)) {
+	    m_h_CMMEnergy_parity->Fill(18, crate);
+	  }
+	}
+	m_h_CMM_ErrorSummary->Fill(EnergyParity);
+	m_histTool->fillEventNumber(m_h_CMM_Events, EnergyParity);
+	overview[crate] |= (1 << EnergyParity);
       }
     }
 
-    // set L1CaloSubStatus for both Crate and System CMM
-    if (eterr.get(DataError::GLinkParity))   m_h_CMMEnergy_error->Fill(2,ypos);
-    if (eterr.get(DataError::GLinkProtocol)) m_h_CMMEnergy_error->Fill(3,ypos);
-    if (eterr.get(DataError::BCNMismatch))   m_h_CMMEnergy_error->Fill(4,ypos);
-    if (eterr.get(DataError::FIFOOverflow))  m_h_CMMEnergy_error->Fill(5,ypos);
-    if (eterr.get(DataError::ModuleError))   m_h_CMMEnergy_error->Fill(6,ypos);
-    if (eterr.get(DataError::GLinkDown))     m_h_CMMEnergy_error->Fill(7,ypos);
-    if (eterr.get(DataError::GLinkTimeout))  m_h_CMMEnergy_error->Fill(8,ypos);
+    // Overflow - not an error, plot rate
+    if (crate == 1 && (dataID == LVL1::CMMEtSums::REMOTE ||
+                       dataID == LVL1::CMMEtSums::LOCAL  ||
+	               dataID == LVL1::CMMEtSums::TOTAL)) {
+      const double ypos = (dataID == LVL1::CMMEtSums::REMOTE) ? 0.
+                        : (dataID == LVL1::CMMEtSums::LOCAL)  ? 1. : 2.;
+      m_h_CMMEtSums_Overflow->Fill(0., ypos, exerr.get(DataError::Overflow));
+      m_h_CMMEtSums_Overflow->Fill(1., ypos, eyerr.get(DataError::Overflow));
+      m_h_CMMEtSums_Overflow->Fill(2., ypos, eterr.get(DataError::Overflow));
+    }
 
   }
 
@@ -623,33 +640,21 @@ StatusCode CMMMon::fillHistograms()
   DataError jetEterr((CR)-> jetEtError());
 
   // Parity (Ex)
-  if (exerr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(0.);
+  if (exerr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(ExParity);
   // Parity (Ey,SumEtMap)
-  if (eyerr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(1);
+  if (eyerr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(EyParity);
   // Parity (Et,MissingEtMap)
-  if (eterr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(2);
+  if (eterr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(EtParity);
   // Parity (JetEtMap)
-  if (jetEterr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(3);
-      
-  //----------------Comparison on slice number-----------
-  if (j_num_slice >= 0 && e_num_slice >= 0 && j_num_slice != e_num_slice) {
-    m_h_CMMRoI_error->Fill(4,1);
-  }
-  //-----------------------------------------------------
-  // Overflow (Ex)
-  if (exerr.get(DataError::Overflow)) m_h_CMMRoI_error->Fill(5);
-  // Overflow (Ey)
-  if (eyerr.get(DataError::Overflow)) m_h_CMMRoI_error->Fill(6);
-  // Overflow (Et)
-  if (eterr.get(DataError::Overflow)) m_h_CMMRoI_error->Fill(7);
+  if (jetEterr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(JetEtParity);
       
   //Error summary plots
   //parity
   if (exerr.get(DataError::Parity) || eyerr.get(DataError::Parity) ||
       eterr.get(DataError::Parity) || jetEterr.get(DataError::Parity)) {
-    m_h_CMM_ErrorSummary->Fill(1,1);
-    m_histTool->fillEventNumber(m_h_CMM_Events, 1);
-    overview[1] |= 0x2;
+    m_h_CMM_ErrorSummary->Fill(RoIParity);
+    m_histTool->fillEventNumber(m_h_CMM_Events, RoIParity);
+    overview[1] |= (1 << RoIParity);
            
   }
 

@@ -56,6 +56,9 @@ public:
 
 private:
 
+   enum SummaryErrors { EMParity, HadParity, EMLink, HadLink, JEMStatus,
+                        RoIParity, NumberOfSummaryBins };
+
    typedef DataVector<LVL1::JetElement> JECollection;
    typedef DataVector<LVL1::JEMHits> JEMHitsCollection;
    typedef DataVector<LVL1::JEMEtSums> JEMEtSumsCollection;
@@ -94,6 +97,10 @@ private:
    // error maps
    int m_NoEvents;
    TH2F_LW* m_h_je_error;
+   TH2F_LW* m_h_je_em_parity;
+   TH2F_LW* m_h_je_had_parity;
+   TH2F_LW* m_h_je_em_link;
+   TH2F_LW* m_h_je_had_link;
    
    // number of triggered slice
    TH1F_LW* m_h_je_triggeredSlice;
@@ -118,6 +125,7 @@ private:
  
    // errors and saturation
    TH2F_LW* m_h_JEMRoI_error;
+   TH2F_LW* m_h_JEMRoI_sat;
    
    // Error Summary
    TH1F_LW* m_h_JEM_ErrorSummary;

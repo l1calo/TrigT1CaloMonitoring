@@ -1,3 +1,7 @@
+2010-08-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-07-04
+        * Revise JEM hardware error histograms.
+
 2010-08-03  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-07-03
         * Fix checkreq warnings.

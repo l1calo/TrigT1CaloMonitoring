@@ -137,8 +137,9 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
                                                                  expert, run);
     MonGroup JEM_RoI(this, m_PathInRootFile+"/Output/RoI", shift, run);
     MonGroup JEM_Error(this, m_ErrorPathInRootFile, shift, run );
+    MonGroup JEM_ErrorDetail(this, m_ErrorPathInRootFile, expert, run );
     MonGroup JEM_ErrorEvents(this, m_ErrorPathInRootFile, expert, run, "",
-                                                               "eventSample" );
+                                                              "eventSample" );
 
     //-------------------------- JetElements histos --------------------------
 
@@ -196,26 +197,6 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
                                                           +  "  --  JEM input";
       m_h_je_hadHitMap.push_back(m_histTool->bookJEMEtaVsPhi(name,title));
     }
-
-    // ---------------------------- Error Histos -----------------------------
-
-    m_histTool->setMonGroup(&JEM_Error);
-
-    m_h_je_error = m_histTool->book2F("jem_2d_Status",
-      "Error reports from JEM SubStatus Word", 11, 0., 11., 32, 0., 32.);
-    LWHist::LWHistAxis* axis = m_h_je_error->GetXaxis();
-    axis->SetBinLabel(1, "EM Parity");
-    axis->SetBinLabel(2, "HAD Parity");
-    axis->SetBinLabel(3, "Link down (em)");
-    axis->SetBinLabel(4, "Link down (had)");
-    axis->SetBinLabel(5, "GLinkParity");
-    axis->SetBinLabel(6, "GLinkProtocol");
-    axis->SetBinLabel(7, "BCNMismatch");
-    axis->SetBinLabel(8, "FIFOOverflow");
-    axis->SetBinLabel(9, "ModuleError");
-    axis->SetBinLabel(10, "GLinkDown");
-    axis->SetBinLabel(11, "GLinkTimeout");
-    m_histTool->jemCrateModule(m_h_je_error, 0, false);
       
     //---------------------------- DAQ histos -----------------------------
 
@@ -231,12 +212,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
       "jem_1d_thresh_FwdHitsLeft",
       "Fwd Left Jet Hit Multiplicity per Threshold  --  JEM DAQ");
       
-    m_h_JEMDAQ_Hits_Map = m_histTool->book2F("jem_2d_thresh_HitsPerJem",
-      "HitMap of Hits per JEM", 18, 0., 18., 32, 0., 32.);
-    m_histTool->jemThresholds(m_h_JEMDAQ_Hits_Map);
-    m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel(17,"Sat(Main)");
-    m_h_JEMDAQ_Hits_Map->GetXaxis()->SetBinLabel(18,"Sat(Fwd)");
-    m_histTool->jemCrateModule(m_h_JEMDAQ_Hits_Map, 0, false);
+    m_h_JEMDAQ_Hits_Map = m_histTool->bookJEMCrateModuleVsThresholds(
+      "jem_2d_thresh_HitsPerJem", "HitMap of Hits per JEM");
 
     m_histTool->setMonGroup(&JEM_EnergySums);
       
@@ -260,6 +237,8 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
     m_h_JEMRoI_FwdHitsLeft = m_histTool->bookBackwardJetThresholds(
       "jem_1d_roi_FwdHitsLeft",
       "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI");
+    m_h_JEMRoI_sat = m_histTool->bookJEMRoIEtaVsPhi(
+      "jem_2d_etaPhi_roi_Saturation", "JEM RoI Saturation");
 
     //----------------------- HitThreshold per Eta-Phi -----------------------
 
@@ -290,30 +269,43 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 
     //--------------------------- Error Histos -------------------------------
 
+    m_histTool->setMonGroup(&JEM_ErrorDetail);
+
+    m_h_je_error = m_histTool->bookJEMSubStatusVsCrateModule("jem_2d_Status",
+      "Error reports from JEM SubStatus Word");
+    m_h_je_em_parity = m_histTool->bookJEMEtaVsPhi(
+      "jem_em_2d_etaPhi_jetEl_Parity", "Jet Element EM Parity Errors");
+    m_h_je_had_parity = m_histTool->bookJEMEtaVsPhi(
+      "jem_had_2d_etaPhi_jetEl_Parity", "Jet Element Had Parity Errors");
+    m_h_je_em_link = m_histTool->bookJEMEtaVsPhi(
+      "jem_em_2d_etaPhi_jetEl_LinkDown", "Jet Element EM Link Down Errors");
+    m_h_je_had_link = m_histTool->bookJEMEtaVsPhi(
+      "jem_had_2d_etaPhi_jetEl_LinkDown", "Jet Element Had Link Down Errors");
+
+    m_h_JEMRoI_error = m_histTool->bookJEMRoIEtaVsPhi(
+      "jem_2d_etaPhi_roi_Parity", "JEM RoI Parity Errors");
+	
     m_histTool->setMonGroup(&JEM_Error);
 
-    m_h_JEMRoI_error = m_histTool->book2F("jem_2d_roi_Parity",
-      "JEMRoI Parity", 2, 0., 2., 32, 0., 32.);
-    axis = m_h_JEMRoI_error->GetXaxis();
-    axis->SetBinLabel(1, "Parity (Main Jets)");
-    axis->SetBinLabel(2, "Parity (Fwd Jets)");
-    m_histTool->jemCrateModule(m_h_JEMRoI_error, 0, false);
-	
     m_h_JEM_ErrorSummary = m_histTool->book1F("jem_1d_ErrorSummary",
-      "Summary of Data Errors", 3, 0., 3.);
-    axis = m_h_JEM_ErrorSummary->GetXaxis();
-    axis->SetBinLabel(1, "Jet element errors");
-    axis->SetBinLabel(2, "Status errors");
-    axis->SetBinLabel(3, "Jet RoI errors");
+      "Summary of JEM Data Errors", NumberOfSummaryBins, 0.,
+                                                          NumberOfSummaryBins);
 
     m_histTool->setMonGroup(&JEM_ErrorEvents);
 
     m_h_JEM_Events = m_histTool->bookEventNumbers("jem_2d_ErrorEventNumbers",
-      "JEM Error Event Numbers", 3, 0., 3.);
-    axis = m_h_JEM_Events->GetYaxis();
-    axis->SetBinLabel(1, "#splitline{#splitline{Jet}{element}}{errors}");
-    axis->SetBinLabel(2, "#splitline{Status}{errors}");
-    axis->SetBinLabel(3, "#splitline{Jet RoI}{errors}");
+      "JEM Error Event Numbers", NumberOfSummaryBins, 0., NumberOfSummaryBins);
+
+    LWHist::LWHistAxis* axis = m_h_JEM_ErrorSummary->GetXaxis();
+    for (int i = 0; i < 2; ++i) {
+      axis->SetBinLabel(1+EMParity,  "EM parity");
+      axis->SetBinLabel(1+HadParity, "Had parity");
+      axis->SetBinLabel(1+EMLink,    "EM link");
+      axis->SetBinLabel(1+HadLink,   "Had link");
+      axis->SetBinLabel(1+JEMStatus, "JEM status");
+      axis->SetBinLabel(1+RoIParity, "RoI parity");
+      axis = m_h_JEM_Events->GetYaxis();
+    }
        
     m_histTool->unsetMonGroup();
   }
@@ -410,55 +402,44 @@ StatusCode JEMMon::fillHistograms()
     DataError haderr((*it_je)->hadError());
 
     int ypos = crate*16 + module;
-    bool error = false;
     // EM Parity
     if (err.get(DataError::Parity)) {
-      m_h_je_error->Fill(0., ypos);
-      overview[crate] |= 1;
-      error = true;
+      m_histTool->fillJEMEtaVsPhi(m_h_je_em_parity, eta, phi);
+      m_histTool->fillEventNumber(m_h_JEM_Events, EMParity);
+      m_h_JEM_ErrorSummary->Fill(EMParity);
+      overview[crate] |= (1 << EMParity);
     }
     // HAD Parity
     if (haderr.get(DataError::Parity)) {
-      m_h_je_error->Fill(1, ypos);
-      overview[crate] |= (1 << 1);
-      error = true;
+      m_histTool->fillJEMEtaVsPhi(m_h_je_had_parity, eta, phi);
+      m_histTool->fillEventNumber(m_h_JEM_Events, HadParity);
+      m_h_JEM_ErrorSummary->Fill(HadParity);
+      overview[crate] |= (1 << HadParity);
     }
     // PPM Link down: em.
     if (err.get(DataError::LinkDown)) {
-      m_h_je_error->Fill(2, ypos);
-      overview[crate] |= (1 << 2);
-      error = true;
+      m_histTool->fillJEMEtaVsPhi(m_h_je_em_link, eta, phi);
+      m_histTool->fillEventNumber(m_h_JEM_Events, EMLink);
+      m_h_JEM_ErrorSummary->Fill(EMLink);
+      overview[crate] |= (1 << EMLink);
     }
     // PPM Link down: had.
     if (haderr.get(DataError::LinkDown)) {
-      m_h_je_error->Fill(3, ypos);
-      overview[crate] |= (1 << 3);
-      error = true;
-    }
-    if (error) {
-      m_h_JEM_ErrorSummary->Fill(0);
-      m_histTool->fillEventNumber(m_h_JEM_Events, 0);
+      m_histTool->fillJEMEtaVsPhi(m_h_je_had_link, eta, phi);
+      m_histTool->fillEventNumber(m_h_JEM_Events, HadLink);
+      m_h_JEM_ErrorSummary->Fill(HadLink);
+      overview[crate] |= (1 << HadLink);
     }
 	  
     //Errors from substatus word from ROD: JEM
-    if (err.get(DataError::GLinkParity))   m_h_je_error->Fill(4, ypos);
-    if (err.get(DataError::GLinkProtocol)) m_h_je_error->Fill(5, ypos);
-    if (err.get(DataError::BCNMismatch))   m_h_je_error->Fill(6, ypos);
-    if (err.get(DataError::FIFOOverflow))  m_h_je_error->Fill(7, ypos);
-    if (err.get(DataError::ModuleError))   m_h_je_error->Fill(8, ypos);
-    if (err.get(DataError::GLinkDown))     m_h_je_error->Fill(9, ypos);
-    if (err.get(DataError::GLinkTimeout))  m_h_je_error->Fill(10,ypos);
-	 
-    if (err.get(DataError::GLinkParity)   ||
-        err.get(DataError::GLinkProtocol) ||
-        err.get(DataError::BCNMismatch)   ||
-	err.get(DataError::FIFOOverflow)  ||
-        err.get(DataError::ModuleError)   ||
-	err.get(DataError::GLinkDown)     ||
-        err.get(DataError::GLinkTimeout)) {
-      m_h_JEM_ErrorSummary->Fill(1);
-      m_histTool->fillEventNumber(m_h_JEM_Events, 1);
-      overview[crate] |= (1 << 4);
+    const int status = (err.error() >> LVL1::DataError::GLinkParity) & 0xff;
+    if (status) {
+      for (int bit = 0; bit < 8; ++bit) {
+        if ((status >> bit) & 0x1) m_h_je_error->Fill(bit, ypos);
+      }
+      m_histTool->fillEventNumber(m_h_JEM_Events, JEMStatus);
+      m_h_JEM_ErrorSummary->Fill(JEMStatus);
+      overview[crate] |= (1 << JEMStatus);
     }
   }
 
@@ -485,20 +466,20 @@ StatusCode JEMMon::fillHistograms()
                                                               ++it_JEMHits ) {	  
     int crate  = (*it_JEMHits)->crate();
     int module = (*it_JEMHits)->module();
-    int ypos   = crate*16 + module;
+    int xpos   = crate*16 + module;
     bool forward = (*it_JEMHits)->forward();
     unsigned int jetHits = (*it_JEMHits)->JetHits();
 
     int nBits = (forward) ? 2 : 3;
     m_histTool->fillThresholds(m_h_JEMHits_MainHits, jetHits, 8, nBits);
-    m_histTool->fillThresholdsVsY(m_h_JEMDAQ_Hits_Map, jetHits, ypos, 8, nBits);
+    m_histTool->fillXVsThresholds(m_h_JEMDAQ_Hits_Map, xpos, jetHits, 8, nBits);
     if (forward) {
-      int fwdHits   = jetHits >> 16;
-      int offset    = (module%8 == 0) ? 8 : 12;
+      int fwdHits = jetHits >> 16;
+      int offset  = (module%8 == 0) ? 8 : 12;
       TH1F_LW* fwdHist = (module%8 == 0) ? m_h_JEMHits_FwdHitsLeft
                                          : m_h_JEMHits_FwdHitsRight;
       m_histTool->fillThresholds(fwdHist, fwdHits, 4, nBits);
-      m_histTool->fillThresholdsVsY(m_h_JEMDAQ_Hits_Map, fwdHits, ypos, 4,
+      m_histTool->fillXVsThresholds(m_h_JEMDAQ_Hits_Map, xpos, fwdHits, 4,
                                                                 nBits, offset);
     }
 
@@ -575,7 +556,6 @@ StatusCode JEMMon::fillHistograms()
                                                           ++it_JEMRoIs) {	  
     int crate   = (*it_JEMRoIs)->crate();
     int module  = (*it_JEMRoIs)->jem();
-    int ypos    = crate*16 + module;
     int forward = (*it_JEMRoIs)->forward();
     int roiHits = (*it_JEMRoIs)->hits();
     LVL1::JEPRoIDecoder decoder;
@@ -613,13 +593,14 @@ StatusCode JEMMon::fillHistograms()
     DataError err((*it_JEMRoIs)->error());
 
     if (err.get(DataError::Parity)) {
-      m_h_JEMRoI_error->Fill(forward, ypos);
-      m_h_JEM_ErrorSummary->Fill(2);
-      m_histTool->fillEventNumber(m_h_JEM_Events, 2);
-      overview[crate] |= (1 << 5);
+      m_histTool->fillJEMRoIEtaVsPhi(m_h_JEMRoI_error, eta, phi);
+      m_histTool->fillEventNumber(m_h_JEM_Events, RoIParity);
+      m_h_JEM_ErrorSummary->Fill(RoIParity);
+      overview[crate] |= (1 << RoIParity);
     }
+    // saturation
     if (err.get(DataError::Overflow)) {
-      m_h_JEMDAQ_Hits_Map->Fill(16+forward, ypos);
+      m_histTool->fillJEMRoIEtaVsPhi(m_h_JEMRoI_sat, eta, phi);
     }
   }
 
