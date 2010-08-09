@@ -289,7 +289,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 StatusCode CMMMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  bool debug = msgLvl(MSG::DEBUG);
+  const bool debug = msgLvl(MSG::DEBUG);
 
   // Skip events believed to be corrupt
 
@@ -312,7 +312,7 @@ StatusCode CMMMon::fillHistograms()
   // =========================================================================
 
   // retrieve CMM Jet Hits from Storegate
-  const CMMJetHitsCollection* CMMJetHits;
+  const CMMJetHitsCollection* CMMJetHits = 0;
   StatusCode sc = evtStore()->retrieve(CMMJetHits, m_CMMJetHitsLocation);
   if (sc == StatusCode::FAILURE) {
     msg(MSG::INFO) << "No CMM JetHits found in TES at "
@@ -346,8 +346,8 @@ StatusCode CMMMon::fillHistograms()
     //input data from JEMs have dataID 0..15
     if (dataID < 16) {
 
-      bool forward = (dataID%8 == 0 || dataID%8 == 7);
-      int nBits = (forward) ?  2 : 3;
+      const bool forward = (dataID%8 == 0 || dataID%8 == 7);
+      const int nBits = (forward) ?  2 : 3;
       m_histTool->fillThresholds(m_h_CMMJetHits_JEM_MainHits, jetHits, 8,
                                                                        nBits);
       if (forward) {
@@ -357,7 +357,7 @@ StatusCode CMMMon::fillHistograms()
       }
 
       if (debug) {
-        int nHits = (forward) ? 12 : 8;
+        const int nHits = (forward) ? 12 : 8;
 	msg(MSG::DEBUG) << m_histTool->thresholdString(jetHits, nHits, nBits)
 	                << endreq;
       }
@@ -379,11 +379,11 @@ StatusCode CMMMon::fillHistograms()
       }
 
       if (debug) {
-        int nHits = (dataID == LVL1::CMMJetHits::ET_MAP) ? 4 : 8;
-        int nBits = (dataID == LVL1::CMMJetHits::TOTAL_MAIN ||
-	             dataID == LVL1::CMMJetHits::LOCAL_MAIN ||
-		     dataID == LVL1::CMMJetHits::REMOTE_MAIN) ? 3 :
-                     ((dataID == LVL1::CMMJetHits::ET_MAP) ? 1 : 2);
+        const int nHits = (dataID == LVL1::CMMJetHits::ET_MAP) ? 4 : 8;
+        const int nBits = (dataID == LVL1::CMMJetHits::TOTAL_MAIN ||
+	                   dataID == LVL1::CMMJetHits::LOCAL_MAIN ||
+		           dataID == LVL1::CMMJetHits::REMOTE_MAIN) ? 3 :
+                              ((dataID == LVL1::CMMJetHits::ET_MAP) ? 1 : 2);
 	msg(MSG::DEBUG) << m_histTool->thresholdString(jetHits, nHits, nBits)
 	                << endreq;
       }
@@ -395,7 +395,7 @@ StatusCode CMMMon::fillHistograms()
        
     if (j_num_slice < 0) j_num_slice = (*it_CMMJetHits)->peak();
 
-    DataError err((*it_CMMJetHits)->Error());
+    const DataError err((*it_CMMJetHits)->Error());
 	  
     //Error summary plots
     //substatus word
@@ -413,9 +413,9 @@ StatusCode CMMMon::fillHistograms()
                     || dataID == LVL1::CMMJetHits::REMOTE_FORWARD) {
       // Parity
       if (err.get(DataError::Parity)) {
-        int xpos = (dataID < 16) ? dataID
-	                         : (dataID == LVL1::CMMJetHits::REMOTE_MAIN)
-				   ? 16 : 17;
+        const int xpos = (dataID < 16)
+	                 ? dataID
+	                 : (dataID == LVL1::CMMJetHits::REMOTE_MAIN) ? 16 : 17;
 	m_h_CMMJet_parity->Fill(xpos, crate);
 	m_h_CMM_ErrorSummary->Fill(JetParity);
 	m_histTool->fillEventNumber(m_h_CMM_Events, JetParity);
@@ -429,10 +429,8 @@ StatusCode CMMMon::fillHistograms()
   // ================= Container: CMM Et Sums ================================
   // =========================================================================
 
-  LVL1::QuadLinear expand;
-  
   // retrieve CMM Et Sums from Storegate
-  const CMMEtSumsCollection* CMMEtSums;
+  const CMMEtSumsCollection* CMMEtSums = 0;
   sc = evtStore()->retrieve(CMMEtSums, m_CMMEtSumsLocation);
   if (sc == StatusCode::FAILURE) {
     msg(MSG::INFO) << "No CMMEtSums found in TES at "
@@ -446,14 +444,14 @@ StatusCode CMMMon::fillHistograms()
   CMMEtSumsCollection::const_iterator it_CMMEtSums ;
   for (it_CMMEtSums = CMMEtSums->begin(); it_CMMEtSums != CMMEtSums->end();
                                                        ++it_CMMEtSums) {	  
-    int crate  = (*it_CMMEtSums)->crate();
-    int dataID = (*it_CMMEtSums)->dataID();
-    unsigned int rawEx = (*it_CMMEtSums)->Ex();
-    unsigned int rawEy = (*it_CMMEtSums)->Ey();
-    unsigned int rawEt = (*it_CMMEtSums)->Et();
-    int exError = (*it_CMMEtSums)->ExError();
-    int eyError = (*it_CMMEtSums)->EyError();
-    int etError = (*it_CMMEtSums)->EtError();
+    const int crate  = (*it_CMMEtSums)->crate();
+    const int dataID = (*it_CMMEtSums)->dataID();
+    const unsigned int rawEx = (*it_CMMEtSums)->Ex();
+    const unsigned int rawEy = (*it_CMMEtSums)->Ey();
+    const unsigned int rawEt = (*it_CMMEtSums)->Et();
+    const int exError = (*it_CMMEtSums)->ExError();
+    const int eyError = (*it_CMMEtSums)->EyError();
+    const int etError = (*it_CMMEtSums)->EtError();
 
     // -----------------------------------------------------------------------
     // -------------- Histos with distribution of JEM Energies ---------------
@@ -461,9 +459,9 @@ StatusCode CMMMon::fillHistograms()
     // JEM energy sums, dataID < 16
     if (dataID < 16) {
       // note: JEM energies are compressed -> use QuadLinear to expand!
-      int ex = expand.Expand(rawEx);
-      int ey = expand.Expand(rawEy);
-      int et = expand.Expand(rawEt);
+      const int ex = LVL1::QuadLinear::Expand(rawEx);
+      const int ey = LVL1::QuadLinear::Expand(rawEy);
+      const int et = LVL1::QuadLinear::Expand(rawEt);
 	  
       if (ex > 0) m_h_CMMEtSums_JEM_Ex->Fill(ex, 1.);
       if (ey > 0) m_h_CMMEtSums_JEM_Ey->Fill(ey, 1.);
@@ -478,9 +476,9 @@ StatusCode CMMMon::fillHistograms()
       // Use CrateEnergy object to decode 15-bit twos-complement format
       LVL1::CrateEnergy cen(crate, rawEt, rawEx, rawEy,
                             etError&0x1, exError&0x1, eyError&0x1);
-      int ex = std::abs(cen.ex());
-      int ey = std::abs(cen.ey());
-      int et = rawEt;
+      const int ex = std::abs(cen.ex());
+      const int ey = std::abs(cen.ey());
+      const int et = rawEt;
 
       if (ex > 0 && !cen.exOverflow()) m_h_CMMEtSums_Ex->Fill(ex, 1.);
       if (ey > 0 && !cen.eyOverflow()) m_h_CMMEtSums_Ey->Fill(ey, 1.);
@@ -496,7 +494,7 @@ StatusCode CMMMon::fillHistograms()
     //MissingEt/SumEt Hitmaps
     if ((dataID == LVL1::CMMEtSums::MISSING_ET_MAP ||
          dataID == LVL1::CMMEtSums::SUM_ET_MAP) && crate == 1) {
-      int nHits  = (dataID == LVL1::CMMEtSums::MISSING_ET_MAP) ? 8 : 4;
+      const int nHits  = (dataID == LVL1::CMMEtSums::MISSING_ET_MAP) ? 8 : 4;
       TH1F_LW* hist = (dataID == LVL1::CMMEtSums::MISSING_ET_MAP)
                        ? m_h_CMMEtSums_MissingEtMap : m_h_CMMEtSums_SumEtMap;
       m_histTool->fillThresholds(hist, rawEt, nHits, 1);
@@ -521,9 +519,9 @@ StatusCode CMMMon::fillHistograms()
     // -----------------------------------------------------------------------
     //Error summary plots
     //substatus word
-    DataError exerr(exError);
-    DataError eyerr(eyError);
-    DataError eterr(etError);
+    const DataError exerr(exError);
+    const DataError eyerr(eyError);
+    const DataError eterr(etError);
     const int status = (eterr.error() >> LVL1::DataError::GLinkParity) & 0xff;
     if (status) {
       for (int bit = 0; bit < 8; ++bit) {
@@ -590,15 +588,15 @@ StatusCode CMMMon::fillHistograms()
   // -------------- Histos filled with CMM RoI information -------------------
   // -------------------------------------------------------------------------
 
-  int rawEx = (CR)->ex();
-  int rawEy = (CR)->ey();
-  int et    = (CR)->et();
-  int exError = (CR)->exError();
-  int eyError = (CR)->eyError();
-  int etError = (CR)->etError();
-  int jetEtHits = (CR)->jetEtHits();
-  int sumEtHits = (CR)->sumEtHits();
-  int missingEtHits = (CR)->missingEtHits();
+  const int rawEx = (CR)->ex();
+  const int rawEy = (CR)->ey();
+  const int et    = (CR)->et();
+  const int exError = (CR)->exError();
+  const int eyError = (CR)->eyError();
+  const int etError = (CR)->etError();
+  const int jetEtHits = (CR)->jetEtHits();
+  const int sumEtHits = (CR)->sumEtHits();
+  const int missingEtHits = (CR)->missingEtHits();
 
   m_histTool->fillThresholds(m_h_CMMRoI_JetEtHits, jetEtHits, 4, 1);
   m_histTool->fillThresholds(m_h_CMMRoI_SumEtHits, sumEtHits, 4, 1);
@@ -616,9 +614,9 @@ StatusCode CMMMon::fillHistograms()
 
   // Use CrateEnergy object to decode 15-bit twos-complement format
   LVL1::CrateEnergy cen(1, et, rawEx, rawEy,
-                           etError&0x1, exError&0x1, eyError&0x1);
-  int ex = std::abs(cen.ex());
-  int ey = std::abs(cen.ey());
+                        etError&0x1, exError&0x1, eyError&0x1);
+  const int ex = std::abs(cen.ex());
+  const int ey = std::abs(cen.ey());
 
   if (ex > 0 && !cen.exOverflow()) m_h_CMMRoI_Ex->Fill(ex,1);
   if (ey > 0 && !cen.eyOverflow()) m_h_CMMRoI_Ey->Fill(ey,1);
@@ -634,10 +632,10 @@ StatusCode CMMMon::fillHistograms()
   }
   
   // errors
-  DataError exerr(exError);
-  DataError eyerr(eyError);
-  DataError eterr(etError);
-  DataError jetEterr((CR)-> jetEtError());
+  const DataError exerr(exError);
+  const DataError eyerr(eyError);
+  const DataError eterr(etError);
+  const DataError jetEterr((CR)-> jetEtError());
 
   // Parity (Ex)
   if (exerr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(ExParity);

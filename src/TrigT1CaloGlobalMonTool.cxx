@@ -225,7 +225,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  bool debug = msgLvl(MSG::DEBUG);
+  const bool debug = msgLvl(MSG::DEBUG);
   if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
   StatusCode sc;
@@ -246,7 +246,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
                                << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates; ++crate) {
-      int err = (*errTES)[crate];
+      const int err = (*errTES)[crate];
       if (err == 0) continue;
       if ((err >> DataStatus) & 0x1)   m_h_global->Fill(PPMDataStatus, crate);
       if ((err >> DataError) & 0x1)    m_h_global->Fill(PPMDataError,  crate);
@@ -264,7 +264,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
                                << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates; ++crate) {
-      int err = (*errTES)[crate];
+      const int err = (*errTES)[crate];
       if (err == 0) continue;
       if ((err >> DataStatus) & 0x1)   m_h_global->Fill(PPMDataStatus, crate);
       if ((err >> DataError) & 0x1)    m_h_global->Fill(PPMDataError,  crate);
@@ -282,7 +282,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
                                << endreq;
   } else {
     for (int crate = 0; crate < cpmCrates; ++crate) {
-      int err = (*errTES)[crate];
+      const int err = (*errTES)[crate];
       if (err == 0) continue;
       const int cr = crate + ppmCrates;
       if ((err >> CPMStatus) & 0x1) m_h_global->Fill(SubStatus, cr);
@@ -306,7 +306,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
                                << endreq;
   } else {
     for (int crate = 0; crate < jemCrates; ++crate) {
-      int err = (*errTES)[crate];
+      const int err = (*errTES)[crate];
       if (err == 0) continue;
       const int cr = crate + ppmCrates + cpmCrates;
       if ((err >> JEMStatus) & 0x1) m_h_global->Fill(SubStatus, cr);
@@ -328,7 +328,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
                                << endreq;
   } else {
     for (int crate = 0; crate < jemCrates; ++crate) {
-      int err = (*errTES)[crate];
+      const int err = (*errTES)[crate];
       if (err == 0) continue;
       const int cr = crate + ppmCrates + cpmCrates;
       if (((err >> JEMCMMJetStatus) & 0x1) ||
@@ -353,7 +353,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
                                << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates+cpmCrates+jemCrates; ++crate) {
-      int err = (*errTES)[crate];
+      const int err = (*errTES)[crate];
       if (err == 0) continue;
       //if (err & 0x7f) m_h_global->Fill(RODStatus, crate);
       if (err & 0x3f) m_h_global->Fill(RODStatus, crate);
@@ -374,7 +374,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
                                << endreq;
   } else {
     for (int crate = 0; crate < ppmCrates; ++crate) {
-      int err = (*errTES)[crate];
+      const int err = (*errTES)[crate];
       if (err == 0) continue;
       if (((err >> LUTMismatch) & 0x1)) m_h_global->Fill(Simulation, crate);
     }
@@ -390,7 +390,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
                                << endreq;
   } else {
     for (int crate = 0; crate < cpmCrates; ++crate) {
-      int err = (*errTES)[crate];
+      const int err = (*errTES)[crate];
       if (err == 0) continue;
       const int cr = crate + ppmCrates;
       if (((err >> EMTowerMismatch) & 0x1) || ((err >> HadTowerMismatch) & 0x1))
@@ -414,7 +414,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
                                << endreq;
   } else {
     for (int crate = 0; crate < jemCrates; ++crate) {
-      int err = (*errTES)[crate];
+      const int err = (*errTES)[crate];
       if (err == 0) continue;
       const int cr = crate + ppmCrates + cpmCrates;
       if (((err >> EMElementMismatch) & 0x1)  ||

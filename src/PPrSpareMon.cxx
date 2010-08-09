@@ -192,7 +192,7 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
 	buffer << (crate+1);
 	name += buffer.str();
 	title += "-"+buffer.str();
-	int nbins = (error != 4) ? 32 : 16;
+	const int nbins = (error != 4) ? 32 : 16;
 	TH2F_LW* hist = m_histTool->book2F(name,title,nbins,0,nbins,32,0,32);
 	m_histTool->numbers(hist, 0, 15, 2);
 	LWHist::LWHistAxis* axis = hist->GetXaxis();
@@ -267,14 +267,14 @@ StatusCode PPrSpareMon::fillHistograms()
 
     //---------------------------- ADC HitMaps -------------------------------
 
-    double crateModule      = (*TriggerTowerIterator)->eta();
-    double submoduleChannel = (*TriggerTowerIterator)->phi();
-    int icm       = crateModule;
-    int isc       = submoduleChannel;
-    int crate     = icm/16;
-    int module    = icm%16;
-    int submodule = isc/4;
-    int channel   = isc%4;
+    const double crateModule      = (*TriggerTowerIterator)->eta();
+    const double submoduleChannel = (*TriggerTowerIterator)->phi();
+    const int icm       = crateModule;
+    const int isc       = submoduleChannel;
+    const int crate     = icm/16;
+    const int module    = icm%16;
+    const int submodule = isc/4;
+    const int channel   = isc%4;
 
     if (crate < 2 || crate > 5) continue;
     
@@ -288,7 +288,7 @@ StatusCode PPrSpareMon::fillHistograms()
     //------------------------ SubStatus Word errors -------------------------
 
     using LVL1::DataError;
-    DataError error((*TriggerTowerIterator)-> emError());
+    const DataError error((*TriggerTowerIterator)-> emError());
    
     //Summary
 

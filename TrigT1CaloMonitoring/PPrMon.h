@@ -69,6 +69,7 @@ private:
   int m_TT_ADC_Pedestal;
   int m_HADFADCCut;
   int m_EMFADCCut;
+  int m_NoEvents;
   bool m_onlineTest;
 
   std::string m_PathInRootFile;
@@ -113,7 +114,6 @@ private:
   TH2F_LW* m_h_TT_BCID;
    
   // error
-  int m_NoEvents;
   TH1F_LW* m_h_TT_Error; // Error summary
   TH2F_LW* m_h_TT_error_Crate_03; // just ROD sub-status word
   TH2F_LW* m_h_TT_error_Crate_47; //just ROD sub-status word

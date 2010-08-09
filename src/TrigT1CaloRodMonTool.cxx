@@ -31,7 +31,8 @@ TrigT1CaloRodMonTool::TrigT1CaloRodMonTool(const std::string & type,
 				           const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloLWHistogramTool")
+    m_histTool("TrigT1CaloLWHistogramTool"),
+    m_events(0)
 /*---------------------------------------------------------*/
 {
 
@@ -507,7 +508,7 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
       }
       if (i >= 72) {
         if (i%2 == 0) {
-          int bin = (i-72)/2 + 9;
+          const int bin = (i-72)/2 + 9;
           m_h_ROD_RoI->SetBinContentAndError(bin, average1, error1);
 	  if (online) {
 	    m_h_ROD_RoI->SetBinContentAndError(13+bin, average2, error2);
@@ -515,28 +516,28 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
         }
       } else if (i >= 56) {
         if (i%2 == 0) {
-          int bin = (i-56)/2 + 1;
+          const int bin = (i-56)/2 + 1;
           m_h_ROD_RoI->SetBinContentAndError(bin, average1, error1);
 	  if (online) {
             m_h_ROD_RoI->SetBinContentAndError(13+bin, average2, error2);
           }
         }
       } else if (i >= 48) {
-        int bin = i-48 + 1;
+        const int bin = i-48 + 1;
         m_h_ROD_JEP->SetBinContentAndError(bin, average1, error1);
         if (online) {
           m_h_ROD_JEP->SetBinContentAndError(9+bin, average2, error2);
         }
       } else if (i >= 32) {
         if (i%2 == 0) {
-          int bin = (i-32)/2 + 1;
+          const int bin = (i-32)/2 + 1;
           m_h_ROD_CP->SetBinContentAndError(bin, average1, error1);
 	  if (online) {
             m_h_ROD_CP->SetBinContentAndError(9+bin, average2, error2);
           }
         }
       } else {
-        int bin = i + 1;
+        const int bin = i + 1;
         m_h_ROD_PP->SetBinContentAndError(bin, average1, error1);
         if (online) {
           m_h_ROD_PP->SetBinContentAndError(33+bin, average2, error2);

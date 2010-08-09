@@ -1047,7 +1047,7 @@ void JEPSimBSMon::compare(const JemRoiMap& roiSimMap,
         RodHeaderCollection::const_iterator rodIter  = rods->begin();
 	RodHeaderCollection::const_iterator rodIterE = rods->end();
 	for (; rodIter != rodIterE; ++rodIter) {
-	  LVL1::RODHeader* rod = *rodIter;
+	  const LVL1::RODHeader* rod = *rodIter;
 	  const int rodCrate = rod->crate() - 12;
 	  if (rodCrate >= 0 && rodCrate < nCrates
 	      && rod->dataType() == 1 && rod->limitedRoISet()) {
@@ -1196,9 +1196,9 @@ void JEPSimBSMon::compare(const JemHitsMap& jemSimMap,
     }
     if (hist) hist->Fill(jem, crate);
     
-    bool forward = (jem == 0 || jem == 7 || jem == 8 || jem == 15);
+    const bool forward = (jem == 0 || jem == 7 || jem == 8 || jem == 15);
+    const int thrLen = (forward) ? 2 : 3;
     int nThresh = 8;
-    int thrLen = (forward) ? 2 : 3;
     int same = m_histTool->thresholdsSame(datHits, simHits, nThresh, thrLen);
     int diff = m_histTool->thresholdsDiff(datHits, simHits, nThresh, thrLen);
     m_histTool->fillXVsThresholds(m_h_JEMHitsThreshSIMeqDAT, loc, same,
@@ -1206,7 +1206,7 @@ void JEPSimBSMon::compare(const JemHitsMap& jemSimMap,
     m_histTool->fillXVsThresholds(m_h_JEMHitsThreshSIMneDAT, loc, diff,
                                                              nThresh, 1);
     if (forward) {
-      int shift = nThresh*thrLen;
+      const int shift = nThresh*thrLen;
       nThresh = 4;
       same = m_histTool->thresholdsSame(datHits>>shift, simHits>>shift,
                                                              nThresh, thrLen);
@@ -1306,9 +1306,9 @@ void JEPSimBSMon::compare(const JemHitsMap& jemMap,
     }
     if (hist) hist->Fill(jem, crate);
 
-    bool forward = (jem == 0 || jem == 7 || jem == 8 || jem == 15);
+    const bool forward = (jem == 0 || jem == 7 || jem == 8 || jem == 15);
+    const int thrLen = (forward) ? 2 : 3;
     int nThresh = 8;
-    int thrLen = (forward) ? 2 : 3;
     int same = m_histTool->thresholdsSame(cmmHits, jemHits, nThresh, thrLen);
     int diff = m_histTool->thresholdsDiff(cmmHits, jemHits, nThresh, thrLen);
     m_histTool->fillXVsThresholds(m_h_CMMHitsThreshSIMeqDAT, loc, same,
@@ -1316,7 +1316,7 @@ void JEPSimBSMon::compare(const JemHitsMap& jemMap,
     m_histTool->fillXVsThresholds(m_h_CMMHitsThreshSIMneDAT, loc, diff,
                                                                  nThresh, 1);
     if (forward) {
-      int shift = nThresh*thrLen;
+      const int shift = nThresh*thrLen;
       nThresh = 4;
       same = m_histTool->thresholdsSame(cmmHits>>shift, jemHits>>shift,
                                                              nThresh, thrLen);
@@ -1461,10 +1461,10 @@ void JEPSimBSMon::compare(const CmmJetHitsMap& cmmSimMap,
 	thrLen  = 1;
 	offset  = 16;
       }
-      int same = m_histTool->thresholdsSame(cmmHits, cmmSimHits, nThresh,
-                                                                   thrLen);
-      int diff = m_histTool->thresholdsDiff(cmmHits, cmmSimHits, nThresh,
-                                                                   thrLen);
+      const int same = m_histTool->thresholdsSame(cmmHits, cmmSimHits, nThresh,
+                                                                       thrLen);
+      const int diff = m_histTool->thresholdsDiff(cmmHits, cmmSimHits, nThresh,
+                                                                       thrLen);
       m_histTool->fillXVsThresholds(m_h_SumsThreshSIMeqDAT, loc1, same,
                                                        nThresh, 1, offset);
       m_histTool->fillXVsThresholds(m_h_SumsThreshSIMneDAT, loc1, diff,

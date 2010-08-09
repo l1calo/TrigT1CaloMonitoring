@@ -52,7 +52,7 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
     m_cpHitsTool("LVL1::L1CPHitsTools/L1CPHitsTools"),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_debug(false)
+    m_debug(false), m_overlapPresent(false)
 /*---------------------------------------------------------*/
 {
   declareProperty("EmTauTool", m_emTauTool);
@@ -843,7 +843,7 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
 	RodHeaderCollection::const_iterator rodIter  = rods->begin();
 	RodHeaderCollection::const_iterator rodIterE = rods->end();
 	for (; rodIter != rodIterE; ++rodIter) {
-	  LVL1::RODHeader* rod = *rodIter;
+	  const LVL1::RODHeader* rod = *rodIter;
 	  const int rodCrate = rod->crate() - 8;
 	  if (rodCrate >= 0 && rodCrate < nCrates
 	      && rod->dataType() == 1 && rod->limitedRoISet()) {
@@ -1093,7 +1093,7 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
     
     //  Fill in error plots
 
-    int loc  = crate * nCPMs + cpm - 1;
+    const int loc  = crate * nCPMs + cpm - 1;
     const int loc2 = crate * nCMMs;
     const int cpmBins = nCrates * nCPMs;
     const int cmmBins = nCrates * nCMMs;

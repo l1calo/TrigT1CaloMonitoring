@@ -42,7 +42,7 @@
 PPrMon::PPrMon(const std::string & type, const std::string & name,
 					 const IInterface* parent)
   : ManagedMonitorToolBase ( type, name, parent ),
-    m_SliceNo(15),
+    m_SliceNo(15), m_NoEvents(0),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool")
@@ -52,9 +52,9 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
                   m_TriggerTowerContainerName = "LVL1TriggerTowers");
   declareProperty("LUTHitMap_ThreshMax",   m_TT_HitMap_ThreshMax  = 10);
   declareProperty("LUTHitMap_LumiBlocks",  m_TT_HitMap_LumiBlocks = 10);
-  declareProperty("ADCPedestal",           m_TT_ADC_Pedestal      = 32);
   declareProperty("ADCHitMap_Thresh",      m_TT_ADC_HitMap_Thresh = 15);
   declareProperty("MaxEnergyRange",        m_MaxEnergyRange       = 256);
+  declareProperty("ADCPedestal",           m_TT_ADC_Pedestal      = 32);
   declareProperty("HADFADCCut",            m_HADFADCCut           = 40);
   declareProperty("EMFADCCut",             m_EMFADCCut            = 40);
 
@@ -147,7 +147,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     MonGroup TT_ErrorDetail(this, m_ErrorPathInRootFile+"/Detail", expert, run);
     MonGroup NoEvents(this, m_EventPathInRootFile, expert, run);
 
-    m_NoEvents=0;
+    m_NoEvents = 0;
 	  
 
     //-------------------- ADC Hitmaps for Triggered Timeslice ---------------
@@ -201,7 +201,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     //---------------------------- Signal shape ------------------------------
 
     m_h_TT_SignalProfile.clear();
-    int emPart = MaxPartitions/2;
+    const int emPart = MaxPartitions/2;
     for (int p = 0; p < MaxPartitions; ++p) {
       if (p < emPart) name = "ppm_em_1d_tt_adc_SignalProfile"
                              + partitionName(p);
@@ -359,7 +359,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	buffer << (crate+1);
 	name += buffer.str();
 	title += "-"+buffer.str();
-	int nbins = (error != 4) ? 32 : 16;
+	const int nbins = (error != 4) ? 32 : 16;
 	TH2F_LW* hist = m_histTool->book2F(name,title,nbins,0,nbins,32,0,32);
 	m_histTool->numbers(hist, 0, 15, 2);
 	LWHist::LWHistAxis* axis = hist->GetXaxis();
@@ -414,8 +414,10 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	                           (block+2)*m_TT_HitMap_ThreshMax + thresh];
 	  hist2->Reset();
 	  hist4->Reset();
-	  unsigned ix, iy;
-	  double content, error;
+	  unsigned int ix = 0;
+	  unsigned int iy = 0;
+	  double content = 0.;
+	  double error   = 0.;
 	  hist1->resetActiveBinLoop();
 	  while (hist1->getNextActiveBin(ix, iy, content, error)) {
 	    if (content > 0.) hist2->SetBinContent(ix, iy, content);
@@ -582,7 +584,7 @@ StatusCode PPrMon::fillHistograms()
     unsigned int tslice = (*TriggerTowerIterator)->emADCPeak();
     
     if (tslice < ((*TriggerTowerIterator)->emADC()).size()) {
-      int temADC = ((*TriggerTowerIterator)->emADC())[tslice];
+      const int temADC = ((*TriggerTowerIterator)->emADC())[tslice];
       if (temADC > m_TT_ADC_HitMap_Thresh) {
 	m_histTool->fillPPMEmEtaVsPhi(m_h_TT_HitMap_emADC_00100, eta, phi, 1);
 	m_histTool->fillPPMEmEtaVsPhi(m_p_TT_HitMap_emADC_00100, eta, phi,
@@ -593,7 +595,7 @@ StatusCode PPrMon::fillHistograms()
     tslice = (*TriggerTowerIterator)->hadADCPeak();
 
     if (tslice < ((*TriggerTowerIterator)->hadADC()).size()) {
-      int thadADC = ((*TriggerTowerIterator)->hadADC())[tslice];
+      const int thadADC = ((*TriggerTowerIterator)->hadADC())[tslice];
       if (thadADC > m_TT_ADC_HitMap_Thresh) {
         m_histTool->fillPPMHadEtaVsPhi(m_h_TT_HitMap_hadADC_00100, eta, phi, 1);
         m_histTool->fillPPMHadEtaVsPhi(m_p_TT_HitMap_hadADC_00100, eta, phi,
@@ -602,12 +604,11 @@ StatusCode PPrMon::fillHistograms()
     }
 	             
     //---------------------------- Timing of FADC Signal ---------------------
-    double max;
 
     const std::vector<int>& emADC((*TriggerTowerIterator)->emADC());
     const std::vector<int>& hadADC((*TriggerTowerIterator)->hadADC());
 
-    max = recTime(emADC, m_EMFADCCut);
+    double max = recTime(emADC, m_EMFADCCut);
     //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
     if (max >= 0.) {
       m_histTool->fillPPMEmEtaVsPhi(m_h_TT_ADC_emTiming_signal, eta, phi,
@@ -647,17 +648,13 @@ StatusCode PPrMon::fillHistograms()
     //----------------------------- em ---------------------------------------
 
     using LVL1::DataError;
-    DataError emerr((*TriggerTowerIterator)-> emError());
+    const DataError emerr((*TriggerTowerIterator)-> emError());
 
-    int crate     = 0;
-    int module    = 0;
-    int submodule = 0;
-    int channel   = 0;
-    L1CaloCoolChannelId emCoolId(m_ttTool->channelID(eta, phi, 0));
-    crate     = emCoolId.crate();
-    module    = emCoolId.module();
-    submodule = emCoolId.subModule();
-    channel   = emCoolId.channel();
+    const L1CaloCoolChannelId emCoolId(m_ttTool->channelID(eta, phi, 0));
+    int crate     = emCoolId.crate();
+    int module    = emCoolId.module();
+    int submodule = emCoolId.subModule();
+    int channel   = emCoolId.channel();
 
     // em signals Crate 0-3
     //em+had FCAL signals get processed in one crate (Crates 4-7)
@@ -726,9 +723,9 @@ StatusCode PPrMon::fillHistograms()
     
     //had
 
-    DataError haderr((*TriggerTowerIterator)-> hadError());
+    const DataError haderr((*TriggerTowerIterator)-> hadError());
 
-    L1CaloCoolChannelId hadCoolId(m_ttTool->channelID(eta, phi, 1));
+    const L1CaloCoolChannelId hadCoolId(m_ttTool->channelID(eta, phi, 1));
     crate     = hadCoolId.crate();
     module    = hadCoolId.module();
     submodule = hadCoolId.subModule();
@@ -833,7 +830,7 @@ double PPrMon::recTime(const std::vector<int>& vFAdc, int cut) {
 /*---------------------------------------------------------*/
 
   int max = -1;
-  int slices = vFAdc.size();
+  const int slices = vFAdc.size();
   if (slices > 0) {
     max = 0.;
     int maxAdc = vFAdc[0];

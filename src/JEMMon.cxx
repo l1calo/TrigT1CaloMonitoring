@@ -319,7 +319,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
 StatusCode JEMMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  bool debug = msgLvl(MSG::DEBUG);
+  const bool debug = msgLvl(MSG::DEBUG);
 
   // Skip events believed to be corrupt
 
@@ -338,7 +338,7 @@ StatusCode JEMMon::fillHistograms()
   // =========================================================================
 
   // retrieve JetElements
-  const JECollection* jetElements;
+  const JECollection* jetElements = 0;
   StatusCode sc = evtStore()->retrieve(jetElements, m_JetElementLocation);
 
   if(sc == StatusCode::FAILURE) {
@@ -351,14 +351,14 @@ StatusCode JEMMon::fillHistograms()
   LVL1::CoordToHardware ToHW;
   JECollection::const_iterator it_je ;
   for (it_je = jetElements->begin(); it_je != jetElements->end(); ++it_je) {
-    double eta = (*it_je)->eta();
-    double phi = (*it_je)->phi();
-    LVL1::Coordinate coord(phi, eta);
-    int crate  = ToHW.jepCrate(coord);
-    int module = ToHW.jepModule(coord);
-    int cord   = ToHW.jepCoordinateWord(coord);
-    int emEnergy  = (*it_je)->emEnergy();
-    int hadEnergy = (*it_je)->hadEnergy();
+    const double eta = (*it_je)->eta();
+    const double phi = (*it_je)->phi();
+    const LVL1::Coordinate coord(phi, eta);
+    const int crate  = ToHW.jepCrate(coord);
+    const int module = ToHW.jepModule(coord);
+    const int cord   = ToHW.jepCoordinateWord(coord);
+    const int emEnergy  = (*it_je)->emEnergy();
+    const int hadEnergy = (*it_je)->hadEnergy();
 	  
     if (debug) {
       msg(MSG::VERBOSE) << "JE has coords (eta,phi): " << eta << ", " << phi
@@ -386,8 +386,8 @@ StatusCode JEMMon::fillHistograms()
     // ----------------- HitMaps per time slice ------------------------------
     const std::vector<int>& emEnergyVec((*it_je)->emEnergyVec());
     const std::vector<int>& hadEnergyVec((*it_je)->hadEnergyVec());
-    int slicesEm  = emEnergyVec.size();
-    int slicesHad = hadEnergyVec.size();
+    const int slicesEm  = emEnergyVec.size();
+    const int slicesHad = hadEnergyVec.size();
     for (int i = 0; i < m_SliceNo; i++) {
       if (i < slicesEm && emEnergyVec[i] > 0) {
         m_histTool->fillJEMEtaVsPhi(m_h_je_emHitMap[i], eta, phi , 1.);
@@ -398,10 +398,10 @@ StatusCode JEMMon::fillHistograms()
     }
 
     // ----------------- Error Histos ----------------------------------------
-    DataError err((*it_je)->emError());
-    DataError haderr((*it_je)->hadError());
+    const DataError err((*it_je)->emError());
+    const DataError haderr((*it_je)->hadError());
 
-    int ypos = crate*16 + module;
+    const int ypos = crate*16 + module;
     // EM Parity
     if (err.get(DataError::Parity)) {
       m_histTool->fillJEMEtaVsPhi(m_h_je_em_parity, eta, phi);
@@ -448,7 +448,7 @@ StatusCode JEMMon::fillHistograms()
   // =========================================================================
 
   // retrieve JEMHits collection from storegate
-  const JEMHitsCollection* JEMHits;
+  const JEMHitsCollection* JEMHits = 0;
   sc = evtStore()->retrieve(JEMHits, m_JEMHitsLocation);
   if (sc == StatusCode::FAILURE) {
     msg(MSG::INFO) << "No JEMHits found in TES at " << m_JEMHitsLocation
@@ -464,20 +464,20 @@ StatusCode JEMMon::fillHistograms()
   JEMHitsCollection::const_iterator it_JEMHits ;
   for (it_JEMHits = JEMHits->begin(); it_JEMHits != JEMHits->end();
                                                               ++it_JEMHits ) {	  
-    int crate  = (*it_JEMHits)->crate();
-    int module = (*it_JEMHits)->module();
-    int xpos   = crate*16 + module;
-    bool forward = (*it_JEMHits)->forward();
-    unsigned int jetHits = (*it_JEMHits)->JetHits();
+    const int crate  = (*it_JEMHits)->crate();
+    const int module = (*it_JEMHits)->module();
+    const int xpos   = crate*16 + module;
+    const bool forward = (*it_JEMHits)->forward();
+    const unsigned int jetHits = (*it_JEMHits)->JetHits();
 
-    int nBits = (forward) ? 2 : 3;
+    const int nBits = (forward) ? 2 : 3;
     m_histTool->fillThresholds(m_h_JEMHits_MainHits, jetHits, 8, nBits);
     m_histTool->fillXVsThresholds(m_h_JEMDAQ_Hits_Map, xpos, jetHits, 8, nBits);
     if (forward) {
-      int fwdHits = jetHits >> 16;
-      int offset  = (module%8 == 0) ? 8 : 12;
-      TH1F_LW* fwdHist = (module%8 == 0) ? m_h_JEMHits_FwdHitsLeft
-                                         : m_h_JEMHits_FwdHitsRight;
+      const int fwdHits = jetHits >> 16;
+      const int offset  = (module%8 == 0) ? 8 : 12;
+      TH1F_LW* fwdHist  = (module%8 == 0) ? m_h_JEMHits_FwdHitsLeft
+                                          : m_h_JEMHits_FwdHitsRight;
       m_histTool->fillThresholds(fwdHist, fwdHits, 4, nBits);
       m_histTool->fillXVsThresholds(m_h_JEMDAQ_Hits_Map, xpos, fwdHits, 4,
                                                                 nBits, offset);
@@ -495,7 +495,7 @@ StatusCode JEMMon::fillHistograms()
   // ================= Container: JEM Et Sums ================================
   // =========================================================================
 
-  const JEMEtSumsCollection* JEMEtSums;
+  const JEMEtSumsCollection* JEMEtSums = 0;
   sc = evtStore()->retrieve(JEMEtSums, m_JEMEtSumsLocation);
   if (sc == StatusCode::FAILURE) {
     msg(MSG::INFO) << "No JEMEtSums found in TES at " << m_JEMEtSumsLocation
@@ -509,14 +509,13 @@ StatusCode JEMMon::fillHistograms()
 
   // Step over all cells
   JEMEtSumsCollection::const_iterator it_JEMEtSums ;
-  LVL1::QuadLinear expand;
 
   for (it_JEMEtSums = JEMEtSums->begin(); it_JEMEtSums != JEMEtSums->end();
                                                              ++it_JEMEtSums) {	       
     // note: the energy values are compressed -> expand!
-    int ex = expand.Expand((*it_JEMEtSums)->Ex());
-    int ey = expand.Expand((*it_JEMEtSums)->Ey());
-    int et = expand.Expand((*it_JEMEtSums)->Et());
+    const int ex = LVL1::QuadLinear::Expand((*it_JEMEtSums)->Ex());
+    const int ey = LVL1::QuadLinear::Expand((*it_JEMEtSums)->Ey());
+    const int et = LVL1::QuadLinear::Expand((*it_JEMEtSums)->Et());
 
     if (ex != 0) m_h_JEMEtSums_Ex->Fill(ex, 1.); 
     if (ey != 0) m_h_JEMEtSums_Ey->Fill(ey, 1.); 
@@ -554,15 +553,15 @@ StatusCode JEMMon::fillHistograms()
 
   for (it_JEMRoIs = JEMRoIs->begin(); it_JEMRoIs != JEMRoIs->end();
                                                           ++it_JEMRoIs) {	  
-    int crate   = (*it_JEMRoIs)->crate();
-    int module  = (*it_JEMRoIs)->jem();
-    int forward = (*it_JEMRoIs)->forward();
-    int roiHits = (*it_JEMRoIs)->hits();
+    const int crate   = (*it_JEMRoIs)->crate();
+    const int module  = (*it_JEMRoIs)->jem();
+    const int forward = (*it_JEMRoIs)->forward();
+    const int roiHits = (*it_JEMRoIs)->hits();
     LVL1::JEPRoIDecoder decoder;
-    LVL1::CoordinateRange coordRange =
+    const LVL1::CoordinateRange coordRange =
                                   decoder.coordinate((*it_JEMRoIs)->roiWord());
-    double eta = coordRange.eta();
-    double phi = coordRange.phi();
+    const double eta = coordRange.eta();
+    const double phi = coordRange.phi();
       
     int nHits = 8;
     TH1F_LW* hist = m_h_JEMRoI_MainHits;
@@ -573,7 +572,7 @@ StatusCode JEMMon::fillHistograms()
     m_histTool->fillThresholds(hist, roiHits, nHits, 1);
 
     for (int thr = 0; thr < nHits; ++thr) {
-      int hit = (roiHits >> thr) & 0x1;
+      const int hit = (roiHits >> thr) & 0x1;
       if (hit) {
         TH2F_LW* hist2 = (forward) ? m_h_JEMRoI_FwdThreshPerEtaPhi[thr]
 	                           : m_h_JEMRoI_MainThreshPerEtaPhi[thr];
@@ -590,7 +589,7 @@ StatusCode JEMMon::fillHistograms()
 	              << endreq;
     }
       
-    DataError err((*it_JEMRoIs)->error());
+    const DataError err((*it_JEMRoIs)->error());
 
     if (err.get(DataError::Parity)) {
       m_histTool->fillJEMRoIEtaVsPhi(m_h_JEMRoI_error, eta, phi);

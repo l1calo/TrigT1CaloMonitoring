@@ -40,7 +40,7 @@ PPMSimBSMon::PPMSimBSMon(const std::string & type,
     m_l1CondSvc("L1CaloCondSvc", name),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"), 
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_debug(false), m_events(0)
+    m_LutContainer(0), m_debug(false), m_events(0)
 /*---------------------------------------------------------*/
 {
   declareProperty("TriggerTowerLocation",
@@ -293,8 +293,15 @@ StatusCode PPMSimBSMon::fillHistograms()
 
 
   if ((m_environment == AthenaMonManager::online || m_onlineTest) && (m_events%int(0.5*m_instantaneous)==0)) {
-    double worst_value, minValue, maxValue;
-    int worst_binx, worst_biny, minBinx, minBiny, maxBinx, maxBiny;
+    double worst_value = 0.;
+    double minValue    = 0.;
+    double maxValue    = 0.;
+    int worst_binx = 0;
+    int worst_biny = 0;
+    int minBinx    = 0;
+    int minBiny    = 0;
+    int maxBinx    = 0;
+    int maxBiny    = 0;
     m_histTool->getMinMaxBin(m_h_ppm_em_2d_etaPhi_tt_ped_instavg,
                        minBinx, minBiny, maxBinx, maxBiny, minValue, maxValue);
     if(fabs(minValue) > fabs(maxValue)){
@@ -376,7 +383,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
   StatusCode sc = m_ttTool->retrieveConditions();
   if (sc.isFailure()) return;
 
-  int nCrates = 8;
+  const int nCrates = 8;
   ErrorVector crateError(nCrates);
   ErrorVector moduleError(nCrates);
   
@@ -387,28 +394,24 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
   for (; iter != iterE; ++iter) {
     
     const LVL1::TriggerTower* tt = *iter;
+    
+    const L1CaloCoolChannelId em_coolId(m_ttTool->channelID(tt->eta(),
+                                                            tt->phi(),0));
+    const L1CaloCoolChannelId had_coolId(m_ttTool->channelID(tt->eta(),
+                                                             tt->phi(),1));
+
+    const int had_crate  = had_coolId.crate();
+    const int had_module = had_coolId.module();
+    const int em_crate   = em_coolId.crate();
+    const int em_module  = em_coolId.module();
  
     std::vector<int> emLut;
     std::vector<int> emBcidR;
     std::vector<int> emBcidD;
-
-    int had_crate = -1;
-    int had_module = -1;
-    int em_crate = -1;
-    int em_module = -1;
-    
-    L1CaloCoolChannelId em_coolId(m_ttTool->channelID(tt->eta(),tt->phi(),0));
-    L1CaloCoolChannelId had_coolId(m_ttTool->channelID(tt->eta(),tt->phi(),1));
-
-    had_crate = had_coolId.crate();
-    had_module = had_coolId.module();
-    em_crate = em_coolId.crate();
-    em_module = em_coolId.module();
-				  
     m_ttTool->process(tt->emADC(),em_coolId, emLut, emBcidR, emBcidD);
     const int emPeak = tt->emADCPeak();
     std::vector<int> emLut1;
-    int emSlices = (tt->emADC()).size();
+    const int emSlices = (tt->emADC()).size();
     if (emSlices < 7 || emBcidD[emPeak]) emLut1.push_back(emLut[emPeak]);
     else                 emLut1.push_back(0);
     std::vector<int> emBcidR1;
@@ -428,7 +431,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     m_ttTool->process(tt->hadADC(),had_coolId, hadLut, hadBcidR, hadBcidD);
     const int hadPeak = tt->hadADCPeak();
     std::vector<int> hadLut1;
-    int hadSlices = (tt->hadADC()).size();
+    const int hadSlices = (tt->hadADC()).size();
     if (hadSlices < 7 || hadBcidD[hadPeak]) hadLut1.push_back(hadLut[hadPeak]);
     else                   hadLut1.push_back(0);
     std::vector<int> hadBcidR1;
@@ -458,7 +461,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     } 
     else if (m_debug) msg(MSG::DEBUG) << "::lut: No LUT Container retrieved" << endreq;
 
-    bool em_notSignal = (datEm==0 && !(m_ttTool->disabledChannel(em_coolId)));
+    const bool em_notSignal = (datEm==0 && !(m_ttTool->disabledChannel(em_coolId)));
 
     int had_offset = 0;
 
@@ -471,7 +474,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     } 
     else if (m_debug) msg(MSG::DEBUG) << "::lut: No LUT Container retrieved" << endreq;
 
-    bool had_notSignal = (datHad==0 && !(m_ttTool->disabledChannel(had_coolId)));
+    const bool had_notSignal = (datHad==0 && !(m_ttTool->disabledChannel(had_coolId)));
     
     const double eta = tt->eta();
     const double phi = tt->phi();
@@ -655,7 +658,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 
 void PPMSimBSMon::fillEventSample(int crate, int module)
 {
-  int y = module + 16*(crate%2);
+  const int y = module + 16*(crate%2);
   TH2I_LW* hist = 0;
   if     (crate==0 || crate==1) hist = m_h_ppm_2d_LUT_MismatchEvents_cr0cr1;
   else if(crate==2 || crate==3) hist = m_h_ppm_2d_LUT_MismatchEvents_cr2cr3;

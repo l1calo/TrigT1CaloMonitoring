@@ -340,12 +340,13 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
 StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 /*---------------------------------------------------------*/
 {
-  msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
+  const bool debug = msgLvl(MSG::DEBUG);
+  if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
   // Skip events believed to be corrupt
 
   if (m_errorTool->corrupt()) {
-    msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
+    if (debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
 
@@ -523,8 +524,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 
   while (ttMapIter != ttMapIterEnd && cpMapIter != cpMapIterEnd) {
 
-    unsigned int ttKey = ttMapIter->first;
-    unsigned int cpKey = cpMapIter->first;
+    const unsigned int ttKey = ttMapIter->first;
+    const unsigned int cpKey = cpMapIter->first;
 
     if      (cpKey > ttKey) ++ttMapIter;
     else if (ttKey > cpKey) ++cpMapIter;
@@ -580,7 +581,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       const double phi = coord.phi();
       const int crate = (*crIterator)->crate();
       const int cpm   = (*crIterator)->cpm();
-      int bin  = crate * s_modules + cpm - 1;
+      const int bin   = crate * s_modules + cpm - 1;
       if (hits) {
         m_histTool->fillXVsThresholds(m_h_RoI_thresholds, bin, hits,
                                                              s_thresholds, 1);
@@ -665,8 +666,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       if (hits1) m_histTool->fillXVsThresholds(hist, bin, hits1, nThresh,
                                                      s_threshBits, nThresh);
       // Errors
-      int error0 = (*cmIterator)->Error0();
-      int error1 = (*cmIterator)->Error1();
+      const int error0 = (*cmIterator)->Error0();
+      const int error1 = (*cmIterator)->Error1();
       if (error0 || error1) {
         const LVL1::DataError hit0Err(error0);
         const LVL1::DataError hit1Err(error1);
@@ -678,7 +679,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	    if (parity0) m_h_CMM_parity->Fill(dataId, 2*crate + 1);
 	    errorsCPM[bin] |= (1 << CMMParity);
           } else {
-  	    int remBin   = s_modules + 1;
+  	    const int remBin = s_modules + 1;
 	    int remCrate = -1;
             if      (dataId == LVL1::CMMCPHits::REMOTE_0) remCrate = 0;
             else if (dataId == LVL1::CMMCPHits::REMOTE_1) remCrate = 1;
@@ -720,8 +721,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 
   while (cpmMapIter != cpmMapIterEnd && cmmMapIter != cmmMapIterEnd) {
 
-    unsigned int cpmKey = cpmMapIter->first;
-    unsigned int cmmKey = cmmMapIter->first;
+    const unsigned int cpmKey = cpmMapIter->first;
+    const unsigned int cmmKey = cmmMapIter->first;
 
     if      (cmmKey > cpmKey) ++cpmMapIter;
     else if (cpmKey > cmmKey) ++cmmMapIter;
