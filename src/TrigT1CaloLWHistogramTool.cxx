@@ -1179,7 +1179,7 @@ TH1F_LW* TrigT1CaloLWHistogramTool::bookPPMHadEta(const std::string name,
 TH2F_LW* TrigT1CaloLWHistogramTool::bookPPMEmEtaVsPhi(const std::string name,
                                                       const std::string title)
 {
-  TH2F_LW*  hist = 0;
+  TH2F_LW* hist = 0;
   LWHist::LWHistAxis* axis = 0;
   if (m_shrinkEtaBins) {
     hist = book2F(name, title, 66, -3.3, 3.3, 64, 0., 64.);
@@ -1190,10 +1190,10 @@ TH2F_LW* TrigT1CaloLWHistogramTool::bookPPMEmEtaVsPhi(const std::string name,
       const double eta = (chan/10.)+0.05;
       axis->SetBinLabel(chan+34, intDoubleString(chan, eta).c_str());
     }
-    axis->SetBinLabel(1, "-49/-4.69");
+    axis->SetBinLabel(1, "-49/-4.41");
     axis->SetBinLabel(5, "-32/-3.15");
     axis->SetBinLabel(62, "31/3.15");
-    axis->SetBinLabel(66, "44/4.69");
+    axis->SetBinLabel(66, "44/4.41");
   } else {
     const int nxbins = 66;
     const double xbins[nxbins+1] = {-4.9,-4.475,-4.050,-3.625,-3.2,-3.1,-2.9,
@@ -1229,8 +1229,8 @@ TH2F_LW* TrigT1CaloLWHistogramTool::bookPPMHadEtaVsPhi(const std::string name,
   TH2F_LW* hist = bookPPMEmEtaVsPhi(name, title);
   if (m_shrinkEtaBins) {
     LWHist::LWHistAxis* axis = hist->GetXaxis();
-    axis->SetBinLabel(1, "-49/-4.48");
-    axis->SetBinLabel(66, "44/4.48");
+    axis->SetBinLabel(1, "-49/-4.17");
+    axis->SetBinLabel(66, "44/4.19");
   }
   return hist;
 
@@ -1243,7 +1243,7 @@ TProfile2D_LW* TrigT1CaloLWHistogramTool::bookProfilePPMEmEtaVsPhi(
 {
   // todo - remove duplication with above
   TProfile2D_LW* hist = 0;
-  LWHist::LWHistAxis*    axis = 0;
+  LWHist::LWHistAxis* axis = 0;
   if (m_shrinkEtaBins) {
     hist = bookProfile2D(name, title, 66, -3.3, 3.3, 64, 0., 64.);
     axis = hist->GetXaxis();
@@ -1253,10 +1253,10 @@ TProfile2D_LW* TrigT1CaloLWHistogramTool::bookProfilePPMEmEtaVsPhi(
       const double eta = (chan/10.)+0.05;
       axis->SetBinLabel(chan+34, intDoubleString(chan, eta).c_str());
     }
-    axis->SetBinLabel(1, "-49/-4.69");
+    axis->SetBinLabel(1, "-49/-4.41");
     axis->SetBinLabel(5, "-32/-3.15");
     axis->SetBinLabel(62, "31/3.15");
-    axis->SetBinLabel(66, "44/4.69");
+    axis->SetBinLabel(66, "44/4.41");
   } else {
     const int nxbins = 66;
     const double xbins[nxbins+1] = {-4.9,-4.475,-4.050,-3.625,-3.2,-3.1,-2.9,
@@ -1292,8 +1292,8 @@ TProfile2D_LW* TrigT1CaloLWHistogramTool::bookProfilePPMHadEtaVsPhi(
   TProfile2D_LW* hist = bookProfilePPMEmEtaVsPhi(name, title);
   if (m_shrinkEtaBins) {
     LWHist::LWHistAxis* axis = hist->GetXaxis();
-    axis->SetBinLabel(1, "-49/-4.48");
-    axis->SetBinLabel(66, "44/4.48");
+    axis->SetBinLabel(1, "-49/-4.17");
+    axis->SetBinLabel(66, "44/4.19");
   }
   return hist;
 
@@ -1728,7 +1728,7 @@ void TrigT1CaloLWHistogramTool::fillPPMHadEtaVsPhi(LWHist2D* hist, double eta,
 // Fill PPM Em eta vs phi profile
 
 void TrigT1CaloLWHistogramTool::fillPPMEmEtaVsPhi(TProfile2D_LW* hist,
-                                      double eta, double phi, double weight)
+                              double eta, double phi, double z, double weight)
 {
   const double phiMod = phi * m_phiScaleTT;
   double etaMod = eta;
@@ -1739,28 +1739,28 @@ void TrigT1CaloLWHistogramTool::fillPPMEmEtaVsPhi(TProfile2D_LW* hist,
       if (eta < 0.) etaMod = -etaMod;
     }
     // Fill four bins in phi
-    hist->Fill(etaMod, phiMod + 1.5, weight);
-    hist->Fill(etaMod, phiMod + 0.5, weight);
-    hist->Fill(etaMod, phiMod - 0.5, weight);
-    hist->Fill(etaMod, phiMod - 1.5, weight);
+    hist->Fill(etaMod, phiMod + 1.5, z, weight);
+    hist->Fill(etaMod, phiMod + 0.5, z, weight);
+    hist->Fill(etaMod, phiMod - 0.5, z, weight);
+    hist->Fill(etaMod, phiMod - 1.5, z, weight);
   } else if (absEta > 2.5) {
     if (m_shrinkEtaBins) {
       etaMod = (absEta > 3.1) ? 2.85 : 2.5 + (absEta-2.5)/2.;
       if (eta < 0.) etaMod = -etaMod;
     }
     // Fill two bins in phi
-    hist->Fill(etaMod, phiMod + 0.5, weight);
-    hist->Fill(etaMod, phiMod - 0.5, weight);
-  } else hist->Fill(eta, phiMod, weight);
+    hist->Fill(etaMod, phiMod + 0.5, z, weight);
+    hist->Fill(etaMod, phiMod - 0.5, z, weight);
+  } else hist->Fill(eta, phiMod, z, weight);
 }
 
 // Fill PPM Had eta vs phi profile
 
 void TrigT1CaloLWHistogramTool::fillPPMHadEtaVsPhi(TProfile2D_LW* hist,
-                                       double eta, double phi, double weight)
+                              double eta, double phi, double z, double weight)
 {
   // Use EM mapping - puts FCAL2 in left half of bin and FCAL3 in right half
-  fillPPMEmEtaVsPhi(hist, eta, phi, weight);
+  fillPPMEmEtaVsPhi(hist, eta, phi, z, weight);
 }
 
 // Fill PPM phi allowing for granularity varying with eta

@@ -374,10 +374,10 @@ class TrigT1CaloLWHistogramTool : public AthAlgTool {
                                                        double weight = 1.);
    /// Fill PPM Em eta vs phi profile
    void fillPPMEmEtaVsPhi(TProfile2D_LW* hist, double eta, double phi,
-                                                           double weight = 1.);
+                                               double z, double weight = 1.);
    /// Fill PPM Had eta vs phi profile
    void fillPPMHadEtaVsPhi(TProfile2D_LW* hist, double eta, double phi,
-                                                            double weight = 1.);
+                                                double z, double weight = 1.);
    /// Fill PPM phi allowing for granularity varying with eta
    void fillPPMPhi(LWHist1D* hist, double eta, double phi, double weight = 1.);
    /// Find bin in Em eta vs phi
