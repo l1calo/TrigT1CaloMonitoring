@@ -9,7 +9,7 @@
 // ********************************************************************
 
 #include <cmath>
-
+#include "TH1F.h"
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
 #include "SGTools/StlVectorClids.h"
@@ -42,7 +42,8 @@
 PPrMon::PPrMon(const std::string & type, const std::string & name,
 					 const IInterface* parent)
   : ManagedMonitorToolBase ( type, name, parent ),
-    m_SliceNo(15), m_NoEvents(0),
+    m_LumiBlockNo(1), m_SliceNo(15), m_NoEvents(0),
+    m_Em_FineTimeFilled(false),m_Had_FineTimeFilled(false),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool")
@@ -139,6 +140,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     MonGroup TT_HitMaps(this, m_PathInRootFile+"/LUT/EtaPhiMaps", shift, run);
     MonGroup TT_ADC(this, m_PathInRootFile+"/ADC/EtaPhiMaps", shift, run);
     MonGroup TT_ADCSlices(this, m_PathInRootFile+"/ADC/Timeslices", shift, run);
+    MonGroup TT_ADCFineTime(this,m_PathInRootFile+"/ADC/FineTime/",shift,run);
     MonGroup TT_LUTPeakDist(this, m_PathInRootFile+"/LUT/Distributions",
                                                                   shift, run);
     MonGroup TT_Error(this, m_ErrorPathInRootFile, shift, run);
@@ -159,11 +161,13 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     buffer << m_TT_ADC_HitMap_Thresh;
 
     m_histTool->setMonGroup(&TT_ADC);
+    
 
     title = "#eta - #phi Map of EM FADC > "+ buffer.str()
                                            + " for triggered timeslice";
     m_h_TT_HitMap_emADC_00100 = m_histTool->bookPPMEmEtaVsPhi(
                                 "ppm_em_2d_etaPhi_tt_adc_HitMap", title);
+
     title = "#eta - #phi Profile Map of EM FADC > "+ buffer.str()
                                            + " for triggered timeslice";
     m_p_TT_HitMap_emADC_00100 = m_histTool->bookProfilePPMEmEtaVsPhi(
@@ -173,11 +177,72 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
                                             + " for triggered timeslice";
     m_h_TT_HitMap_hadADC_00100 = m_histTool->bookPPMHadEtaVsPhi(
                                  "ppm_had_2d_etaPhi_tt_adc_HitMap",title);
+
     title = "#eta - #phi Profile Map of HAD FADC > "+ buffer.str()
                                             + " for triggered timeslice";
     m_p_TT_HitMap_hadADC_00100 = m_histTool->bookProfilePPMHadEtaVsPhi(
                                "ppm_had_2d_etaPhi_tt_adc_ProfileHitMap", title);
 
+    //---------------------- Fine Time -----------------------//
+    m_histTool->setMonGroup(&TT_ADCFineTime);
+    
+    title = "Fine time distribution for em FADC peak  > "+ buffer.str()+";ns";
+    m_h_fineTime_emADC  = m_histTool->book1F("fineTimeEm",title,100,-20,20);
+
+    title = "Fine time distribution for had FADC >"+ buffer.str()+";ns";
+    m_h_fineTime_hadADC = m_histTool->book1F("fineTimeHad",title,100,-20,20);
+
+    title = "Profile plot Fine time - eta: Fine time for EM FADC peak > "+buffer.str()+";eta; fineTime ns";
+    m_p_fineTime_eta_emADC = m_histTool->bookProfile("fineTime_profile_eta_emADC",title,100,-5,5);
+
+    title = "Profile plot Fine time - phi: Fine time for EM FADC > "+buffer.str()+";phi;fineTime ns";
+    m_p_fineTime_phi_emADC = m_histTool->bookProfile("fineTime_profile_phi_emADC",title,100,0,2*3.14);
+
+    title = "Fine time - eta: Fine time for EM FADC > "+buffer.str()+";eta; fineTime ns";
+    m_h_fineTime_eta_emADC = m_histTool->book2F("fineTime_eta_emADC",title,100,-5,5,100,-20,20);
+    
+    title = "Fine time - phi: Fine time for EM FADC peak > "+buffer.str()+"; phi; fineTime ns";
+    m_h_fineTime_phi_emADC = m_histTool->book2F("fineTime_phi_emADC",title,100,0,2*3.14,100,-20,20);
+
+    title = "Profile plot Fine time - eta: Fine time for HAD FADC peak > "+buffer.str()+";eta;fineTime ns";
+    m_p_fineTime_eta_hadADC = m_histTool->bookProfile("fineTime_Profile_eta_hadADC",title,100,-5,5);
+
+    title = "Profile plot Fine time - phi: Fine time for HAD FADC peak > "+buffer.str()+";phi;fineTime ns";
+    m_p_fineTime_phi_hadADC = m_histTool->bookProfile("fineTime_Profile_phi_hadADC",title,100,0,2*3.14);
+
+    title = "Fine time - eta: Fine time HAD FADC peak > "+buffer.str()+" ; eta; fineTime ns";
+    m_h_fineTime_eta_hadADC = m_histTool->book2F("fineTime_eta_hadADC",title,100,-5,5,100,-20,20);
+
+    title = "Fine time - phi: Fine time  HAD FADC peak > "+buffer.str()+"; phi; fineTime ns";
+    m_h_fineTime_phi_hadADC = m_histTool->book2F("fineTime_phi_hadADC",title,100,0,2*3.14,100,-20,20);
+
+    title = "#eta - #phi Profile Map of fine time for  EM FADC peak > "+buffer.str()+";eta;phi";
+    m_p_TT_fineTime_emADC_HitMap = m_histTool->bookProfilePPMEmEtaVsPhi("ppm_fineTime_emADC",title);
+
+    title =" #eta - #phi Profile Map of fine time for Had FADC peak> "+buffer.str()+";eta;phi";
+    m_p_TT_fineTime_hadADC_HitMap = m_histTool->bookProfilePPMHadEtaVsPhi("ppm_fineTime_hadADC",title);
+
+    title ="Fine time for EM FADC peak > "+buffer.str();
+    m_h_TT_Lumi_fineTime_emADC	= m_histTool->book1F("fineTimeEM_LumiBlock",title,100,-20,20);
+
+    title ="Fine time for HAD FADC peak > "+buffer.str();
+    m_h_TT_Lumi_fineTime_hadADC = m_histTool->book1F("fineTimeHAD_LumiBlock",title,100,-20,20);
+
+    title ="Fine time(RMS) - Lumi Block for EM FADC peak > "+buffer.str();
+    m_h_fineTime_emADC_RMS	= m_histTool->book2F("fineTimeEM_RMS",title,100,0,500,100,-20,20);
+
+    title="Fine time(Mean) - Lumi Block for EM FADC peak > "+buffer.str();
+    m_h_fineTime_emADC_Mean	= m_histTool->book2F("fineTimeEM_Mean",title,100,0,500,100,-20,20);
+    
+
+    title ="Fine time(RMS) - Lumi Block for HAD FADC peak >"+buffer.str();
+    m_h_fineTime_hadADC_RMS	= m_histTool->book2F("fineTimeHAD_RMS",title,100,0,500,100,-20,20);
+    
+    title ="Fine time(Mean) - Lumi Block for HAD FADC peak >"+buffer.str();
+    m_h_fineTime_hadADC_Mean	= m_histTool->book2F("fineTimeHAD_Mean",title,100,0,500,100,-20,20);
+
+    
+    //---------------------------------------------------------//
     m_histTool->setMonGroup(&TT_ADCSlices);
 
     m_h_dist_had_max = m_histTool->book1F("ppm_had_1d_tt_adc_MaxTimeslice",
@@ -642,7 +707,39 @@ StatusCode PPrMon::fillHistograms()
         m_h_TT_SignalProfile[hadPart]->Fill(slice, *it);
       }
     }
-    
+
+   //----------------------------- Fine Time ---------------------------
+   const L1CaloCoolChannelId emCoolChannelId  = (m_ttTool->channelID(eta,phi,0));
+   const L1CaloCoolChannelId hadCoolChannelId = (m_ttTool->channelID(eta,phi,1));
+   const bool em_SignalPass	      = (EmEnergy !=0 && !m_ttTool->disabledChannel(emCoolChannelId));
+   const bool had_SignalPass	      = (HadEnergy!=0 && !m_ttTool->disabledChannel(hadCoolChannelId));
+   double fineTimeEM = getFineTime((*TriggerTowerIterator)->emADCPeak(),(*TriggerTowerIterator)->emADC(), m_TT_ADC_HitMap_Thresh);
+   if(fineTimeEM !=-100 && em_SignalPass)
+   {
+      m_Em_FineTimeFilled = true;
+      m_h_fineTime_emADC->Fill(fineTimeEM);
+      m_h_TT_Lumi_fineTime_emADC->Fill(fineTimeEM);
+      m_p_fineTime_eta_emADC->Fill(eta,fineTimeEM);
+      m_p_fineTime_phi_emADC->Fill(phi,fineTimeEM);
+      m_h_fineTime_eta_emADC->Fill(eta,fineTimeEM);
+      m_h_fineTime_phi_emADC->Fill(phi,fineTimeEM);
+      m_histTool->fillPPMEmEtaVsPhi(m_p_TT_fineTime_emADC_HitMap,eta,phi,fineTimeEM);
+   }
+   else{m_Em_FineTimeFilled = false;}
+
+   double fineTimeHAD= getFineTime((*TriggerTowerIterator)->hadADCPeak(),(*TriggerTowerIterator)->hadADC(), m_TT_ADC_HitMap_Thresh);
+   if(fineTimeHAD !=-100 && had_SignalPass)
+   {
+       m_Had_FineTimeFilled = true;
+       m_h_fineTime_hadADC->Fill(fineTimeHAD);
+       m_h_TT_Lumi_fineTime_hadADC->Fill(fineTimeHAD);
+       m_p_fineTime_eta_hadADC->Fill(eta,fineTimeHAD);
+       m_p_fineTime_phi_hadADC->Fill(phi,fineTimeHAD);
+       m_h_fineTime_eta_hadADC->Fill(eta,fineTimeHAD);
+       m_h_fineTime_phi_hadADC->Fill(phi,fineTimeHAD);
+       m_histTool->fillPPMHadEtaVsPhi(m_p_TT_fineTime_hadADC_HitMap,eta,phi,fineTimeHAD);
+   }
+   else{m_Had_FineTimeFilled = false;}
 
     //---------------------------- SubStatus Word errors ---------------------
     //----------------------------- em ---------------------------------------
@@ -811,20 +908,55 @@ StatusCode PPrMon::fillHistograms()
   return StatusCode::SUCCESS;
 }
 
-
-   
 /*---------------------------------------------------------*/
 StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock,
                                    bool isEndOfLumiBlock, bool isEndOfRun )
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "in procHistograms" << endreq ;
-
   if( isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun ) { }
-
+  
+  if(isEndOfLumiBlock)
+  {
+     if(m_Em_FineTimeFilled= true)
+     {
+        m_h_fineTime_emADC_RMS->Fill(m_LumiBlockNo,m_h_TT_Lumi_fineTime_emADC->getROOTHist()->GetRMS());
+        m_h_fineTime_emADC_Mean->Fill(m_LumiBlockNo,m_h_TT_Lumi_fineTime_emADC->getROOTHist()->GetMean());
+        m_h_TT_Lumi_fineTime_emADC->Reset();
+     }
+     if(m_Had_FineTimeFilled = true)
+     {
+        m_h_fineTime_hadADC_RMS->Fill(m_LumiBlockNo,m_h_TT_Lumi_fineTime_hadADC->getROOTHist()->GetRMS());
+        m_h_fineTime_hadADC_Mean->Fill(m_LumiBlockNo,m_h_TT_Lumi_fineTime_hadADC->getROOTHist()->GetMean());
+        m_h_TT_Lumi_fineTime_hadADC->Reset();
+     }
+     m_LumiBlockNo++;
+  }
   return StatusCode::SUCCESS;
 }
 
+/*---------------------------------------------------------*/
+double PPrMon::getFineTime(const int peakIndx, const std::vector<int>& adcContainer,const int threshold)
+{
+   msg(MSG::DEBUG) << "in getFine Time" << endreq;
+   double fineTime = -100; // Condition to check while filling histogram
+
+   int peakSlice     = adcContainer[peakIndx];
+   int inferiorSlice = adcContainer[peakIndx - 1];
+   int superiorSlice = adcContainer[peakIndx + 1];
+   
+   if(peakSlice > threshold)
+   {
+      double denom = (2*(2*peakSlice - superiorSlice - inferiorSlice));
+      double numer = superiorSlice - inferiorSlice; 
+      if(denom > 0)
+      {
+         fineTime = numer/denom;
+         fineTime = fineTime*25; //Sampling interval 25 nano seconds.
+      }
+   }
+   return fineTime;
+}
 /*---------------------------------------------------------*/
 double PPrMon::recTime(const std::vector<int>& vFAdc, int cut) {
 /*---------------------------------------------------------*/

@@ -63,6 +63,7 @@ private:
   std::string m_TriggerTowerContainerName;
   int m_TT_HitMap_ThreshMax;
   int m_TT_HitMap_LumiBlocks;
+  int m_LumiBlockNo;
   int m_TT_ADC_HitMap_Thresh;
   int m_SliceNo;
   int m_MaxEnergyRange;
@@ -71,6 +72,8 @@ private:
   int m_EMFADCCut;
   int m_NoEvents;
   bool m_onlineTest;
+  bool m_Em_FineTimeFilled;
+  bool m_Had_FineTimeFilled;
 
   std::string m_PathInRootFile;
   std::string m_ErrorPathInRootFile;
@@ -111,6 +114,14 @@ private:
   TProfile2D_LW* m_p_TT_fineTime_emADC_HitMap;
   TProfile2D_LW* m_p_TT_fineTime_hadADC_HitMap;
 
+  TH1F_LW* m_h_TT_Lumi_fineTime_emADC;
+  TH1F_LW* m_h_TT_Lumi_fineTime_hadADC;
+
+  TH2F_LW* m_h_fineTime_emADC_RMS;
+  TH2F_LW* m_h_fineTime_emADC_Mean;
+
+  TH2F_LW* m_h_fineTime_hadADC_RMS;
+  TH2F_LW* m_h_fineTime_hadADC_Mean;
 
   //timing HitMaps
   TProfile2D_LW* m_h_TT_ADC_emTiming_signal;
