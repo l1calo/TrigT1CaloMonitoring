@@ -918,13 +918,13 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock,
   
   if(isEndOfLumiBlock)
   {
-     if(m_Em_FineTimeFilled= true)
+     if(m_Em_FineTimeFilled)
      {
         m_h_fineTime_emADC_RMS->Fill(m_LumiBlockNo,m_h_TT_Lumi_fineTime_emADC->getROOTHist()->GetRMS());
         m_h_fineTime_emADC_Mean->Fill(m_LumiBlockNo,m_h_TT_Lumi_fineTime_emADC->getROOTHist()->GetMean());
         m_h_TT_Lumi_fineTime_emADC->Reset();
      }
-     if(m_Had_FineTimeFilled = true)
+     if(m_Had_FineTimeFilled)
      {
         m_h_fineTime_hadADC_RMS->Fill(m_LumiBlockNo,m_h_TT_Lumi_fineTime_hadADC->getROOTHist()->GetRMS());
         m_h_fineTime_hadADC_Mean->Fill(m_LumiBlockNo,m_h_TT_Lumi_fineTime_hadADC->getROOTHist()->GetMean());
