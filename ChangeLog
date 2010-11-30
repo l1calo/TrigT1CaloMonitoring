@@ -1,3 +1,7 @@
+2010-11-30  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-07-09
+        * PPrMon: Bugfix.
+
 2010-11-29  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-07-08
         * PPrMon: Fix minor bugs in procHistograms.

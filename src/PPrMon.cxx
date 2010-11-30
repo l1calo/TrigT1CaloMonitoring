@@ -725,7 +725,6 @@ StatusCode PPrMon::fillHistograms()
       m_h_fineTime_phi_emADC->Fill(phi,fineTimeEM);
       m_histTool->fillPPMEmEtaVsPhi(m_p_TT_fineTime_emADC_HitMap,eta,phi,fineTimeEM);
    }
-   else{m_Em_FineTimeFilled = false;}
 
    double fineTimeHAD= getFineTime((*TriggerTowerIterator)->hadADCPeak(),(*TriggerTowerIterator)->hadADC(), m_TT_ADC_HitMap_Thresh);
    if(fineTimeHAD !=-100 && had_SignalPass)
@@ -739,7 +738,6 @@ StatusCode PPrMon::fillHistograms()
        m_h_fineTime_phi_hadADC->Fill(phi,fineTimeHAD);
        m_histTool->fillPPMHadEtaVsPhi(m_p_TT_fineTime_hadADC_HitMap,eta,phi,fineTimeHAD);
    }
-   else{m_Had_FineTimeFilled = false;}
 
     //---------------------------- SubStatus Word errors ---------------------
     //----------------------------- em ---------------------------------------
@@ -931,6 +929,8 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock,
         m_h_TT_Lumi_fineTime_hadADC->Reset();
      }
      m_LumiBlockNo++;
+     m_Em_FineTimeFilled  = false;
+     m_Had_FineTimeFilled = false;
   }
   return StatusCode::SUCCESS;
 }
