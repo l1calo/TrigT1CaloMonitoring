@@ -56,7 +56,7 @@ JEPSimBSMon::JEPSimBSMon(const std::string & type,
     m_etSumsTool("LVL1::L1JEPEtSumsTools/L1JEPEtSumsTools"),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_debug(false)
+    m_debug(false), m_rodTES(0), m_limitedRoi(0)
 /*---------------------------------------------------------*/
 {
   declareProperty("JEPHitsTool", m_jepHitsTool);
@@ -532,17 +532,19 @@ StatusCode JEPSimBSMon::fillHistograms()
   
   //Retrieve JEM RoIs from SG
   const JemRoiCollection* jemRoiTES = 0;
-  const RodHeaderCollection* rodTES = 0;
   sc = evtStore()->retrieve( jemRoiTES, m_jemRoiLocation);
   if( sc.isFailure()  ||  !jemRoiTES  ||  jemRoiTES->empty() ) {
     msg(MSG::DEBUG) << "No DAQ JEM RoIs container found" << endreq; 
-  } else {
-    if (evtStore()->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
-      sc = evtStore()->retrieve( rodTES, m_rodHeaderLocation);
-    } else sc = StatusCode::FAILURE;
-    if( sc.isFailure()  ||  !rodTES ) {
-      msg(MSG::DEBUG) << "No ROD Header container found" << endreq;
-    }
+  }
+
+  //Retrieve ROD Headers from SG
+  m_limitedRoi = 0;
+  m_rodTES = 0;
+  if (evtStore()->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
+    sc = evtStore()->retrieve( m_rodTES, m_rodHeaderLocation);
+  } else sc = StatusCode::FAILURE;
+  if( sc.isFailure()  ||  !m_rodTES ) {
+    msg(MSG::DEBUG) << "No ROD Header container found" << endreq;
   }
   
   //Retrieve JEM Hits from SG
@@ -636,7 +638,7 @@ StatusCode JEPSimBSMon::fillHistograms()
   }
   JemRoiMap jrSimMap;
   setupMap(jemRoiSIM, jrSimMap);
-  compare(jrSimMap, jrMap, rodTES, errorsJEM);
+  compare(jrSimMap, jrMap, errorsJEM);
   jrSimMap.clear();
   delete jemRoiSIM;
 
@@ -953,7 +955,6 @@ void JEPSimBSMon::compare(const JetElementMap& jeSimMap,
 
 void JEPSimBSMon::compare(const JemRoiMap& roiSimMap,
                           const JemRoiMap& roiMap,
-			  const RodHeaderCollection* rods,
                                 ErrorVector& errors)
 {
   if (m_debug) msg(MSG::DEBUG) << "Compare Simulated RoIs with data" << endreq;
@@ -962,7 +963,6 @@ void JEPSimBSMon::compare(const JemRoiMap& roiSimMap,
   const int nJEMs = 16;
   const int maxKey = 0xffff;
   LVL1::JEPRoIDecoder decoder;
-  std::vector<int> limitedRoi(nCrates);
   JemRoiMap::const_iterator simMapIter    = roiSimMap.begin();
   JemRoiMap::const_iterator simMapIterEnd = roiSimMap.end();
   JemRoiMap::const_iterator datMapIter    = roiMap.begin();
@@ -1042,22 +1042,7 @@ void JEPSimBSMon::compare(const JemRoiMap& roiSimMap,
     //  Check LimitedRoISet bit
 
     const int crate = roi->crate();
-    if (!datHits) {
-      if (rods) {
-        RodHeaderCollection::const_iterator rodIter  = rods->begin();
-	RodHeaderCollection::const_iterator rodIterE = rods->end();
-	for (; rodIter != rodIterE; ++rodIter) {
-	  const LVL1::RODHeader* rod = *rodIter;
-	  const int rodCrate = rod->crate() - 12;
-	  if (rodCrate >= 0 && rodCrate < nCrates
-	      && rod->dataType() == 1 && rod->limitedRoISet()) {
-            limitedRoi[rodCrate] = 1;
-          }
-        }
-	rods = 0;
-      }
-      if (limitedRoi[crate]) continue;
-    }
+    if (!datHits && limitedRoiSet(crate)) continue;
     
     //  Fill in error plots
 
@@ -1178,6 +1163,10 @@ void JEPSimBSMon::compare(const JemHitsMap& jemSimMap,
     }
 
     if (!simHits && !datHits) continue;
+
+    //  Check LimitedRoISet bit
+
+    if ((simHits < datHits) && limitedRoiSet(crate)) continue;
     
     //  Fill in error plots
 
@@ -1548,32 +1537,35 @@ void JEPSimBSMon::compare(const CmmJetHitsMap& cmmMap,
     etMap = hits->Hits();
   }
   if (cmmRoi) etRoi = cmmRoi->jetEtHits();
-  if (etMap || etRoi) {
-    const int crate = 1;
-    const int loc = crate * 2 + 1;
-    const int cmmBins = 2 * 2;
-    const int bit = (1 << JetEtRoIMismatch);
-    TH1F_LW* hist = 0;
-    if (etMap == etRoi) {
-      errors[loc] |= bit;
-      hist = m_h_SumsSIMeqDAT;
-    } else {
-      errors[loc+cmmBins] |= bit;
-      if (etMap && etRoi) hist = m_h_SumsSIMneDAT;
-      else if (!etRoi)    hist = m_h_SumsSIMnoDAT;
-      else                hist = m_h_SumsDATnoSIM;
-    }
-    const int loc1 = 5;
-    if (hist) hist->Fill(loc1);
 
-    const int nThresh = 4;
-    const int thrLen  = 1;
-    const int offset  = 16;
-    m_histTool->fillXVsThresholds(m_h_SumsThreshSIMeqDAT, loc1,
-                                  etRoi & etMap, nThresh, thrLen, offset);
-    m_histTool->fillXVsThresholds(m_h_SumsThreshSIMneDAT, loc1,
-                                  etRoi ^ etMap, nThresh, thrLen, offset);
+  //  Check LimitedRoISet bit
+
+  const int crate = 1;
+  if ((!etMap && !etRoi) || (!etRoi && limitedRoiSet(crate))) return;
+  
+  const int loc = crate * 2 + 1;
+  const int cmmBins = 2 * 2;
+  const int bit = (1 << JetEtRoIMismatch);
+  TH1F_LW* hist = 0;
+  if (etMap == etRoi) {
+    errors[loc] |= bit;
+    hist = m_h_SumsSIMeqDAT;
+  } else {
+    errors[loc+cmmBins] |= bit;
+    if (etMap && etRoi) hist = m_h_SumsSIMneDAT;
+    else if (!etRoi)    hist = m_h_SumsSIMnoDAT;
+    else                hist = m_h_SumsDATnoSIM;
   }
+  const int loc1 = 5;
+  if (hist) hist->Fill(loc1);
+
+  const int nThresh = 4;
+  const int thrLen  = 1;
+  const int offset  = 16;
+  m_histTool->fillXVsThresholds(m_h_SumsThreshSIMeqDAT, loc1,
+                                etRoi & etMap, nThresh, thrLen, offset);
+  m_histTool->fillXVsThresholds(m_h_SumsThreshSIMneDAT, loc1,
+                                etRoi ^ etMap, nThresh, thrLen, offset);
 }
 
 //  Compare simulated JEM Et Sums with data
@@ -2107,55 +2099,62 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmMap,
         et == etRoi && ex == exRoi && ey == eyRoi) errors[loc] |= bit;
     else errors[loc+cmmBins] |= bit;
     TH2F_LW* hist = 0;
-    if (ex && ex == exRoi) hist = m_h_EnSumsSIMeqDAT;
+    if (ex && ex == exRoi)         hist = m_h_EnSumsSIMeqDAT;
     else if (ex != exRoi) {
-      if (ex && exRoi) hist = m_h_EnSumsSIMneDAT;
-      else if (!exRoi) hist = m_h_EnSumsSIMnoDAT;
-      else             hist = m_h_EnSumsDATnoSIM;
+      if (ex && exRoi)             hist = m_h_EnSumsSIMneDAT;
+      else if (!exRoi) {
+        if (!limitedRoiSet(crate)) hist = m_h_EnSumsSIMnoDAT;
+      } else                       hist = m_h_EnSumsDATnoSIM;
     }
     if (hist) hist->Fill(4, 0);
     hist = 0;
-    if (ey && ey == eyRoi) hist = m_h_EnSumsSIMeqDAT;
+    if (ey && ey == eyRoi)         hist = m_h_EnSumsSIMeqDAT;
     else if (ey != eyRoi) {
-      if (ey && eyRoi) hist = m_h_EnSumsSIMneDAT;
-      else if (!eyRoi) hist = m_h_EnSumsSIMnoDAT;
-      else             hist = m_h_EnSumsDATnoSIM;
+      if (ey && eyRoi)             hist = m_h_EnSumsSIMneDAT;
+      else if (!eyRoi) {
+        if (!limitedRoiSet(crate)) hist = m_h_EnSumsSIMnoDAT;
+      } else                       hist = m_h_EnSumsDATnoSIM;
     }
     if (hist) hist->Fill(4, 1);
     hist = 0;
-    if (et && et == etRoi) hist = m_h_EnSumsSIMeqDAT;
+    if (et && et == etRoi)         hist = m_h_EnSumsSIMeqDAT;
     else if (et != etRoi) {
-      if (et && etRoi) hist = m_h_EnSumsSIMneDAT;
-      else if (!etRoi) hist = m_h_EnSumsSIMnoDAT;
-      else             hist = m_h_EnSumsDATnoSIM;
+      if (et && etRoi)             hist = m_h_EnSumsSIMneDAT;
+      else if (!etRoi) {
+        if (!limitedRoiSet(crate)) hist = m_h_EnSumsSIMnoDAT;
+      } else                       hist = m_h_EnSumsDATnoSIM;
     }
     if (hist) hist->Fill(4, 2);
     hist = 0;
     if (sumEtMap && sumEtMap == sumEtRoi) hist = m_h_EnSumsSIMeqDAT;
     else if (sumEtMap != sumEtRoi) {
-      if (sumEtMap && sumEtRoi) hist = m_h_EnSumsSIMneDAT;
-      else if (!sumEtRoi)       hist = m_h_EnSumsSIMnoDAT;
-      else                      hist = m_h_EnSumsDATnoSIM;
+      if (sumEtMap && sumEtRoi)           hist = m_h_EnSumsSIMneDAT;
+      else if (!sumEtRoi) {
+        if (!limitedRoiSet(crate))        hist = m_h_EnSumsSIMnoDAT;
+      } else                              hist = m_h_EnSumsDATnoSIM;
     }
     if (hist) hist->Fill(4, 3);
     hist = 0;
     if (missEtMap && missEtMap == missEtRoi) hist = m_h_EnSumsSIMeqDAT;
     else if (missEtMap != missEtRoi) {
-      if (missEtMap && missEtRoi) hist = m_h_EnSumsSIMneDAT;
-      else if (!missEtRoi)        hist = m_h_EnSumsSIMnoDAT;
-      else                        hist = m_h_EnSumsDATnoSIM;
+      if (missEtMap && missEtRoi)            hist = m_h_EnSumsSIMneDAT;
+      else if (!missEtRoi) {
+        if (!limitedRoiSet(crate))           hist = m_h_EnSumsSIMnoDAT;
+      } else                                 hist = m_h_EnSumsDATnoSIM;
     }
     if (hist) hist->Fill(4, 4);
 
     const int thrLen = 1;
-    if (sumEtMap || sumEtRoi) {
+    if ((sumEtMap || sumEtRoi) && !(sumEtMap && !sumEtRoi 
+                               && limitedRoiSet(crate))) {
       const int nThresh = 4;
       m_histTool->fillXVsThresholds(m_h_EnSumsThreshSIMeqDAT, 1,
                                     sumEtRoi & sumEtMap, nThresh, thrLen);
       m_histTool->fillXVsThresholds(m_h_EnSumsThreshSIMneDAT, 1,
                                     sumEtRoi ^ sumEtMap, nThresh, thrLen);
     }
-    if (missEtMap || missEtRoi) {
+    if ((missEtMap || missEtRoi) && !(missEtMap && !missEtRoi
+                                 && limitedRoiSet(crate))) {
       const int nThresh = 8;
       const int offset  = 4;
       m_histTool->fillXVsThresholds(m_h_EnSumsThreshSIMeqDAT, 3,
@@ -2468,4 +2467,26 @@ void JEPSimBSMon::simulate(const CmmEtSumsCollection* sumsIn,
   } else if (selection == LVL1::CMMEtSums::SUM_ET_MAP) {
     m_etSumsTool->formCMMEtSumsEtMaps(sumsIn, sumsOut);
   }
+}
+
+// Check if LimitedRoISet bit set
+
+bool JEPSimBSMon::limitedRoiSet(int crate)
+{
+  if (m_rodTES) {
+    m_limitedRoi = 0;
+    const int nCrates = 2;
+    RodHeaderCollection::const_iterator rodIter  = m_rodTES->begin();
+    RodHeaderCollection::const_iterator rodIterE = m_rodTES->end();
+    for (; rodIter != rodIterE; ++rodIter) {
+      const LVL1::RODHeader* rod = *rodIter;
+      const int rodCrate = rod->crate() - 12;
+      if (rodCrate >= 0 && rodCrate < nCrates
+          && rod->dataType() == 1 && rod->limitedRoISet()) {
+        m_limitedRoi |= (1<<rodCrate);
+      }
+    }
+    m_rodTES = 0;
+  }
+  return (((m_limitedRoi>>crate)&0x1) == 1);
 }

@@ -1,3 +1,7 @@
+2010-12-02  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-07-10
+        * Take full account of LimitedRoISet bit.
+
 2010-11-30  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-07-09
         * PPrMon: Bugfix.

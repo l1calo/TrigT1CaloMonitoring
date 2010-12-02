@@ -52,7 +52,7 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
     m_cpHitsTool("LVL1::L1CPHitsTools/L1CPHitsTools"),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_debug(false), m_overlapPresent(false)
+    m_debug(false), m_rodTES(0), m_overlapPresent(false), m_limitedRoi(0)
 /*---------------------------------------------------------*/
 {
   declareProperty("EmTauTool", m_emTauTool);
@@ -430,17 +430,19 @@ StatusCode CPMSimBSMon::fillHistograms()
   
   //Retrieve CPM RoIs from SG
   const CpmRoiCollection* cpmRoiTES = 0;
-  const RodHeaderCollection* rodTES = 0;
   sc = evtStore()->retrieve( cpmRoiTES, m_cpmRoiLocation);
   if( sc.isFailure()  ||  !cpmRoiTES ) {
     msg(MSG::DEBUG) << "No DAQ CPM RoIs container found" << endreq;
-  } else {
-    if (evtStore()->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
-      sc = evtStore()->retrieve( rodTES, m_rodHeaderLocation);
-    } else sc = StatusCode::FAILURE;
-    if( sc.isFailure()  ||  !rodTES ) {
-      msg(MSG::DEBUG) << "No ROD Header container found" << endreq;
-    }
+  }
+
+  //Retrieve ROD Headers from SG
+  m_limitedRoi = 0;
+  m_rodTES = 0;
+  if (evtStore()->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
+    sc = evtStore()->retrieve( m_rodTES, m_rodHeaderLocation);
+  } else sc = StatusCode::FAILURE;
+  if( sc.isFailure()  ||  !m_rodTES ) {
+    msg(MSG::DEBUG) << "No ROD Header container found" << endreq;
   }
   
   //Retrieve CPM Hits from SG
@@ -499,7 +501,7 @@ StatusCode CPMSimBSMon::fillHistograms()
   }
   CpmRoiMap crSimMap;
   setupMap(cpmRoiSIM, crSimMap);
-  compare(crSimMap, crMap, rodTES, errorsCPM);
+  compare(crSimMap, crMap, errorsCPM);
   crSimMap.clear();
   delete cpmRoiSIM;
 
@@ -780,7 +782,7 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
 //  Compare Simulated RoIs with data
 
 void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
-                          const RodHeaderCollection* rods, ErrorVector& errors)
+                                                           ErrorVector& errors)
 {
   if (m_debug) msg(MSG::DEBUG) << "Compare Simulated RoIs with data" << endreq;
 
@@ -788,7 +790,6 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
   const int nCPMs = 14;
   const int maxKey = 0xffff;
   LVL1::CPRoIDecoder decoder;
-  std::vector<int> limitedRoi(nCrates);
   CpmRoiMap::const_iterator simMapIter    = roiSimMap.begin();
   CpmRoiMap::const_iterator simMapIterEnd = roiSimMap.end();
   CpmRoiMap::const_iterator datMapIter    = roiMap.begin();
@@ -838,22 +839,7 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
     //  Check LimitedRoISet bit
 
     const int crate = roi->crate();
-    if (!datHits) {
-      if (rods) {
-	RodHeaderCollection::const_iterator rodIter  = rods->begin();
-	RodHeaderCollection::const_iterator rodIterE = rods->end();
-	for (; rodIter != rodIterE; ++rodIter) {
-	  const LVL1::RODHeader* rod = *rodIter;
-	  const int rodCrate = rod->crate() - 8;
-	  if (rodCrate >= 0 && rodCrate < nCrates
-	      && rod->dataType() == 1 && rod->limitedRoISet()) {
-	    limitedRoi[rodCrate] = 1;
-	  }
-	}
-        rods = 0;
-      }
-      if (limitedRoi[crate]) continue;
-    }
+    if (!datHits && limitedRoiSet(crate)) continue;
     
     //  Fill in error plots
 
@@ -973,6 +959,11 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
     }
 
     if (!simHits0 && !simHits1 && !datHits0 && !datHits1) continue;
+
+    //  Check LimitedRoISet bit
+
+    if (((simHits0 < datHits0) || (simHits1 < datHits1))
+                               && limitedRoiSet(crate)) continue;
     
     //  Fill in error plots
 
@@ -1552,4 +1543,26 @@ LVL1::CPMTower* CPMSimBSMon::ttCheck(LVL1::CPMTower* tt,
     return ct;
   }
   return tt;
+}
+
+// Check if LimitedRoISet bit set
+
+bool CPMSimBSMon::limitedRoiSet(int crate)
+{
+  if (m_rodTES) {
+    m_limitedRoi = 0;
+    const int nCrates = 4;
+    RodHeaderCollection::const_iterator rodIter  = m_rodTES->begin();
+    RodHeaderCollection::const_iterator rodIterE = m_rodTES->end();
+    for (; rodIter != rodIterE; ++rodIter) {
+      const LVL1::RODHeader* rod = *rodIter;
+      const int rodCrate = rod->crate() - 8;
+      if (rodCrate >= 0 && rodCrate < nCrates
+          && rod->dataType() == 1 && rod->limitedRoISet()) {
+        m_limitedRoi |= (1<<rodCrate);
+      }
+    }
+    m_rodTES = 0;
+  }
+  return (((m_limitedRoi>>crate)&0x1) == 1);
 }

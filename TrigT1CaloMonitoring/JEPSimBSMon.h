@@ -95,7 +95,7 @@ private:
   void  compare(const JetElementMap& jeSimMap, const JetElementMap& jeMap,
                       ErrorVector& errors, bool overlap);
   void  compare(const JemRoiMap& roiSimMap, const JemRoiMap& roiMap,
-                const RodHeaderCollection* rods, ErrorVector& errors);
+                                                 ErrorVector& errors);
   void  compare(const JemHitsMap& jemSimMap, const JemHitsMap& jemMap,
                                              ErrorVector& errors);
   void  compare(const JemHitsMap& jemMap, const CmmJetHitsMap& cmmMap,
@@ -136,6 +136,7 @@ private:
                        JemEtSumsCollection* sums);
   void  simulate(const CmmEtSumsCollection* sumsIn,
                        CmmEtSumsCollection* sumsOut, int selection);
+  bool  limitedRoiSet(int crate);
 
   ToolHandle<LVL1::IL1JEPHitsTools>      m_jepHitsTool;
   ToolHandle<LVL1::IL1JetTools>          m_jetTool;
@@ -167,6 +168,10 @@ private:
   std::string m_triggerTowerLocation;
   /// ROD header container StoreGate key
   std::string m_rodHeaderLocation;
+  /// Pointer to ROD header container
+  const RodHeaderCollection* m_rodTES;
+  /// LimitedRoISet flags
+  int m_limitedRoi;
 
   //=======================
   //   Match/Mismatch plots

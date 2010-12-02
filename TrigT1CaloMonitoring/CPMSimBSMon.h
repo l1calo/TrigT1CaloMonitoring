@@ -85,7 +85,7 @@ private:
   void  compare(const TriggerTowerMap& ttMap, const CpmTowerMap& cpMap,
                       ErrorVector& errors, bool overlap);
   void  compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
-                const RodHeaderCollection* rods, ErrorVector& errors);
+                                                 ErrorVector& errors);
   void  compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
                                              ErrorVector& errors);
   void  compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
@@ -105,6 +105,7 @@ private:
                        CmmCpHitsCollection* hitsOut, int selection);
   int   fpga(int crate, double phi);
   LVL1::CPMTower* ttCheck(LVL1::CPMTower* tt, CpmTowerCollection* coll);
+  bool  limitedRoiSet(int crate);
 
   ToolHandle<LVL1::IL1EmTauTools>       m_emTauTool;
   ToolHandle<LVL1::IL1CPHitsTools>      m_cpHitsTool;
@@ -129,9 +130,13 @@ private:
   std::string m_triggerTowerLocation;
   /// ROD header container StoreGate key
   std::string m_rodHeaderLocation;
+  /// Pointer to ROD header container
+  const RodHeaderCollection* m_rodTES;
 
   /// CPM overlap tower container present
   bool m_overlapPresent;
+  /// LimitedRoISet flags
+  int m_limitedRoi;
 
   //=======================
   //   Match/Mismatch plots
