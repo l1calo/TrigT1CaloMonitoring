@@ -594,6 +594,20 @@ TH2F_LW* TrigT1CaloLWHistogramTool::book2F(const std::string& name,
   return hist;
 }
 
+// Book and register a 2D histogram with variable width bins both axes
+
+TH2F_LW* TrigT1CaloLWHistogramTool::book2F(const std::string& name,
+                                           const std::string& title,
+                                           int nx, const double* xbins,
+                                           int ny, const double* ybins)
+{
+  TH2F_LW *hist = TH2F_LW::create(name.c_str(), title.c_str(), nx, xbins,
+                                                               ny, ybins);
+  registerHist(hist);
+  hist->SetOption("colz");
+  return hist;
+}
+
 // Book and register a 2D profile histogram
 
 TProfile2D_LW* TrigT1CaloLWHistogramTool::bookProfile2D(
@@ -615,6 +629,19 @@ TProfile2D_LW* TrigT1CaloLWHistogramTool::bookProfile2D(
 {
   TProfile2D_LW *hist = TProfile2D_LW::create(name.c_str(), title.c_str(),
                                                    nx, xbins, ny, ymin, ymax);
+  registerHist(hist);
+  hist->SetOption("colz");
+  return hist;
+}
+
+// Book and register a 2D profile histogram with variable width bins both axes
+
+TProfile2D_LW* TrigT1CaloLWHistogramTool::bookProfile2D(
+                const std::string& name, const std::string& title,
+                int nx, const double* xbins, int ny, const double* ybins)
+{
+  TProfile2D_LW *hist = TProfile2D_LW::create(name.c_str(), title.c_str(),
+                                                   nx, xbins, ny, ybins);
   registerHist(hist);
   hist->SetOption("colz");
   return hist;

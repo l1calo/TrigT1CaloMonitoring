@@ -1,3 +1,8 @@
+2010-12-21  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-07-11
+        * Updates to TrigT1CaloLWHistogramTool.
+        * Remove obsolete MonHelper.
+
 2010-12-02  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-07-10
         * Take full account of LimitedRoISet bit.

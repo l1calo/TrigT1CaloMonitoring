@@ -163,6 +163,10 @@ class TrigT1CaloLWHistogramTool : public AthAlgTool {
    TH2F_LW* book2F(const std::string& name, const std::string& title,
                                             int nx, const double* xbins,
 					    int ny, double ymin, double ymax);
+   /// Book and register a 2D histogram with variable width bins both axes
+   TH2F_LW* book2F(const std::string& name, const std::string& title,
+                                            int nx, const double* xbins,
+					    int ny, const double* ybins);
    /// Book and register a 2D histogram of integers displayed as text
    TH2I_LW* book2I(const std::string& name, const std::string& title,
                                             int nx, double xmin, double xmax,
@@ -177,6 +181,11 @@ class TrigT1CaloLWHistogramTool : public AthAlgTool {
                                 const std::string& title,
                                 int nx, const double* xbins,
 				int ny, double ymin, double ymax);
+   /// Book and register a 2D profile histogram with variable width bins both axes
+   TProfile2D_LW* bookProfile2D(const std::string& name,
+                                const std::string& title,
+                                int nx, const double* xbins,
+				int ny, const double* ybins);
    /// Book and register a 2D histogram containing event numbers as bin contents
    TH2I_LW* bookEventNumbers(const std::string& name, const std::string& title,
                                          int ny, double ymin, double ymax);
