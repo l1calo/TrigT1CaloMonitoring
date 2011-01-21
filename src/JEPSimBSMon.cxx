@@ -56,7 +56,7 @@ JEPSimBSMon::JEPSimBSMon(const std::string & type,
     m_etSumsTool("LVL1::L1JEPEtSumsTools/L1JEPEtSumsTools"),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_debug(false), m_rodTES(0), m_limitedRoi(0)
+    m_debug(false), m_rodTES(0), m_limitedRoi(0), m_versionSig(true)
 /*---------------------------------------------------------*/
 {
   declareProperty("JEPHitsTool", m_jepHitsTool);
@@ -366,24 +366,24 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
   // Energy Crate/System sums
 
   m_h_EnSumsSIMeqDAT = m_histTool->book2F("cmm_2d_energy_SumsSimEqData",
-    "Energy Totals Data/Simulation Non-zero Matches", 5, 0, 5, 5, 0, 5);
+    "Energy Totals Data/Simulation Non-zero Matches", 5, 0, 5, 6, 0, 6);
   setLabelsEnTot(m_h_EnSumsSIMeqDAT);
   m_h_EnSumsSIMneDAT = m_histTool->book2F("cmm_2d_energy_SumsSimNeData",
-    "Energy Totals Data/Simulation Non-zero Mismatches", 5, 0, 5, 5, 0, 5);
+    "Energy Totals Data/Simulation Non-zero Mismatches", 5, 0, 5, 6, 0, 6);
   setLabelsEnTot(m_h_EnSumsSIMneDAT);
   m_h_EnSumsSIMnoDAT = m_histTool->book2F("cmm_2d_energy_SumsSimNoData",
-    "Energy Totals Simulation but no Data", 5, 0, 5, 5, 0, 5);
+    "Energy Totals Simulation but no Data", 5, 0, 5, 6, 0, 6);
   setLabelsEnTot(m_h_EnSumsSIMnoDAT);
   m_h_EnSumsDATnoSIM = m_histTool->book2F("cmm_2d_energy_SumsDataNoSim",
-    "Energy Totals Data but no Simulation", 5, 0, 5, 5, 0, 5);
+    "Energy Totals Data but no Simulation", 5, 0, 5, 6, 0, 6);
   setLabelsEnTot(m_h_EnSumsDATnoSIM);
   m_h_EnSumsThreshSIMeqDAT = m_histTool->book2F(
     "cmm_2d_energy_EtMapsThreshSimEqData",
-    "Et Maps Data/Simulation Threshold Matches", 4, 0, 4, 12, 0, 12);
+    "Et Maps Data/Simulation Threshold Matches", 6, 0, 6, 24, 0, 24);
   setLabelsEnTotThr(m_h_EnSumsThreshSIMeqDAT);
   m_h_EnSumsThreshSIMneDAT = m_histTool->book2F(
     "cmm_2d_energy_EtMapsThreshSimNeData",
-    "Et Maps Data/Simulation Threshold Mismatches", 4, 0, 4, 12, 0, 12);
+    "Et Maps Data/Simulation Threshold Mismatches", 6, 0, 6, 24, 0, 24);
   setLabelsEnTotThr(m_h_EnSumsThreshSIMneDAT);
 
   // Summary
@@ -393,37 +393,21 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_h_JEPeqSIM = m_histTool->book2F("jem_2d_SimEqDataOverview",
    "JEP Transmission/Comparison with Simulation Overview - Events with Matches;Crate/Module",
              36, 0, 36, NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  setLabels(m_h_JEPeqSIM);
+  m_histTool->jemCMMCrateModule(m_h_JEPeqSIM);
+  setLabels(m_h_JEPeqSIM, false);
 
   m_h_JEPneSIM = m_histTool->book2F("jem_2d_SimNeDataOverview",
 "JEP Transmission/Comparison with Simulation Overview - Events with Mismatches;Crate/Module",
              36, 0, 36, NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  setLabels(m_h_JEPneSIM);
+  m_histTool->jemCMMCrateModule(m_h_JEPneSIM);
+  setLabels(m_h_JEPneSIM, false);
 
   m_histTool->setMonGroup(&monShift);
 
   m_h_JEPneSIMSummary = m_histTool->book1F("jem_1d_SimNeDataSummary",
    "JEP Transmission/Comparison with Simulation Mismatch Summary;;Events",
     NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  LWHist::LWHistAxis* axis = m_h_JEPneSIMSummary->GetXaxis();
-  axis->SetBinLabel(1+EMElementMismatch,    "EM je");
-  axis->SetBinLabel(1+HadElementMismatch,   "Had je");
-  axis->SetBinLabel(1+RoIMismatch,          "RoIs");
-  axis->SetBinLabel(1+JEMHitsMismatch,      "JEMHits");
-  axis->SetBinLabel(1+CMMJetHitsMismatch,   "CMMHits");
-  axis->SetBinLabel(1+LocalJetMismatch,     "Local");
-  axis->SetBinLabel(1+RemoteJetMismatch,    "Remote");
-  axis->SetBinLabel(1+TotalJetMismatch,     "Total");
-  axis->SetBinLabel(1+JetEtMismatch,        "JetEt");
-  axis->SetBinLabel(1+JetEtRoIMismatch,     "JetEt RoI");
-  axis->SetBinLabel(1+JEMEtSumsMismatch,    "JEMSums");
-  axis->SetBinLabel(1+CMMEtSumsMismatch,    "CMMSums");
-  axis->SetBinLabel(1+LocalEnergyMismatch,  "Local");
-  axis->SetBinLabel(1+RemoteEnergyMismatch, "Remote");
-  axis->SetBinLabel(1+TotalEnergyMismatch,  "Total");
-  axis->SetBinLabel(1+SumEtMismatch,        "SumEt");
-  axis->SetBinLabel(1+MissingEtMismatch,    "MissingEt");
-  axis->SetBinLabel(1+EnergyRoIMismatch,    "Engy RoIs");
+  setLabels(m_h_JEPneSIMSummary);
 
   // Mismatch Event Number Samples
 
@@ -460,7 +444,7 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_sampleHists[6] = hist;
   hist = m_histTool->bookEventNumbers("cmm_2d_thresh_SumsMismatchEvents",
     "CMM Hit Sums Mismatch Event Numbers", 8, 0., 8.);
-  axis = hist->GetYaxis();
+  LWHist::LWHistAxis* axis = hist->GetYaxis();
   axis->SetBinLabel(1, "Modules 0");
   axis->SetBinLabel(2, "Modules 1");
   axis->SetBinLabel(3, "Local 0");
@@ -471,7 +455,7 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
   axis->SetBinLabel(8, "JetEt RoI");
   m_sampleHists[7] = hist;
   hist = m_histTool->bookEventNumbers("cmm_2d_energy_SumsMismatchEvents",
-    "CMM Energy Sums Mismatch Event Numbers", 9, 0., 9.);
+    "CMM Energy Sums Mismatch Event Numbers", 10, 0., 10.);
   axis = hist->GetYaxis();
   axis->SetBinLabel(1, "Modules 0");
   axis->SetBinLabel(2, "Modules 1");
@@ -481,7 +465,8 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
   axis->SetBinLabel(6, "Total");
   axis->SetBinLabel(7, "SumEt");
   axis->SetBinLabel(8, "MissingEt");
-  axis->SetBinLabel(9, "Engy RoIs");
+  axis->SetBinLabel(9, "MissEtSig");
+  axis->SetBinLabel(10, "Engy RoIs");
   m_sampleHists[8] = hist;
 
   } // end if (isNewRun ...
@@ -504,9 +489,6 @@ StatusCode JEPSimBSMon::fillHistograms()
     return StatusCode::SUCCESS;
   }
 
-  // NB. Collection retrieves wrapped in evtStore()->contains<..>(..)
-  // are for those not expected to be on ESD. They should be on bytestream.
-
   StatusCode sc;
 
   //Retrieve Trigger Towers from SG
@@ -523,9 +505,7 @@ StatusCode JEPSimBSMon::fillHistograms()
   if( sc.isFailure()  ||  !jetElementTES ) {
     msg(MSG::DEBUG) << "No Core Jet Element container found" << endreq; 
   }
-  if (evtStore()->contains<JetElementCollection>(m_jetElementLocationOverlap)) {
-    sc = evtStore()->retrieve(jetElementOvTES, m_jetElementLocationOverlap);
-  } else sc = StatusCode::FAILURE;
+  sc = evtStore()->retrieve(jetElementOvTES, m_jetElementLocationOverlap);
   if( sc.isFailure()  ||  !jetElementOvTES ) {
     msg(MSG::DEBUG) << "No Overlap Jet Element container found" << endreq;
   }
@@ -538,11 +518,10 @@ StatusCode JEPSimBSMon::fillHistograms()
   }
 
   //Retrieve ROD Headers from SG
-  m_limitedRoi = 0;
   m_rodTES = 0;
-  if (evtStore()->contains<RodHeaderCollection>(m_rodHeaderLocation)) {
-    sc = evtStore()->retrieve( m_rodTES, m_rodHeaderLocation);
-  } else sc = StatusCode::FAILURE;
+  m_limitedRoi = 0;
+  m_versionSig = true;
+  sc = evtStore()->retrieve( m_rodTES, m_rodHeaderLocation);
   if( sc.isFailure()  ||  !m_rodTES ) {
     msg(MSG::DEBUG) << "No ROD Header container found" << endreq;
   }
@@ -753,7 +732,7 @@ StatusCode JEPSimBSMon::fillHistograms()
   cmmEtTotalSimMap.clear();
   delete cmmEtTotalSIM;
 
-  // Compare Et Maps (sumEt/missingEt) simulated from Total sums
+  // Compare Et Maps (sumEt/missingEt/missingEtSig) simulated from Total sums
   // with Et Maps from data
 
   CmmEtSumsCollection* cmmSumEtSIM = 0;
@@ -1857,7 +1836,8 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
       if (remote && dataId != LVL1::CMMEtSums::LOCAL) continue;
       if (total  && dataId != LVL1::CMMEtSums::TOTAL) continue;
       if (etmaps && dataId != LVL1::CMMEtSums::SUM_ET_MAP &&
-                    dataId != LVL1::CMMEtSums::MISSING_ET_MAP) continue;
+                    dataId != LVL1::CMMEtSums::MISSING_ET_MAP &&
+                    dataId != LVL1::CMMEtSums::MISSING_ET_SIG_MAP) continue;
       cmmSimEt = cmmS->Et();
       cmmSimEx = cmmS->Ex();
       cmmSimEy = cmmS->Ey();
@@ -1879,7 +1859,8 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
       if (remote && dataId != LVL1::CMMEtSums::REMOTE) continue;
       if (total  && dataId != LVL1::CMMEtSums::TOTAL)  continue;
       if (etmaps && dataId != LVL1::CMMEtSums::SUM_ET_MAP &&
-                    dataId != LVL1::CMMEtSums::MISSING_ET_MAP) continue;
+                    dataId != LVL1::CMMEtSums::MISSING_ET_MAP &&
+                    dataId != LVL1::CMMEtSums::MISSING_ET_SIG_MAP) continue;
       cmmEt = cmmD->Et();
       cmmEx = cmmD->Ex();
       cmmEy = cmmD->Ey();
@@ -1904,7 +1885,8 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
                     dataId != LVL1::CMMEtSums::REMOTE) continue;
       if (total  && dataId != LVL1::CMMEtSums::TOTAL)  continue;
       if (etmaps && dataId != LVL1::CMMEtSums::SUM_ET_MAP &&
-                    dataId != LVL1::CMMEtSums::MISSING_ET_MAP) continue;
+                    dataId != LVL1::CMMEtSums::MISSING_ET_MAP &&
+                    dataId != LVL1::CMMEtSums::MISSING_ET_SIG_MAP) continue;
       cmmSimEt = cmmS->Et();
       cmmSimEx = cmmS->Ex();
       cmmSimEy = cmmS->Ey();
@@ -1922,6 +1904,28 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
       crate    = cmmS->crate();
     }
 
+    // Simulation will set all map bits for saturation according
+    // to new thresholds scheme
+    if (cmmSimEt != cmmEt) {
+      if (dataId == LVL1::CMMEtSums::SUM_ET_MAP) {
+        if (cmmSimEt == 0xff && cmmEt == 0xf) {
+	  if (!hasMissingEtSig()) {
+	    cmmSimEt = 0xf;
+	    cmmSimEx = 0xf;
+	    cmmSimEy = 0xf;
+          }
+        }
+      } else if (dataId == LVL1::CMMEtSums::MISSING_ET_SIG_MAP) {
+        if (cmmSimEt == 0xff && cmmEt == 0) {
+	  if (!hasMissingEtSig()) {
+	    cmmSimEt = 0;
+	    cmmSimEx = 0;
+	    cmmSimEy = 0;
+	  }
+        }
+      }
+    }
+
     if (!cmmSimEt && !cmmSimEx && !cmmSimEy && !cmmEt && !cmmEx && !cmmEy)
                                                                      continue;
     
@@ -1936,7 +1940,9 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
 			    ? (1 << TotalEnergyMismatch)
 			    : (dataId == LVL1::CMMEtSums::SUM_ET_MAP)
 			       ? (1 << SumEtMismatch)
-			       : (1 << MissingEtMismatch);
+			       : (dataId == LVL1::CMMEtSums::MISSING_ET_MAP)
+			          ? (1 << MissingEtMismatch)
+			          : (1 << MissingEtSigMismatch);
       if (cmmSimEt == cmmEt && cmmSimEx == cmmEx && cmmSimEy == cmmEy) {
         errors[loc] |= bit;
       } else errors[loc+cmmBins] |= bit;
@@ -1967,7 +1973,9 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
         }
 	if (hist) hist->Fill(loc1, 2);
       } else {
-        const int loc2 = (dataId == LVL1::CMMEtSums::SUM_ET_MAP) ? 3 : 4;
+        const int loc2 = (dataId == LVL1::CMMEtSums::SUM_ET_MAP)
+	                  ? 3 : (dataId == LVL1::CMMEtSums::MISSING_ET_MAP)
+			      ? 4 : 5;
         TH2F_LW* hist = 0;
 	if (cmmSimEt && cmmSimEt == cmmEt) hist = m_h_EnSumsSIMeqDAT;
 	else if (cmmSimEt != cmmEt) {
@@ -1978,12 +1986,15 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
 	if (hist) hist->Fill(loc1, loc2);
 	if (cmmSimEt || cmmEt) {
 	  int loc3 = 0;
-	  int nThresh = 4;
+	  int nThresh = 8;
 	  int offset  = 0;
 	  if (dataId == LVL1::CMMEtSums::MISSING_ET_MAP) {
 	    loc3 = 2;
-	    nThresh = 8;
-	    offset  = 4;
+	    offset = 8;
+          }
+	  if (dataId == LVL1::CMMEtSums::MISSING_ET_SIG_MAP) {
+	    loc3 = 4;
+	    offset = 16;
           }
 	  m_histTool->fillXVsThresholds(m_h_EnSumsThreshSIMeqDAT, loc3,
 	                                cmmEt & cmmSimEt, nThresh, 1, offset);
@@ -2054,11 +2065,13 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmMap,
 
   int sumEtMap = 0;
   int missEtMap = 0;
+  int missEtSigMap = 0;
   int et = 0;
   int ex = 0;
   int ey = 0;
   int sumEtRoi = 0;
   int missEtRoi = 0;
+  int missEtSigRoi = 0;
   int etRoi = 0;
   int exRoi = 0;
   int eyRoi = 0;
@@ -2074,6 +2087,12 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmMap,
     const LVL1::CMMEtSums* sums = iter->second;
     missEtMap = sums->Et();
   }
+  key = 100 + LVL1::CMMEtSums::MISSING_ET_SIG_MAP;
+  iter = cmmMap.find(key);
+  if (iter != cmmMap.end()) {
+    const LVL1::CMMEtSums* sums = iter->second;
+    missEtSigMap = sums->Et();
+  }
   key = 100 + LVL1::CMMEtSums::TOTAL;
   iter = cmmMap.find(key);
   if (iter != cmmMap.end()) {
@@ -2085,17 +2104,20 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmMap,
   if (cmmRoi) {
     sumEtRoi = cmmRoi->sumEtHits();
     missEtRoi = cmmRoi->missingEtHits();
+    missEtSigRoi = cmmRoi->missingEtSigHits();
     etRoi = (cmmRoi->et() | ((cmmRoi->etError() & 0x1) << 15));
     exRoi = (cmmRoi->ex() | ((cmmRoi->exError() & 0x1) << 15));
     eyRoi = (cmmRoi->ey() | ((cmmRoi->eyError() & 0x1) << 15));
   }
-  if (sumEtMap || sumEtRoi || missEtMap || missEtRoi || et || etRoi ||
-                                           ex || exRoi || ey || eyRoi) {
+  if (sumEtMap || sumEtRoi || missEtMap || missEtRoi ||
+      missEtSigMap || missEtSigRoi ||
+      et || etRoi || ex || exRoi || ey || eyRoi) {
     const int crate = 1;
     const int loc = crate * 2;
     const int cmmBins = 2 * 2;
     const int bit = (1 << EnergyRoIMismatch);
     if (sumEtMap == sumEtRoi && missEtMap == missEtRoi &&
+        missEtSigMap == missEtSigRoi &&
         et == etRoi && ex == exRoi && ey == eyRoi) errors[loc] |= bit;
     else errors[loc+cmmBins] |= bit;
     TH2F_LW* hist = 0;
@@ -2143,11 +2165,20 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmMap,
       } else                                 hist = m_h_EnSumsDATnoSIM;
     }
     if (hist) hist->Fill(4, 4);
+    hist = 0;
+    if (missEtSigMap && missEtSigMap == missEtSigRoi) hist = m_h_EnSumsSIMeqDAT;
+    else if (missEtSigMap != missEtSigRoi) {
+      if (missEtSigMap && missEtSigRoi)               hist = m_h_EnSumsSIMneDAT;
+      else if (!missEtSigRoi) {
+        if (!limitedRoiSet(crate))                    hist = m_h_EnSumsSIMnoDAT;
+      } else                                          hist = m_h_EnSumsDATnoSIM;
+    }
+    if (hist) hist->Fill(4, 5);
 
     const int thrLen = 1;
+    const int nThresh = 8;
     if ((sumEtMap || sumEtRoi) && !(sumEtMap && !sumEtRoi 
                                && limitedRoiSet(crate))) {
-      const int nThresh = 4;
       m_histTool->fillXVsThresholds(m_h_EnSumsThreshSIMeqDAT, 1,
                                     sumEtRoi & sumEtMap, nThresh, thrLen);
       m_histTool->fillXVsThresholds(m_h_EnSumsThreshSIMneDAT, 1,
@@ -2155,12 +2186,21 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmMap,
     }
     if ((missEtMap || missEtRoi) && !(missEtMap && !missEtRoi
                                  && limitedRoiSet(crate))) {
-      const int nThresh = 8;
-      const int offset  = 4;
+      const int offset  = 8;
       m_histTool->fillXVsThresholds(m_h_EnSumsThreshSIMeqDAT, 3,
                               missEtRoi & missEtMap,  nThresh, thrLen, offset);
       m_histTool->fillXVsThresholds(m_h_EnSumsThreshSIMneDAT, 3,
                               missEtRoi ^ missEtMap,  nThresh, thrLen, offset);
+    }
+    if ((missEtSigMap || missEtSigRoi) && !(missEtSigMap && !missEtSigRoi
+                                       && limitedRoiSet(crate))) {
+      const int offset  = 16;
+      m_histTool->fillXVsThresholds(m_h_EnSumsThreshSIMeqDAT, 5,
+                              missEtSigRoi & missEtSigMap,  nThresh, thrLen,
+			                                               offset);
+      m_histTool->fillXVsThresholds(m_h_EnSumsThreshSIMneDAT, 5,
+                              missEtSigRoi ^ missEtSigMap,  nThresh, thrLen,
+			                                               offset);
     }
   }
 }
@@ -2180,16 +2220,16 @@ void JEPSimBSMon::fillEventSample(int err, int loc, bool isJem)
     if (err == TotalJetMismatch  || err == TotalEnergyMismatch)  y = 5;
     if (err == JetEtMismatch     || err == SumEtMismatch)        y = 6;
     if (err == JetEtRoIMismatch  || err == MissingEtMismatch)    y = 7;
-    if (err == EnergyRoIMismatch)                                y = 8;
+    if (err == MissingEtSigMismatch)                             y = 8;
+    if (err == EnergyRoIMismatch)                                y = 9;
   }
   if (m_sampleHists[hist]) m_histTool->fillEventNumber(m_sampleHists[hist], y);
 }
 
-void JEPSimBSMon::setLabels(LWHist* hist)
+void JEPSimBSMon::setLabels(LWHist* hist, bool xAxis)
 {
-  m_histTool->jemCMMCrateModule(hist);
   // Simulation steps in red (#color[2]) depend on Trigger Menu
-  LWHist::LWHistAxis* axis = hist->GetYaxis();
+  LWHist::LWHistAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
   axis->SetBinLabel(1+EMElementMismatch,    "EM je");
   axis->SetBinLabel(1+HadElementMismatch,   "Had je");
   axis->SetBinLabel(1+RoIMismatch,          "#color[2]{RoIs}");
@@ -2207,6 +2247,7 @@ void JEPSimBSMon::setLabels(LWHist* hist)
   axis->SetBinLabel(1+TotalEnergyMismatch,  "Total");
   axis->SetBinLabel(1+SumEtMismatch,        "#color[2]{SumEt}");
   axis->SetBinLabel(1+MissingEtMismatch,    "#color[2]{MissingEt}");
+  axis->SetBinLabel(1+MissingEtSigMismatch, "#color[2]{MissEtSig}");
   axis->SetBinLabel(1+EnergyRoIMismatch,    "Engy RoIs");
 }
 
@@ -2242,6 +2283,7 @@ void JEPSimBSMon::setLabelsEnTot(LWHist* hist)
   axis->SetBinLabel(3, "Et");
   axis->SetBinLabel(4, "SumEt");
   axis->SetBinLabel(5, "MissingEt");
+  axis->SetBinLabel(6, "MissEtSig");
 }
 
 void JEPSimBSMon::setLabelsEnTotThr(LWHist* hist)
@@ -2251,8 +2293,11 @@ void JEPSimBSMon::setLabelsEnTotThr(LWHist* hist)
   axis->SetBinLabel(2, "SumEt RoI");
   axis->SetBinLabel(3, "MissingEt");
   axis->SetBinLabel(4, "MissingEt RoI");
+  axis->SetBinLabel(5, "MissingEtSig");
+  axis->SetBinLabel(6, "MissingEtSig RoI");
   m_histTool->sumEtThresholds(hist, 0, false);
-  m_histTool->missingEtThresholds(hist, 4, false);
+  m_histTool->missingEtThresholds(hist, 8, false);
+  m_histTool->missingEtSigThresholds(hist, 16, false);
 }
 
 void JEPSimBSMon::setupMap(const JetElementCollection* coll,
@@ -2475,18 +2520,29 @@ bool JEPSimBSMon::limitedRoiSet(int crate)
 {
   if (m_rodTES) {
     m_limitedRoi = 0;
+    m_versionSig = true;
     const int nCrates = 2;
     RodHeaderCollection::const_iterator rodIter  = m_rodTES->begin();
     RodHeaderCollection::const_iterator rodIterE = m_rodTES->end();
     for (; rodIter != rodIterE; ++rodIter) {
       const LVL1::RODHeader* rod = *rodIter;
       const int rodCrate = rod->crate() - 12;
-      if (rodCrate >= 0 && rodCrate < nCrates
-          && rod->dataType() == 1 && rod->limitedRoISet()) {
-        m_limitedRoi |= (1<<rodCrate);
+      if (rodCrate >= 0 && rodCrate < nCrates && rod->dataType() == 1) {
+        if (rod->limitedRoISet()) {
+          m_limitedRoi |= (1<<rodCrate);
+        }
+	m_versionSig = (rod->minorVersion() >= 0x1003);
       }
     }
     m_rodTES = 0;
   }
   return (((m_limitedRoi>>crate)&0x1) == 1);
+}
+
+// Return true if version with Missing-Et-Sig
+
+bool JEPSimBSMon::hasMissingEtSig()
+{
+  if (m_rodTES) limitedRoiSet(0); // Force RODHeader read
+  return m_versionSig;
 }

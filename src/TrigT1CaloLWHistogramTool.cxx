@@ -210,12 +210,15 @@ bool TrigT1CaloLWHistogramTool::thresholdNames(const std::string& type,
   else if (type == def.jbType())  nthresh = def.max_JB_Threshold_Number();
   else if (type == def.xeType())  nthresh = def.max_XE_Threshold_Number();
   else if (type == def.jeType())  nthresh = def.max_JE_Threshold_Number();
-  else if (type == def.teType())  nthresh = def.max_TE_Threshold_Number();
+  //else if (type == def.teType())  nthresh = def.max_TE_Threshold_Number();
+  //else if (type == def.xsType())  nthresh = def.max_XS_Threshold_Number();
+  else if (type == def.teType())  nthresh = 8;
+  else if (type == "XS")          nthresh = 8;
   else return found;
 
   for (int thr = 0; thr < nthresh; ++thr) {
     std::ostringstream cnum;
-    cnum << thr;
+    cnum << type << " " << thr;
     names.push_back(cnum.str());
   }
 
@@ -251,12 +254,13 @@ void TrigT1CaloLWHistogramTool::thresholds(LWHist* hist,
 {
   LWHist::LWHistAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
   std::vector<std::string> names;
-  const bool found = thresholdNames(type, names);
+  //const bool found = thresholdNames(type, names);
+  thresholdNames(type, names);
   std::vector<std::string>::const_iterator it = names.begin();
   for (int bin = 1; it != names.end(); ++it, ++bin) {
     axis->SetBinLabel(bin+offset, (*it).c_str());
   }
-  if (!found) axis->SetTitle("Threshold Number");
+  //if (!found) axis->SetTitle("Threshold Number");
 }
 
 // Put threshold hit values into a string suitable for printing
@@ -477,6 +481,15 @@ void TrigT1CaloLWHistogramTool::sumEtThresholds(LWHist* hist, int offset,
                                                               bool xAxis)
 {
   thresholds(hist, TrigConf::L1DataDef::teType(), offset, xAxis);
+}
+
+// Label bins with MissingEtSig threshold names
+
+void TrigT1CaloLWHistogramTool::missingEtSigThresholds(LWHist* hist, int offset,
+                                                                     bool xAxis)
+{
+  //thresholds(hist, TrigConf::L1DataDef::xsType(), offset, xAxis);
+  thresholds(hist, "XS", offset, xAxis);
 }
 
 //===========================================================================
@@ -1130,9 +1143,22 @@ TH1F_LW* TrigT1CaloLWHistogramTool::bookMissingEtThresholds(
 TH1F_LW* TrigT1CaloLWHistogramTool::bookSumEtThresholds(
                             const std::string& name, const std::string& title)
 {
-  const int nbins = TrigConf::L1DataDef::max_TE_Threshold_Number();
+  //const int nbins = TrigConf::L1DataDef::max_TE_Threshold_Number();
+  const int nbins = 8;
   TH1F_LW* hist = book1F(name, title, nbins, 0, nbins);
   sumEtThresholds(hist);
+  return hist;
+}
+
+// Book JEM MissingEtSig thresholds
+
+TH1F_LW* TrigT1CaloLWHistogramTool::bookMissingEtSigThresholds(
+                            const std::string& name, const std::string& title)
+{
+  //const int nbins = TrigConf::L1DataDef::max_XS_Threshold_Number();
+  const int nbins = 8;
+  TH1F_LW* hist = book1F(name, title, nbins, 0, nbins);
+  missingEtSigThresholds(hist);
   return hist;
 }
 

@@ -66,7 +66,7 @@ private:
 		     JetEtRoIMismatch, JEMEtSumsMismatch, CMMEtSumsMismatch,
 		     LocalEnergyMismatch, RemoteEnergyMismatch,
 		     TotalEnergyMismatch, SumEtMismatch, MissingEtMismatch,
-		     EnergyRoIMismatch };
+		     MissingEtSigMismatch, EnergyRoIMismatch };
 
   enum GlobalErrors { PPMDataStatus, PPMDataError, SubStatus, Parity, LinkDown,
                       RoIParity, Transmission, Simulation, CMMSubStatus,

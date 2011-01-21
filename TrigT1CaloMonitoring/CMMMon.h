@@ -92,6 +92,7 @@ private:
    TH1F_LW* m_h_CMMEtSums_Et;
    TH1F_LW* m_h_CMMEtSums_MissingEtMap;
    TH1F_LW* m_h_CMMEtSums_SumEtMap;
+   TH1F_LW* m_h_CMMEtSums_MissingEtSigMap;
    TProfile2D_LW* m_h_CMMEtSums_Overflow;
    // JEM Et Sums
    TH1F_LW*  m_h_CMMEtSums_JEM_Ex;
@@ -102,6 +103,7 @@ private:
    TH1F_LW* m_h_CMMRoI_JetEtHits;
    TH1F_LW* m_h_CMMRoI_SumEtHits;
    TH1F_LW* m_h_CMMRoI_MissingEtHits;
+   TH1F_LW* m_h_CMMRoI_MissingEtSigHits;
 
    TH1F_LW* m_h_CMMRoI_Ex;
    TH1F_LW* m_h_CMMRoI_Ey;

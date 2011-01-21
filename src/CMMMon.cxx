@@ -181,6 +181,9 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
     m_h_CMMEtSums_SumEtMap = m_histTool->bookSumEtThresholds(
       "cmm_1d_energy_SumEtHits",
       "SumEt Multiplicity per Threshold  --  CMM DAQ");
+    m_h_CMMEtSums_MissingEtSigMap = m_histTool->bookMissingEtSigThresholds(
+      "cmm_1d_energy_MissingEtSigHits",
+      "MissingEtSig Multiplicity per Threshold  --  CMM DAQ");
 
     m_h_CMMEtSums_Ex = m_histTool->bookJEMQuadLinear("cmm_1d_energy_TotalEx",
       "E_{x}^{CMM}  --  CMM DAQ;Ex [GeV]", 8);
@@ -212,6 +215,9 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
     m_h_CMMRoI_SumEtHits = m_histTool->bookSumEtThresholds(
       "cmm_1d_roi_SumEtHits",
       "SumEt Multiplicity per Threshold  --  CMM RoI");
+    m_h_CMMRoI_MissingEtSigHits = m_histTool->bookMissingEtSigThresholds(
+      "cmm_1d_roi_MissingEtSigHits",
+      "MissingEtSig Multiplicity per Threshold  --  CMM RoI");
 
     m_h_CMMRoI_Ex = m_histTool->bookJEMQuadLinear("cmm_1d_roi_Ex",
       "E_{x}^{CMM}  --  CMM RoI;Ex [GeV]", 8);
@@ -247,7 +253,7 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       "CMM RoI Parity Errors",
       NumberOfRoIParityBins, 0., NumberOfRoIParityBins);
     axis = m_h_CMMRoI_error->GetXaxis();
-    axis->SetBinLabel(1+ExParity,    "Ex");
+    axis->SetBinLabel(1+ExParity,    "Ex, MissingEtSig");
     axis->SetBinLabel(1+EyParity,    "Ey, SumEt");
     axis->SetBinLabel(1+EtParity,    "Et, MissingEt");
     axis->SetBinLabel(1+JetEtParity, "JetEt");
@@ -491,18 +497,23 @@ StatusCode CMMMon::fillHistograms()
                         << rawEt << endreq;
       }
     }
-    //MissingEt/SumEt Hitmaps
+    //MissingEt/SumEt/MissingEtSig Hitmaps
     if ((dataID == LVL1::CMMEtSums::MISSING_ET_MAP ||
-         dataID == LVL1::CMMEtSums::SUM_ET_MAP) && crate == 1) {
-      const int nHits  = (dataID == LVL1::CMMEtSums::MISSING_ET_MAP) ? 8 : 4;
+         dataID == LVL1::CMMEtSums::SUM_ET_MAP ||
+	 dataID == LVL1::CMMEtSums::MISSING_ET_SIG_MAP) && crate == 1) {
+      const int nHits = 8;
       TH1F_LW* hist = (dataID == LVL1::CMMEtSums::MISSING_ET_MAP)
-                       ? m_h_CMMEtSums_MissingEtMap : m_h_CMMEtSums_SumEtMap;
+                       ? m_h_CMMEtSums_MissingEtMap
+		       : (dataID == LVL1::CMMEtSums::SUM_ET_MAP)
+		       ? m_h_CMMEtSums_SumEtMap : m_h_CMMEtSums_MissingEtSigMap;
       m_histTool->fillThresholds(hist, rawEt, nHits, 1);
 
       if (debug) {
         if (dataID == LVL1::CMMEtSums::MISSING_ET_MAP) {
 	  msg(MSG::DEBUG) << "MissingEt Hits: ";
-        } else msg(MSG::DEBUG) << "SumEt Hits: ";
+        } else if (dataID == LVL1::CMMEtSums::SUM_ET_MAP) {
+	  msg(MSG::DEBUG) << "SumEt Hits: ";
+	} else msg(MSG::DEBUG) << "MissingEtSig Hits: ";
 	msg(MSG::DEBUG) << m_histTool->thresholdString(rawEt, nHits) << endreq;
       }
     }
@@ -597,18 +608,23 @@ StatusCode CMMMon::fillHistograms()
   const int jetEtHits = (CR)->jetEtHits();
   const int sumEtHits = (CR)->sumEtHits();
   const int missingEtHits = (CR)->missingEtHits();
+  const int missingEtSigHits = (CR)->missingEtSigHits();
 
   m_histTool->fillThresholds(m_h_CMMRoI_JetEtHits, jetEtHits, 4, 1);
-  m_histTool->fillThresholds(m_h_CMMRoI_SumEtHits, sumEtHits, 4, 1);
+  m_histTool->fillThresholds(m_h_CMMRoI_SumEtHits, sumEtHits, 8, 1);
   m_histTool->fillThresholds(m_h_CMMRoI_MissingEtHits, missingEtHits, 8, 1);
+  m_histTool->fillThresholds(m_h_CMMRoI_MissingEtSigHits, missingEtSigHits,
+                                                                      8, 1);
 
   if (debug) {
     msg(MSG::DEBUG) << "JetEtHits: "
                     << m_histTool->thresholdString(jetEtHits, 4)
 		    << "; SumEtHits: "
-		    << m_histTool->thresholdString(sumEtHits, 4)
+		    << m_histTool->thresholdString(sumEtHits, 8)
 		    << "; MissingEtHits: "
 		    << m_histTool->thresholdString(missingEtHits, 8)
+		    << "; MissingEtSigHits: "
+		    << m_histTool->thresholdString(missingEtSigHits, 8)
 		    << endreq;
   }
 
@@ -637,7 +653,7 @@ StatusCode CMMMon::fillHistograms()
   const DataError eterr(etError);
   const DataError jetEterr((CR)-> jetEtError());
 
-  // Parity (Ex)
+  // Parity (Ex,MissingEtSigMap)
   if (exerr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(ExParity);
   // Parity (Ey,SumEtMap)
   if (eyerr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(EyParity);

@@ -71,7 +71,8 @@ private:
 		       JetEtRoIMismatch, JEMEtSumsMismatch, CMMEtSumsMismatch,
 		       LocalEnergyMismatch, RemoteEnergyMismatch,
 		       TotalEnergyMismatch, SumEtMismatch, MissingEtMismatch,
-		       EnergyRoIMismatch, NumberOfSummaryBins };
+		       MissingEtSigMismatch, EnergyRoIMismatch,
+		       NumberOfSummaryBins };
 
   typedef DataVector<LVL1::JetElement>   JetElementCollection;
   typedef DataVector<LVL1::JEMHits>      JemHitsCollection;
@@ -113,7 +114,7 @@ private:
   void  compare(const CmmEtSumsMap& cmmMap, const LVL1::CMMRoI* cmmRoi,
                                               ErrorVector& errors);
   void  fillEventSample(int err, int loc, bool isJem);
-  void  setLabels(LWHist* hist);
+  void  setLabels(LWHist* hist, bool xAxis = true);
   void  setLabelsSH(LWHist* hist);
   void  setLabelsSHF(LWHist* hist);
   void  setLabelsEnTot(LWHist* hist);
@@ -137,6 +138,7 @@ private:
   void  simulate(const CmmEtSumsCollection* sumsIn,
                        CmmEtSumsCollection* sumsOut, int selection);
   bool  limitedRoiSet(int crate);
+  bool  hasMissingEtSig();
 
   ToolHandle<LVL1::IL1JEPHitsTools>      m_jepHitsTool;
   ToolHandle<LVL1::IL1JetTools>          m_jetTool;
@@ -172,6 +174,8 @@ private:
   const RodHeaderCollection* m_rodTES;
   /// LimitedRoISet flags
   int m_limitedRoi;
+  /// Version with Missimg-Et-Sig flag
+  bool m_versionSig;
 
   //=======================
   //   Match/Mismatch plots

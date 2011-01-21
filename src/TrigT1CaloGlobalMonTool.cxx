@@ -203,6 +203,8 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
       "MissingEt Multiplicity per Threshold  --  CMM DAQ");
     m_histTool->bookSumEtThresholds("cmm_1d_energy_SumEtHits",
       "SumEt Multiplicity per Threshold  --  CMM DAQ");
+    m_histTool->bookMissingEtSigThresholds("cmm_1d_energy_MissingEtSigHits",
+      "MissingEtSig Multiplicity per Threshold  --  CMM DAQ");
     m_histTool->setMonGroup(&CMM_RoI);
     m_histTool->bookJetEtThresholds("cmm_1d_roi_JetEtHits",
       "JetEt Multiplicity per Threshold  --  CMM RoI");
@@ -210,6 +212,8 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
       "MissingEt Multiplicity per Threshold  --  CMM RoI");
     m_histTool->bookSumEtThresholds("cmm_1d_roi_SumEtHits",
       "SumEt Multiplicity per Threshold  --  CMM RoI");
+    m_histTool->bookMissingEtSigThresholds("cmm_1d_roi_MissingEtSigHits",
+      "MissingEtSig Multiplicity per Threshold  --  CMM RoI");
   }
 
   m_histTool->unsetMonGroup();
@@ -435,7 +439,8 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
           ((err >> LocalEnergyMismatch) & 0x1) ||
           ((err >> TotalEnergyMismatch) & 0x1) ||
 	  ((err >> SumEtMismatch) & 0x1)       ||
-	  ((err >> MissingEtMismatch) & 0x1))
+	  ((err >> MissingEtMismatch) & 0x1)   ||
+	  ((err >> MissingEtSigMismatch) & 0x1))
 	                                m_h_global->Fill(CMMSimulation, cr);
     }
   }

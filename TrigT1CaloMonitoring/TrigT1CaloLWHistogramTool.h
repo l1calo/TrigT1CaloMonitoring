@@ -125,6 +125,8 @@ class TrigT1CaloLWHistogramTool : public AthAlgTool {
    void missingEtThresholds(LWHist* hist, int offset = 0, bool xAxis = true);
    /// Label bins with SumEt threshold names
    void sumEtThresholds(LWHist* hist, int offset = 0, bool xAxis = true);
+   /// Label bins with MissingEtSig threshold names
+   void missingEtSigThresholds(LWHist* hist, int offset = 0, bool xAxis = true);
 
    ////////////////////////////////
    // Labelling Utilities - PPM
@@ -275,6 +277,9 @@ class TrigT1CaloLWHistogramTool : public AthAlgTool {
    /// Book JEM SumEt thresholds
    TH1F_LW* bookSumEtThresholds(const std::string& name,
                                 const std::string& title);
+   /// Book JEM MissingEtSig thresholds
+   TH1F_LW* bookMissingEtSigThresholds(const std::string& name,
+                                       const std::string& title);
    /// Book JEM sub-status errors vs crate/module
    TH2F_LW* bookJEMSubStatusVsCrateModule(const std::string& name,
                                           const std::string& title);
