@@ -1923,6 +1923,11 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
 	    cmmSimEy = 0;
 	  }
         }
+      // Total Et set to max for overflow in new scheme
+      } else if (dataId == LVL1::CMMEtSums::TOTAL) {
+        if (cmmSimEt == 0xffff && (cmmEt>>15) == 0x1) {
+	  if (!hasMissingEtSig()) cmmSimEt = cmmEt;
+        }
       }
     }
 
