@@ -137,9 +137,21 @@ StatusCode TrigT1CaloMonErrorTool::retrieve(const std::vector<unsigned int>*&
 
   //Retrieve Trigger Towers from SG
   const TriggerTowerCollection* triggerTowerTES = 0; 
+  const TriggerTowerCollection* triggerTowerSpareTES = 0; 
+  const TriggerTowerCollection* triggerTowerMuonTES = 0; 
   sc = evtStore()->retrieve(triggerTowerTES, m_triggerTowerLocation); 
   if( sc.isFailure()  ||  !triggerTowerTES ) {
     msg(MSG::DEBUG) << "No Trigger Tower container found"<< endreq; 
+  }
+  sc = evtStore()->retrieve(triggerTowerSpareTES,
+                                         m_triggerTowerLocation+"Spare"); 
+  if( sc.isFailure()  ||  !triggerTowerSpareTES ) {
+    msg(MSG::DEBUG) << "No Spare Trigger Tower container found"<< endreq; 
+  }
+  sc = evtStore()->retrieve(triggerTowerMuonTES,
+                                         m_triggerTowerLocation+"Muon"); 
+  if( sc.isFailure()  ||  !triggerTowerMuonTES ) {
+    msg(MSG::DEBUG) << "No Tile Muon Trigger Tower container found"<< endreq; 
   }
 
   //Retrieve Core and Overlap CPM Towers from SG

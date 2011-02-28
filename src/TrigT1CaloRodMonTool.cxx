@@ -357,6 +357,76 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   std::vector<int> errorsROB(7);
   std::vector<int> errorsUnpack(numUnpErr+1);
   std::vector<int> crateErr(14);
+  std::vector<int> robErrorFlags(80, 0);
+
+  //Retrieve ROB and Unpacking Error vector from SG
+  const ROBErrorCollection* errVecTES = 0;
+  sc = m_errorTool->retrieve(errVecTES);
+  if( sc.isFailure()  ||  !errVecTES ) {
+    if (debug) {
+      msg(MSG::DEBUG) << "No ROB Status and Unpacking Error vector found"
+                      << endreq;
+    }
+  }
+
+  // Update ROB Status and Unpacking Errors
+
+  if (errVecTES && !errVecTES->empty()) {
+    ROBErrorCollection::const_iterator robIter  = errVecTES->begin();
+    ROBErrorCollection::const_iterator robIterE = errVecTES->end();
+    unsigned int numRobErr = *robIter;
+    ++robIter;
+    while (robIter != robIterE) {
+      const unsigned int sourceId = *robIter;
+      ++robIter;
+      if (robIter != robIterE) {
+        const int crate = sourceId & 0xf;
+        const int slink = (sourceId >> 4) & 0x3;
+        const int dataType = (sourceId >> 7) & 0x1;
+        const int rob = crate + dataType*6;
+        const int pos = rob*4 + slink;
+	unsigned int err = *robIter;
+	++robIter;
+	if (err == 0) continue;
+        TH2F_LW* hist1 = m_h_ROD_PP_robgen;
+        TH2F_LW* hist2 = m_h_ROD_PP_robspec;
+	TH2F_LW* hist3 = m_h_ROD_PP_unp;
+        int val = pos;
+        if (pos >= 56) {
+          hist1 = m_h_ROD_RoI_robgen;
+	  hist2 = m_h_ROD_RoI_robspec;
+	  hist3 = m_h_ROD_RoI_unp;
+	  val = (pos >= 72) ? (pos-72)/2 + 8 : (pos-56)/2;
+        } else if (pos >= 32) {
+          hist1 = m_h_ROD_CPJEP_robgen;
+	  hist2 = m_h_ROD_CPJEP_robspec;
+	  hist3 = m_h_ROD_CPJEP_unp;
+	  val = (pos >= 48) ? pos-48 + 8 : (pos-32)/2;
+        }
+	if (numRobErr) {
+	  for (int bit = 0; bit < 32; ++bit) {
+	    const int robErr = (err >> bit) & 0x1;
+	    if (robErr) {
+	      if (bit < 16) hist1->Fill(bit, val);
+	      else          hist2->Fill(bit-16, val);
+	      if      (bit < 5)  errorsROB[bit] = 1;
+	      else if (bit < 16) errorsROB[5]   = 1;
+	      else               errorsROB[6]   = 1;
+	    }
+	  }
+	  crateErr[crate] |= (1 << ROBStatusError);
+	  robErrorFlags[pos] = 1;
+	  numRobErr--;
+        } else {
+	  if (err > numUnpErr) err = numUnpErr;
+	  hist3->Fill(err, val);
+	  errorsUnpack[err] = 1;
+	  crateErr[crate] |= (1 << UnpackingError);
+	  if (err == 3) robErrorFlags[pos] = 1;
+        }
+      }
+    }
+  }
 
   // Skip corrupt events in main plots
 
@@ -548,6 +618,10 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
     // Update missing ROD fragments and payloads
 
     for (int pos = 0; pos < 80; ++pos) {
+      if (robErrorFlags[pos]) {
+        noFragmentFlags[pos] = 0;
+	if (pos < 56) noPayloadFlags[pos] = 0;
+      }
       if (noFragmentFlags[pos] || (pos < 56 && noPayloadFlags[pos])) {
         TH2F_LW* hist = m_h_ROD_PP_stat;
         int val = pos;
@@ -577,73 +651,6 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
           hist->Fill(NoPayload, val);
           errors[NoPayload] = 1;
 	  crateErr[crate] |= (1 << NoPayload);
-        }
-      }
-    }
-  }
-
-  //Retrieve ROB and Unpacking Error vector from SG
-  const ROBErrorCollection* errVecTES = 0;
-  sc = m_errorTool->retrieve(errVecTES);
-  if( sc.isFailure()  ||  !errVecTES ) {
-    if (debug) {
-      msg(MSG::DEBUG) << "No ROB Status and Unpacking Error vector found"
-                      << endreq;
-    }
-  }
-
-  // Update ROB Status and Unpacking Errors
-
-  if (errVecTES && !errVecTES->empty()) {
-    ROBErrorCollection::const_iterator robIter  = errVecTES->begin();
-    ROBErrorCollection::const_iterator robIterE = errVecTES->end();
-    unsigned int numRobErr = *robIter;
-    ++robIter;
-    while (robIter != robIterE) {
-      const unsigned int sourceId = *robIter;
-      ++robIter;
-      if (robIter != robIterE) {
-        const int crate = sourceId & 0xf;
-        const int slink = (sourceId >> 4) & 0x3;
-        const int dataType = (sourceId >> 7) & 0x1;
-        const int rob = crate + dataType*6;
-        const int pos = rob*4 + slink;
-	unsigned int err = *robIter;
-	++robIter;
-	if (err == 0) continue;
-        TH2F_LW* hist1 = m_h_ROD_PP_robgen;
-        TH2F_LW* hist2 = m_h_ROD_PP_robspec;
-	TH2F_LW* hist3 = m_h_ROD_PP_unp;
-        int val = pos;
-        if (pos >= 56) {
-          hist1 = m_h_ROD_RoI_robgen;
-	  hist2 = m_h_ROD_RoI_robspec;
-	  hist3 = m_h_ROD_RoI_unp;
-	  val = (pos >= 72) ? (pos-72)/2 + 8 : (pos-56)/2;
-        } else if (pos >= 32) {
-          hist1 = m_h_ROD_CPJEP_robgen;
-	  hist2 = m_h_ROD_CPJEP_robspec;
-	  hist3 = m_h_ROD_CPJEP_unp;
-	  val = (pos >= 48) ? pos-48 + 8 : (pos-32)/2;
-        }
-	if (numRobErr) {
-	  for (int bit = 0; bit < 32; ++bit) {
-	    const int robErr = (err >> bit) & 0x1;
-	    if (robErr) {
-	      if (bit < 16) hist1->Fill(bit, val);
-	      else          hist2->Fill(bit-16, val);
-	      if      (bit < 5)  errorsROB[bit] = 1;
-	      else if (bit < 16) errorsROB[5]   = 1;
-	      else               errorsROB[6]   = 1;
-	    }
-	  }
-	  crateErr[crate] |= (1 << ROBStatusError);
-	  numRobErr--;
-        } else {
-	  if (err > numUnpErr) err = numUnpErr;
-	  hist3->Fill(err, val);
-	  errorsUnpack[err] = 1;
-	  crateErr[crate] |= (1 << UnpackingError);
         }
       }
     }

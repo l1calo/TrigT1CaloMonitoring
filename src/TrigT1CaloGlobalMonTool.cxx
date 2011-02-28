@@ -88,10 +88,13 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 
   if ( isNewEventsBlock || isNewLumiBlock ) { }
 
-  if ( isNewRun ) {
+  if ((isNewLumiBlock && m_environment != AthenaMonManager::online)
+                                       || isNewRun ) {
 
   std::string dir(m_rootDir + "/Overview/Errors");
-  MonGroup monGlobal( this, dir, shift, run );
+  MonGroup monGlobal( this, dir, shift,
+           (isNewLumiBlock && m_environment != AthenaMonManager::online)
+	   ? lumiBlock : run );
 
   // Global Error Overview
 
@@ -129,6 +132,10 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
     cnum << type << cr;
     axis->SetBinLabel(crate+1, cnum.str().c_str());
   }
+
+  } // end if ((isNewLumiBlock && ...
+
+  if ( isNewRun ) {
 
   // If running in RAW to ESD step prebook histograms which need threshold
   // names for bin labels for those tools which run in ESD to AOD step.
@@ -216,9 +223,9 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
       "MissingEtSig Multiplicity per Threshold  --  CMM RoI");
   }
 
-  m_histTool->unsetMonGroup();
-
   } // end if (isNewRun ...
+  
+  m_histTool->unsetMonGroup();
 
   msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
 
