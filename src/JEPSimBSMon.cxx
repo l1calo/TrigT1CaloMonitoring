@@ -940,7 +940,7 @@ void JEPSimBSMon::compare(const JemRoiMap& roiSimMap,
 
   const int nCrates = 2;
   const int nJEMs = 16;
-  const int maxKey = 0xffff;
+  const int maxKey = 0x7fffffff;
   LVL1::JEPRoIDecoder decoder;
   JemRoiMap::const_iterator simMapIter    = roiSimMap.begin();
   JemRoiMap::const_iterator simMapIterEnd = roiSimMap.end();

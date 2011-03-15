@@ -788,7 +788,7 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
 
   const int nCrates = 4;
   const int nCPMs = 14;
-  const int maxKey = 0xffff;
+  const int maxKey = 0x7fffffff;
   LVL1::CPRoIDecoder decoder;
   CpmRoiMap::const_iterator simMapIter    = roiSimMap.begin();
   CpmRoiMap::const_iterator simMapIterEnd = roiSimMap.end();
