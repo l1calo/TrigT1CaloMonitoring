@@ -28,7 +28,8 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
 				                 const std::string & name,
 				                 const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
-    m_histTool("TrigT1CaloLWHistogramTool")
+    m_histTool("TrigT1CaloLWHistogramTool"),
+    m_h_global(0)
 /*---------------------------------------------------------*/
 {
 
@@ -239,6 +240,11 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   const bool debug = msgLvl(MSG::DEBUG);
   if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
+  if (!m_h_global) {
+    if (debug) msg(MSG::DEBUG) << "Histogram not booked" << endreq;
+    return StatusCode::SUCCESS;
+  }
+
   StatusCode sc;
 
   // Update Global overview plot
@@ -252,7 +258,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   if (evtStore()->contains<ErrorVector>("L1CaloPPMErrorVector")) {
     sc = evtStore()->retrieve(errTES, "L1CaloPPMErrorVector"); 
   } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
+  if (sc.isFailure() || !errTES || errTES->size() != size_t(ppmCrates)) {
     if (debug) msg(MSG::DEBUG) << "No PPM error vector of expected size"
                                << endreq;
   } else {
@@ -270,7 +276,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   if (evtStore()->contains<ErrorVector>("L1CaloPPMSpareErrorVector")) {
     sc = evtStore()->retrieve(errTES, "L1CaloPPMSpareErrorVector"); 
   } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
+  if (sc.isFailure() || !errTES || errTES->size() != size_t(ppmCrates)) {
     if (debug) msg(MSG::DEBUG) << "No PPMSpare error vector of expected size"
                                << endreq;
   } else {
@@ -288,7 +294,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   if (evtStore()->contains<ErrorVector>("L1CaloCPMErrorVector")) {
     sc = evtStore()->retrieve(errTES, "L1CaloCPMErrorVector"); 
   } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(cpmCrates)) {
+  if (sc.isFailure() || !errTES || errTES->size() != size_t(cpmCrates)) {
     if (debug) msg(MSG::DEBUG) << "No CPM error vector of expected size"
                                << endreq;
   } else {
@@ -312,7 +318,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   if (evtStore()->contains<ErrorVector>("L1CaloJEMErrorVector")) {
     sc = evtStore()->retrieve(errTES, "L1CaloJEMErrorVector"); 
   } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
+  if (sc.isFailure() || !errTES || errTES->size() != size_t(jemCrates)) {
     if (debug) msg(MSG::DEBUG) << "No JEM error vector of expected size"
                                << endreq;
   } else {
@@ -334,7 +340,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   if (evtStore()->contains<ErrorVector>("L1CaloJEMCMMErrorVector")) {
     sc = evtStore()->retrieve(errTES, "L1CaloJEMCMMErrorVector"); 
   } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
+  if (sc.isFailure() || !errTES || errTES->size() != size_t(jemCrates)) {
     if (debug) msg(MSG::DEBUG) << "No JEM CMM error vector of expected size"
                                << endreq;
   } else {
@@ -359,7 +365,8 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   if (evtStore()->contains<ErrorVector>("L1CaloRODErrorVector")) {
     sc = evtStore()->retrieve(errTES, "L1CaloRODErrorVector"); 
   } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(ppmCrates + cpmCrates + jemCrates)) {
+  if (sc.isFailure() || !errTES || 
+                errTES->size() != size_t(ppmCrates + cpmCrates + jemCrates)) {
     if (debug) msg(MSG::DEBUG) << "No ROD error vector of expected size"
                                << endreq;
   } else {
@@ -380,7 +387,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   if (evtStore()->contains<ErrorVector>("L1CaloPPMMismatchVector")) {
     sc = evtStore()->retrieve(errTES, "L1CaloPPMMismatchVector"); 
   } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(ppmCrates)) {
+  if (sc.isFailure() || !errTES || errTES->size() != size_t(ppmCrates)) {
     if (debug) msg(MSG::DEBUG) << "No PPM mismatch vector of expected size"
                                << endreq;
   } else {
@@ -396,7 +403,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   if (evtStore()->contains<ErrorVector>("L1CaloCPMMismatchVector")) {
     sc = evtStore()->retrieve(errTES, "L1CaloCPMMismatchVector"); 
   } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(cpmCrates)) {
+  if (sc.isFailure() || !errTES || errTES->size() != size_t(cpmCrates)) {
     if (debug) msg(MSG::DEBUG) << "No CPM mismatch vector of expected size"
                                << endreq;
   } else {
@@ -420,7 +427,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   if (evtStore()->contains<ErrorVector>("L1CaloJEMMismatchVector")) {
     sc = evtStore()->retrieve(errTES, "L1CaloJEMMismatchVector"); 
   } else sc = StatusCode::FAILURE;
-  if (sc.isFailure() || errTES->size() != size_t(jemCrates)) {
+  if (sc.isFailure() || !errTES || errTES->size() != size_t(jemCrates)) {
     if (debug) msg(MSG::DEBUG) << "No JEM mismatch vector of expected size"
                                << endreq;
   } else {

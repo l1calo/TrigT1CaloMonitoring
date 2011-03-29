@@ -56,7 +56,70 @@ JEPSimBSMon::JEPSimBSMon(const std::string & type,
     m_etSumsTool("LVL1::L1JEPEtSumsTools/L1JEPEtSumsTools"),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_debug(false), m_rodTES(0), m_limitedRoi(0), m_versionSig(true)
+    m_debug(false), m_rodTES(0), m_limitedRoi(0), m_versionSig(true),
+    m_histBooked(false),
+    m_h_EMEleSIMeqDAT(0),
+    m_h_EMEleSIMneDAT(0),
+    m_h_EMEleSIMnoDAT(0),
+    m_h_EMEleDATnoSIM(0),
+    m_h_HadEleSIMeqDAT(0),
+    m_h_HadEleSIMneDAT(0),
+    m_h_HadEleSIMnoDAT(0),
+    m_h_HadEleDATnoSIM(0),
+    m_h_EMEleOvSIMeqDAT(0),
+    m_h_EMEleOvSIMneDAT(0),
+    m_h_EMEleOvSIMnoDAT(0),
+    m_h_EMEleOvDATnoSIM(0),
+    m_h_HadEleOvSIMeqDAT(0),
+    m_h_HadEleOvSIMneDAT(0),
+    m_h_HadEleOvSIMnoDAT(0),
+    m_h_HadEleOvDATnoSIM(0),
+    m_h_RoISIMeqDAT(0),
+    m_h_RoISIMneDAT(0),
+    m_h_RoISIMnoDAT(0),
+    m_h_RoIDATnoSIM(0),
+    m_h_RoIThreshSIMeqDAT(0),
+    m_h_RoIThreshSIMneDAT(0),
+    m_h_RoIEtaPhiSIMeqDAT(0),
+    m_h_RoIEtaPhiSIMneDAT(0),
+    m_h_RoIEtaPhiSIMnoDAT(0),
+    m_h_RoIEtaPhiDATnoSIM(0),
+    m_h_JEMHitsSIMeqDAT(0),
+    m_h_JEMHitsSIMneDAT(0),
+    m_h_JEMHitsSIMnoDAT(0),
+    m_h_JEMHitsDATnoSIM(0),
+    m_h_JEMHitsThreshSIMeqDAT(0),
+    m_h_JEMHitsThreshSIMneDAT(0),
+    m_h_CMMHitsSIMeqDAT(0),
+    m_h_CMMHitsSIMneDAT(0),
+    m_h_CMMHitsSIMnoDAT(0),
+    m_h_CMMHitsDATnoSIM(0),
+    m_h_CMMHitsThreshSIMeqDAT(0),
+    m_h_CMMHitsThreshSIMneDAT(0),
+    m_h_SumsSIMeqDAT(0),
+    m_h_SumsSIMneDAT(0),
+    m_h_SumsSIMnoDAT(0),
+    m_h_SumsDATnoSIM(0),
+    m_h_SumsThreshSIMeqDAT(0),
+    m_h_SumsThreshSIMneDAT(0),
+    m_h_jemEtSumsSIMeqDAT(0),
+    m_h_jemEtSumsSIMneDAT(0),
+    m_h_jemEtSumsSIMnoDAT(0),
+    m_h_jemEtSumsDATnoSIM(0),
+    m_h_cmmEtSumsSIMeqDAT(0),
+    m_h_cmmEtSumsSIMneDAT(0),
+    m_h_cmmEtSumsSIMnoDAT(0),
+    m_h_cmmEtSumsDATnoSIM(0),
+    m_h_EnSumsSIMeqDAT(0),
+    m_h_EnSumsSIMneDAT(0),
+    m_h_EnSumsSIMnoDAT(0),
+    m_h_EnSumsDATnoSIM(0),
+    m_h_EnSumsThreshSIMeqDAT(0),
+    m_h_EnSumsThreshSIMneDAT(0),
+    m_h_JEPeqSIM(0),
+    m_h_JEPneSIM(0),
+    m_h_JEPneSIMSummary(0),
+    m_sampleHists(0)
 /*---------------------------------------------------------*/
 {
   declareProperty("JEPHitsTool", m_jepHitsTool);
@@ -469,6 +532,9 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
   axis->SetBinLabel(10, "Engy RoIs");
   m_sampleHists[8] = hist;
 
+  m_histTool->unsetMonGroup();
+  m_histBooked = true;
+
   } // end if (isNewRun ...
 
   msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
@@ -481,6 +547,11 @@ StatusCode JEPSimBSMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
   if (m_debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
+
+  if (!m_histBooked) {
+    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    return StatusCode::SUCCESS;
+  }
 
   // Skip events believed to be corrupt
 
@@ -688,7 +759,7 @@ StatusCode JEPSimBSMon::fillHistograms()
   // Compare JEMEtSums simulated from JetElements with JEMEtSums from data
 
   JemEtSumsCollection* jemEtSumsSIM = 0;
-  if (jemEtSumsTES) {
+  if (jetElementTES) {
     jemEtSumsSIM = new JemEtSumsCollection;
     simulate(jetElementTES, jemEtSumsSIM);
   }
@@ -2523,6 +2594,22 @@ void JEPSimBSMon::simulate(const CmmEtSumsCollection* sumsIn,
 
 bool JEPSimBSMon::limitedRoiSet(int crate)
 {
+  if (m_rodTES) loadRodHeaders();
+  return (((m_limitedRoi>>crate)&0x1) == 1);
+}
+
+// Return true if version with Missing-Et-Sig
+
+bool JEPSimBSMon::hasMissingEtSig()
+{
+  if (m_rodTES) loadRodHeaders();
+  return m_versionSig;
+}
+
+// Load ROD Headers
+
+void JEPSimBSMon::loadRodHeaders()
+{
   if (m_rodTES) {
     m_limitedRoi = 0;
     m_versionSig = true;
@@ -2541,13 +2628,4 @@ bool JEPSimBSMon::limitedRoiSet(int crate)
     }
     m_rodTES = 0;
   }
-  return (((m_limitedRoi>>crate)&0x1) == 1);
-}
-
-// Return true if version with Missing-Et-Sig
-
-bool JEPSimBSMon::hasMissingEtSig()
-{
-  if (m_rodTES) limitedRoiSet(0); // Force RODHeader read
-  return m_versionSig;
 }

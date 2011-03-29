@@ -48,6 +48,7 @@ private:
   int m_TT_ADC_HitMap_Thresh;
   int m_SliceNo;
   bool m_onlineTest;
+  bool m_histBooked;
 
   std::string m_PathInRootFile;
   std::string m_ErrorPathInRootFile;

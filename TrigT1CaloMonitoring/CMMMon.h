@@ -72,6 +72,7 @@ private:
 
    std::string m_PathInRootFile;   
    std::string m_ErrorPathInRootFile;
+   bool m_histBooked;
 
    /** Histos */   
    // CMM Jet Hits

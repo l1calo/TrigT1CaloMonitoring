@@ -32,7 +32,30 @@ TrigT1CaloRodMonTool::TrigT1CaloRodMonTool(const std::string & type,
   : ManagedMonitorToolBase(type, name, parent),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_events(0)
+    m_events(0),
+    m_histBooked(false),
+    m_h_ROD_PP(0),
+    m_h_ROD_CP(0),
+    m_h_ROD_JEP(0),
+    m_h_ROD_RoI(0),
+    m_h_ROD_PP_stat(0),
+    m_h_ROD_CPJEP_stat(0),
+    m_h_ROD_RoI_stat(0),
+    m_h_ROD_PP_robgen(0),
+    m_h_ROD_CPJEP_robgen(0),
+    m_h_ROD_RoI_robgen(0),
+    m_h_ROD_PP_robspec(0),
+    m_h_ROD_CPJEP_robspec(0),
+    m_h_ROD_RoI_robspec(0),
+    m_h_ROD_PP_unp(0),
+    m_h_ROD_CPJEP_unp(0),
+    m_h_ROD_RoI_unp(0),
+    m_h_ROD_summary(0),
+    m_h_ROB_summary(0),
+    m_h_Unp_summary(0),
+    m_h_ROD_events(0),
+    m_h_ROB_events(0),
+    m_h_Unp_events(0)
 /*---------------------------------------------------------*/
 {
 
@@ -331,6 +354,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   setLabelsUnpacking(m_h_Unp_events, false);
 
   m_histTool->unsetMonGroup();
+  m_histBooked = true;
 
   } // end if (isNewRun ...
 
@@ -345,6 +369,11 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
 {
   const bool debug = msgLvl(MSG::DEBUG);
   if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
+
+  if (!m_histBooked) {
+    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    return StatusCode::SUCCESS;
+  }
 
   const bool online = m_onlineTest ||
                      (m_environment == AthenaMonManager::online);

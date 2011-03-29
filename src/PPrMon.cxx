@@ -44,9 +44,62 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   : ManagedMonitorToolBase ( type, name, parent ),
     m_LumiBlockNo(1), m_SliceNo(15), m_NoEvents(0),
     m_Em_FineTimeFilled(false),m_Had_FineTimeFilled(false),
+    m_histBooked(false),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool")
+    m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"),
+    m_h_TT_HitMap_emADC_00100(0),
+    m_h_TT_HitMap_hadADC_00100(0),
+    m_h_dist_had_max(0),
+    m_h_dist_em_max(0),
+    m_p_TT_HitMap_emADC_00100(0),
+    m_p_TT_HitMap_hadADC_00100(0),
+    m_h_fineTime_emADC(0),
+    m_h_fineTime_hadADC(0),
+    m_p_fineTime_eta_emADC(0),
+    m_p_fineTime_phi_emADC(0),
+    m_h_fineTime_eta_emADC(0),
+    m_h_fineTime_phi_emADC(0),
+    m_p_fineTime_eta_hadADC(0),
+    m_p_fineTime_phi_hadADC(0),
+    m_h_fineTime_eta_hadADC(0),
+    m_h_fineTime_phi_hadADC(0),
+    m_h_TT_fineTime_emADC_HitMap(0),
+    m_h_TT_fineTime_hadADC_HitMap(0),
+    m_p_TT_fineTime_emADC_HitMap(0),
+    m_p_TT_fineTime_hadADC_HitMap(0),
+    m_h_TT_Lumi_fineTime_emADC(0),
+    m_h_TT_Lumi_fineTime_hadADC(0),
+    m_h_fineTime_emADC_RMS(0),
+    m_h_fineTime_emADC_Mean(0),
+    m_h_fineTime_hadADC_RMS(0),
+    m_h_fineTime_hadADC_Mean(0),
+    m_h_TT_ADC_emTiming_signal(0),
+    m_h_TT_ADC_hadTiming_signal(0),
+    m_h_TT_SignalProfile(0),
+    m_h_TT_HitMap_emLUT_Thresh(0),
+    m_h_TT_HitMap_hadLUT_Thresh(0),
+    m_p_TT_HitMap_emLUT_etAv(0),
+    m_p_TT_HitMap_hadLUT_etAv(0),
+    m_h_TT_emLUT(0),
+    m_h_TT_emLUT_eta(0),
+    m_h_TT_emLUT_phi(0),
+    m_h_TT_hadLUT(0),
+    m_h_TT_hadLUT_eta(0),
+    m_h_TT_hadLUT_phi(0),
+    m_h_TT_BCLUT(0),
+    m_h_TT_BCID(0),
+    m_h_TT_Error(0),
+    m_h_TT_error_Crate_03(0),
+    m_h_TT_error_Crate_47(0),
+    m_h_fwPpmError_Crate_03(0),
+    m_h_fwPpmError_Crate_47(0),
+    m_h_ErrorDetails(0),
+    m_h_TT_EventNumbers(0),
+    m_h_TT_ASICEventNumbers(0),
+    m_h_TT_triggeredSlice_em(0),
+    m_h_TT_triggeredSlice_had(0),
+    m_h_NumberEvents(0)
 /*---------------------------------------------------------*/
 {
   declareProperty("BS_TriggerTowerContainer",
@@ -521,6 +574,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     }
 
     m_histTool->unsetMonGroup();
+    if (isNewRun) m_histBooked = true;
   }
 
   return StatusCode::SUCCESS;
@@ -532,6 +586,11 @@ StatusCode PPrMon::fillHistograms()
 {
   const bool debug = msgLvl(MSG::DEBUG);
   if (debug) msg(MSG::DEBUG) << "in fillHistograms()" << endreq;
+
+  if (!m_histBooked) {
+    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    return StatusCode::SUCCESS;
+  }
 
   // Skip events believed to be corrupt
 
@@ -550,7 +609,7 @@ StatusCode PPrMon::fillHistograms()
   const TriggerTowerCollection* TriggerTowerTES = 0; 
   StatusCode sc = evtStore()->retrieve(TriggerTowerTES,
                                                 m_TriggerTowerContainerName); 
-  if (sc.isFailure()) {
+  if (sc.isFailure() || !TriggerTowerTES) {
     if (debug) msg(MSG::DEBUG) << "No TriggerTower found in TES at "
                                << m_TriggerTowerContainerName << endreq ;
     return StatusCode::SUCCESS;
@@ -560,7 +619,7 @@ StatusCode PPrMon::fillHistograms()
   uint32_t bunchCrossing = 0;
   const EventInfo* evInfo = 0;
   sc = evtStore()->retrieve(evInfo);
-  if (sc.isFailure()) {
+  if (sc.isFailure() || !evInfo) {
     if (debug) msg(MSG::DEBUG) << "No EventInfo found" << endreq;
   } else {
     const EventID* evID = evInfo->event_ID();

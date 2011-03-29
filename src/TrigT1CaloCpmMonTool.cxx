@@ -52,7 +52,43 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
   : ManagedMonitorToolBase(type, name, parent),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_events(0)
+    m_events(0),
+    m_histBooked(false),
+    m_h_CPM_slices(0),
+    m_h_CMM_slices(0),
+    m_h_PP_CP_slice(0),
+    m_h_CP_CM_slice(0),
+    m_h_TT_Em_eta_phi(0),
+    m_h_TT_Had_eta_phi(0),
+    m_h_CT_Em_Et(0),
+    m_h_CT_Had_Et(0),
+    m_h_CT_Em_eta(0),
+    m_h_CT_Had_eta(0),
+    m_h_CT_Em_phi(0),
+    m_h_CT_Had_phi(0),
+    m_h_CT_Em_eta_phi(0),
+    m_h_CT_Had_eta_phi(0),
+    m_h_CT_Em_eta_phi_w(0),
+    m_h_CT_Had_eta_phi_w(0),
+    m_h_CT_Em_parity(0),
+    m_h_CT_Had_parity(0),
+    m_h_CT_Em_link(0),
+    m_h_CT_Had_link(0),
+    m_h_CT_status(0),
+    m_h_RoI_thresholds(0),
+    m_h_RoI_eta_phi(0),
+    m_h_RoI_Em_eta_phi(0),
+    m_h_RoI_Tau_eta_phi(0),
+    m_h_RoI_Saturation(0),
+    m_h_RoI_Parity(0),
+    m_h_CPM_thresholds(0),
+    m_h_CMM_thresholds(0),
+    m_h_CMM_T_thresholds(0),
+    m_h_CMM_parity(0),
+    m_h_CMM_status(0),
+    m_h_CP_errors(0),
+    m_h_CP_overview(0),
+    m_h_CP_events(0)
 /*---------------------------------------------------------*/
 {
 
@@ -278,6 +314,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_histTool->numbers(m_h_CMM_parity, 1, s_modules);
   m_h_CMM_parity->GetXaxis()->SetBinLabel(15, "REM");
   m_histTool->numberPairs(m_h_CMM_parity, 0, s_crates-1, 0, 1, 1, 0, false);
+ 
   m_h_CMM_status = m_histTool->book2F("cmm_2d_Status",
                           "CMM Sub-status bits;;Crate/CMM",
                            8, 0., 8., 8, 0., 8.);
@@ -328,6 +365,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_histTool->unsetMonGroup();
 
   m_events = 0;
+  m_histBooked = true;
 
   } // end if (isNewRun ...
 
@@ -342,6 +380,11 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 {
   const bool debug = msgLvl(MSG::DEBUG);
   if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
+
+  if (!m_histBooked) {
+    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    return StatusCode::SUCCESS;
+  }
 
   // Skip events believed to be corrupt
 

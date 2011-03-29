@@ -89,6 +89,8 @@ private:
   int m_events;
   /// Test online code flag
   bool m_onlineTest;
+  /// Histograms booked flag
+  bool m_histBooked;
 
   //=======================
   //   Payload plots

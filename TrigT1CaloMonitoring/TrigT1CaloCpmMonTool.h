@@ -101,6 +101,8 @@ private:
   int m_maxEnergyRange;
   /// Number of events
   int m_events;
+  /// Histograms booked flag
+  bool m_histBooked;
 
   //=======================
   //   Timeslice plots

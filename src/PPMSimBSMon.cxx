@@ -40,7 +40,34 @@ PPMSimBSMon::PPMSimBSMon(const std::string & type,
     m_l1CondSvc("L1CaloCondSvc", name),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"), 
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_LutContainer(0), m_debug(false), m_events(0)
+    m_LutContainer(0), m_debug(false), m_events(0),
+    m_histBooked(false),
+    m_h_ppm_em_2d_etaPhi_tt_lut_SimEqData(0),
+    m_h_ppm_em_2d_etaPhi_tt_lut_SimNeData(0),
+    m_h_ppm_em_2d_etaPhi_tt_lut_SimNoData(0),
+    m_h_ppm_em_2d_etaPhi_tt_lut_DataNoSim(0),
+    m_h_ppm_had_2d_etaPhi_tt_lut_SimEqData(0),
+    m_h_ppm_had_2d_etaPhi_tt_lut_SimNeData(0),
+    m_h_ppm_had_2d_etaPhi_tt_lut_SimNoData(0),
+    m_h_ppm_had_2d_etaPhi_tt_lut_DataNoSim(0),
+    m_h_ppm_em_2d_etaPhi_tt_ped_runavg(0),
+    m_h_ppm_had_2d_etaPhi_tt_ped_runavg(0),
+    m_h_ppm_em_2d_etaPhi_tt_ped_worstavg(0),
+    m_h_ppm_had_2d_etaPhi_tt_ped_worstavg(0),
+    m_h_ppm_em_2d_etaPhi_tt_ped_runrms(0),
+    m_h_ppm_had_2d_etaPhi_tt_ped_runrms(0),
+    m_h_ppm_em_2d_etaPhi_tt_ped_instavg(0),
+    m_h_ppm_had_2d_etaPhi_tt_ped_instavg(0),
+    m_h_ppm_em_2d_etaPhi_tt_ped_instrms(0),
+    m_h_ppm_had_2d_etaPhi_tt_ped_instrms(0),
+    m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B(0),
+    m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B(0),
+    m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B(0),
+    m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B(0),
+    m_h_ppm_2d_LUT_MismatchEvents_cr0cr1(0),
+    m_h_ppm_2d_LUT_MismatchEvents_cr2cr3(0),
+    m_h_ppm_2d_LUT_MismatchEvents_cr4cr5(0),
+    m_h_ppm_2d_LUT_MismatchEvents_cr6cr7(0)
 /*---------------------------------------------------------*/
 {
   declareProperty("TriggerTowerLocation",
@@ -261,6 +288,7 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
     "ppm_2d_LUT_MismatchEvents_cr6cr7","PPM LUT Mismatch Event Numbers",6,7);
 
   m_histTool->unsetMonGroup();
+  m_histBooked = true;
 
   } // end if (isNewRun ...
 
@@ -274,6 +302,11 @@ StatusCode PPMSimBSMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
   if (m_debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
+
+  if (!m_histBooked) {
+    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    return StatusCode::SUCCESS;
+  }
 
   StatusCode sc;
 

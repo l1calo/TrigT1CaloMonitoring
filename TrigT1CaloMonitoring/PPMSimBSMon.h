@@ -83,6 +83,8 @@ private:
   int m_events;
   /// Number of events over which to sample pedestal
   int m_instantaneous;
+  /// Histograms booked flag
+  bool m_histBooked;
 
   //=======================
   //   Match/Mismatch plots

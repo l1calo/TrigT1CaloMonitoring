@@ -74,6 +74,7 @@ private:
   bool m_onlineTest;
   bool m_Em_FineTimeFilled;
   bool m_Had_FineTimeFilled;
+  bool m_histBooked;
 
   std::string m_PathInRootFile;
   std::string m_ErrorPathInRootFile;

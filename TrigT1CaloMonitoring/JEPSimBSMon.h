@@ -139,6 +139,7 @@ private:
                        CmmEtSumsCollection* sumsOut, int selection);
   bool  limitedRoiSet(int crate);
   bool  hasMissingEtSig();
+  void  loadRodHeaders();
 
   ToolHandle<LVL1::IL1JEPHitsTools>      m_jepHitsTool;
   ToolHandle<LVL1::IL1JetTools>          m_jetTool;
@@ -176,6 +177,8 @@ private:
   int m_limitedRoi;
   /// Version with Missimg-Et-Sig flag
   bool m_versionSig;
+  /// Histograms booked flag
+  bool m_histBooked;
 
   //=======================
   //   Match/Mismatch plots

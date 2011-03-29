@@ -33,9 +33,18 @@
 PPrSpareMon::PPrSpareMon(const std::string & type, const std::string & name,
 					           const IInterface* parent)
   : ManagedMonitorToolBase ( type, name, parent ),
-    m_SliceNo(15),
+    m_SliceNo(15), m_histBooked(false),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloLWHistogramTool")
+    m_histTool("TrigT1CaloLWHistogramTool"),
+    m_h_TT_HitMap_ADC(0),
+    m_p_TT_HitMap_ADC(0),
+    m_h_TT_Error(0),
+    m_h_TT_error_Crate_25(0),
+    m_h_fwPpmError_Crate_25(0),
+    m_h_ErrorDetails(0),
+    m_h_TT_EventNumbers(0),
+    m_h_TT_ASICEventNumbers(0),
+    m_h_TT_triggeredSlice(0)
 /*---------------------------------------------------------*/
 {
   declareProperty("BS_TriggerTowerContainer",
@@ -216,6 +225,7 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
     m_histTool->numbers(m_h_TT_triggeredSlice, 0, m_SliceNo-1);
      
     m_histTool->unsetMonGroup();
+    m_histBooked = true;
   }	
 
   if ( isNewLumiBlock ) { }
@@ -229,6 +239,11 @@ StatusCode PPrSpareMon::fillHistograms()
 {
   const bool debug = msgLvl(MSG::DEBUG);
   if (debug) msg(MSG::DEBUG) << "in fillHistograms()" << endreq;
+
+  if (!m_histBooked) {
+    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    return StatusCode::SUCCESS;
+  }
 
   // Skip events believed to be corrupt
 
@@ -246,7 +261,7 @@ StatusCode PPrSpareMon::fillHistograms()
   if (evtStore()->contains<TriggerTowerCollection>(m_TriggerTowerContainerName)) {
     sc = evtStore()->retrieve(TriggerTowerTES, m_TriggerTowerContainerName); 
   } else sc = StatusCode::FAILURE;
-  if (sc.isFailure()) {
+  if (sc.isFailure() || !TriggerTowerTES) {
     if (debug) msg(MSG::DEBUG) << "No TriggerTower found in TES at "
                                << m_TriggerTowerContainerName<< endreq ;
     return StatusCode::SUCCESS;

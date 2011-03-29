@@ -47,7 +47,42 @@ CMMMon::CMMMon( const std::string & type, const std::string & name,
 		const IInterface* parent )
   : ManagedMonitorToolBase( type, name, parent ),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloLWHistogramTool")
+    m_histTool("TrigT1CaloLWHistogramTool"),
+    m_histBooked(false),
+    m_h_CMMJetHits_MainJets(0),
+    m_h_CMMJetHits_FwdJetsRight(0),
+    m_h_CMMJetHits_FwdJetsLeft(0),
+    m_h_CMMJetHits_EtMap(0),
+    m_h_CMMJetHits_JEM_MainHits(0),
+    m_h_CMMJetHits_JEM_FwdHitsRight(0),
+    m_h_CMMJetHits_JEM_FwdHitsLeft(0),
+    m_h_CMMJetHits_JEM_Crate0ParityError(0),
+    m_h_CMMJetHits_JEM_Crate1ParityError(0),
+    m_h_CMMEtSums_Ex(0),
+    m_h_CMMEtSums_Ey(0),
+    m_h_CMMEtSums_Et(0),
+    m_h_CMMEtSums_MissingEtMap(0),
+    m_h_CMMEtSums_SumEtMap(0),
+    m_h_CMMEtSums_MissingEtSigMap(0),
+    m_h_CMMEtSums_Overflow(0),
+    m_h_CMMEtSums_JEM_Ex(0),
+    m_h_CMMEtSums_JEM_Ey(0),
+    m_h_CMMEtSums_JEM_Et(0),
+    m_h_CMMRoI_JetEtHits(0),
+    m_h_CMMRoI_SumEtHits(0),
+    m_h_CMMRoI_MissingEtHits(0),
+    m_h_CMMRoI_MissingEtSigHits(0),
+    m_h_CMMRoI_Ex(0),
+    m_h_CMMRoI_Ey(0),
+    m_h_CMMRoI_Et(0),
+    m_h_CMMJet_error(0),
+    m_h_CMMEnergy_error(0),
+    m_h_CMMJet_parity(0),
+    m_h_CMMEnergy_parity(0),
+    m_h_CMMRoI_error(0),
+    m_h_CMM_ErrorSummary(0),
+    m_h_TriggeredSlice(0),
+    m_h_CMM_Events(0)
 /*---------------------------------------------------------*/
 {
   // This is how you declare the parameters to Gaudi so that
@@ -285,6 +320,9 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
       axis->SetBinLabel(1+RoIParity,    "RoI parity");
       axis = m_h_CMM_Events->GetYaxis();
     }
+    
+    m_histTool->unsetMonGroup();
+    m_histBooked = true;
   }
   
   return StatusCode::SUCCESS;
@@ -296,6 +334,11 @@ StatusCode CMMMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
   const bool debug = msgLvl(MSG::DEBUG);
+
+  if (!m_histBooked) {
+    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    return StatusCode::SUCCESS;
+  }
 
   // Skip events believed to be corrupt
 
@@ -320,7 +363,7 @@ StatusCode CMMMon::fillHistograms()
   // retrieve CMM Jet Hits from Storegate
   const CMMJetHitsCollection* CMMJetHits = 0;
   StatusCode sc = evtStore()->retrieve(CMMJetHits, m_CMMJetHitsLocation);
-  if (sc == StatusCode::FAILURE) {
+  if (sc == StatusCode::FAILURE || !CMMJetHits) {
     msg(MSG::INFO) << "No CMM JetHits found in TES at "
                    << m_CMMJetHitsLocation << endreq;
     return StatusCode::SUCCESS;
@@ -438,7 +481,7 @@ StatusCode CMMMon::fillHistograms()
   // retrieve CMM Et Sums from Storegate
   const CMMEtSumsCollection* CMMEtSums = 0;
   sc = evtStore()->retrieve(CMMEtSums, m_CMMEtSumsLocation);
-  if (sc == StatusCode::FAILURE) {
+  if (sc == StatusCode::FAILURE || !CMMEtSums) {
     msg(MSG::INFO) << "No CMMEtSums found in TES at "
                    << m_CMMEtSumsLocation << endreq ;
     return StatusCode::SUCCESS;
@@ -585,7 +628,7 @@ StatusCode CMMMon::fillHistograms()
   // retrieve RoI information from Storegate
   const LVL1::CMMRoI* CR = 0;
   sc = evtStore()->retrieve (CR, m_CMMRoILocation);
-  if (sc == StatusCode::FAILURE) {
+  if (sc == StatusCode::FAILURE || !CR) {
     msg(MSG::INFO) << "No CMM RoI found in TES at " << m_CMMRoILocation
                    << endreq;
     return StatusCode::SUCCESS;    

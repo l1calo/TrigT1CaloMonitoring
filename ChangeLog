@@ -1,3 +1,7 @@
+2011-03-29  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-07-16
+        * More Coverity fixes.
+
 2011-03-15  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-07-15
         * Coverity fixes.

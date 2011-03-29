@@ -137,6 +137,8 @@ private:
   bool m_overlapPresent;
   /// LimitedRoISet flags
   int m_limitedRoi;
+  /// Histograms booked flag
+  bool m_histBooked;
 
   //=======================
   //   Match/Mismatch plots

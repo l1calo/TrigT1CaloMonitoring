@@ -76,6 +76,7 @@ private:
 
    int m_SliceNo;
    int m_MaxEnergyRange;
+   bool m_histBooked;
 
    std::string m_PathInRootFile;   
    std::string m_ErrorPathInRootFile;
@@ -95,7 +96,6 @@ private:
    std::vector<TH2F_LW*> m_h_je_hadHitMap;
 
    // error maps
-   int m_NoEvents;
    TH2F_LW* m_h_je_error;
    TH2F_LW* m_h_je_em_parity;
    TH2F_LW* m_h_je_had_parity;

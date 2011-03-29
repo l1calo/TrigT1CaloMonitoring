@@ -52,7 +52,60 @@ CPMSimBSMon::CPMSimBSMon(const std::string & type,
     m_cpHitsTool("LVL1::L1CPHitsTools/L1CPHitsTools"),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_debug(false), m_rodTES(0), m_overlapPresent(false), m_limitedRoi(0)
+    m_debug(false), m_rodTES(0), m_overlapPresent(false), m_limitedRoi(0),
+    m_histBooked(false),
+    m_h_EMTowerSIMeqDAT(0),
+    m_h_EMTowerSIMneDAT(0),
+    m_h_EMTowerSIMnoDAT(0),
+    m_h_EMTowerDATnoSIM(0),
+    m_h_HadTowerSIMeqDAT(0),
+    m_h_HadTowerSIMneDAT(0),
+    m_h_HadTowerSIMnoDAT(0),
+    m_h_HadTowerDATnoSIM(0),
+    m_h_EMTowerOvSIMeqDAT(0),
+    m_h_EMTowerOvSIMneDAT(0),
+    m_h_EMTowerOvSIMnoDAT(0),
+    m_h_EMTowerOvDATnoSIM(0),
+    m_h_HadTowerOvSIMeqDAT(0),
+    m_h_HadTowerOvSIMneDAT(0),
+    m_h_HadTowerOvSIMnoDAT(0),
+    m_h_HadTowerOvDATnoSIM(0),
+    m_h_FpgaTowerSIMeqDAT(0),
+    m_h_FpgaTowerSIMneDAT(0),
+    m_h_FpgaTowerSIMnoDAT(0),
+    m_h_FpgaTowerDATnoSIM(0),
+    m_h_RoISIMeqDAT(0),
+    m_h_RoISIMneDAT(0),
+    m_h_RoISIMnoDAT(0),
+    m_h_RoIDATnoSIM(0),
+    m_h_RoIThreshSIMeqDAT(0),
+    m_h_RoIThreshSIMneDAT(0),
+    m_h_RoIEtaPhiSIMeqDAT(0),
+    m_h_RoIEtaPhiSIMneDAT(0),
+    m_h_RoIEtaPhiSIMnoDAT(0),
+    m_h_RoIEtaPhiDATnoSIM(0),
+    m_h_CPMHitsSIMeqDAT(0),
+    m_h_CPMHitsSIMneDAT(0),
+    m_h_CPMHitsSIMnoDAT(0),
+    m_h_CPMHitsDATnoSIM(0),
+    m_h_CPMHitsThreshSIMeqDAT(0),
+    m_h_CPMHitsThreshSIMneDAT(0),
+    m_h_CMMHitsSIMeqDAT(0),
+    m_h_CMMHitsSIMneDAT(0),
+    m_h_CMMHitsSIMnoDAT(0),
+    m_h_CMMHitsDATnoSIM(0),
+    m_h_CMMHitsThreshSIMeqDAT(0),
+    m_h_CMMHitsThreshSIMneDAT(0),
+    m_h_SumsSIMeqDAT(0),
+    m_h_SumsSIMneDAT(0),
+    m_h_SumsSIMnoDAT(0),
+    m_h_SumsDATnoSIM(0),
+    m_h_SumsThreshSIMeqDAT(0),
+    m_h_SumsThreshSIMneDAT(0),
+    m_h_CPeqSIM(0),
+    m_h_CPneSIM(0),
+    m_h_CPneSIMSummary(0),
+    m_sampleHists(0)
 /*---------------------------------------------------------*/
 {
   declareProperty("EmTauTool", m_emTauTool);
@@ -380,6 +433,7 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_sampleHists[5] = hist;
 
   m_histTool->unsetMonGroup();
+  m_histBooked = true;
 
   } // end if (isNewRun ...
 
@@ -393,6 +447,11 @@ StatusCode CPMSimBSMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
   if (m_debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
+
+  if (!m_histBooked) {
+    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    return StatusCode::SUCCESS;
+  }
   
   // Skip events believed to be corrupt
 

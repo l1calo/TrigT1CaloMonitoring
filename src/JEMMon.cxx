@@ -46,7 +46,40 @@ JEMMon::JEMMon( const std::string & type, const std::string & name,
 		const IInterface* parent )
   : ManagedMonitorToolBase( type, name, parent ),
     m_errorTool("TrigT1CaloMonErrorTool"),
-    m_histTool("TrigT1CaloLWHistogramTool")
+    m_histTool("TrigT1CaloLWHistogramTool"),
+    m_histBooked(false),
+    m_h_je_emeta(0),
+    m_h_je_hadeta(0),
+    m_h_je_emphi(0),
+    m_h_je_hadphi(0),
+    m_h_je_emenergy(0),
+    m_h_je_hadenergy(0),
+    m_h_je_energy_emHitMap(0),
+    m_h_je_energy_hadHitMap(0),
+    m_h_je_emHitMap(0),
+    m_h_je_hadHitMap(0),
+    m_h_je_error(0),
+    m_h_je_em_parity(0),
+    m_h_je_had_parity(0),
+    m_h_je_em_link(0),
+    m_h_je_had_link(0),
+    m_h_je_triggeredSlice(0),
+    m_h_JEMHits_MainHits(0),
+    m_h_JEMHits_FwdHitsRight(0),
+    m_h_JEMHits_FwdHitsLeft(0),
+    m_h_JEMDAQ_Hits_Map(0),
+    m_h_JEMEtSums_Ex(0),
+    m_h_JEMEtSums_Ey(0),
+    m_h_JEMEtSums_Et(0),
+    m_h_JEMRoI_MainHits(0),
+    m_h_JEMRoI_FwdHitsRight(0),
+    m_h_JEMRoI_FwdHitsLeft(0),
+    m_h_JEMRoI_MainThreshPerEtaPhi(0),
+    m_h_JEMRoI_FwdThreshPerEtaPhi(0),
+    m_h_JEMRoI_error(0),
+    m_h_JEMRoI_sat(0),
+    m_h_JEM_ErrorSummary(0),
+    m_h_JEM_Events(0)
 /*---------------------------------------------------------*/
 {
   // This is how you declare the parameters to Gaudi so that
@@ -308,6 +341,7 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
     }
        
     m_histTool->unsetMonGroup();
+    m_histBooked = true;
   }
     
   return StatusCode::SUCCESS;
@@ -320,6 +354,11 @@ StatusCode JEMMon::fillHistograms()
 /*---------------------------------------------------------*/
 {
   const bool debug = msgLvl(MSG::DEBUG);
+
+  if (!m_histBooked) {
+    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    return StatusCode::SUCCESS;
+  }
 
   // Skip events believed to be corrupt
 
@@ -341,7 +380,7 @@ StatusCode JEMMon::fillHistograms()
   const JECollection* jetElements = 0;
   StatusCode sc = evtStore()->retrieve(jetElements, m_JetElementLocation);
 
-  if(sc == StatusCode::FAILURE) {
+  if(sc == StatusCode::FAILURE || !jetElements) {
     msg(MSG::INFO) << "No JetElements found in TES at " << m_JetElementLocation
                    << endreq;
     return StatusCode::SUCCESS;
@@ -450,7 +489,7 @@ StatusCode JEMMon::fillHistograms()
   // retrieve JEMHits collection from storegate
   const JEMHitsCollection* JEMHits = 0;
   sc = evtStore()->retrieve(JEMHits, m_JEMHitsLocation);
-  if (sc == StatusCode::FAILURE) {
+  if (sc == StatusCode::FAILURE || !JEMHits) {
     msg(MSG::INFO) << "No JEMHits found in TES at " << m_JEMHitsLocation
                    << endreq ;
     return StatusCode::SUCCESS;
@@ -497,7 +536,7 @@ StatusCode JEMMon::fillHistograms()
 
   const JEMEtSumsCollection* JEMEtSums = 0;
   sc = evtStore()->retrieve(JEMEtSums, m_JEMEtSumsLocation);
-  if (sc == StatusCode::FAILURE) {
+  if (sc == StatusCode::FAILURE || !JEMEtSums) {
     msg(MSG::INFO) << "No JEMEtSums found in TES at " << m_JEMEtSumsLocation
                    << endreq ;
     return StatusCode::SUCCESS;
@@ -538,7 +577,7 @@ StatusCode JEMMon::fillHistograms()
 
   const JemRoiCollection* JEMRoIs = 0;
   sc = evtStore()->retrieve (JEMRoIs, m_JEMRoILocation);
-  if (sc == StatusCode::FAILURE) {
+  if (sc == StatusCode::FAILURE || !JEMRoIs) {
     msg(MSG::INFO) << "No JEM RoIs found in TES at" << m_JEMRoILocation
                    << endreq;
     return StatusCode::SUCCESS;    
