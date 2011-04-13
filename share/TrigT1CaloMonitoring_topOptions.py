@@ -88,6 +88,15 @@ toolSvc.L1TriggerTowerMonTool.EventPathInRootFile = "L1Calo"
 toolSvc.L1TriggerTowerMonTool.EventNoInHistoTitle = EventNoInHistoTitle
 #toolSvc.L1TriggerTowerMonTool.OutputLevel = DEBUG
 
+
+L1CaloMan.AthenaMonTools += [ "PPrStabilityMon/L1TriggerTowerStabilityMonTool" ]
+#toolSvc.L1TriggerTowerStabilityMonTool.DataType = "M3"  
+toolSvc.L1TriggerTowerStabilityMonTool.BS_TriggerTowerContainer = "TriggerTowers"
+toolSvc.L1TriggerTowerStabilityMonTool.ppmADCMinValue = 60
+toolSvc.L1TriggerTowerStabilityMonTool.PathInRootFile = "L1Calo/PPrStabilityMon"
+#toolSvc.L1TriggerTowerMonTool.OutputLevel = DEBUG
+
+
 #---------------------------- Performance Checks -----------------------------------
 L1CaloMan.AthenaMonTools += [ "PPrPerfMon/L1PPrPerfMonTool" ]
 toolSvc.L1PPrPerfMonTool.CompWithCalorimeter=False

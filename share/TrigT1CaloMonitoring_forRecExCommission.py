@@ -58,6 +58,18 @@ if l1caloESDMon:
     ToolSvc += L1PPrMonTool
     L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
 
+    from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrStabilityMon
+    L1PPrStabilityMonTool = PPrStabilityMon(
+        name = "L1PPrStabilityMonTool",
+        BS_TriggerTowerContainer = "TriggerTowers",
+        ppmADCMinValue = 60,
+        PathInRootFile = "L1Calo/PPrStabilityMon",
+        #OutputLevel = DEBUG
+        )
+    ToolSvc += L1PPrStabilityMonTool
+    L1CaloMan.AthenaMonTools += [ L1PPrStabilityMonTool ]
+
+
 if l1caloESDMon and globalflags.DataSource() == "data":
         
     include("TrigT1CaloCalibConditions/L1CaloCalibConditions_jobOptions.py")

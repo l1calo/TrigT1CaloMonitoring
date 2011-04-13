@@ -6,6 +6,7 @@
 #include "TrigT1CaloMonitoring/CPMSimBSMon.h"
 #include "TrigT1CaloMonitoring/JEPSimBSMon.h"
 #include "TrigT1CaloMonitoring/PPrMon.h"
+#include "TrigT1CaloMonitoring/PPrStabilityMon.h"
 #include "TrigT1CaloMonitoring/PPrSpareMon.h"
 #include "TrigT1CaloMonitoring/JEMMon.h"
 #include "TrigT1CaloMonitoring/CMMMon.h"
@@ -21,6 +22,7 @@ DECLARE_TOOL_FACTORY(TrigT1CaloLWHistogramTool )
 DECLARE_TOOL_FACTORY(CPMSimBSMon)
 DECLARE_TOOL_FACTORY(JEPSimBSMon)
 DECLARE_TOOL_FACTORY(PPrMon)
+DECLARE_TOOL_FACTORY(PPrStabilityMon)
 DECLARE_TOOL_FACTORY(PPrSpareMon)
 DECLARE_TOOL_FACTORY(JEMMon)
 DECLARE_TOOL_FACTORY(CMMMon)
@@ -35,6 +37,7 @@ DECLARE_FACTORY_ENTRIES(TrigT1CaloMonitoring) {
   DECLARE_ALGTOOL(CPMSimBSMon);
   DECLARE_ALGTOOL(JEPSimBSMon);
   DECLARE_ALGTOOL(PPrMon);
+  DECLARE_ALGTOOL(PPrStabilityMon);
   DECLARE_ALGTOOL(PPrSpareMon);
   DECLARE_ALGTOOL(JEMMon);
   DECLARE_ALGTOOL(CMMMon);
