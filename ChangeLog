@@ -1,5 +1,10 @@
+2011-04-18  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-08-01
+        * Efficiency updates.
+
 2011-04-13 Rohin T Narayan <narayan@physi.uni-heidelberg.de>
 		* Included class PPrStability Mon
+
 2011-03-29  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-07-16
         * More Coverity fixes.

@@ -26,8 +26,8 @@
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 #include "TrigT1CaloCondSvc/L1CaloCondSvc.h"
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
-#include "TrigT1CaloCalibConditions/L1CaloPprLutContainer.h"
-#include "TrigT1CaloCalibConditions/L1CaloPprLut.h"
+#include "TrigT1CaloCalibConditions/L1CaloPprConditionsContainer.h"
+#include "TrigT1CaloCalibConditions/L1CaloPprConditions.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
 
 #include "TrigT1CaloMonitoring/PPMSimBSMon.h"
@@ -40,7 +40,7 @@ PPMSimBSMon::PPMSimBSMon(const std::string & type,
     m_l1CondSvc("L1CaloCondSvc", name),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"), 
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_LutContainer(0), m_debug(false), m_events(0),
+    m_conditionsContainer(0), m_debug(false), m_events(0),
     m_histBooked(false),
     m_h_ppm_em_2d_etaPhi_tt_lut_SimEqData(0),
     m_h_ppm_em_2d_etaPhi_tt_lut_SimNeData(0),
@@ -77,6 +77,7 @@ PPMSimBSMon::PPMSimBSMon(const std::string & type,
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
 
   declareProperty("PedestalSampleSize", m_instantaneous=400);
+  declareProperty("SimulationADCCut", m_simulationADCCut = 36);
   declareProperty("OnlineTest", m_onlineTest = false,
                   "Test online code when running offline");
 }
@@ -152,17 +153,16 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   
   if( isNewRun ) {
     
-    
-    m_LutContainer = 0;
+    m_conditionsContainer = 0;
     if (m_l1CondSvc) {
       msg(MSG::DEBUG) << "Retrieving Conditions Containers " << endreq;
       
-      StatusCode sc = m_l1CondSvc->retrieve(m_LutContainer);
+      StatusCode sc = m_l1CondSvc->retrieve(m_conditionsContainer);
       if (sc.isFailure()) {
-	msg(MSG::WARNING) << "Could not retrieve LutContainer " << endreq;
+	msg(MSG::WARNING) << "Could not retrieve Conditions Container " << endreq;
 	return sc;
       }
-      msg(MSG::DEBUG) << "Retrieved LutContainer " << endreq;
+      msg(MSG::DEBUG) << "Retrieved Conditions Container " << endreq;
     }
     
     else {
@@ -441,42 +441,72 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     std::vector<int> emLut;
     std::vector<int> emBcidR;
     std::vector<int> emBcidD;
-    m_ttTool->process(tt->emADC(),em_coolId, emLut, emBcidR, emBcidD);
+    //
     const int emPeak = tt->emADCPeak();
     std::vector<int> emLut1;
     const int emSlices = (tt->emADC()).size();
-    if (emSlices < 7 || emBcidD[emPeak]) emLut1.push_back(emLut[emPeak]);
-    else                 emLut1.push_back(0);
-    std::vector<int> emBcidR1;
-    emBcidR1.push_back(emBcidR[emPeak]);
-    if (m_debug && emLut1[0] != tt->emEnergy() && (emSlices>=7 || tt->emEnergy()!=0)) { // mismatch - repeat with debug on
-      std::vector<int> emLut2; 
-      std::vector<int> emBcidR2;
-      std::vector<int> emBcidD2;
-      m_ttTool->setDebug(true);
-      m_ttTool->process(tt->emADC(),em_coolId, emLut2, emBcidR2, emBcidD2);
-      m_ttTool->setDebug(false);
+    bool keep = true;
+    if (tt->emEnergy()==0) {
+      keep = false;
+      std::vector<int>::const_iterator it1 = (tt->emADC()).begin();
+      std::vector<int>::const_iterator itE = (tt->emADC()).end();
+      for (;it1 != itE; ++it1) {
+        if (*it1 >= m_simulationADCCut) {
+          keep = true;
+	  break;
+        }
+      }
     }
+    if (keep) {
+      m_ttTool->process(tt->emADC(),em_coolId, emLut, emBcidR, emBcidD);
+      if (emSlices < 7 || emBcidD[emPeak]) emLut1.push_back(emLut[emPeak]);
+      else                 emLut1.push_back(0);
+      std::vector<int> emBcidR1;
+      emBcidR1.push_back(emBcidR[emPeak]);
+      if (m_debug && emLut1[0] != tt->emEnergy() && (emSlices>=7 || tt->emEnergy()!=0)) { // mismatch - repeat with debug on
+        std::vector<int> emLut2; 
+        std::vector<int> emBcidR2;
+        std::vector<int> emBcidD2;
+        m_ttTool->setDebug(true);
+        m_ttTool->process(tt->emADC(),em_coolId, emLut2, emBcidR2, emBcidD2);
+        m_ttTool->setDebug(false);
+      }
+    } else emLut1.push_back(0);
     
     std::vector<int> hadLut;
     std::vector<int> hadBcidR;
     std::vector<int> hadBcidD;
-    m_ttTool->process(tt->hadADC(),had_coolId, hadLut, hadBcidR, hadBcidD);
+    //
     const int hadPeak = tt->hadADCPeak();
     std::vector<int> hadLut1;
     const int hadSlices = (tt->hadADC()).size();
-    if (hadSlices < 7 || hadBcidD[hadPeak]) hadLut1.push_back(hadLut[hadPeak]);
-    else                   hadLut1.push_back(0);
-    std::vector<int> hadBcidR1;
-    hadBcidR1.push_back(hadBcidR[hadPeak]);
-    if (m_debug && hadLut1[0] != tt->hadEnergy() && (hadSlices>=7 || tt->hadEnergy()!=0)) {
-      std::vector<int> hadLut2;
-      std::vector<int> hadBcidR2;
-      std::vector<int> hadBcidD2;
-      m_ttTool->setDebug(true);
-      m_ttTool->process(tt->hadADC(),had_coolId, hadLut2, hadBcidR2, hadBcidD2);
-      m_ttTool->setDebug(false);
+    keep = true;
+    if (tt->hadEnergy()==0) {
+      keep = false;
+      std::vector<int>::const_iterator it1 = (tt->hadADC()).begin();
+      std::vector<int>::const_iterator itE = (tt->hadADC()).end();
+      for (;it1 != itE; ++it1) {
+        if (*it1 >= m_simulationADCCut) {
+	  keep = true;
+	  break;
+        }
+      }
     }
+    if (keep) {
+      m_ttTool->process(tt->hadADC(),had_coolId, hadLut, hadBcidR, hadBcidD);
+      if (hadSlices < 7 || hadBcidD[hadPeak]) hadLut1.push_back(hadLut[hadPeak]);
+      else                   hadLut1.push_back(0);
+      std::vector<int> hadBcidR1;
+      hadBcidR1.push_back(hadBcidR[hadPeak]);
+      if (m_debug && hadLut1[0] != tt->hadEnergy() && (hadSlices>=7 || tt->hadEnergy()!=0)) {
+        std::vector<int> hadLut2;
+        std::vector<int> hadBcidR2;
+        std::vector<int> hadBcidD2;
+        m_ttTool->setDebug(true);
+        m_ttTool->process(tt->hadADC(),had_coolId, hadLut2, hadBcidR2, hadBcidD2);
+        m_ttTool->setDebug(false);
+      }
+    } else hadLut1.push_back(0);
     
     const int simEm  = emLut1[0];
     const int simHad = hadLut1[0];
@@ -485,27 +515,27 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 
     int em_offset = 0;
     
-    if (m_LutContainer) {
-      const L1CaloPprLut* em_LUT = m_LutContainer->pprLut(em_coolId);
+    if (m_conditionsContainer) {
+      const L1CaloPprConditions* em_LUT = m_conditionsContainer->pprConditions(em_coolId);
       if (em_LUT) {
 	em_offset   = em_LUT->pedMean();
       } 
-      else if (m_debug) msg(MSG::DEBUG) << "::lut: No L1CaloPprLut found" << endreq;
+      else if (m_debug) msg(MSG::DEBUG) << "::lut: No L1CaloPprConditions found" << endreq;
     } 
-    else if (m_debug) msg(MSG::DEBUG) << "::lut: No LUT Container retrieved" << endreq;
+    else if (m_debug) msg(MSG::DEBUG) << "::lut: No Conditions Container retrieved" << endreq;
 
     const bool em_notSignal = (datEm==0 && !(m_ttTool->disabledChannel(em_coolId)));
 
     int had_offset = 0;
 
-    if (m_LutContainer) {
-      const L1CaloPprLut* had_LUT = m_LutContainer->pprLut(had_coolId);
+    if (m_conditionsContainer) {
+      const L1CaloPprConditions* had_LUT = m_conditionsContainer->pprConditions(had_coolId);
       if (had_LUT) {
 	had_offset   = had_LUT->pedMean();
       } 
-      else if (m_debug) msg(MSG::DEBUG) << "::lut: No L1CaloPprLut found" << endreq;
+      else if (m_debug) msg(MSG::DEBUG) << "::lut: No L1CaloPprConditions found" << endreq;
     } 
-    else if (m_debug) msg(MSG::DEBUG) << "::lut: No LUT Container retrieved" << endreq;
+    else if (m_debug) msg(MSG::DEBUG) << "::lut: No Conditions Container retrieved" << endreq;
 
     const bool had_notSignal = (datHad==0 && !(m_ttTool->disabledChannel(had_coolId)));
     

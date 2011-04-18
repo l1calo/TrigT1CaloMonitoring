@@ -26,7 +26,7 @@ class TProfile2D_LW;
 
 class StatusCode;
 class L1CaloCondSvc;
-class L1CaloPprLutContainer;
+class L1CaloPprConditionsContainer;
 
 class TrigT1CaloLWHistogramTool;
 
@@ -69,7 +69,7 @@ private:
   ToolHandle<LVL1::IL1TriggerTowerTool> m_ttTool;
   ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
       
-  L1CaloPprLutContainer* m_LutContainer;
+  L1CaloPprConditionsContainer* m_conditionsContainer;
 
   bool m_debug;
   bool m_onlineTest;
@@ -83,6 +83,8 @@ private:
   int m_events;
   /// Number of events over which to sample pedestal
   int m_instantaneous;
+  /// Cut on ADC digits for re-simulation
+  int m_simulationADCCut;
   /// Histograms booked flag
   bool m_histBooked;
 
