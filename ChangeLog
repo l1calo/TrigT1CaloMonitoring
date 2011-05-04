@@ -1,3 +1,8 @@
+2011-05-02  Ivana Hristova <ivana.hristova@cern.ch>
+	* Tag as TrigT1CaloMonitoring-00-08-02
+	* PPrMon: Replace ThreshMax with ThreshVec.
+	* A list of PPM LUT thresholds can be set in joboptions.
+
 2011-04-18  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-08-01
         * Efficiency updates.

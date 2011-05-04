@@ -104,7 +104,6 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
 {
   declareProperty("BS_TriggerTowerContainer",
                   m_TriggerTowerContainerName = "LVL1TriggerTowers");
-  declareProperty("LUTHitMap_ThreshMax",   m_TT_HitMap_ThreshMax  = 10);
   declareProperty("LUTHitMap_LumiBlocks",  m_TT_HitMap_LumiBlocks = 10);
   declareProperty("ADCHitMap_Thresh",      m_TT_ADC_HitMap_Thresh = 15);
   declareProperty("MaxEnergyRange",        m_MaxEnergyRange       = 256);
@@ -119,6 +118,11 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
                   m_EventPathInRootFile="L1Calo/Overview") ;
   declareProperty("OnlineTest", m_onlineTest = false,
                   "Test online code when running offline");
+
+  unsigned int defaultThresh[] = {0,1,2,3,4,5,6,7,10,15,20,33,45,50};
+  std::vector<unsigned int> defaultThreshVec (defaultThresh, 
+      defaultThresh + sizeof(defaultThresh) / sizeof(unsigned int) );
+  declareProperty("LUTHitMap_ThreshVec", m_TT_HitMap_ThreshVec = defaultThreshVec);
 
 }
 
@@ -337,9 +341,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       m_h_TT_HitMap_emLUT_Thresh.clear();
       m_h_TT_HitMap_hadLUT_Thresh.clear();
       m_histTool->setMonGroup(&TT_HitMaps);
-      for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh) {
+      for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
         buffer.str("");
-        buffer << thresh;
+        buffer << m_TT_HitMap_ThreshVec[thresh];
 	TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(
 	       "ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer.str(),
 	       "#eta - #phi Map of EM LUT > "+buffer.str());
@@ -355,19 +359,19 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
         MonGroup lumiGroup(this,
 	  m_PathInRootFile+"/LUT/EtaPhiMaps/lumi_"+buffer.str(), expert, run);
         m_histTool->setMonGroup(&lumiGroup);
-	for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh) {
+	for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
           buffer.str("");
-	  buffer << thresh << "Lumi" << block;
+	  buffer << m_TT_HitMap_ThreshVec[thresh] << "Lumi" << block;
 	  std::string name = "ppm_em_2d_etaPhi_tt_lut_Thresh"+buffer.str();
 	  buffer.str("");
-	  if (block == 0) buffer << thresh << ", Current Lumi-block";
-	  else            buffer << thresh << ", Lumi-block -" << block;
+	  if (block == 0) buffer << m_TT_HitMap_ThreshVec[thresh] << ", Current Lumi-block";
+	  else            buffer << m_TT_HitMap_ThreshVec[thresh] << ", Lumi-block -" << block;
 	  std::string title = "#eta - #phi Map of EM LUT > "+buffer.str();
 	  TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(name, title);
 	  m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
 	  title = "#eta - #phi Map of Had LUT > "+buffer.str();
 	  buffer.str("");
-	  buffer << thresh << "Lumi" << block;
+	  buffer << m_TT_HitMap_ThreshVec[thresh] << "Lumi" << block;
 	  name = "ppm_had_2d_etaPhi_tt_lut_Thresh"+buffer.str();
 	  hist = m_histTool->bookPPMHadEtaVsPhi(name, title);
 	  m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
@@ -381,7 +385,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       "ppm_em_2d_etaPhi_tt_lut_AverageEt","EM Average LUT Et for Et > 5");
     m_p_TT_HitMap_hadLUT_etAv = m_histTool->bookProfilePPMHadEtaVsPhi(
       "ppm_had_2d_etaPhi_tt_lut_AverageEt","Had Average LUT Et for Et > 5");
-      
+    
     //--------------- distribution of LUT peak per detector region -----------
 
     m_histTool->setMonGroup(&TT_LUTPeakDist);
@@ -521,15 +525,15 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 
       // Current lumi copied to lumi-1 and so on
       for (int block = m_TT_HitMap_LumiBlocks-1; block >= 0; --block) {
-	for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh) {
+	for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
 	  TH2F_LW* hist1 = m_h_TT_HitMap_emLUT_Thresh[
-	                           (block+1)*m_TT_HitMap_ThreshMax + thresh];
+	                           (block+1)*m_TT_HitMap_ThreshVec.size() + thresh];
 	  TH2F_LW* hist2 = m_h_TT_HitMap_emLUT_Thresh[
-	                           (block+2)*m_TT_HitMap_ThreshMax + thresh];
+	                           (block+2)*m_TT_HitMap_ThreshVec.size() + thresh];
 	  TH2F_LW* hist3 = m_h_TT_HitMap_hadLUT_Thresh[
-	                           (block+1)*m_TT_HitMap_ThreshMax + thresh];
+	                           (block+1)*m_TT_HitMap_ThreshVec.size() + thresh];
 	  TH2F_LW* hist4 = m_h_TT_HitMap_hadLUT_Thresh[
-	                           (block+2)*m_TT_HitMap_ThreshMax + thresh];
+	                           (block+2)*m_TT_HitMap_ThreshVec.size() + thresh];
 	  hist2->Reset();
 	  hist4->Reset();
 	  unsigned int ix = 0;
@@ -559,9 +563,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
                                                          expert, lumiBlock);
       m_histTool->setMonGroup(&TT_LumiHitMaps);
       std::stringstream buffer;
-      for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh) {
+      for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
         buffer.str("");
-	buffer << thresh;
+	buffer << m_TT_HitMap_ThreshVec[thresh];
 	TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(
 	  "ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer.str(),
 	  "#eta - #phi Map of EM LUT > "+buffer.str());
@@ -660,14 +664,17 @@ StatusCode PPrMon::fillHistograms()
     }
 	 
     //---------------------------- EM LUT HitMaps -----------------------------
-    for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh) {
-      if (EmEnergy > thresh) {
-	m_histTool->fillPPMEmEtaVsPhi(m_h_TT_HitMap_emLUT_Thresh[thresh],
-	                                                          eta, phi, 1);
-	if (m_environment == AthenaMonManager::online || m_onlineTest) {
-	  m_histTool->fillPPMEmEtaVsPhi(
-	    m_h_TT_HitMap_emLUT_Thresh[thresh+m_TT_HitMap_ThreshMax],
-	    eta, phi, 1);
+    for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
+      if (EmEnergy > 0) {
+        unsigned int u_EmEnergy = static_cast<unsigned int>(EmEnergy); 
+        if (u_EmEnergy > m_TT_HitMap_ThreshVec[thresh]) {
+   	  m_histTool->fillPPMEmEtaVsPhi(m_h_TT_HitMap_emLUT_Thresh[thresh],
+	                                                            eta, phi, 1);
+	  if (m_environment == AthenaMonManager::online || m_onlineTest) {
+	    m_histTool->fillPPMEmEtaVsPhi(
+	      m_h_TT_HitMap_emLUT_Thresh[thresh+m_TT_HitMap_ThreshVec.size()],
+	      eta, phi, 1);
+          }
         }
       }
     }
@@ -691,14 +698,17 @@ StatusCode PPrMon::fillHistograms()
     }
     
     //---------------------------- had LUT HitMaps -----------------------------
-    for (int thresh = 0; thresh < m_TT_HitMap_ThreshMax; ++thresh) {
-      if (HadEnergy > thresh) {
-	m_histTool->fillPPMHadEtaVsPhi(m_h_TT_HitMap_hadLUT_Thresh[thresh],
-	                                                          eta, phi, 1);
-        if (m_environment == AthenaMonManager::online || m_onlineTest) {
-	  m_histTool->fillPPMHadEtaVsPhi(
-	    m_h_TT_HitMap_hadLUT_Thresh[thresh+m_TT_HitMap_ThreshMax],
-	    eta, phi, 1);
+    for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
+      if (HadEnergy > 0) {
+        unsigned int u_HadEnergy = static_cast<unsigned int>(HadEnergy);
+        if (u_HadEnergy > m_TT_HitMap_ThreshVec[thresh]) {
+	  m_histTool->fillPPMHadEtaVsPhi(m_h_TT_HitMap_hadLUT_Thresh[thresh],
+	                                                            eta, phi, 1);
+          if (m_environment == AthenaMonManager::online || m_onlineTest) {
+	    m_histTool->fillPPMHadEtaVsPhi(
+	      m_h_TT_HitMap_hadLUT_Thresh[thresh+m_TT_HitMap_ThreshVec.size()],
+	      eta, phi, 1);
+          }
         }
       }
     }

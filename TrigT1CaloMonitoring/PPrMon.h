@@ -61,7 +61,7 @@ private:
   std::string partitionName(int part);
 
   std::string m_TriggerTowerContainerName;
-  int m_TT_HitMap_ThreshMax;
+  std::vector<unsigned int> m_TT_HitMap_ThreshVec;
   int m_TT_HitMap_LumiBlocks;
   int m_LumiBlockNo;
   int m_TT_ADC_HitMap_Thresh;
@@ -162,7 +162,7 @@ private:
   TH1F_LW* m_h_TT_triggeredSlice_em;
   TH1F_LW* m_h_TT_triggeredSlice_had;
    
-  TH1F_LW* m_h_NumberEvents;  
+  TH1F_LW* m_h_NumberEvents;
 };
 
 #endif
