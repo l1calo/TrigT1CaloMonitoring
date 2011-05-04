@@ -43,8 +43,7 @@ if l1caloESDMon:
     L1PPrMonTool = PPrMon(
         name = "L1PPrMonTool",
         BS_TriggerTowerContainer = "TriggerTowers",
-        #LUTHitMap_ThreshMax = 10,
-        LUTHitMap_ThreshVec=[10,20,30],
+        LUTHitMap_ThreshVec=[0,1,2,3,4,5,6,7,10,15,20,33,45,50],
         LUTHitMap_LumiBlocks = 10,
         ADCHitMap_Thresh = 50,
         MaxEnergyRange = 256,
