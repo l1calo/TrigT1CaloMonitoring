@@ -176,7 +176,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
                                                           bool isNewRun )
 /*---------------------------------------------------------*/
 {
-  msg(MSG::DEBUG) << "in PPrMon::bookHistograms" << endreq;
+  if (msgLvl(MSG::DEBUG)) msg(MSG::DEBUG) << "in PPrMon::bookHistograms" << endreq;
 
   if( m_environment == AthenaMonManager::online ) {
     // book histograms that are only made in the online environment...
@@ -980,7 +980,7 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock,
                                    bool isEndOfLumiBlock, bool isEndOfRun )
 /*---------------------------------------------------------*/
 {
-  msg(MSG::DEBUG) << "in procHistograms" << endreq ;
+  if (msgLvl(MSG::DEBUG)) msg(MSG::DEBUG) << "in procHistograms" << endreq ;
   if( isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun ) { }
   
   if(isEndOfLumiBlock)
@@ -1007,7 +1007,7 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock,
 /*---------------------------------------------------------*/
 double PPrMon::getFineTime(const int peakIndx, const std::vector<int>& adcContainer,const int threshold)
 {
-   msg(MSG::DEBUG) << "in getFine Time" << endreq;
+   if (msgLvl(MSG::DEBUG)) msg(MSG::DEBUG) << "in getFine Time" << endreq;
    double fineTime = -100; // Condition to check while filling histogram
 
    int peakSlice     = adcContainer[peakIndx];
