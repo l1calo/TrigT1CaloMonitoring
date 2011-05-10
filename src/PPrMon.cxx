@@ -340,7 +340,6 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 
     //----------------------- LUT Hitmaps per threshold ----------------------
 
-    // use threshold vector index (not value) to name PPM LUT histograms
     std::stringstream buffer_name;
 
     // Per run and last N lumiblocks - online only
@@ -575,7 +574,6 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       std::stringstream buffer_name;
       for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
         buffer.str("");
-        // use threshold vector index (not value) to name PPM LUT histograms
         buffer_name.str("");
 	buffer << m_TT_HitMap_ThreshVec[thresh];
         buffer_name << thresh;
