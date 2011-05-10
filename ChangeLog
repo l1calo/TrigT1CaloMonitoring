@@ -1,3 +1,7 @@
+2011-05-02  Ivana Hristova <ivana.hristova@cern.ch>
+	* Tag as TrigT1CaloMonitoring-00-08-05
+	* PPrMon: Use ThreshVec index in histogram name.
+
 2011-05-09  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
 	* Tag as TrigT1CaloMonitoring-00-08-04
         * Protect DEBUG messages.

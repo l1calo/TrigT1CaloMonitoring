@@ -119,10 +119,14 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   declareProperty("OnlineTest", m_onlineTest = false,
                   "Test online code when running offline");
 
+  // note: threshold vector index (not value) is preferred 
+  // to name PPM LUT histograms (see below, buffer_name) to 
+  // spare some Data Quality configuration file changes 
   unsigned int defaultThresh[] = {0,1,2,3,4,5,6,7,10,15,20,33,45,50};
   std::vector<unsigned int> defaultThreshVec (defaultThresh, 
       defaultThresh + sizeof(defaultThresh) / sizeof(unsigned int) );
-  declareProperty("LUTHitMap_ThreshVec", m_TT_HitMap_ThreshVec = defaultThreshVec);
+  declareProperty("LUTHitMap_ThreshVec", 
+                  m_TT_HitMap_ThreshVec = defaultThreshVec);
 
 }
 
@@ -336,6 +340,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 
     //----------------------- LUT Hitmaps per threshold ----------------------
 
+    // use threshold vector index (not value) to name PPM LUT histograms
+    std::stringstream buffer_name;
+
     // Per run and last N lumiblocks - online only
     if (m_environment == AthenaMonManager::online || m_onlineTest) {
       m_h_TT_HitMap_emLUT_Thresh.clear();
@@ -343,13 +350,15 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       m_histTool->setMonGroup(&TT_HitMaps);
       for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
         buffer.str("");
+        buffer_name.str("");
         buffer << m_TT_HitMap_ThreshVec[thresh];
+        buffer_name << thresh;
 	TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(
-	       "ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer.str(),
+	       "ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer_name.str(),
 	       "#eta - #phi Map of EM LUT > "+buffer.str());
 	m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
 	hist = m_histTool->bookPPMHadEtaVsPhi(
-	       "ppm_had_2d_etaPhi_tt_lut_Threshold"+buffer.str(),
+	       "ppm_had_2d_etaPhi_tt_lut_Threshold"+buffer_name.str(),
 	       "#eta - #phi Map of Had LUT > "+buffer.str());
 	m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
       }
@@ -360,9 +369,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	  m_PathInRootFile+"/LUT/EtaPhiMaps/lumi_"+buffer.str(), expert, run);
         m_histTool->setMonGroup(&lumiGroup);
 	for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
-          buffer.str("");
-	  buffer << m_TT_HitMap_ThreshVec[thresh] << "Lumi" << block;
-	  std::string name = "ppm_em_2d_etaPhi_tt_lut_Thresh"+buffer.str();
+          buffer_name.str("");
+	  buffer_name << thresh << "Lumi" << block;
+	  std::string name = "ppm_em_2d_etaPhi_tt_lut_Thresh"+buffer_name.str();
 	  buffer.str("");
 	  if (block == 0) buffer << m_TT_HitMap_ThreshVec[thresh] << ", Current Lumi-block";
 	  else            buffer << m_TT_HitMap_ThreshVec[thresh] << ", Lumi-block -" << block;
@@ -370,9 +379,9 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	  TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(name, title);
 	  m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
 	  title = "#eta - #phi Map of Had LUT > "+buffer.str();
-	  buffer.str("");
-	  buffer << m_TT_HitMap_ThreshVec[thresh] << "Lumi" << block;
-	  name = "ppm_had_2d_etaPhi_tt_lut_Thresh"+buffer.str();
+	  buffer_name.str("");
+	  buffer_name << thresh << "Lumi" << block;
+	  name = "ppm_had_2d_etaPhi_tt_lut_Thresh"+buffer_name.str();
 	  hist = m_histTool->bookPPMHadEtaVsPhi(name, title);
 	  m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
 	}
@@ -563,15 +572,19 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
                                                          expert, lumiBlock);
       m_histTool->setMonGroup(&TT_LumiHitMaps);
       std::stringstream buffer;
+      std::stringstream buffer_name;
       for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
         buffer.str("");
+        // use threshold vector index (not value) to name PPM LUT histograms
+        buffer_name.str("");
 	buffer << m_TT_HitMap_ThreshVec[thresh];
+        buffer_name << thresh;
 	TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(
-	  "ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer.str(),
+	  "ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer_name.str(),
 	  "#eta - #phi Map of EM LUT > "+buffer.str());
 	m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
 	hist = m_histTool->bookPPMHadEtaVsPhi(
-	  "ppm_had_2d_etaPhi_tt_lut_Threshold"+buffer.str(),
+	  "ppm_had_2d_etaPhi_tt_lut_Threshold"+buffer_name.str(),
 	  "#eta - #phi Map of Had LUT > "+buffer.str());
 	m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
       }
