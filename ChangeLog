@@ -1,4 +1,9 @@
-2011-05-02  Ivana Hristova <ivana.hristova@cern.ch>
+2011-05-11  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+	* Tag as TrigT1CaloMonitoring-00-08-06
+        * Move TrigT1CaloLWHistogramTool to new package to
+          resolve circular dependency.
+
+2011-05-10  Ivana Hristova <ivana.hristova@cern.ch>
 	* Tag as TrigT1CaloMonitoring-00-08-05
 	* PPrMon: Use ThreshVec index in histogram name.
 

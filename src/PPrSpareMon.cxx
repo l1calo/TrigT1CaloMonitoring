@@ -22,7 +22,7 @@
 
 #include "TrigT1CaloMonitoring/PPrSpareMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 
 #include "TrigT1CaloEvent/TriggerTower_ClassDEF.h"
 #include "TrigT1CaloEvent/TriggerTowerCollection.h"

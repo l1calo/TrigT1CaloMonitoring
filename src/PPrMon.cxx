@@ -28,7 +28,7 @@
 
 #include "TrigT1CaloMonitoring/PPrMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 #include "TrigT1CaloToolInterfaces/IL1TriggerTowerTool.h"
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
 #include "TrigConfigSvc/ILVL1ConfigSvc.h"

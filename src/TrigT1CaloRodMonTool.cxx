@@ -23,7 +23,7 @@
 
 #include "TrigT1CaloMonitoring/TrigT1CaloRodMonTool.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 
 /*---------------------------------------------------------*/
 TrigT1CaloRodMonTool::TrigT1CaloRodMonTool(const std::string & type, 

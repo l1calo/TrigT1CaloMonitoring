@@ -26,7 +26,7 @@
 
 #include "TrigT1CaloMonitoring/JEMMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 
 #include "TrigT1CaloEvent/JEMHits.h"
 #include "TrigT1CaloEvent/JEMEtSums.h"

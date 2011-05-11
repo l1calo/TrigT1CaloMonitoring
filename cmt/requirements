@@ -3,39 +3,33 @@ package TrigT1CaloMonitoring
 author Johanna Fleckner
 
 use AtlasPolicy         	AtlasPolicy-*
-#use AtlasCLHEP          	AtlasCLHEP-00-*       	External
 use GaudiInterface      	GaudiInterface-*      	External
-#use DataCollection       	DataCollection-*       	External
-#use StoreGate           	StoreGate-*           	Control
-use SGTools                     SGTools-*               Control
 use AthenaBaseComps             AthenaBaseComps-*       Control
 use AthenaMonitoring    	AthenaMonitoring-* 	Control
 use DataModel 			DataModel-*		Control 
-#use Identifier 			Identifier-*		DetectorDescription
 
-#use AtlasDoxygen		AtlasDoxygen-00-*	Tools
+private
+use SGTools                     SGTools-*               Control
 use AtlasROOT			AtlasROOT-*		External
 use LWHists                     LWHists-*               Tools
 
-#use CaloIdentifier      	CaloIdentifier-00-*   	Calorimeter
-
 use EventInfo            	EventInfo-*	        Event
-
-#use CaloEvent           	CaloEvent-*           	Calorimeter
 
 use TrigT1CaloUtils             TrigT1CaloUtils-*       Trigger/TrigT1
 use TrigT1CaloEvent             TrigT1CaloEvent-*       Trigger/TrigT1
+use TrigT1CaloMonitoringTools   TrigT1CaloMonitoringTools-* Trigger/TrigT1
 use TrigT1Interfaces    	TrigT1Interfaces-*    	Trigger/TrigT1
 use TrigT1CaloToolInterfaces	TrigT1CaloToolInterfaces-* Trigger/TrigT1
 
 use TrigT1CaloCalibConditions   TrigT1CaloCalibConditions-* Trigger/TrigT1
 use TrigT1CaloCalibTools	TrigT1CaloCalibTools-*	Trigger/TrigT1
 use TrigT1CaloCondSvc           TrigT1CaloCondSvc-*     Trigger/TrigT1
-#use CaloTriggerTool		CaloTriggerTool-*	Calorimeter		
 use TrigConfigSvc               TrigConfigSvc-*         Trigger/TrigConfiguration
 use TrigConfL1Data              TrigConfL1Data-*        Trigger/TrigConfiguration
+end_private
 
 apply_pattern declare_joboptions files="*.py"
 
-apply_pattern dual_use_library files=*.cxx
+library TrigT1CaloMonitoring *.cxx components/*.cxx
+apply_pattern component_library
 

@@ -28,7 +28,7 @@
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
 #include "TrigT1CaloCalibConditions/L1CaloPprConditionsContainer.h"
 #include "TrigT1CaloCalibConditions/L1CaloPprConditions.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 
 #include "TrigT1CaloMonitoring/PPMSimBSMon.h"
 

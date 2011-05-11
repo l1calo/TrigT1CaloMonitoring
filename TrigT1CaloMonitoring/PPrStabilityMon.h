@@ -51,9 +51,9 @@ class PPrStabilityMon: public ManagedMonitorToolBase
   virtual ~PPrStabilityMon();
 
   virtual StatusCode initialize();
+  virtual StatusCode finalize();
   virtual StatusCode fillHistograms();
   virtual StatusCode procHistograms(bool isEndofEventsBlock, bool isEndofLumiBlock, bool isEndofRun);
-  inline std::string GetPathInRootFile(){return m_PathInRootFile;};
 
 private:
   unsigned int m_ppmADCMinValue;
@@ -69,7 +69,7 @@ private:
   std::string m_TriggerTowerContainerName;
   std::string m_PathInRootFile;
 
-  EventInfo* m_evtInfo;
+  const EventInfo* m_evtInfo;
 
 };
 

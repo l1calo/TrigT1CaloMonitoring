@@ -23,7 +23,7 @@
 
 #include "TrigT1CaloMonitoring/PPrStabilityMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 #include "TrigT1CaloToolInterfaces/IL1TriggerTowerTool.h"
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
 #include "TrigT1CaloCalibTools/L1CaloPprFineTimePlotManager.h"
@@ -42,7 +42,8 @@ PPrStabilityMon::PPrStabilityMon(const std::string & type, const std::string & n
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"),
-    m_plotManager(0)
+    m_plotManager(0),
+    m_evtInfo(0)
 {
   declareProperty("BS_TriggerTowerContainer",m_TriggerTowerContainerName = "LVL1TriggerTowers");
   declareProperty("ppmADCMinValue", m_ppmADCMinValue=60);
@@ -81,21 +82,29 @@ StatusCode PPrStabilityMon::initialize()
   sc = m_storeGate.retrieve();
   if( sc.isFailure() ) {msg(MSG::ERROR) << "Unable to locate Tool StoreGateSvcTools "<< endreq; return sc;}
 
-  m_plotManager= new L1CaloPprFineTimePlotManager(this,m_ppmADCMinValue);
+  m_plotManager= new L1CaloPprFineTimePlotManager(this,m_PathInRootFile,m_ppmADCMinValue);
 
   return StatusCode::SUCCESS;
+}
+
+StatusCode PPrStabilityMon::finalize()
+{
+    delete m_plotManager;
+    return StatusCode::SUCCESS;
 }
 
 StatusCode PPrStabilityMon::fillHistograms()
 {
     StatusCode sc;
+    const bool debug = msgLvl(MSG::DEBUG);
 
     // Skip events believed to be corrupt
     if (m_errorTool->corrupt()){if (debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;return StatusCode::SUCCESS;}
 
     //Retrieve eventInfo from storeGate;
+    m_evtInfo = 0;
     sc = m_storeGate->retrieve(m_evtInfo);
-    if( sc.isFailure() ) { msg(MSG::FATAL) <<"Could not retrieve Event Info" <<endreq; return sc;}
+    if( sc.isFailure() ) { msg(MSG::ERROR) <<"Could not retrieve Event Info" <<endreq; return sc;}
    
     //Retrieve TriggerTowers from SG
     const TriggerTowerCollection* trigTwrColl = 0; 
@@ -106,7 +115,7 @@ StatusCode PPrStabilityMon::fillHistograms()
         if (debug) msg(MSG::DEBUG) << "No TriggerTower found at "<< m_TriggerTowerContainerName << endreq ;
         return sc;
     }
-    msg(MSG::INFO)<<"In Fill histograms"<<endreq;
+    if (debug) msg(MSG::DEBUG)<<"In Fill histograms"<<endreq;
 
     // ================= Container: TriggerTower ===========================
     
@@ -129,7 +138,7 @@ StatusCode PPrStabilityMon::fillHistograms()
     return sc;
 }
 
-StatusCode PPrStabilityMon::procHistograms(bool isEndofEventsBlock, bool isEndofLumiBlock, bool isEndofRun)
+StatusCode PPrStabilityMon::procHistograms(bool /*isEndofEventsBlock*/, bool /*isEndofLumiBlock*/, bool isEndofRun)
 {
     if(isEndofRun){m_plotManager->MakeSummary();}
     return StatusCode::SUCCESS;

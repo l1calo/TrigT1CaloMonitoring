@@ -21,7 +21,7 @@
 #include "AthenaMonitoring/AthenaMonManager.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloGlobalMonTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloLWHistogramTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 
 /*---------------------------------------------------------*/
 TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type, 
