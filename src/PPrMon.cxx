@@ -351,7 +351,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
         buffer.str("");
         buffer_name.str("");
         buffer << m_TT_HitMap_ThreshVec[thresh];
-        buffer_name  << std::setw(2) << std::setfill('0') << thresh;
+        buffer_name << std::setw(2) << std::setfill('0') << thresh;
 	TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(
 	       "ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer_name.str(),
 	       "#eta - #phi Map of EM LUT > "+buffer.str());
@@ -369,7 +369,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
         m_histTool->setMonGroup(&lumiGroup);
 	for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
           buffer_name.str("");
-	  buffer_name << thresh << "Lumi" << block;
+	  buffer_name << std::setw(2) << std::setfill('0') << thresh << "Lumi" << block;
 	  std::string name = "ppm_em_2d_etaPhi_tt_lut_Thresh"+buffer_name.str();
 	  buffer.str("");
 	  if (block == 0) buffer << m_TT_HitMap_ThreshVec[thresh] << ", Current Lumi-block";
@@ -379,7 +379,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	  m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
 	  title = "#eta - #phi Map of Had LUT > "+buffer.str();
 	  buffer_name.str("");
-	  buffer_name << thresh << "Lumi" << block;
+	  buffer_name << std::setw(2) << std::setfill('0') << thresh << "Lumi" << block;
 	  name = "ppm_had_2d_etaPhi_tt_lut_Thresh"+buffer_name.str();
 	  hist = m_histTool->bookPPMHadEtaVsPhi(name, title);
 	  m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
