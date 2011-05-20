@@ -1,3 +1,8 @@
+2011-05-20  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+	* Tag as TrigT1CaloMonitoring-00-09-00
+        * jobOptions update.
+        * Should have changed to 09-00 at 08-06.
+
 2011-05-17  Ivana Hristova <ivana.hristova@cern.ch>
 	* Tag as TrigT1CaloMonitoring-00-08-07
 	* PPrMon: Pad numbers with zeros in histogram names.
