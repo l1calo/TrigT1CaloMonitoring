@@ -59,18 +59,16 @@ if l1caloESDMon:
     L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
 
     if not Offline:  # Don't run on Tier0
-
         from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrStabilityMon
         L1PPrStabilityMonTool = PPrStabilityMon(
-            name = "L1PPrStabilityMonTool",
-            BS_TriggerTowerContainer = "TriggerTowers",
-            ppmADCMinValue = 60,
-            PathInRootFile = "L1Calo/PPrStabilityMon",
-            #OutputLevel = DEBUG
-            )
+                name = "L1PPrStabilityMonTool",
+                BS_TriggerTowerContainer = "TriggerTowers",
+                ppmADCMinValue = 60,
+                PathInRootFile = "L1Calo/PPrStabilityMon",
+                #OutputLevel = DEBUG
+                )
         ToolSvc += L1PPrStabilityMonTool
         L1CaloMan.AthenaMonTools += [ L1PPrStabilityMonTool ]
-
 
 if l1caloESDMon and globalflags.DataSource() == "data":
         

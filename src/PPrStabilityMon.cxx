@@ -82,7 +82,11 @@ StatusCode PPrStabilityMon::initialize()
   sc = m_storeGate.retrieve();
   if( sc.isFailure() ) {msg(MSG::ERROR) << "Unable to locate Tool StoreGateSvcTools "<< endreq; return sc;}
 
+  msg(MSG::INFO) <<"CALLING THE CONSTRUCTOR:L1CaloPprFineTimePlotManager" <<endreq;
+
   m_plotManager= new L1CaloPprFineTimePlotManager(this,m_PathInRootFile,m_ppmADCMinValue);
+
+  msg(MSG::INFO) <<"CONSTRUCTOR CALLED: L1CaloPprFineTimePlotManager" <<endreq;
 
   return StatusCode::SUCCESS;
 }
@@ -130,17 +134,18 @@ StatusCode PPrStabilityMon::fillHistograms()
         const L1CaloCoolChannelId emCoolChannelID = m_ttTool->channelID(eta,phi,0);
         const L1CaloCoolChannelId hadCoolChannelID = m_ttTool->channelID(eta,phi,1);
 
-        unsigned int emcoolID = emCoolChannelID.id();
-        unsigned int hadcoolID = hadCoolChannelID.id();
+        bool emDead = m_ttTool->disabledChannel(emCoolChannelID);
+        bool hadDead= m_ttTool->disabledChannel(hadCoolChannelID);
 
-        m_plotManager->SetValues(emcoolID,hadcoolID,m_evtInfo, *TriggerTowerIterator);
+        m_plotManager->SetValues(m_evtInfo, *TriggerTowerIterator,emDead,hadDead);
     }
+    
     return sc;
 }
 
 StatusCode PPrStabilityMon::procHistograms(bool /*isEndofEventsBlock*/, bool /*isEndofLumiBlock*/, bool isEndofRun)
 {
-    if(isEndofRun){m_plotManager->MakeSummary();}
+    //if(isEndofRun){m_plotManager->MakeSummary();}
     return StatusCode::SUCCESS;
 }
 
