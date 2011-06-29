@@ -82,11 +82,7 @@ StatusCode PPrStabilityMon::initialize()
   sc = m_storeGate.retrieve();
   if( sc.isFailure() ) {msg(MSG::ERROR) << "Unable to locate Tool StoreGateSvcTools "<< endreq; return sc;}
 
-  msg(MSG::INFO) <<"CALLING THE CONSTRUCTOR:L1CaloPprFineTimePlotManager" <<endreq;
-
-  m_plotManager= new L1CaloPprFineTimePlotManager(this,m_PathInRootFile,m_ppmADCMinValue);
-
-  msg(MSG::INFO) <<"CONSTRUCTOR CALLED: L1CaloPprFineTimePlotManager" <<endreq;
+  m_plotManager= new L1CaloPprFineTimePlotManager(this,m_ttTool,m_PathInRootFile,m_ppmADCMinValue);
 
   return StatusCode::SUCCESS;
 }
