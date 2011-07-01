@@ -58,6 +58,7 @@ class PPrStabilityMon: public ManagedMonitorToolBase
 private:
   unsigned int m_ppmADCMinValue;
   unsigned int m_lumiBlock;
+  unsigned int m_lumiBlockMax;
 
   ServiceHandle<StoreGateSvc>             m_storeGate;
   // Tool to retrieve bytestream errors

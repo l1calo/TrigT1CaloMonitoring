@@ -1,5 +1,9 @@
+2011-07-01 Rohin Narayan <narayan@physi.uni-heidelberg.de>
+    * Tas as TrigT1CaloMonitoring-00-09-03
+	* PPrStabilityMon: New private variable m_lumiBlockMax
+
 2011-06-29 Rohin Narayan <narayan@physi.uni-heidelberg.de>
-    * Tag as TrigT1CaloMonitoring-00-09-01
+    * Tag as TrigT1CaloMonitoring-00-09-02
 	* PPrStabilityMon: pass TriggerTower tool to Plot Manager
 
 2011-06-29 Rohin Narayan <narayan@physi.uni.heidelberg.de>

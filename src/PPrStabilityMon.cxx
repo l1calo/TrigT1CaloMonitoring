@@ -38,6 +38,7 @@ using namespace std;
 PPrStabilityMon::PPrStabilityMon(const std::string & type, const std::string & name, const IInterface* parent): ManagedMonitorToolBase ( type, name, parent ),
     m_ppmADCMinValue(0),
     m_lumiBlock(0),
+    m_lumiBlockMax(0),
     m_storeGate("StoreGateSvc",name),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
@@ -48,6 +49,7 @@ PPrStabilityMon::PPrStabilityMon(const std::string & type, const std::string & n
   declareProperty("BS_TriggerTowerContainer",m_TriggerTowerContainerName = "LVL1TriggerTowers");
   declareProperty("ppmADCMinValue", m_ppmADCMinValue=60);
   declareProperty("PathInRootFile", m_PathInRootFile="L1Calo/PPrStabilityMon") ;
+  declareProperty("lumiMax", m_lumiBlockMax = 200);
 }
 
 PPrStabilityMon::~PPrStabilityMon()
@@ -82,7 +84,7 @@ StatusCode PPrStabilityMon::initialize()
   sc = m_storeGate.retrieve();
   if( sc.isFailure() ) {msg(MSG::ERROR) << "Unable to locate Tool StoreGateSvcTools "<< endreq; return sc;}
 
-  m_plotManager= new L1CaloPprFineTimePlotManager(this,m_ttTool,m_PathInRootFile,m_ppmADCMinValue);
+  m_plotManager= new L1CaloPprFineTimePlotManager(this,m_ttTool,m_PathInRootFile,m_ppmADCMinValue,m_lumiBlockMax);
 
   return StatusCode::SUCCESS;
 }
