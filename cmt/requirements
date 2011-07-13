@@ -9,11 +9,20 @@ use AthenaMonitoring    	AthenaMonitoring-* 	Control
 use DataModel 			DataModel-*		Control 
 
 private
+use StoreGate                   StoreGate-*             Control
 use SGTools                     SGTools-*               Control
+use AtlasCLHEP                  AtlasCLHEP-*            External
+use AtlasCORAL                  AtlasCORAL-*            External
 use AtlasROOT			AtlasROOT-*		External
 use LWHists                     LWHists-*               Tools
 
 use EventInfo            	EventInfo-*	        Event
+use AnalysisTriggerEvent        AnalysisTriggerEvent-*  PhysicsAnalysis/AnalysisTrigger
+use AthenaPoolUtilities         AthenaPoolUtilities-*   Database/AthenaPOOL
+use CaloEvent                   CaloEvent-*             Calorimeter
+use TrigDecisionTool            TrigDecisionTool-*      Trigger/TrigAnalysis
+use VxVertex                    VxVertex-*              Tracking/TrkEvent
+use egammaEvent                 egammaEvent-*           Reconstruction/egamma
 
 use TrigT1CaloUtils             TrigT1CaloUtils-*       Trigger/TrigT1
 use TrigT1CaloEvent             TrigT1CaloEvent-*       Trigger/TrigT1
@@ -22,6 +31,7 @@ use TrigT1Interfaces    	TrigT1Interfaces-*    	Trigger/TrigT1
 use TrigT1CaloToolInterfaces	TrigT1CaloToolInterfaces-* Trigger/TrigT1
 
 use TrigT1CaloCalibConditions   TrigT1CaloCalibConditions-* Trigger/TrigT1
+use TrigT1CaloCalibToolInterfaces TrigT1CaloCalibToolInterfaces-* Trigger/TrigT1
 use TrigT1CaloCalibTools	TrigT1CaloCalibTools-*	Trigger/TrigT1
 use TrigT1CaloCondSvc           TrigT1CaloCondSvc-*     Trigger/TrigT1
 use TrigConfigSvc               TrigConfigSvc-*         Trigger/TrigConfiguration

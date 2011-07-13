@@ -235,6 +235,22 @@ if globalflags.DataSource() == "data":
     ToolSvc += L1GlobalMonTool
     L1CaloMan.AthenaMonTools += [ L1GlobalMonTool ]
 
+if Offline and l1caloESDMon and globalflags.DataSource() == "data" and rec.triggerStream == "Egamma":
+
+    #=================================================================================
+    #=============================== EM Efficiencies =================================
+    #=================================================================================
+    from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import EmEfficienciesMonTool
+    L1EmEfficienciesMonTool = EmEfficienciesMonTool ( name = "EmEfficienciesMonTool",
+                                                      TriggerStrings = ['L1_J.*']
+                                                    )
+    ToolSvc += L1EmEfficienciesMonTool
+    L1CaloMan.AthenaMonTools += [ L1EmEfficienciesMonTool ]
+    if not hasattr( ToolSvc, "TrigDecisionTool" ):
+        from TrigDecisionTool.TrigDecisionToolConf import Trig__TrigDecisionTool
+        tdt = Trig__TrigDecisionTool('TrigDecisionTool')
+        ToolSvc += tdt
+
 #=================================================================================
 # FileKey must match that given to THistSvc
 L1CaloMan.FileKey             = DQMonFlags.monManFileKey()

@@ -1,3 +1,7 @@
+2011-07-13  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-10-00
+        * New tool EmEfficienciesMonTool from Hardeep.
+
 2011-07-01 Rohin Narayan <narayan@physi.uni-heidelberg.de>
     * Tas as TrigT1CaloMonitoring-00-09-03
 	* PPrStabilityMon: New private variable m_lumiBlockMax
