@@ -223,33 +223,43 @@ if globalflags.DataSource() == "data":
     if l1caloRawMon:
         prebookThresh = not l1caloESDMon
         L1GlobalMonTool = TrigT1CaloGlobalMonTool ( name = "L1GlobalMonTool",
-	                                            BookCPMThresh = prebookThresh,
-						    BookJEMThresh = prebookThresh,
-						    BookCMMThresh = prebookThresh,
-						    #OutputLevel = DEBUG
+                                                    BookCPMThresh = prebookThresh,
+                                                    BookJEMThresh = prebookThresh,
+                                                    BookCMMThresh = prebookThresh,
+                                                    #OutputLevel = DEBUG
                                                   )
     else:
         L1GlobalMonTool = TrigT1CaloGlobalMonTool ( name = "L1GlobalESDMonTool",
-	                                            #OutputLevel = DEBUG
-						  )
+                                                    #OutputLevel = DEBUG
+                                                  )
     ToolSvc += L1GlobalMonTool
     L1CaloMan.AthenaMonTools += [ L1GlobalMonTool ]
 
-if Offline and l1caloESDMon and globalflags.DataSource() == "data" and rec.triggerStream == "Egamma":
+if l1caloESDMon and globalflags.DataSource() == "data" and Offline:
 
     #=================================================================================
     #=============================== EM Efficiencies =================================
     #=================================================================================
-    from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import EmEfficienciesMonTool
-    L1EmEfficienciesMonTool = EmEfficienciesMonTool ( name = "EmEfficienciesMonTool",
-                                                      TriggerStrings = ['L1_J.*']
-                                                    )
-    ToolSvc += L1EmEfficienciesMonTool
-    L1CaloMan.AthenaMonTools += [ L1EmEfficienciesMonTool ]
-    if not hasattr( ToolSvc, "TrigDecisionTool" ):
-        from TrigDecisionTool.TrigDecisionToolConf import Trig__TrigDecisionTool
-        tdt = Trig__TrigDecisionTool('TrigDecisionTool')
-        ToolSvc += tdt
+    egamma       = (rec.triggerStream == "Egamma")
+    jetTauEtmiss = (rec.triggerStream == "JetTauEtmiss")
+    muons        = (rec.triggerStream == "Muons")
+    if egamma or jetTauEtmiss or muons:
+        if egamma:
+            trigstring = ['L1_EM.*']
+        if jetTauEtmiss:
+            trigstring = ['L1_J.*']
+        if muons:
+            trigstring = ['L1_MU.*']
+        from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import EmEfficienciesMonTool
+        L1EmEfficienciesMonTool = EmEfficienciesMonTool ( name = "EmEfficienciesMonTool",
+                                                          TriggerStrings = trigstring
+                                                        )
+        ToolSvc += L1EmEfficienciesMonTool
+        L1CaloMan.AthenaMonTools += [ L1EmEfficienciesMonTool ]
+        if not hasattr( ToolSvc, "TrigDecisionTool" ):
+            from TrigDecisionTool.TrigDecisionToolConf import Trig__TrigDecisionTool
+            tdt = Trig__TrigDecisionTool('TrigDecisionTool')
+            ToolSvc += tdt
 
 #=================================================================================
 # FileKey must match that given to THistSvc
