@@ -91,27 +91,34 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
 /*---------------------------------------------------------*/
 {
 
+  declareProperty("HistogramTool", m_histTool);
+  declareProperty("OfflineTriggerTowerTool", m_tools);
+  declareProperty("TrigDecisionTool", m_trigger);
+  declareProperty("DeadChannelsFolder", m_dbPpmDeadChannelsFolder);
+  declareProperty("TriggerTowersLocation", m_triggerTowersLocation);
+  declareProperty("RoIsLocation", m_lvl1RoIsLocation);
+  declareProperty("OfflineElectronsLocation", m_offlineElectronsLocation);
+  declareProperty("OfflinePhotonsLocation", m_offlinePhotonsLocation);
+  declareProperty("PrimaryVertexLocation", m_primaryVertexLocation);
+
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
-  declareProperty("UseTrigger",m_useTrigger = true);
-  declareProperty("TriggerStrings",m_triggerStrings);
-  declareProperty("TestMerging",m_testMerge = false);
+  declareProperty("UseTrigger", m_useTrigger = true);
+  declareProperty("TriggerStrings", m_triggerStrings);
+  declareProperty("TestMerging", m_testMerge = false);
   
   // HSB - python cuts
-  declareProperty("useDeltaRMatch",m_useDeltaRMatch = true);
-  declareProperty("goodEMDeltaRMatch_Cut",m_goodEMDeltaRMatch_Cut = 0.15);
-  declareProperty("goodHadDeltaRMatch_Cut",m_goodHadDeltaRMatch_Cut = 0.2);
-  declareProperty("useDeltaEtaPhiMatch",m_useDeltaEtaPhiMatch = false);
-  declareProperty("goodEMDeltaPhiMatch_Cut",m_goodEMDeltaPhiMatch_Cut = 0.2);
-  declareProperty("goodEMDeltaEtaMatch_Cut",m_goodEMDeltaEtaMatch_Cut = 0.2);
-  declareProperty("goodHadDeltaEtaMatch_Cut",m_goodHadDeltaEtaMatch_Cut = 0.3);
-  declareProperty("goodHadDeltaPhiMatch_Cut",m_goodHadDeltaPhiMatch_Cut = 0.3);
-  declareProperty("deltaRMatchType",m_deltaRMatchType = 1);
-  declareProperty("UseEmThresholdsOnly",m_useEmThresholdsOnly = true);
-  declareProperty("UseEmTransRegionCut",m_useEmTRcut = true);
-  declareProperty("IsEmType",m_isEmType = 32);
-  
-  declareProperty("OfflineElectronsLocation",m_offlineElectronsLocation);
-  declareProperty("OfflinePhotonsLocation",m_offlinePhotonsLocation);
+  declareProperty("useDeltaRMatch", m_useDeltaRMatch = true);
+  declareProperty("goodEMDeltaRMatch_Cut", m_goodEMDeltaRMatch_Cut = 0.15);
+  declareProperty("goodHadDeltaRMatch_Cut", m_goodHadDeltaRMatch_Cut = 0.2);
+  declareProperty("useDeltaEtaPhiMatch", m_useDeltaEtaPhiMatch = false);
+  declareProperty("goodEMDeltaPhiMatch_Cut", m_goodEMDeltaPhiMatch_Cut = 0.2);
+  declareProperty("goodEMDeltaEtaMatch_Cut", m_goodEMDeltaEtaMatch_Cut = 0.2);
+  declareProperty("goodHadDeltaEtaMatch_Cut", m_goodHadDeltaEtaMatch_Cut = 0.3);
+  declareProperty("goodHadDeltaPhiMatch_Cut", m_goodHadDeltaPhiMatch_Cut = 0.3);
+  declareProperty("deltaRMatchType", m_deltaRMatchType = 1);
+  declareProperty("UseEmThresholdsOnly", m_useEmThresholdsOnly = true);
+  declareProperty("UseEmTransRegionCut", m_useEmTRcut = true);
+  declareProperty("IsEmType", m_isEmType = 32);
 
   for (int i = 0; i < ROI_BITS; ++i) {
     m_h_ClusterRaw_Et_bitcheck[i] = 0;
@@ -175,6 +182,12 @@ StatusCode EmEfficienciesMonTool:: initialize()
     msg(MSG::ERROR)<<"Can't get handle on TrigDecisionTool"<<endreq;
     return sc;
   }
+
+  std::vector<std::string>::const_iterator iter  = m_triggerStrings.begin();
+  std::vector<std::string>::const_iterator iterE = m_triggerStrings.end();
+  msg(MSG::INFO) << "TriggerStrings:";
+  for (; iter != iterE; ++iter) msg(MSG::INFO) << " " << *iter;
+  msg(MSG::INFO) << endreq;
 
   return StatusCode::SUCCESS;
 }
