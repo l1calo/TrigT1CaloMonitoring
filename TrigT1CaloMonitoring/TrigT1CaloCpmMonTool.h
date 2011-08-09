@@ -146,6 +146,10 @@ private:
   TH2F_LW* m_h_RoI_eta_phi;
   TH2F_LW* m_h_RoI_Em_eta_phi;
   TH2F_LW* m_h_RoI_Tau_eta_phi;
+  //To be deleted:
+  TH2F_LW* m_h_RoI_eta_phi_old;
+  TH2F_LW* m_h_RoI_Em_eta_phi_old;
+  TH2F_LW* m_h_RoI_Tau_eta_phi_old;
   // Tower saturation
   TH2F_LW* m_h_RoI_Saturation;
   // Parity errors

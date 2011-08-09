@@ -272,11 +272,19 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_RoI_thresholds = m_histTool->bookCPMCrateModuleVsThreshold(
                        "cpm_2d_roi_Thresholds", "CPM RoI Thresholds");
   m_h_RoI_eta_phi = m_histTool->bookCPMRoIEtaVsPhi(
-    "cpm_2d_etaPhi_roi_Hitmap", "CPM RoIs Eta-Phi Hit Map");
+    "cpm_2d_etaPhi_roi_HitmapAll", "CPM RoIs All Eta-Phi Hit Map");
   m_h_RoI_Em_eta_phi = m_histTool->bookCPMRoIEtaVsPhi(
-    "cpm_2d_etaPhi_roi_EmHitmap", "CPM RoIs EM Eta-Phi Hit Map");
+    "cpm_2d_etaPhi_roi_HitmapEm", "CPM RoIs EM Eta-Phi Hit Map");
   m_h_RoI_Tau_eta_phi = m_histTool->bookCPMRoIEtaVsPhi(
-    "cpm_2d_etaPhi_roi_TauHitmap", "CPM RoIs Tau Eta-Phi Hit Map");
+    "cpm_2d_etaPhi_roi_HitmapTau", "CPM RoIs Tau Eta-Phi Hit Map");
+  // Delete these duplicates when DQ updated:
+  m_h_RoI_eta_phi_old = m_histTool->bookCPMRoIEtaVsPhi(
+    "cpm_2d_etaPhi_roi_Hitmap", "CPM RoIs All Eta-Phi Hit Map (Duplicate)");
+  m_h_RoI_Em_eta_phi_old = m_histTool->bookCPMRoIEtaVsPhi(
+    "cpm_2d_etaPhi_roi_EmHitmap", "CPM RoIs EM Eta-Phi Hit Map (Duplicate)");
+  m_h_RoI_Tau_eta_phi_old = m_histTool->bookCPMRoIEtaVsPhi(
+    "cpm_2d_etaPhi_roi_TauHitmap", "CPM RoIs Tau Eta-Phi Hit Map (Duplicate)");
+  // end delete
   m_h_RoI_Saturation = m_histTool->bookCPMRoIEtaVsPhi(
     "cpm_2d_etaPhi_roi_Saturation", "CPM RoI Tower Saturation");
 
@@ -629,11 +637,17 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         m_histTool->fillXVsThresholds(m_h_RoI_thresholds, bin, hits,
                                                              s_thresholds, 1);
         m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_eta_phi, eta, phi);
+	//To be deleted:
+        m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_eta_phi_old, eta, phi);
 	if (hits & 0xff) {
 	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Em_eta_phi, eta, phi);
+	  //To be deleted:
+	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Em_eta_phi_old, eta, phi);
         }
 	if (hits & 0xff00 ) {
 	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Tau_eta_phi, eta, phi);
+	  //To be deleted:
+	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Tau_eta_phi_old, eta, phi);
         }
       }
       const LVL1::DataError err((*crIterator)->error());
