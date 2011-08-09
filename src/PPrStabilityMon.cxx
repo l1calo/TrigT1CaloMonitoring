@@ -144,6 +144,7 @@ StatusCode PPrStabilityMon::fillHistograms()
 StatusCode PPrStabilityMon::procHistograms(bool /*isEndofEventsBlock*/, bool /*isEndofLumiBlock*/, bool isEndofRun)
 {
     //if(isEndofRun){m_plotManager->MakeSummary();}
+    if(isEndofRun){}
     return StatusCode::SUCCESS;
 }
 
