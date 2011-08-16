@@ -243,7 +243,7 @@ else:
         ToolSvc += L1GlobalMonTool
         L1CaloMan.AthenaMonTools += [ L1GlobalMonTool ]
 
-    if l1caloESDMon and globalflags.DataSource() == "data" and Offline:
+    if l1caloESDMon and globalflags.DataSource() == "data" and Offline and rec.doCalo() and rec.doLArg() and rec.doTile():
 
         #=================================================================================
         #=============================== EM Efficiencies =================================
