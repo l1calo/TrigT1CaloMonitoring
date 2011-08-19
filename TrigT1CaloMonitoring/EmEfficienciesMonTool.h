@@ -81,10 +81,10 @@ private:
   bool inEMTransR(double eta, int sign);
   bool inEMEndcap(double eta, int sign);
 				        
-  bool correctIsEmElectron(Analysis::Electron* el);
-  bool correctIsEmPhoton(Analysis::Photon* ph);
-  std::string isEmLevelElectron(Analysis::Electron* el, int &code);
-  std::string isEmLevelPhoton(Analysis::Photon* ph, int &code);    
+  bool correctIsEmElectron(const Analysis::Electron* el);
+  bool correctIsEmPhoton(const Analysis::Photon* ph);
+  std::string isEmLevelElectron(const Analysis::Electron* el, int &code);
+  std::string isEmLevelPhoton(const Analysis::Photon* ph, int &code);    
 				    
   bool isolatedEmObjectL1(double phi, double eta);
   bool isolatedEmObjectEF(double phi, double eta);    

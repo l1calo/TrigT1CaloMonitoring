@@ -556,23 +556,23 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons()
       typedef PhotonContainer::const_iterator Itr_photons;
       
       // Create variables for electron properties
-      double etaOE = 0.0, phiOE = 0.0, EtOE = 0.0, EtCE = 0.0, phiCE = 0.0, etaCE = 0.0;
-      double EtCEraw = 0.0, phiCEraw = 0.0, etaCEraw = 0.0, calRawRatio = 0.0;
+      double etaOE = 0.0, phiOE = 0.0, /*EtOE = 0.0, EtCE = 0.0,*/ phiCE = 0.0, etaCE = 0.0;
+      double EtCEraw = 0.0, phiCEraw = 0.0, etaCEraw = 0.0/*, calRawRatio = 0.0*/;
       // Create variable to determine if selecting the right type of electrons based on criteria in jO
       bool correctType;
       
-      bool roiValuesFilled = false;
+      //bool roiValuesFilled = false;
        
       //Cycle through all of the offline reconstructed electrons
       for(Itr_electrons elItr = m_offlineElectrons->begin(); elItr != m_offlineElectrons->end(); ++elItr)
       {
 	//Keep track of eta, phi and Et as these will be used often
 	//----------------------------------------------------------------------
-	EtOE  = (*elItr)->et()/GeV;
+	//EtOE  = (*elItr)->et()/GeV;
 	etaOE = (*elItr)->eta();
 	phiOE = (*elItr)->phi();
 	//----------------------------------------------------------------------
-	EtCE  = (*elItr)->cluster()->et()/GeV;
+	//EtCE  = (*elItr)->cluster()->et()/GeV;
 	etaCE = (*elItr)->cluster()->eta();
 	phiCE = (*elItr)->cluster()->phi();	
 	//----------------------------------------------------------------------
@@ -581,7 +581,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons()
 	etaCEraw = rawValues.at(1); 
 	phiCEraw = rawValues.at(2);	
 	//----------------------------------------------------------------------
-	calRawRatio = (EtCEraw > 0.0) ? EtCE/EtCEraw : -1;
+	//calRawRatio = (EtCEraw > 0.0) ? EtCE/EtCEraw : -1;
 	
 	bool awayFromJet = true;
 	if(m_passedL1JetTrigger == true) { awayFromJet = isolatedEmObjectL1(phiCE, etaCE); }
@@ -624,16 +624,16 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons()
 		}
 
 	   	//Set up useful numbers to keep track of RoI information
-		double etaROI = 0.0, phiROI = 0.0, EtROI = 0.0;
+		double etaROI = 0.0, phiROI = 0.0/*, EtROI = 0.0*/;
 	   	double dEta = 0.0, dPhi = 0.0, dR = 1001, tempRmin = 0.0;
 	   	double dEtaClus = 0.0, dPhiClus = 0.0, dRClus = 1000, tempRminClus = 0.0;
 		double dEtaClRaw = 0.0, dPhiClRaw = 0.0, dRClRaw = 1000, tempRminClRaw = 0.0;
-	   	double bestEtaROI = 0.0, bestPhiROI = 0.0, bestEtROI = 0.0, bestEtIsol = 0.0;
-		double bestEtResClus = 1000, bestEtResClusRaw = 1000;
-	   	double bestDeltaPhi = 0.0, bestDeltaEta = 0.0, bestDeltaEt = 0.0;
-	   	double bestDeltaPhiClus = 0.0, bestDeltaEtaClus = 0.0, bestDeltaEtClus = 0.0;
-		double bestDeltaPhiClRaw = 0.0, bestDeltaEtaClRaw = 0.0, bestDeltaEtClRaw = 0.0;
-	   	uint32_t ROIWord = 0, ThrPattern = 0;			
+	   	//double bestEtaROI = 0.0, bestPhiROI = 0.0, bestEtROI = 0.0, bestEtIsol = 0.0;
+		//double bestEtResClus = 1000, bestEtResClusRaw = 1000;
+	   	//double bestDeltaPhi = 0.0, bestDeltaEta = 0.0, bestDeltaEt = 0.0;
+	   	//double bestDeltaPhiClus = 0.0, bestDeltaEtaClus = 0.0, bestDeltaEtClus = 0.0;
+		//double bestDeltaPhiClRaw = 0.0, bestDeltaEtaClRaw = 0.0, bestDeltaEtClRaw = 0.0;
+	   	uint32_t ROIWord = 0/*, ThrPattern = 0*/;			
 	   
 	   	//Access the EmTauRoIs
 	        std::vector<EmTau_ROI> emrois = m_lvl1RoIs->getEmTauROIs();
@@ -666,7 +666,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons()
 			     //Get useful values for the EmTauRoI
 			     etaROI = (*roiItr).getEta();
 			     phiROI = (*roiItr).getPhi();
-			     EtROI  = (*roiItr).getEMClus()/GeV;
+			     //EtROI  = (*roiItr).getEMClus()/GeV;
 
 			     //Calculate the difference in eta and phi between the electron and RoI
 			     dEta = etaOE - etaROI;
@@ -699,34 +699,34 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons()
 			     if(tempdR < smallestdRSoFar)
 			     {
 	   			     //RoI information
-				     bestPhiROI = phiROI;
-	   			     bestEtaROI = etaROI;
-	   			     bestEtROI = EtROI;
-	  			     bestEtIsol = (*roiItr).getEMIsol()/GeV;
+				     //bestPhiROI = phiROI;
+	   			     //bestEtaROI = etaROI;
+	   			     //bestEtROI = EtROI;
+	  			     //bestEtIsol = (*roiItr).getEMIsol()/GeV;
 	   			     ROIWord = (*roiItr).getROIWord();
-	   			     ThrPattern = (*roiItr).getThrPattern();
+	   			     //ThrPattern = (*roiItr).getThrPattern();
 
-	   			     bestDeltaEta = dEta;
-	   			     bestDeltaPhi = dPhi;
+	   			     //bestDeltaEta = dEta;
+	   			     //bestDeltaPhi = dPhi;
 				     dR = tempRmin;
-	   			     bestDeltaEt = EtOE-bestEtROI;					   
+	   			     //bestDeltaEt = EtOE-bestEtROI;					   
 
-				     bestDeltaEtaClus = dEtaClus;
-				     bestDeltaPhiClus = dPhiClus;
+				     //bestDeltaEtaClus = dEtaClus;
+				     //bestDeltaPhiClus = dPhiClus;
 	   			     dRClus = tempRminClus;
-				     bestDeltaEtClus = EtCE-bestEtROI;
-				     bestEtResClus = (EtCE-bestEtROI)/EtCE;
+				     //bestDeltaEtClus = EtCE-bestEtROI;
+				     //bestEtResClus = (EtCE-bestEtROI)/EtCE;
 				     
-				     bestDeltaEtaClRaw = dEtaClRaw;
-				     bestDeltaPhiClRaw = dPhiClRaw;
+				     //bestDeltaEtaClRaw = dEtaClRaw;
+				     //bestDeltaPhiClRaw = dPhiClRaw;
 	   			     dRClRaw = tempRminClRaw;
-				     bestDeltaEtClRaw = EtCEraw-bestEtROI;					     
-				     if( EtCEraw > 0.0 ) { bestEtResClusRaw = (EtCEraw-bestEtROI)/EtCEraw; }
+				     //bestDeltaEtClRaw = EtCEraw-bestEtROI;					     
+				     //if( EtCEraw > 0.0 ) { bestEtResClusRaw = (EtCEraw-bestEtROI)/EtCEraw; }
 			     }
 			}
           	}
 			
-		roiValuesFilled = true;
+		//roiValuesFilled = true;
 			  		
 		//Check to see if there was an RoI to match with an electron cluster
 		if(dRClus != 1000)
@@ -794,23 +794,23 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons()
       typedef ElectronContainer::const_iterator Itr_electrons;      
      
       // Variables for accessing properties of recosntructed photons
-      double etaOP = 0.0, phiOP = 0.0, EtOP = 0.0, EtCP = 0.0, etaCP = 0.0, phiCP = 0.0;
-      double EtCPraw = 0.0, etaCPraw = 0.0, phiCPraw = 0.0, calRawRatio = 0.0;
+      double etaOP = 0.0, phiOP = 0.0, /*EtOP = 0.0, EtCP = 0.0,*/ etaCP = 0.0, phiCP = 0.0;
+      double EtCPraw = 0.0, etaCPraw = 0.0, phiCPraw = 0.0/*, calRawRatio = 0.0*/;
       // Variable to check if photon is of the right type as defined in the jobOptions
       bool correctType;
       
-      bool roiValuesFilled = false;
+      //bool roiValuesFilled = false;
                 
       //Cycle through all of the offline reconstructed photons      
       for(Itr_photons phItr=m_offlinePhotons->begin(); phItr != m_offlinePhotons->end(); ++phItr)
       {	
 	//Keep track of eta, phi and Et as these will be used often
 	//----------------------------------------------------------------------
-	EtOP  = (*phItr)->et()/GeV;
+	//EtOP  = (*phItr)->et()/GeV;
 	etaOP = (*phItr)->eta();
 	phiOP = (*phItr)->phi();
 	//----------------------------------------------------------------------
-	EtCP  = (*phItr)->cluster()->et()/GeV;
+	//EtCP  = (*phItr)->cluster()->et()/GeV;
 	etaCP = (*phItr)->cluster()->eta();
 	phiCP = (*phItr)->cluster()->phi();
 	//----------------------------------------------------------------------
@@ -819,7 +819,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons()
 	etaCPraw = rawValues.at(1); 
 	phiCPraw = rawValues.at(2);	
 	//----------------------------------------------------------------------	
-	calRawRatio = (EtCPraw > 0.0) ? EtCP/EtCPraw : -1;
+	//calRawRatio = (EtCPraw > 0.0) ? EtCP/EtCPraw : -1;
 	
 	bool awayFromJet = true;
 	if(m_passedL1JetTrigger == true) { awayFromJet = isolatedEmObjectL1(phiCP, etaCP); }
@@ -864,16 +864,16 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons()
 		}
 		
 	   	//Set up useful numbers to keep track of RoI information
-		double etaROI = 0.0, phiROI = 0.0, EtROI = 0.0;	   
+		double etaROI = 0.0, phiROI = 0.0/*, EtROI = 0.0*/;	   
 	   	double dEta = 0.0, dPhi = 0.0, dR = 1001, tempRmin = 0.0;
 		double dEtaClus = 0.0, dPhiClus = 0.0, dRClus = 1000, tempRminClus = 0.0;
 		double dEtaClRaw = 0.0, dPhiClRaw = 0.0, dRClRaw = 1000, tempRminClRaw = 0.0;
-	   	double bestPhiROI = 0.0, bestEtaROI = 0.0, bestEtROI = 0.0, bestEtIsol = 0.0; 
-		double bestEtResClus = 1000, bestEtResClusRaw = 1000;
-	   	double bestDeltaPhi = 0.0, bestDeltaEta = 0.0, bestDeltaEt = 0.0;	   
-		double bestDeltaPhiClus = 0.0, bestDeltaEtaClus = 0.0, bestDeltaEtClus = 0.0;	
-		double bestDeltaPhiClRaw = 0.0, bestDeltaEtaClRaw = 0.0, bestDeltaEtClRaw = 0.0;				
-	   	uint32_t ROIWord = 0, ThrPattern = 0;			
+	   	//double bestPhiROI = 0.0, bestEtaROI = 0.0, bestEtROI = 0.0, bestEtIsol = 0.0; 
+		//double bestEtResClus = 1000, bestEtResClusRaw = 1000;
+	   	//double bestDeltaPhi = 0.0, bestDeltaEta = 0.0, bestDeltaEt = 0.0;	   
+		//double bestDeltaPhiClus = 0.0, bestDeltaEtaClus = 0.0, bestDeltaEtClus = 0.0;	
+		//double bestDeltaPhiClRaw = 0.0, bestDeltaEtaClRaw = 0.0, bestDeltaEtClRaw = 0.0;				
+	   	uint32_t ROIWord = 0/*, ThrPattern = 0*/;			
 			
 	       	//Access the EmTau RoIs
 	   	std::vector<EmTau_ROI> emrois = m_lvl1RoIs->getEmTauROIs();
@@ -906,7 +906,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons()
 			    //Get useful values for the EmTauRoI
 			    etaROI = (*roiItr).getEta();
 			    phiROI = (*roiItr).getPhi();
-			    EtROI  = (*roiItr).getEMClus()/GeV;
+			    //EtROI  = (*roiItr).getEMClus()/GeV;
 
 			    //Calculate the difference in eta and phi between the electron and RoI
 			    dEta = etaOP - etaROI;
@@ -938,34 +938,34 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons()
 			    //In that case, keep track of the new RoI values 
 			    if(tempdR < smallestdRSoFar) 
 			    {
-	   			    bestPhiROI = phiROI;
-	   			    bestEtaROI = etaROI;
-				    bestEtROI  = EtROI;
-	   			    bestEtIsol = (*roiItr).getEMIsol()/GeV;
+	   			    //bestPhiROI = phiROI;
+	   			    //bestEtaROI = etaROI;
+				    //bestEtROI  = EtROI;
+	   			    //bestEtIsol = (*roiItr).getEMIsol()/GeV;
 	   			    ROIWord    = (*roiItr).getROIWord();
-	   			    ThrPattern = (*roiItr).getThrPattern();
+	   			    //ThrPattern = (*roiItr).getThrPattern();
 
-	   			    bestDeltaEta = dEta;
-	   			    bestDeltaPhi = dPhi;
+	   			    //bestDeltaEta = dEta;
+	   			    //bestDeltaPhi = dPhi;
 	   			    dR           = tempRmin;
-	   			    bestDeltaEt  = EtOP-bestEtROI;
+	   			    //bestDeltaEt  = EtOP-bestEtROI;
 				    
-	   			    bestDeltaEtaClus = dEtaClus;
-	   			    bestDeltaPhiClus = dPhiClus;
+	   			    //bestDeltaEtaClus = dEtaClus;
+	   			    //bestDeltaPhiClus = dPhiClus;
 	   			    dRClus = tempRminClus;
-				    bestDeltaEtClus = EtCP-bestEtROI;
-				    bestEtResClus = (EtCP-bestEtROI)/EtCP;
+				    //bestDeltaEtClus = EtCP-bestEtROI;
+				    //bestEtResClus = (EtCP-bestEtROI)/EtCP;
 				    
-				    bestDeltaEtaClRaw = dEtaClRaw;
-	   			    bestDeltaPhiClRaw = dPhiClRaw;
+				    //bestDeltaEtaClRaw = dEtaClRaw;
+	   			    //bestDeltaPhiClRaw = dPhiClRaw;
 	   			    dRClRaw = tempRminClRaw;
-	   			    bestDeltaEtClRaw = EtCPraw-bestEtROI;
-				    if(EtCPraw > 0.0) { bestEtResClusRaw = (EtCPraw-bestEtROI)/EtCPraw; }
+	   			    //bestDeltaEtClRaw = EtCPraw-bestEtROI;
+				    //if(EtCPraw > 0.0) { bestEtResClusRaw = (EtCPraw-bestEtROI)/EtCPraw; }
 			    }
 			}
            	}
 			
-		roiValuesFilled = true;
+		//roiValuesFilled = true;
 			   
 	   	//Check to see if there was an RoI to match with a photon
 		if(dRClus != 1000)
@@ -1234,7 +1234,7 @@ double EmEfficienciesMonTool::calcDeltaR(double eta1, double phi1, double eta2, 
 //------------------------------------------------------------------
  //Check for electron that it is of the right isEm type as required from jobOptions
 //------------------------------------------------------------------
-bool EmEfficienciesMonTool::correctIsEmElectron(Analysis::Electron* el)
+bool EmEfficienciesMonTool::correctIsEmElectron(const Analysis::Electron* el)
 {
 	bool correctType = false;
 	switch (m_isEmType) 
@@ -1263,7 +1263,7 @@ bool EmEfficienciesMonTool::correctIsEmElectron(Analysis::Electron* el)
 //------------------------------------------------------------------
  //Check for photon that it is of the right isEm type as required from jobOptions
 //------------------------------------------------------------------
-bool EmEfficienciesMonTool::correctIsEmPhoton(Analysis::Photon* ph)
+bool EmEfficienciesMonTool::correctIsEmPhoton(const Analysis::Photon* ph)
 {
 	bool correctType = false;
 	switch (m_isEmType) 
@@ -1290,7 +1290,7 @@ bool EmEfficienciesMonTool::correctIsEmPhoton(Analysis::Photon* ph)
 //------------------------------------------------------------------
  //Check for electron that it is of the right isEm type as required from jobOptions
 //------------------------------------------------------------------
-std::string EmEfficienciesMonTool::isEmLevelElectron(Analysis::Electron* el, int &code)
+std::string EmEfficienciesMonTool::isEmLevelElectron(const Analysis::Electron* el, int &code)
 {
 	std::string isEmLevel = "None"; code = 0;
 	if(el->isem(egammaPID::ElectronLoose )==0) { isEmLevel = "Loose";  code = 1; }
@@ -1303,7 +1303,7 @@ std::string EmEfficienciesMonTool::isEmLevelElectron(Analysis::Electron* el, int
 //------------------------------------------------------------------
  //Check for photon that it is of the right isEm type as required from jobOptions
 //------------------------------------------------------------------
-std::string EmEfficienciesMonTool::isEmLevelPhoton(Analysis::Photon* ph, int &code)
+std::string EmEfficienciesMonTool::isEmLevelPhoton(const Analysis::Photon* ph, int &code)
 {
 	std::string isEmLevel = "None"; code = 0;
 	if(ph->isem(egammaPID::PhotonLoose )==0) { isEmLevel = "Loose"; code = 1; }
@@ -1453,11 +1453,11 @@ void EmEfficienciesMonTool::triggerTowerAnalysis()
   for(Itr_tt ttItr=m_triggerTowers->begin();ttItr!=m_triggerTowers->end();++ttItr)
   {
     // Set up variables to store the Trigger Tower values as they will be required in several places
-    double ttEtEm  = 0.0, ttEtHad = 0.0, ttEta = 0.0, ttPhi = 0.0;
+    double /*ttEtEm  = 0.0, ttEtHad = 0.0,*/ ttEta = 0.0, ttPhi = 0.0;
     
     // Get the values for the electromagnetic and hadronic Et in the towers
-    ttEtEm  = (*ttItr)->emEnergy();
-    ttEtHad = (*ttItr)->hadEnergy();
+    //ttEtEm  = (*ttItr)->emEnergy();
+    //ttEtHad = (*ttItr)->hadEnergy();
 
     // Get the values of eta and phi for the trigger towers
     ttEta = (*ttItr)->eta();
