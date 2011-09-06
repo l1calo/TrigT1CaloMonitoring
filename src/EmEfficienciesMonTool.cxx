@@ -411,7 +411,7 @@ StatusCode EmEfficienciesMonTool::fillHistograms()
     StatusCode sc;
 
     sc = this->loadContainers();
-    if(sc.isFailure()){msg(MSG::ERROR)<<"Problem loading Athena Containers"<<endreq;return sc;}
+    if(sc.isFailure()){msg(MSG::WARNING)<<"Problem loading Athena Containers"<<endreq;return sc;}
         
     if (debug) msg(MSG::DEBUG)<<"Run number "<<m_eventInfo->event_ID()->run_number()<<" : Lumi Block "<<m_eventInfo->event_ID()->lumi_block()<<" : Event "<<m_eventInfo->event_ID()->event_number()<<endreq;
     
