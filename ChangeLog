@@ -1,3 +1,7 @@
+2011-10-10  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-10-11
+        * Leave out noDeadBad plots.
+
 2011-09-19  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-10-10
         * Use correct threshold names in hist titles.

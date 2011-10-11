@@ -125,17 +125,17 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
     m_h_ClusterRaw_Et_bitcheck[i] = 0;
     m_h_ClusterRaw_Et_bitcheck_Eff[i] = 0;
     m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[i] = 0;
-    m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[i] = 0;
+    //m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[i] = 0;
     m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[i] = 0;
-    m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = 0;
+    //m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = 0;
     m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[i] = 0;
-    m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[i] = 0;
+    //m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[i] = 0;
     m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[i] = 0;
-    m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = 0;
+    //m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = 0;
     m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[i] = 0;
-    m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i] = 0;
+    //m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i] = 0;
     m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[i] = 0;
-    m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = 0;
+    //m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = 0;
   }
 
 }
@@ -287,9 +287,9 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
 	m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 	
-	name = "ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
-	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
-	m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+	//name = "ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
+	//title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+	//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
     }
 
     m_histTool->setMonGroup(&monClusterRaw10GeVDen);
@@ -304,9 +304,9 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
 	m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 	
-	name = "ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
-	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
-	m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+	//name = "ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
+	//title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+	//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
     }
 
     m_histTool->setMonGroup(&monClusterRaw20GeVNum);
@@ -318,9 +318,9 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
 	m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 	
-	name = "ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
-	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
-	m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+	//name = "ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
+	//title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+	//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
     }     
 
     m_histTool->setMonGroup(&monClusterRaw20GeVDen);
@@ -335,9 +335,9 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
 	m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 	
-	name = "ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
-	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
-	m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+	//name = "ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
+	//title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+	//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
     }
 
     m_histTool->setMonGroup(&monClusterRaw30GeVNum);
@@ -349,9 +349,9 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 	m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 	
-	name = "ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
-	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
-	m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+	//name = "ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
+	//title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+	//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
     }
 
     m_histTool->setMonGroup(&monClusterRaw30GeVDen);
@@ -366,9 +366,9 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
 	m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 	
-	name = "ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
-	title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
-	m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+	//name = "ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
+	//title = "Raw Cluster #eta against #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+	//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
     }
   
     m_histTool->unsetMonGroup();
@@ -494,21 +494,21 @@ StatusCode EmEfficienciesMonTool::procHistograms(bool isEndOfEventsBlock,
           efficienciesForMerge(m_h_ClusterRaw_10GeV_Eta_vs_Phi,
 	                       m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[i],
 			       m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[i]);
-	  efficienciesForMerge(m_h_ClusterRaw_10GeV_Eta_vs_Phi,
-	                       m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[i],
-			       m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
+	  //efficienciesForMerge(m_h_ClusterRaw_10GeV_Eta_vs_Phi,
+	                       //m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[i],
+			       //m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
           efficienciesForMerge(m_h_ClusterRaw_20GeV_Eta_vs_Phi,
 	                       m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[i],
 			       m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[i]);
-          efficienciesForMerge(m_h_ClusterRaw_20GeV_Eta_vs_Phi,
-	                       m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[i],
-			       m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
+          //efficienciesForMerge(m_h_ClusterRaw_20GeV_Eta_vs_Phi,
+	                       //m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[i],
+			       //m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
 	  efficienciesForMerge(m_h_ClusterRaw_30GeV_Eta_vs_Phi,
 	                       m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[i],
 			       m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[i]);
-          efficienciesForMerge(m_h_ClusterRaw_30GeV_Eta_vs_Phi,
-	                       m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i],
-			       m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
+          //efficienciesForMerge(m_h_ClusterRaw_30GeV_Eta_vs_Phi,
+	                       //m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i],
+			       //m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
       }
   }
 
@@ -762,22 +762,22 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons()
 							{
 	 							m_h_ClusterRaw_Et_bitcheck[k]->Fill(EtCEraw);
 								
-								bool deadBadTower = emObjInDeadBadTower(etaCEraw,phiCEraw);
+								//bool deadBadTower = emObjInDeadBadTower(etaCEraw,phiCEraw);
 								if(EtCEraw >  10) 
 								{ 
 									m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[k]->Fill(etaCEraw,phiCEraw);
-									if(deadBadTower == false) { m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCEraw,phiCEraw); }
+									//if(deadBadTower == false) { m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCEraw,phiCEraw); }
 		   			     
 								}
 								if(EtCEraw > 20) 
 								{ 
 									m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[k]->Fill(etaCEraw,phiCEraw);
-									if(deadBadTower == false) { m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCEraw,phiCEraw); }
+									//if(deadBadTower == false) { m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCEraw,phiCEraw); }
 								}
 								if(EtCEraw > 30) 
 								{ 
 									m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[k]->Fill(etaCEraw,phiCEraw);
-									if(deadBadTower == false) { m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCEraw,phiCEraw); }
+									//if(deadBadTower == false) { m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCEraw,phiCEraw); }
 								}
 	      						}
 	  	   				}
@@ -1001,22 +1001,22 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons()
 							{
 	 							m_h_ClusterRaw_Et_bitcheck[k]->Fill(EtCPraw);
 									
-								bool deadBadTower = emObjInDeadBadTower(etaCPraw,phiCPraw);
+								//bool deadBadTower = emObjInDeadBadTower(etaCPraw,phiCPraw);
 								if(EtCPraw > 10)
 								{
 									m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[k]->Fill(etaCPraw,phiCPraw);
-									if(deadBadTower == false) { m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCPraw,phiCPraw); }
+									//if(deadBadTower == false) { m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCPraw,phiCPraw); }
 		   			     
 								}
 								if(EtCPraw > 20)
 								{
 									m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[k]->Fill(etaCPraw,phiCPraw);
-									if(deadBadTower == false) { m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCPraw,phiCPraw); }
+									//if(deadBadTower == false) { m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCPraw,phiCPraw); }
 								}
 								if(EtCPraw > 30)
 								{
 									m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[k]->Fill(etaCPraw,phiCPraw);
-									if(deadBadTower == false) { m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCPraw,phiCPraw); }
+									//if(deadBadTower == false) { m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCPraw,phiCPraw); }
 								}
 	      						}
 	 	   				}

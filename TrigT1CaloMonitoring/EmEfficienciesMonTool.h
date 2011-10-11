@@ -169,19 +169,19 @@ private:
   TH1F_LW* m_h_ClusterRaw_Et_bitcheck_Eff[ROI_BITS];
   TH2F_LW* m_h_ClusterRaw_10GeV_Eta_vs_Phi;      
   TH2F_LW* m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[ROI_BITS];       
-  TH2F_LW* m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[ROI_BITS]; 
+  //TH2F_LW* m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[ROI_BITS]; 
   TH2F_LW* m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[ROI_BITS];       
-  TH2F_LW* m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[ROI_BITS]; 
+  //TH2F_LW* m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[ROI_BITS]; 
   TH2F_LW* m_h_ClusterRaw_20GeV_Eta_vs_Phi;      
   TH2F_LW* m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[ROI_BITS];       
-  TH2F_LW* m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[ROI_BITS];
+  //TH2F_LW* m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[ROI_BITS];
   TH2F_LW* m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[ROI_BITS];       
-  TH2F_LW* m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[ROI_BITS];
+  //TH2F_LW* m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[ROI_BITS];
   TH2F_LW* m_h_ClusterRaw_30GeV_Eta_vs_Phi;      
   TH2F_LW* m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[ROI_BITS];
-  TH2F_LW* m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[ROI_BITS];         
+  //TH2F_LW* m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[ROI_BITS];         
   TH2F_LW* m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[ROI_BITS];
-  TH2F_LW* m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[ROI_BITS];         
+  //TH2F_LW* m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[ROI_BITS];         
    
   TH2F_LW* m_h_TrigTower_emBadCalo;   
   TH2F_LW* m_h_TrigTower_emDeadChannel;       
