@@ -44,12 +44,14 @@ PPrStabilityMon::PPrStabilityMon(const std::string & type, const std::string & n
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"),
     m_plotManager(0),
-    m_evtInfo(0)
+    m_evtInfo(0),
+    m_fineTimeCut(0)
 {
   declareProperty("BS_TriggerTowerContainer",m_TriggerTowerContainerName = "LVL1TriggerTowers");
   declareProperty("ppmADCMinValue", m_ppmADCMinValue=60);
   declareProperty("PathInRootFile", m_PathInRootFile="L1Calo/PPrStabilityMon") ;
-  declareProperty("lumiMax", m_lumiBlockMax = 200);
+  declareProperty("lumiMax", m_lumiBlockMax = 2000);
+  declareProperty("fineTimeCut",m_fineTimeCut = 20 );
 }
 
 PPrStabilityMon::~PPrStabilityMon()
@@ -85,6 +87,7 @@ StatusCode PPrStabilityMon::initialize()
   if( sc.isFailure() ) {msg(MSG::ERROR) << "Unable to locate Tool StoreGateSvcTools "<< endreq; return sc;}
 
   m_plotManager= new L1CaloPprFineTimePlotManager(this,m_ttTool,m_PathInRootFile,m_ppmADCMinValue,m_lumiBlockMax);
+  m_plotManager->SetFineTimeCut(m_fineTimeCut);
 
   return StatusCode::SUCCESS;
 }

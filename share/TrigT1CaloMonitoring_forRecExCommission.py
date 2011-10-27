@@ -16,6 +16,65 @@ else:
     # Anything else
     l1caloRawMon=True
     l1caloESDMon=True
+
+
+#================================= Monitoring configuration ======================
+from AthenaCommon.AlgSequence import AlgSequence
+topSequence = AlgSequence()
+topSequence += AthenaMonManager( "L1CaloMonManager" )
+L1CaloMan = topSequence.L1CaloMonManager
+
+## get a handle on the ToolSvc
+from AthenaCommon.AppMgr import ToolSvc
+
+if globalflags.InputFormat() == "bytestream":
+    include ("TrigT1CaloByteStream/ReadLVL1CaloBS_jobOptions.py")
+
+if l1caloESDMon:
+
+    #=================================================================================
+    #================================= PPr ===========================================
+    #=================================================================================
+    include("CaloConditions/CaloConditions_jobOptions.py")
+    include("LArDetDescr/LArDetDescr_joboptions.py")
+
+    #--------------------------------- PPM -------------------------------------------
+    from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrMon
+    L1PPrMonTool = PPrMon(
+        name = "L1PPrMonTool",
+        BS_TriggerTowerContainer = "TriggerTowers",
+        LUTHitMap_ThreshVec=[0,1,2,3,4,5,6,7,10,15,20,33,45,50],
+        LUTHitMap_LumiBlocks = 10,
+        ADCHitMap_Thresh = 50,
+        MaxEnergyRange = 256,
+        EMFADCCut = 40,
+        HADFADCCut = 40,
+        ADCPedestal = 32,
+        PathInRootFile = "L1Calo/PPM",
+        ErrorPathInRootFile = "L1Calo/PPM/Errors",
+        EventPathInRootFile = "L1Calo/Overview",
+        #OutputLevel = DEBUG
+        )
+    ToolSvc += L1PPrMonTool
+    L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
+
+    #if not Offline:  # Don't run on Tier0
+    from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrStabilityMon
+    L1PPrStabilityMonTool = PPrStabilityMon(
+            name = "L1PPrStabilityMonTool",
+            BS_TriggerTowerContainer = "TriggerTowers",
+            ppmADCMinValue = 60,
+            lumiMax = 2000,
+            fineTimeCut = 20,
+            PathInRootFile = "L1Calo/PPrStabilityMon",
+            #OutputLevel = DEBUG
+            )
+    ToolSvc += L1PPrStabilityMonTool
+    L1CaloMan.AthenaMonTools += [ L1PPrStabilityMonTool ]
+
+if l1caloESDMon and globalflags.DataSource() == "data":
+        
+    include("TrigT1CaloCalibConditions/L1CaloCalibConditionsTier0_jobOptions.py")
     
 if l1caloRawMon or l1caloESDMon:
     

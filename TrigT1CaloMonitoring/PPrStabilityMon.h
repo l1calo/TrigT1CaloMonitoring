@@ -71,7 +71,7 @@ private:
   std::string m_PathInRootFile;
 
   const EventInfo* m_evtInfo;
-
+  unsigned int m_fineTimeCut;
 };
 
 #endif
