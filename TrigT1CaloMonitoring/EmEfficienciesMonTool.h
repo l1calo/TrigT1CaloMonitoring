@@ -94,7 +94,8 @@ private:
   virtual StatusCode analyseOfflineElectrons();
   virtual StatusCode analyseOfflinePhotons();  
 									    
-  void triggerTowerAnalysis();    
+  void triggerTowerAnalysis();
+  StatusCode triggerChainAnalysis();  
   StatusCode loadContainers();
 
   void efficienciesForMerge(LWHist* lw1, LWHist* lw2, LWHist* lw3);
@@ -106,6 +107,9 @@ private:
   ToolHandle<LVL1::IL1CaloOfflineTriggerTowerTools> m_tools;
   ToolHandle<Trig::TrigDecisionTool> m_trigger;
 
+  // Configured chains
+  std::vector<std::string> m_configuredChains; 
+  // Trigger strings
   std::vector<std::string> m_triggerStrings;
 
   std::string m_dbPpmDeadChannelsFolder;
@@ -136,11 +140,17 @@ private:
   unsigned int m_numOffPhotPassCuts;
   unsigned int m_numOffElecTriggered;
   unsigned int m_numOffPhotTriggered;
-        
-  bool m_passedL1JetTrigger;
-  bool m_passedEFJetTrigger;
+  unsigned int m_numEmObjPassTrigger;
+  unsigned int m_numEmObjTotal;
+  
+  // Variables for L1 & EF trigger chains 
+  bool m_passed_L1_Jet_Trigger;
+  bool m_passed_EF_SingleJet_Trigger;
+  bool m_passed_EF_MultiJet_Trigger;
+  bool m_passed_EF_egTau_Trigger;
+  bool m_passed_EF_Trigger;
 
-  //Python settable cuts
+  // Python settable cuts  
   bool m_useEmThresholdsOnly;
             
   double m_goodEMDeltaRMatch_Cut;

@@ -247,31 +247,26 @@ if l1caloRawMon or l1caloESDMon:
             ToolSvc += L1GlobalMonTool
             L1CaloMan.AthenaMonTools += [ L1GlobalMonTool ]
     
-        if l1caloESDMon and globalflags.DataSource() == "data" and Offline and rec.doCalo() and rec.doLArg() and rec.doTile():
+        if l1caloESDMon and (globalflags.DataSource() == "data" and Offline
+                             and rec.doCalo() and rec.doLArg() and rec.doTile()
+                             and (rec.triggerStream() == "JetTauEtmiss"
+                               or rec.triggerStream() == "Muons"
+                               or rec.triggerStream() == "express")):
     
             #=================================================================================
             #=============================== EM Efficiencies =================================
             #=================================================================================
-            egamma       = (rec.triggerStream() == "Egamma")
-            jetTauEtmiss = (rec.triggerStream() == "JetTauEtmiss")
-            muons        = (rec.triggerStream() == "Muons")
-            if egamma or jetTauEtmiss or muons:
-                if egamma:
-                    trigstring = ['L1_EM.*']
-                elif jetTauEtmiss:
-                    trigstring = ['L1_J.*']
-                elif muons:
-                    trigstring = ['L1_MU.*']
-                from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import EmEfficienciesMonTool
-                L1EmEfficienciesMonTool = EmEfficienciesMonTool ( name = "EmEfficienciesMonTool",
+            trigstring = ['EF_.*']
+            from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import EmEfficienciesMonTool
+            L1EmEfficienciesMonTool = EmEfficienciesMonTool ( name = "EmEfficienciesMonTool",
                                                                   TriggerStrings = trigstring
-                                                                )
-                ToolSvc += L1EmEfficienciesMonTool
-                L1CaloMan.AthenaMonTools += [ L1EmEfficienciesMonTool ]
-                if not hasattr( ToolSvc, "TrigDecisionTool" ):
-                    from TrigDecisionTool.TrigDecisionToolConf import Trig__TrigDecisionTool
-                    tdt = Trig__TrigDecisionTool('TrigDecisionTool')
-                    ToolSvc += tdt
+                                                            )
+            ToolSvc += L1EmEfficienciesMonTool
+            L1CaloMan.AthenaMonTools += [ L1EmEfficienciesMonTool ]
+            if not hasattr( ToolSvc, "TrigDecisionTool" ):
+                from TrigDecisionTool.TrigDecisionToolConf import Trig__TrigDecisionTool
+                tdt = Trig__TrigDecisionTool('TrigDecisionTool')
+                ToolSvc += tdt
     
     #=================================================================================
     # FileKey must match that given to THistSvc
