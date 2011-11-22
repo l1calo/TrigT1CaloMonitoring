@@ -530,7 +530,7 @@ void EmEfficienciesMonTool::efficienciesForMerge(LWHist* lw1, LWHist* lw2,
 	TH1* hist2 = lw2->getROOTHistBase();
 	TH1* hist3 = lw3->getROOTHistBase();
 	// Need errors for Tier0 merge to work correctly
-	hist1->Sumw2();
+	if (!hist1->GetSumw2()->GetSize()) hist1->Sumw2();
 	hist2->Sumw2();
 	hist3->Sumw2();
 	hist3->Divide(hist2, hist1, 1, 1, "B");
