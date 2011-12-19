@@ -1,3 +1,7 @@
+2011-12-19  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-10-16
+        * Tier0 merging fixes.
+
 2011-11-22  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-10-15
         * Fix ROOT runtime warnings from Sumw2.

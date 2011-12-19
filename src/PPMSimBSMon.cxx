@@ -216,9 +216,11 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_h_ppm_em_2d_etaPhi_tt_ped_runavg = m_histTool->bookProfilePPMEmEtaVsPhi(
     "ppm_em_2d_etaPhi_tt_ped_runavg",
     "PPM Mean Pedestal Difference EM (over run)");
+  m_h_ppm_em_2d_etaPhi_tt_ped_runavg->SetErrorOption("s");
   m_h_ppm_had_2d_etaPhi_tt_ped_runavg = m_histTool->bookProfilePPMHadEtaVsPhi(
     "ppm_had_2d_etaPhi_tt_ped_runavg",
     "PPM Mean Pedestal Difference Had (over run)");
+  m_h_ppm_had_2d_etaPhi_tt_ped_runavg->SetErrorOption("s");
   
   m_histTool->setMonGroup(&monPedrms);
 
@@ -243,9 +245,11 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
     m_h_ppm_em_2d_etaPhi_tt_ped_instavg = m_histTool->bookProfilePPMEmEtaVsPhi(
       "ppm_em_2d_etaPhi_tt_ped_instavg",
       "PPM Mean Pedestal Difference EM (instantaneous)");
+    m_h_ppm_em_2d_etaPhi_tt_ped_instavg->SetErrorOption("s");
     m_h_ppm_had_2d_etaPhi_tt_ped_instavg = m_histTool->bookProfilePPMHadEtaVsPhi(
       "ppm_had_2d_etaPhi_tt_ped_instavg",
       "PPM Mean Pedestal Difference Had (instantaneous)");
+    m_h_ppm_had_2d_etaPhi_tt_ped_instavg->SetErrorOption("s");
     
     m_histTool->setMonGroup(&monPedrms);
 
@@ -261,9 +265,11 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
     m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B = m_histTool->bookProfilePPMEmEtaVsPhi(
       "ppm_em_2d_etaPhi_tt_ped_instavg_B",
       "PPM Mean Pedestal Difference EM (instantaneous [B])");
+    m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->SetErrorOption("s");
     m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B = m_histTool->bookProfilePPMHadEtaVsPhi(
       "ppm_had_2d_etaPhi_tt_ped_instavg_B",
       "PPM Mean Pedestal Difference Had (instantaneous [B])");
+    m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->SetErrorOption("s");
    
     m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B = m_histTool->bookPPMEmEtaVsPhi(
       "ppm_em_2d_etaPhi_tt_ped_instrms_B",
@@ -398,11 +404,39 @@ StatusCode PPMSimBSMon::procHistograms(bool isEndOfEventsBlock,
   }
 
   if (isEndOfRun) {
+
     if(m_onlineTest || m_environment == AthenaMonManager::online) {
+
       LWHist::safeDelete(m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B);
       LWHist::safeDelete(m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B);
       LWHist::safeDelete(m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B);
       LWHist::safeDelete(m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B);
+
+    } else {
+
+      double entries = 0.;
+      double val = 0.;
+      double rms = 0.;
+      int nbinsX = m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetNbinsX();
+      int nbinsY = m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetNbinsY();
+      for (int binx = 1; binx <= nbinsX; ++binx) {
+        for (int biny = 1; biny <= nbinsY; ++biny) {
+	  m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
+	                                                             val, rms);
+	  if (entries != 0.) {
+	    m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_runrms,
+	                                binx, biny, rms, rms/sqrt(2.*entries));
+	  }
+	  m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
+	                                                             val, rms);
+	  if (entries != 0.) {
+	    m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_runrms,
+	                                binx, biny, rms, rms/sqrt(2.*entries));
+	  }
+        }
+      }
+      m_h_ppm_em_2d_etaPhi_tt_ped_runrms->SetEntries(m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetEntries());
+      m_h_ppm_had_2d_etaPhi_tt_ped_runrms->SetEntries(m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetEntries());
     }
   }
 
@@ -563,20 +597,17 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	                          eta, phi, ((tt->emADC()).at(i)-em_offset));
 	    m_histTool->fillPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B,
 	                          eta, phi, ((tt->emADC()).at(i)-em_offset));
-	  }
-	  
-          int binx = 0;
-          int biny = 0;
-	  m_histTool->findBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_runavg,
+            int binx = 0;
+            int biny = 0;
+	    m_histTool->findBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_runavg,
 	                                                 eta, phi, binx, biny);
-	  double entries = 0.;
-	  double val = 0.;
-	  double rms = 0.;
-	  m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
+	    double entries = 0.;
+	    double val = 0.;
+	    double rms = 0.;
+	    m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
 	                                                             val, rms);
-	  m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_runrms,
+	    m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_runrms,
 	                                binx, biny, rms, rms/sqrt(2.*entries));
-	  if (m_environment == AthenaMonManager::online || m_onlineTest) {
 	    m_h_ppm_em_2d_etaPhi_tt_ped_instavg->GetBinInfo(binx, biny, entries,
 	                                                             val, rms);
 	    m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_instrms,
@@ -585,7 +616,6 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	                                                    entries, val, rms);
 	    m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B,
 	                                binx, biny, rms, rms/sqrt(2.*entries));
-	    
 	  }
 	}	 
       }	
@@ -612,19 +642,17 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	                          eta, phi, ((tt->hadADC()).at(i)-had_offset));
 	    m_histTool->fillPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B,
 	                          eta, phi, ((tt->hadADC()).at(i)-had_offset));
-	  }
-          int binx = 0;
-          int biny = 0;
-	  m_histTool->findBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_runavg,
+            int binx = 0;
+            int biny = 0;
+	    m_histTool->findBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_runavg,
 	                                                 eta, phi, binx, biny);
-	  double entries = 0.;
-	  double val = 0.;
-	  double rms = 0.;
-	  m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
+	    double entries = 0.;
+	    double val = 0.;
+	    double rms = 0.;
+	    m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
 	                                                             val, rms);
-	  m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_runrms,
+	    m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_runrms,
 	                                binx, biny, rms, rms/sqrt(2.*entries));
-	  if (m_environment == AthenaMonManager::online || m_onlineTest) {
 	    m_h_ppm_had_2d_etaPhi_tt_ped_instavg->GetBinInfo(binx, biny,
 	                                                    entries, val, rms);
 	    m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_instrms,
@@ -633,7 +661,6 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	                                                    entries, val, rms);
 	    m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B,
 	                                binx, biny, rms, rms/sqrt(2.*entries));
-	  
 	  }
 	}
       }

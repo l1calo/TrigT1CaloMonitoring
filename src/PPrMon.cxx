@@ -283,24 +283,28 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     title =" #eta - #phi Profile Map of fine time for Had FADC peak> "+buffer.str()+";eta;phi";
     m_p_TT_fineTime_hadADC_HitMap = m_histTool->bookProfilePPMHadEtaVsPhi("ppm_fineTime_hadADC",title);
 
-    title ="Fine time for EM FADC peak > "+buffer.str();
-    m_h_TT_Lumi_fineTime_emADC	= m_histTool->book1F("fineTimeEM_LumiBlock",title,100,-20,20);
+    if (m_environment == AthenaMonManager::online || m_onlineTest) {
 
-    title ="Fine time for HAD FADC peak > "+buffer.str();
-    m_h_TT_Lumi_fineTime_hadADC = m_histTool->book1F("fineTimeHAD_LumiBlock",title,100,-20,20);
+      // These don't work sensibly on Tier0 (everything in first bin, merge doesn't work)
 
-    title ="Fine time(RMS) - Lumi Block for EM FADC peak > "+buffer.str();
-    m_h_fineTime_emADC_RMS	= m_histTool->book2F("fineTimeEM_RMS",title,100,0,500,100,-20,20);
+      title ="Fine time for EM FADC peak > "+buffer.str();
+      m_h_TT_Lumi_fineTime_emADC	= m_histTool->book1F("fineTimeEM_LumiBlock",title,100,-20,20);
 
-    title="Fine time(Mean) - Lumi Block for EM FADC peak > "+buffer.str();
-    m_h_fineTime_emADC_Mean	= m_histTool->book2F("fineTimeEM_Mean",title,100,0,500,100,-20,20);
+      title ="Fine time for HAD FADC peak > "+buffer.str();
+      m_h_TT_Lumi_fineTime_hadADC = m_histTool->book1F("fineTimeHAD_LumiBlock",title,100,-20,20);
+
+      title ="Fine time(RMS) - Lumi Block for EM FADC peak > "+buffer.str();
+      m_h_fineTime_emADC_RMS	= m_histTool->book2F("fineTimeEM_RMS",title,100,0,500,100,-20,20);
+
+      title="Fine time(Mean) - Lumi Block for EM FADC peak > "+buffer.str();
+      m_h_fineTime_emADC_Mean	= m_histTool->book2F("fineTimeEM_Mean",title,100,0,500,100,-20,20);
+
+      title ="Fine time(RMS) - Lumi Block for HAD FADC peak >"+buffer.str();
+      m_h_fineTime_hadADC_RMS	= m_histTool->book2F("fineTimeHAD_RMS",title,100,0,500,100,-20,20);
     
-
-    title ="Fine time(RMS) - Lumi Block for HAD FADC peak >"+buffer.str();
-    m_h_fineTime_hadADC_RMS	= m_histTool->book2F("fineTimeHAD_RMS",title,100,0,500,100,-20,20);
-    
-    title ="Fine time(Mean) - Lumi Block for HAD FADC peak >"+buffer.str();
-    m_h_fineTime_hadADC_Mean	= m_histTool->book2F("fineTimeHAD_Mean",title,100,0,500,100,-20,20);
+      title ="Fine time(Mean) - Lumi Block for HAD FADC peak >"+buffer.str();
+      m_h_fineTime_hadADC_Mean	= m_histTool->book2F("fineTimeHAD_Mean",title,100,0,500,100,-20,20);
+    }
 
     
     //---------------------------------------------------------//
@@ -798,7 +802,7 @@ StatusCode PPrMon::fillHistograms()
    {
       m_Em_FineTimeFilled = true;
       m_h_fineTime_emADC->Fill(fineTimeEM);
-      m_h_TT_Lumi_fineTime_emADC->Fill(fineTimeEM);
+      if (m_h_TT_Lumi_fineTime_emADC) m_h_TT_Lumi_fineTime_emADC->Fill(fineTimeEM);
       m_p_fineTime_eta_emADC->Fill(eta,fineTimeEM);
       m_p_fineTime_phi_emADC->Fill(phi,fineTimeEM);
       m_h_fineTime_eta_emADC->Fill(eta,fineTimeEM);
@@ -811,7 +815,7 @@ StatusCode PPrMon::fillHistograms()
    {
        m_Had_FineTimeFilled = true;
        m_h_fineTime_hadADC->Fill(fineTimeHAD);
-       m_h_TT_Lumi_fineTime_hadADC->Fill(fineTimeHAD);
+       if (m_h_TT_Lumi_fineTime_hadADC) m_h_TT_Lumi_fineTime_hadADC->Fill(fineTimeHAD);
        m_p_fineTime_eta_hadADC->Fill(eta,fineTimeHAD);
        m_p_fineTime_phi_hadADC->Fill(phi,fineTimeHAD);
        m_h_fineTime_eta_hadADC->Fill(eta,fineTimeHAD);
@@ -994,7 +998,7 @@ StatusCode PPrMon::procHistograms( bool isEndOfEventsBlock,
   if (msgLvl(MSG::DEBUG)) msg(MSG::DEBUG) << "in procHistograms" << endreq ;
   if( isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun ) { }
   
-  if(isEndOfLumiBlock)
+  if(isEndOfLumiBlock && (m_environment == AthenaMonManager::online || m_onlineTest))
   {
      if(m_Em_FineTimeFilled)
      {
