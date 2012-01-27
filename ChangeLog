@@ -1,3 +1,7 @@
+2012-01-27  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-10-17
+        * Fixes for more than eight EM thresholds.
+
 2011-12-19  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-10-16
         * Tier0 merging fixes.

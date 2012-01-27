@@ -99,9 +99,10 @@ private:
   StatusCode loadContainers();
 
   void efficienciesForMerge(LWHist* lw1, LWHist* lw2, LWHist* lw3);
+  bool emType(int bitNumber);
   //----------------------------------    
 
-  static const int ROI_BITS = 8;
+  static const int ROI_BITS = 16;
 
   ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
   ToolHandle<LVL1::IL1CaloOfflineTriggerTowerTools> m_tools;
@@ -167,6 +168,7 @@ private:
   bool m_useEmTRcut;    
   bool m_useTrigger;
   bool m_testMerge;
+  unsigned int m_emBitMask;
 
   //=======================
   //   Histograms

@@ -53,6 +53,8 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_events(0),
+    m_emBitMask(0),
+    m_tauBitMask(0),
     m_histBooked(false),
     m_h_CPM_slices(0),
     m_h_CMM_slices(0),
@@ -280,6 +282,8 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
     "cpm_2d_etaPhi_roi_HitmapEm", "CPM RoIs EM Eta-Phi Hit Map");
   m_h_RoI_Tau_eta_phi = m_histTool->bookCPMRoIEtaVsPhi(
     "cpm_2d_etaPhi_roi_HitmapTau", "CPM RoIs Tau Eta-Phi Hit Map");
+  m_emBitMask  = m_histTool->thresholdMaskEm();
+  m_tauBitMask = m_histTool->thresholdMaskTau();
   // Delete these duplicates when DQ updated:
   m_h_RoI_eta_phi_old = m_histTool->bookCPMRoIEtaVsPhi(
     "cpm_2d_etaPhi_roi_Hitmap", "CPM RoIs All Eta-Phi Hit Map (Duplicate)");
@@ -642,12 +646,12 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_eta_phi, eta, phi);
 	//To be deleted:
         m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_eta_phi_old, eta, phi);
-	if (hits & 0xff) {
+	if (hits & m_emBitMask) {
 	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Em_eta_phi, eta, phi);
 	  //To be deleted:
 	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Em_eta_phi_old, eta, phi);
         }
-	if (hits & 0xff00 ) {
+	if (hits & m_tauBitMask ) {
 	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Tau_eta_phi, eta, phi);
 	  //To be deleted:
 	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Tau_eta_phi_old, eta, phi);

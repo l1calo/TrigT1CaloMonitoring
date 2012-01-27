@@ -101,6 +101,9 @@ private:
   int m_maxEnergyRange;
   /// Number of events
   int m_events;
+  /// EM/Tau RoI bitmasks
+  unsigned int m_emBitMask;
+  unsigned int m_tauBitMask;
   /// Histograms booked flag
   bool m_histBooked;
 
