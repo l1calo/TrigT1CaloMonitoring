@@ -1,3 +1,7 @@
+2012-02-09	Rohin Narayan <narayan@physi.uni-heidelberg.de>
+		* Tag as TrigT1CaloMonitoring-00-10-18
+		* Clean up Fine Time histograms from PPrMon Class 
+
 2012-01-27  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-10-17
         * Fixes for more than eight EM thresholds.

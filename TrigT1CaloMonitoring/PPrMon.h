@@ -46,16 +46,13 @@ class PPrMon: public ManagedMonitorToolBase
   virtual StatusCode bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
                                                             bool isNewRun );
   virtual StatusCode fillHistograms();
-  virtual StatusCode procHistograms( bool isEndOfEventsBlock,
-                                     bool isEndOfLumiBlock, bool isEndOfRun );
-
 private:
-
+  
   enum CaloPartitions { LArFCAL1C, LArEMECC, LArOverlapC, LArEMBC, LArEMBA,
-                        LArOverlapA, LArEMECA, LArFCAL1A, LArFCAL23C, LArHECC,
-			TileEBC, TileLBC, TileLBA, TileEBA, LArHECA, LArFCAL23A,
-			MaxPartitions };
-  double getFineTime(const int adcPeakIndx, const std::vector<int> &ADCcontainer, const int threshold);
+      LArOverlapA, LArEMECA, LArFCAL1A, LArFCAL23C, LArHECC,
+      TileEBC, TileLBC, TileLBA, TileEBA, LArHECA, LArFCAL23A,
+      MaxPartitions };
+
   double recTime(const std::vector<int>& vFAdc, int cut);
   int partition(int layer, double eta);
   std::string partitionName(int part);
@@ -72,8 +69,6 @@ private:
   int m_EMFADCCut;
   int m_NoEvents;
   bool m_onlineTest;
-  bool m_Em_FineTimeFilled;
-  bool m_Had_FineTimeFilled;
   bool m_histBooked;
 
   std::string m_PathInRootFile;
@@ -92,37 +87,6 @@ private:
 
   TProfile2D_LW* m_p_TT_HitMap_emADC_00100;
   TProfile2D_LW* m_p_TT_HitMap_hadADC_00100;
-
-  //Fine time histograms
-  TH1F_LW* m_h_fineTime_emADC;
-  TH1F_LW* m_h_fineTime_hadADC;
-  
-  TProfile_LW* m_p_fineTime_eta_emADC;
-  TProfile_LW* m_p_fineTime_phi_emADC;
-  
-  TH2F_LW* m_h_fineTime_eta_emADC;
-  TH2F_LW* m_h_fineTime_phi_emADC;
-
-  TProfile_LW* m_p_fineTime_eta_hadADC;
-  TProfile_LW* m_p_fineTime_phi_hadADC;
-
-  TH2F_LW* m_h_fineTime_eta_hadADC;
-  TH2F_LW* m_h_fineTime_phi_hadADC;
-
-  TH2F_LW* m_h_TT_fineTime_emADC_HitMap;
-  TH2F_LW* m_h_TT_fineTime_hadADC_HitMap;
-
-  TProfile2D_LW* m_p_TT_fineTime_emADC_HitMap;
-  TProfile2D_LW* m_p_TT_fineTime_hadADC_HitMap;
-
-  TH1F_LW* m_h_TT_Lumi_fineTime_emADC;
-  TH1F_LW* m_h_TT_Lumi_fineTime_hadADC;
-
-  TH2F_LW* m_h_fineTime_emADC_RMS;
-  TH2F_LW* m_h_fineTime_emADC_Mean;
-
-  TH2F_LW* m_h_fineTime_hadADC_RMS;
-  TH2F_LW* m_h_fineTime_hadADC_Mean;
 
   //timing HitMaps
   TProfile2D_LW* m_h_TT_ADC_emTiming_signal;
