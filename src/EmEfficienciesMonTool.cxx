@@ -220,7 +220,7 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		std::string dir(m_rootDir + "/Reco/EmEfficiencies");
 		ManagedMonitorToolBase::Interval_t interval = (m_testMerge) ? lumiBlock : run;
 
-		MonGroup monEmDead(this, dir + "/DeadOrBadChannels", expert, interval);
+		MonGroup monEmDead(this, dir + "/DeadOrBadChannels", expert, interval, "", "weightedAverage");
 		MonGroup monClusterRawNum(this, dir + "/ClusterRaw_Et/numerator", expert, interval);
 		MonGroup monClusterRawDen(this, dir + "/ClusterRaw_Et/denominator", expert, interval);
 		MonGroup monClusterRawEff(this, dir + "/ClusterRaw_Et", expert, interval, "", "perBinEffPerCent");
@@ -539,6 +539,11 @@ StatusCode EmEfficienciesMonTool::procHistograms(bool isEndOfEventsBlock,
 			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i],
 			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
 		}
+
+		// Treat DB status plots for merge
+		m_histTool->scaleForMerge(m_h_TrigTower_emDeadChannel, m_numEvents);
+		m_histTool->scaleForMerge(m_h_TrigTower_emBadCalo, m_numEvents);
+
 	}
 
 	return StatusCode::SUCCESS;
@@ -549,12 +554,8 @@ void EmEfficienciesMonTool::efficienciesForMerge(LWHist* lw1, LWHist* lw2,
 	TH1* hist1 = lw1->getROOTHistBase();
 	TH1* hist2 = lw2->getROOTHistBase();
 	TH1* hist3 = lw3->getROOTHistBase();
-	// Need errors for Tier0 merge to work correctly
-	if (!hist1->GetSumw2()->GetSize()) hist1->Sumw2();
-	hist2->Sumw2();
-	hist3->Sumw2();
-	hist3->Divide(hist2, hist1, 1, 1, "B");
 	// Modify errors to suit merging algorithm
+	hist3->Sumw2();
 	const double OneSigOneSided = 0.159;
 	int nbins = hist3->GetNbinsX() + 2;
 	if (hist3->GetDimension() == 2)
@@ -563,15 +564,18 @@ void EmEfficienciesMonTool::efficienciesForMerge(LWHist* lw1, LWHist* lw2,
 		double denom = hist1->GetBinContent(bin);
 		if (denom == 0.)
 			continue;
-		double eff = hist3->GetBinContent(bin);
-		if (eff == 0. || (float) eff > 0.99) {
-			hist3->SetBinError(bin, 1. - std::pow(OneSigOneSided, 1. / denom));
+		float eff = hist2->GetBinContent(bin)/denom;
+		float err = 0.;
+		if (eff == 0. || eff > 0.99) {
+			err = 1. - std::pow(OneSigOneSided, 1. / denom);
 		} else {
-			hist3->SetBinError(bin, std::sqrt(eff * (1. - eff) / denom));
+			err = std::sqrt(eff * (1. - eff) / denom);
 		}
+		hist3->SetBinContent(bin, eff*100.);
+		hist3->SetBinError(bin, err*100.);
 	}
-	hist3->Scale(100.); // Merge needs % Efficiency
-	// Set plot limits - may be ignored by DQ
+	hist3->SetEntries(hist1->GetEntries());
+	// Set plot limits
 	if (hist3->GetDimension() == 1) {
 		hist3->SetMinimum(0.);
 		hist3->SetMaximum(110.);
