@@ -178,7 +178,7 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   MonGroup monEvent ( this, dir + "/MismatchEventNumbers", expert, run, "", "eventSample" );
   std::string dirPed (m_rootDir + "/PPM/ADC/Pedestal");
   MonGroup monPed ( this, dirPed, expert, run);
-  MonGroup monPedrms ( this, dirPed, expert, run,"","mergeRMS");
+  MonGroup monPedrms ( this, dirPed, expert, run, "", "mergeRMS");
 
   // LUT
 
@@ -216,6 +216,8 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_h_ppm_em_2d_etaPhi_tt_ped_runavg = m_histTool->bookProfilePPMEmEtaVsPhi(
     "ppm_em_2d_etaPhi_tt_ped_runavg",
     "PPM Mean Pedestal Difference EM (over run)");
+  // The mergeRMS method only works if the parent profile has "s" option.
+  // (and even then with an inaccuracy of up to 3% per merge)
   m_h_ppm_em_2d_etaPhi_tt_ped_runavg->SetErrorOption("s");
   m_h_ppm_had_2d_etaPhi_tt_ped_runavg = m_histTool->bookProfilePPMHadEtaVsPhi(
     "ppm_had_2d_etaPhi_tt_ped_runavg",
@@ -417,22 +419,21 @@ StatusCode PPMSimBSMon::procHistograms(bool isEndOfEventsBlock,
       double entries = 0.;
       double val = 0.;
       double rms = 0.;
+      double err = 0.;
       int nbinsX = m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetNbinsX();
       int nbinsY = m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetNbinsY();
       for (int binx = 1; binx <= nbinsX; ++binx) {
         for (int biny = 1; biny <= nbinsY; ++biny) {
 	  m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
 	                                                             val, rms);
-	  if (entries != 0.) {
-	    m_histTool->setBinPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_runrms,
-	                                binx, biny, rms, rms/sqrt(2.*entries));
-	  }
+	  err = (entries != 0.) ? rms/sqrt(2.*entries) : 0.;
+	  m_h_ppm_em_2d_etaPhi_tt_ped_runrms->SetBinContentAndError(
+	                                                 binx, biny, rms, err);
 	  m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
 	                                                             val, rms);
-	  if (entries != 0.) {
-	    m_histTool->setBinPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_ped_runrms,
-	                                binx, biny, rms, rms/sqrt(2.*entries));
-	  }
+	  err = (entries != 0.) ? rms/sqrt(2.*entries) : 0.;
+	  m_h_ppm_had_2d_etaPhi_tt_ped_runrms->SetBinContentAndError(
+	                                                 binx, biny, rms, err);
         }
       }
       m_h_ppm_em_2d_etaPhi_tt_ped_runrms->SetEntries(m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetEntries());

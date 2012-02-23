@@ -220,7 +220,7 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		std::string dir(m_rootDir + "/Reco/EmEfficiencies");
 		ManagedMonitorToolBase::Interval_t interval = (m_testMerge) ? lumiBlock : run;
 
-		MonGroup monEmDead(this, dir + "/DeadOrBadChannels", expert, interval, "", "weightedAverage");
+		MonGroup monEmDead(this, dir + "/DeadOrBadChannels", expert, interval, "", "lowerLB");
 		MonGroup monClusterRawNum(this, dir + "/ClusterRaw_Et/numerator", expert, interval);
 		MonGroup monClusterRawDen(this, dir + "/ClusterRaw_Et/denominator", expert, interval);
 		MonGroup monClusterRawEff(this, dir + "/ClusterRaw_Et", expert, interval, "", "perBinEffPerCent");
@@ -539,10 +539,6 @@ StatusCode EmEfficienciesMonTool::procHistograms(bool isEndOfEventsBlock,
 			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i],
 			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
 		}
-
-		// Treat DB status plots for merge
-		m_histTool->scaleForMerge(m_h_TrigTower_emDeadChannel, m_numEvents);
-		m_histTool->scaleForMerge(m_h_TrigTower_emBadCalo, m_numEvents);
 
 	}
 
