@@ -691,7 +691,6 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
 
   const int nCrates = 4;
   const int nCPMs   = 14;
-  const int maxKey = 0x7fffffff;
   LVL1::CoordToHardware converter;
   TriggerTowerMap::const_iterator ttMapIter    = ttMap.begin();
   TriggerTowerMap::const_iterator ttMapIterEnd = ttMap.end();
@@ -700,8 +699,8 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
 
   while (ttMapIter != ttMapIterEnd || cpMapIter != cpMapIterEnd) {
 
-    int ttKey = maxKey;
-    int cpKey = maxKey;
+    int ttKey = 0;
+    int cpKey = 0;
     int ttEm  = 0;
     int ttHad = 0;
     int cpEm  = 0;
@@ -713,7 +712,8 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
     if (ttMapIter != ttMapIterEnd) ttKey = ttMapIter->first;
     if (cpMapIter != cpMapIterEnd) cpKey = cpMapIter->first;
 
-    if ((cpMapIter == cpMapIterEnd) || (cpKey > ttKey)) {
+    if ((cpMapIter == cpMapIterEnd) ||
+                 ((ttMapIter != ttMapIterEnd) && (cpKey > ttKey))) {
 
       // TriggerTower but no CPMTower
 
@@ -730,7 +730,8 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
       ttHad = tt->hadEnergy();
       key = ttKey;
 
-    } else if ((ttMapIter == ttMapIterEnd) || (ttKey > cpKey)) {
+    } else if ((ttMapIter == ttMapIterEnd) ||
+                 ((cpMapIter != cpMapIterEnd) && (ttKey > cpKey))) {
 
       // CPMTower but no TriggerTower
 
@@ -847,7 +848,6 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
 
   const int nCrates = 4;
   const int nCPMs = 14;
-  const int maxKey = 0x7fffffff;
   LVL1::CPRoIDecoder decoder;
   CpmRoiMap::const_iterator simMapIter    = roiSimMap.begin();
   CpmRoiMap::const_iterator simMapIterEnd = roiSimMap.end();
@@ -856,8 +856,8 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
 
   while (simMapIter != simMapIterEnd || datMapIter != datMapIterEnd) {
 
-    int simKey = maxKey;
-    int datKey = maxKey;
+    int simKey = 0;
+    int datKey = 0;
     unsigned int simHits = 0;
     unsigned int datHits = 0;
     const LVL1::CPMRoI* roi = 0;
@@ -865,7 +865,8 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
     if (simMapIter != simMapIterEnd) simKey = simMapIter->first;
     if (datMapIter != datMapIterEnd) datKey = datMapIter->first;
 
-    if ((datMapIter == datMapIterEnd) || (datKey > simKey)) {
+    if ((datMapIter == datMapIterEnd) ||
+                ((simMapIter != simMapIterEnd) && (datKey > simKey))) {
 
       // Simulated RoI but no data RoI
 
@@ -873,7 +874,8 @@ void CPMSimBSMon::compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
       simHits = roi->hits();
       ++simMapIter;
 
-    } else if ((simMapIter == simMapIterEnd) || (simKey > datKey)) {
+    } else if ((simMapIter == simMapIterEnd) ||
+                ((datMapIter != datMapIterEnd) && (simKey > datKey))) {
 
       // Data RoI but no simulated RoI
 
@@ -959,7 +961,6 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
     msg(MSG::DEBUG) << "Compare simulated CPM Hits with data" << endreq;
   }
 
-  const int maxKey = 0x7fffffff;
   CpmHitsMap::const_iterator simMapIter    = cpmSimMap.begin();
   CpmHitsMap::const_iterator simMapIterEnd = cpmSimMap.end();
   CpmHitsMap::const_iterator datMapIter    = cpmMap.begin();
@@ -967,8 +968,8 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
 
   while (simMapIter != simMapIterEnd || datMapIter != datMapIterEnd) {
 
-    int simKey = maxKey;
-    int datKey = maxKey;
+    int simKey = 0;
+    int datKey = 0;
     unsigned int simHits0 = 0;
     unsigned int simHits1 = 0;
     unsigned int datHits0 = 0;
@@ -979,7 +980,8 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
     if (simMapIter != simMapIterEnd) simKey = simMapIter->first;
     if (datMapIter != datMapIterEnd) datKey = datMapIter->first;
 
-    if ((datMapIter == datMapIterEnd) || (datKey > simKey)) {
+    if ((datMapIter == datMapIterEnd) ||
+                ((simMapIter != simMapIterEnd) && (datKey > simKey))) {
 
       // Simulation Hits but no data Hits
 
@@ -990,7 +992,8 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmSimMap, const CpmHitsMap& cpmMap,
       cpm      = simh->module();
       ++simMapIter;
 
-    } else if ((simMapIter == simMapIterEnd) || (simKey > datKey)) {
+    } else if ((simMapIter == simMapIterEnd) ||
+                ((datMapIter != datMapIterEnd) && (simKey > datKey))) {
 
       // Data Hits but no simulation Hits
 
@@ -1080,7 +1083,6 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
   const int nCrates = 4;
   const int nCPMs = 14;
   const int nCMMs = 2;
-  const int maxKey = 0x7fffffff;
   CpmHitsMap::const_iterator   cpmMapIter    = cpmMap.begin();
   CpmHitsMap::const_iterator   cpmMapIterEnd = cpmMap.end();
   CmmCpHitsMap::const_iterator cmmMapIter    = cmmMap.begin();
@@ -1088,8 +1090,8 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
 
   while (cpmMapIter != cpmMapIterEnd || cmmMapIter != cmmMapIterEnd) {
 
-    int cpmKey = maxKey;
-    int cmmKey = maxKey;
+    int cpmKey = 0;
+    int cmmKey = 0;
     unsigned int cpmHits0 = 0;
     unsigned int cpmHits1 = 0;
     unsigned int cmmHits0 = 0;
@@ -1100,7 +1102,8 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
     if (cpmMapIter != cpmMapIterEnd) cpmKey = cpmMapIter->first;
     if (cmmMapIter != cmmMapIterEnd) cmmKey = cmmMapIter->first;
 
-    if ((cmmMapIter == cmmMapIterEnd) || (cmmKey > cpmKey)) {
+    if ((cmmMapIter == cmmMapIterEnd) ||
+                  ((cpmMapIter != cpmMapIterEnd) && (cmmKey > cpmKey))) {
 
       // CPM Hits but no CMM Hits
 
@@ -1111,7 +1114,8 @@ void CPMSimBSMon::compare(const CpmHitsMap& cpmMap, const CmmCpHitsMap& cmmMap,
       cpm      = cpmh->module();
       ++cpmMapIter;
 
-    } else if ((cpmMapIter == cpmMapIterEnd) || (cpmKey > cmmKey)) {
+    } else if ((cpmMapIter == cpmMapIterEnd) ||
+                  ((cmmMapIter != cmmMapIterEnd) && (cpmKey > cmmKey))) {
 
       // CMM Hits but no CPM Hits
 
@@ -1215,7 +1219,6 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
   std::vector<unsigned int> hits1(3);
   const int nCrates = 4;
   const int nCMMs = 2;
-  const int maxKey = 0x7fffffff;
   CmmCpHitsMap::const_iterator cmmSimMapIter    = cmmSimMap.begin();
   CmmCpHitsMap::const_iterator cmmSimMapIterEnd = cmmSimMap.end();
   CmmCpHitsMap::const_iterator cmmMapIter       = cmmMap.begin();
@@ -1223,8 +1226,8 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
 
   while (cmmSimMapIter != cmmSimMapIterEnd || cmmMapIter != cmmMapIterEnd) {
 
-    int cmmSimKey = maxKey;
-    int cmmKey    = maxKey;
+    int cmmSimKey = 0;
+    int cmmKey    = 0;
     unsigned int cmmSimHits0 = 0;
     unsigned int cmmSimHits1 = 0;
     unsigned int cmmHits0 = 0;
@@ -1235,7 +1238,8 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
     if (cmmSimMapIter != cmmSimMapIterEnd) cmmSimKey = cmmSimMapIter->first;
     if (cmmMapIter    != cmmMapIterEnd)    cmmKey    = cmmMapIter->first;
 
-    if ((cmmMapIter == cmmMapIterEnd) || (cmmKey > cmmSimKey)) {
+    if ((cmmMapIter == cmmMapIterEnd) ||
+             ((cmmSimMapIter != cmmSimMapIterEnd) && (cmmKey > cmmSimKey))) {
 
       // Sim CMM Hits but no Data CMM Hits
 
@@ -1249,7 +1253,8 @@ void CPMSimBSMon::compare(const CmmCpHitsMap& cmmSimMap,
       cmmSimHits1 = cmmS->HitWord1();
       crate       = cmmS->crate();
 
-    } else if ((cmmSimMapIter == cmmSimMapIterEnd) || (cmmSimKey > cmmKey)) {
+    } else if ((cmmSimMapIter == cmmSimMapIterEnd) ||
+                 ((cmmMapIter != cmmMapIterEnd) && (cmmSimKey > cmmKey))) {
 
       // Data CMM Hits but no Sim CMM Hits
 

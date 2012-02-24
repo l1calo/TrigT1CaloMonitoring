@@ -891,7 +891,6 @@ void JEPSimBSMon::compare(const JetElementMap& jeSimMap,
     msg(MSG::DEBUG) << "Compare Simulated JetElements with data" << endreq;
   }
 
-  const int maxKey = 0x7fffffff;
   JetElementMap::const_iterator simMapIter    = jeSimMap.begin();
   JetElementMap::const_iterator simMapIterEnd = jeSimMap.end();
   JetElementMap::const_iterator datMapIter    = jeMap.begin();
@@ -899,8 +898,8 @@ void JEPSimBSMon::compare(const JetElementMap& jeSimMap,
 
   while (simMapIter != simMapIterEnd || datMapIter != datMapIterEnd) {
 
-    int simKey = maxKey;
-    int datKey = maxKey;
+    int simKey = 0;
+    int datKey = 0;
     int simEm  = 0;
     int simHad = 0;
     int datEm  = 0;
@@ -911,7 +910,8 @@ void JEPSimBSMon::compare(const JetElementMap& jeSimMap,
     if (simMapIter != simMapIterEnd) simKey = simMapIter->first;
     if (datMapIter != datMapIterEnd) datKey = datMapIter->first;
 
-    if ((datMapIter == datMapIterEnd) || (datKey > simKey)) {
+    if ((datMapIter == datMapIterEnd) ||
+                ((simMapIter != simMapIterEnd) && (datKey > simKey))) {
 
       // Simulated JetElement but no data JetElement
 
@@ -922,7 +922,8 @@ void JEPSimBSMon::compare(const JetElementMap& jeSimMap,
       phi = je->phi();
       ++simMapIter;
 
-    } else if ((simMapIter == simMapIterEnd) || (simKey > datKey)) {
+    } else if ((simMapIter == simMapIterEnd) ||
+                ((datMapIter != datMapIterEnd) && (simKey > datKey))) {
 
       // Data JetElement but no simulated JetElement
 
@@ -1011,7 +1012,6 @@ void JEPSimBSMon::compare(const JemRoiMap& roiSimMap,
 
   const int nCrates = 2;
   const int nJEMs = 16;
-  const int maxKey = 0x7fffffff;
   LVL1::JEPRoIDecoder decoder;
   JemRoiMap::const_iterator simMapIter    = roiSimMap.begin();
   JemRoiMap::const_iterator simMapIterEnd = roiSimMap.end();
@@ -1020,8 +1020,8 @@ void JEPSimBSMon::compare(const JemRoiMap& roiSimMap,
 
   while (simMapIter != simMapIterEnd || datMapIter != datMapIterEnd) {
 
-    int simKey = maxKey;
-    int datKey = maxKey;
+    int simKey = 0;
+    int datKey = 0;
     unsigned int simHits = 0;
     unsigned int datHits = 0;
     const LVL1::JEMRoI* roi = 0;
@@ -1029,7 +1029,8 @@ void JEPSimBSMon::compare(const JemRoiMap& roiSimMap,
     if (simMapIter != simMapIterEnd) simKey = simMapIter->first;
     if (datMapIter != datMapIterEnd) datKey = datMapIter->first;
 
-    if ((datMapIter == datMapIterEnd) || (datKey > simKey)) {
+    if ((datMapIter == datMapIterEnd) ||
+                     ((simMapIter != simMapIterEnd) && (datKey > simKey))) {
 
       // Simulated RoI but no data RoI
 
@@ -1045,7 +1046,8 @@ void JEPSimBSMon::compare(const JemRoiMap& roiSimMap,
 	    << endreq;
       }
 
-    } else if ((simMapIter == simMapIterEnd) || (simKey > datKey)) {
+    } else if ((simMapIter == simMapIterEnd) ||
+                     ((datMapIter != datMapIterEnd) && (simKey > datKey))) {
 
       // Data RoI but no simulated RoI
 
@@ -1160,7 +1162,6 @@ void JEPSimBSMon::compare(const JemHitsMap& jemSimMap,
     msg(MSG::DEBUG) << "Compare simulated JEM Hits with data" << endreq;
   }
 
-  const int maxKey = 0x7fffffff;
   JemHitsMap::const_iterator simMapIter    = jemSimMap.begin();
   JemHitsMap::const_iterator simMapIterEnd = jemSimMap.end();
   JemHitsMap::const_iterator datMapIter    = jemMap.begin();
@@ -1168,8 +1169,8 @@ void JEPSimBSMon::compare(const JemHitsMap& jemSimMap,
 
   while (simMapIter != simMapIterEnd || datMapIter != datMapIterEnd) {
 
-    int simKey = maxKey;
-    int datKey = maxKey;
+    int simKey = 0;
+    int datKey = 0;
     unsigned int simHits = 0;
     unsigned int datHits = 0;
     int crate = 0;
@@ -1178,7 +1179,8 @@ void JEPSimBSMon::compare(const JemHitsMap& jemSimMap,
     if (simMapIter != simMapIterEnd) simKey = simMapIter->first;
     if (datMapIter != datMapIterEnd) datKey = datMapIter->first;
 
-    if ((datMapIter == datMapIterEnd) || (datKey > simKey)) {
+    if ((datMapIter == datMapIterEnd) ||
+                ((simMapIter != simMapIterEnd) && (datKey > simKey))) {
 
       // Simulation Hits but no data Hits
 
@@ -1188,7 +1190,8 @@ void JEPSimBSMon::compare(const JemHitsMap& jemSimMap,
       jem     = simh->module();
       ++simMapIter;
 
-    } else if ((simMapIter == simMapIterEnd) || (simKey > datKey)) {
+    } else if ((simMapIter == simMapIterEnd) ||
+                ((datMapIter != datMapIterEnd) && (simKey > datKey))) {
 
       // Data Hits but no simulation Hits
 
@@ -1269,7 +1272,6 @@ void JEPSimBSMon::compare(const JemHitsMap& jemMap,
 {
   if (m_debug) msg(MSG::DEBUG) << "Compare JEM Hits and CMM Hits" << endreq;
 
-  const int maxKey = 0x7fffffff;
   JemHitsMap::const_iterator    jemMapIter    = jemMap.begin();
   JemHitsMap::const_iterator    jemMapIterEnd = jemMap.end();
   CmmJetHitsMap::const_iterator cmmMapIter    = cmmMap.begin();
@@ -1277,8 +1279,8 @@ void JEPSimBSMon::compare(const JemHitsMap& jemMap,
 
   while (jemMapIter != jemMapIterEnd || cmmMapIter != cmmMapIterEnd) {
 
-    int jemKey = maxKey;
-    int cmmKey = maxKey;
+    int jemKey = 0;
+    int cmmKey = 0;
     unsigned int jemHits = 0;
     unsigned int cmmHits = 0;
     int crate  = 0;
@@ -1287,7 +1289,8 @@ void JEPSimBSMon::compare(const JemHitsMap& jemMap,
     if (jemMapIter != jemMapIterEnd) jemKey = jemMapIter->first;
     if (cmmMapIter != cmmMapIterEnd) cmmKey = cmmMapIter->first;
 
-    if ((cmmMapIter == cmmMapIterEnd) || (cmmKey > jemKey)) {
+    if ((cmmMapIter == cmmMapIterEnd) ||
+                ((jemMapIter != jemMapIterEnd) && (cmmKey > jemKey))) {
 
       // JEM Hits but no CMM Hits
 
@@ -1297,7 +1300,8 @@ void JEPSimBSMon::compare(const JemHitsMap& jemMap,
       jem     = jemh->module();
       ++jemMapIter;
 
-    } else if ((jemMapIter == jemMapIterEnd) || (jemKey > cmmKey)) {
+    } else if ((jemMapIter == jemMapIterEnd) ||
+                ((cmmMapIter != cmmMapIterEnd) && (jemKey > cmmKey))) {
 
       // CMM Hits but no JEM Hits
 
@@ -1390,7 +1394,6 @@ void JEPSimBSMon::compare(const CmmJetHitsMap& cmmSimMap,
   unsigned int hitsSimFwd  = 0;
   unsigned int hitsDatMain = 0;
   unsigned int hitsDatFwd  = 0;
-  const int maxKey = 0x7fffffff;
   CmmJetHitsMap::const_iterator cmmSimMapIter    = cmmSimMap.begin();
   CmmJetHitsMap::const_iterator cmmSimMapIterEnd = cmmSimMap.end();
   CmmJetHitsMap::const_iterator cmmMapIter       = cmmMap.begin();
@@ -1398,8 +1401,8 @@ void JEPSimBSMon::compare(const CmmJetHitsMap& cmmSimMap,
 
   while (cmmSimMapIter != cmmSimMapIterEnd || cmmMapIter != cmmMapIterEnd) {
 
-    int cmmSimKey = maxKey;
-    int cmmKey    = maxKey;
+    int cmmSimKey = 0;
+    int cmmKey    = 0;
     unsigned int cmmSimHits = 0;
     unsigned int cmmHits = 0;
     int crate  = 0;
@@ -1408,7 +1411,8 @@ void JEPSimBSMon::compare(const CmmJetHitsMap& cmmSimMap,
     if (cmmSimMapIter != cmmSimMapIterEnd) cmmSimKey = cmmSimMapIter->first;
     if (cmmMapIter    != cmmMapIterEnd)    cmmKey    = cmmMapIter->first;
 
-    if ((cmmMapIter == cmmMapIterEnd) || (cmmKey > cmmSimKey)) {
+    if ((cmmMapIter == cmmMapIterEnd) ||
+            ((cmmSimMapIter != cmmSimMapIterEnd) && (cmmKey > cmmSimKey))) {
 
       // Sim CMM Hits but no Data CMM Hits
 
@@ -1425,7 +1429,8 @@ void JEPSimBSMon::compare(const CmmJetHitsMap& cmmSimMap,
       cmmSimHits = cmmS->Hits();
       crate      = cmmS->crate();
 
-    } else if ((cmmSimMapIter == cmmSimMapIterEnd) || (cmmSimKey > cmmKey)) {
+    } else if ((cmmSimMapIter == cmmSimMapIterEnd) ||
+                 ((cmmMapIter != cmmMapIterEnd) && (cmmSimKey > cmmKey))) {
 
       // Data CMM Hits but no Sim CMM Hits
 
@@ -1627,7 +1632,6 @@ void JEPSimBSMon::compare(const JemEtSumsMap& jemSimMap,
   if (m_debug) msg(MSG::DEBUG) << "Compare simulated JEM Et Sums with data"
                                << endreq;
 
-  const int maxKey = 0x7fffffff;
   JemEtSumsMap::const_iterator simMapIter    = jemSimMap.begin();
   JemEtSumsMap::const_iterator simMapIterEnd = jemSimMap.end();
   JemEtSumsMap::const_iterator datMapIter    = jemMap.begin();
@@ -1635,8 +1639,8 @@ void JEPSimBSMon::compare(const JemEtSumsMap& jemSimMap,
 
   while (simMapIter != simMapIterEnd || datMapIter != datMapIterEnd) {
 
-    int simKey = maxKey;
-    int datKey = maxKey;
+    int simKey = 0;
+    int datKey = 0;
     unsigned int simEt = 0;
     unsigned int simEx = 0;
     unsigned int simEy = 0;
@@ -1649,7 +1653,8 @@ void JEPSimBSMon::compare(const JemEtSumsMap& jemSimMap,
     if (simMapIter != simMapIterEnd) simKey = simMapIter->first;
     if (datMapIter != datMapIterEnd) datKey = datMapIter->first;
 
-    if ((datMapIter == datMapIterEnd) || (datKey > simKey)) {
+    if ((datMapIter == datMapIterEnd) ||
+               ((simMapIter != simMapIterEnd) && (datKey > simKey))) {
 
       // Simulation EtSums but no data EtSums
 
@@ -1661,7 +1666,8 @@ void JEPSimBSMon::compare(const JemEtSumsMap& jemSimMap,
       jem   = sime->module();
       ++simMapIter;
 
-    } else if ((simMapIter == simMapIterEnd) || (simKey > datKey)) {
+    } else if ((simMapIter == simMapIterEnd) ||
+                 ((datMapIter != datMapIterEnd) && (simKey > datKey))) {
 
       // Data EtSums but no simulation EtSums
 
@@ -1744,7 +1750,6 @@ void JEPSimBSMon::compare(const JemEtSumsMap& jemMap,
 {
   if (m_debug) msg(MSG::DEBUG) << "Compare JEM EtSums and CMM EtSums" << endreq;
 
-  const int maxKey = 0x7fffffff;
   JemEtSumsMap::const_iterator jemMapIter    = jemMap.begin();
   JemEtSumsMap::const_iterator jemMapIterEnd = jemMap.end();
   CmmEtSumsMap::const_iterator cmmMapIter    = cmmMap.begin();
@@ -1752,8 +1757,8 @@ void JEPSimBSMon::compare(const JemEtSumsMap& jemMap,
 
   while (jemMapIter != jemMapIterEnd || cmmMapIter != cmmMapIterEnd) {
 
-    int jemKey = maxKey;
-    int cmmKey = maxKey;
+    int jemKey = 0;
+    int cmmKey = 0;
     unsigned int jemEt = 0;
     unsigned int jemEx = 0;
     unsigned int jemEy = 0;
@@ -1766,7 +1771,8 @@ void JEPSimBSMon::compare(const JemEtSumsMap& jemMap,
     if (jemMapIter != jemMapIterEnd) jemKey = jemMapIter->first;
     if (cmmMapIter != cmmMapIterEnd) cmmKey = cmmMapIter->first;
 
-    if ((cmmMapIter == cmmMapIterEnd) || (cmmKey > jemKey)) {
+    if ((cmmMapIter == cmmMapIterEnd) ||
+                ((jemMapIter != jemMapIterEnd) && (cmmKey > jemKey))) {
 
       // JEM EtSums but no CMM EtSums
 
@@ -1778,7 +1784,8 @@ void JEPSimBSMon::compare(const JemEtSumsMap& jemMap,
       jem   = jeme->module();
       ++jemMapIter;
 
-    } else if ((jemMapIter == jemMapIterEnd) || (jemKey > cmmKey)) {
+    } else if ((jemMapIter == jemMapIterEnd) ||
+                ((cmmMapIter != cmmMapIterEnd) && (jemKey > cmmKey))) {
 
       // CMM EtSums but no JEM EtSums
 
@@ -1874,7 +1881,6 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
   unsigned int remoteEt = 0;
   unsigned int remoteEx = 0;
   unsigned int remoteEy = 0;
-  const int maxKey = 0x7fffffff;
   CmmEtSumsMap::const_iterator cmmSimMapIter    = cmmSimMap.begin();
   CmmEtSumsMap::const_iterator cmmSimMapIterEnd = cmmSimMap.end();
   CmmEtSumsMap::const_iterator cmmMapIter       = cmmMap.begin();
@@ -1882,8 +1888,8 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
 
   while (cmmSimMapIter != cmmSimMapIterEnd || cmmMapIter != cmmMapIterEnd) {
 
-    int cmmSimKey = maxKey;
-    int cmmKey    = maxKey;
+    int cmmSimKey = 0;
+    int cmmKey    = 0;
     unsigned int cmmSimEt = 0;
     unsigned int cmmSimEx = 0;
     unsigned int cmmSimEy = 0;
@@ -1896,7 +1902,8 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
     if (cmmSimMapIter != cmmSimMapIterEnd) cmmSimKey = cmmSimMapIter->first;
     if (cmmMapIter    != cmmMapIterEnd)    cmmKey    = cmmMapIter->first;
 
-    if ((cmmMapIter == cmmMapIterEnd) || (cmmKey > cmmSimKey)) {
+    if ((cmmMapIter == cmmMapIterEnd) ||
+          ((cmmSimMapIter != cmmSimMapIterEnd) && (cmmKey > cmmSimKey))) {
 
       // Sim CMM EtSums but no Data CMM EtSums
 
@@ -1919,7 +1926,8 @@ void JEPSimBSMon::compare(const CmmEtSumsMap& cmmSimMap,
       }
       crate    = cmmS->crate();
 
-    } else if ((cmmSimMapIter == cmmSimMapIterEnd) || (cmmSimKey > cmmKey)) {
+    } else if ((cmmSimMapIter == cmmSimMapIterEnd) ||
+                ((cmmMapIter != cmmMapIterEnd) && (cmmSimKey > cmmKey))) {
 
       // Data CMM EtSums but no Sim CMM EtSums
 
