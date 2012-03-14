@@ -7,6 +7,9 @@ use GaudiInterface      	GaudiInterface-*      	External
 use AthenaBaseComps             AthenaBaseComps-*       Control
 use AthenaMonitoring    	AthenaMonitoring-* 	Control
 use DataModel 			DataModel-*		Control 
+use AnalysisTriggerEvent        AnalysisTriggerEvent-*  PhysicsAnalysis/AnalysisTrigger
+use Identifier                  Identifier-*            DetectorDescription
+use TileEvent                   TileEvent-*             TileCalorimeter
 
 private
 use StoreGate                   StoreGate-*             Control
@@ -17,12 +20,13 @@ use AtlasROOT			AtlasROOT-*		External
 use LWHists                     LWHists-*               Tools
 
 use EventInfo            	EventInfo-*	        Event
-use AnalysisTriggerEvent        AnalysisTriggerEvent-*  PhysicsAnalysis/AnalysisTrigger
 use AthenaPoolUtilities         AthenaPoolUtilities-*   Database/AthenaPOOL
 use CaloEvent                   CaloEvent-*             Calorimeter
 use TrigDecisionTool            TrigDecisionTool-*      Trigger/TrigAnalysis
 use VxVertex                    VxVertex-*              Tracking/TrkEvent
 use egammaEvent                 egammaEvent-*           Reconstruction/egamma
+use JetEvent                    JetEvent-*              Reconstruction/Jet
+use JetUtils                    JetUtils-*              Reconstruction/Jet
 
 use TrigT1CaloUtils             TrigT1CaloUtils-*       Trigger/TrigT1
 use TrigT1CaloEvent             TrigT1CaloEvent-*       Trigger/TrigT1

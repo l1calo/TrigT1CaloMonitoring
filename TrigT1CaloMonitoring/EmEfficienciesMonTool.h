@@ -91,14 +91,13 @@ private:
 								        
   std::vector<double> getRawClusterValuesFromCells(CaloCluster* cc);
 								                
-  virtual StatusCode analyseOfflineElectrons();
-  virtual StatusCode analyseOfflinePhotons();  
+  StatusCode analyseOfflineElectrons();
+  StatusCode analyseOfflinePhotons();  
 									    
-  void triggerTowerAnalysis();
+  StatusCode triggerTowerAnalysis();
   StatusCode triggerChainAnalysis();  
   StatusCode loadContainers();
 
-  void efficienciesForMerge(LWHist* lw1, LWHist* lw2, LWHist* lw3);
   bool emType(int bitNumber);
   //----------------------------------    
 
@@ -167,8 +166,10 @@ private:
        
   bool m_useEmTRcut;    
   bool m_useTrigger;
-  bool m_testMerge;
   unsigned int m_emBitMask;
+
+  // disabled channel/bad calo flag
+  bool m_firstEvent;
 
   //=======================
   //   Histograms

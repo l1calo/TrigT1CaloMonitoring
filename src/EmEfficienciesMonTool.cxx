@@ -12,7 +12,6 @@
 #include <cmath>
 #include <cstdio>
 
-#include "TH1.h"
 #include "LWHists/LWHist.h"
 #include "LWHists/TH1F_LW.h"
 #include "LWHists/TH2F_LW.h"
@@ -85,6 +84,7 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
 			m_passed_EF_egTau_Trigger(false), 
 			m_passed_EF_Trigger(false),
 			m_emBitMask(0),
+			m_firstEvent(true),
 			m_h_ClusterRaw_Et_gdEta(0), 
 			m_h_ClusterRaw_Et_triggered_gdEta(0),
 			m_h_ClusterRaw_Et_triggered_Eff(0),
@@ -110,7 +110,6 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
 	declareProperty("RootDirectory", m_rootDir = "L1Calo");
 	declareProperty("UseTrigger", m_useTrigger = true);
 	declareProperty("TriggerStrings", m_triggerStrings);
-	declareProperty("TestMerging", m_testMerge = false);
 
 	// HSB - python cuts
 	declareProperty("useDeltaRMatch", m_useDeltaRMatch = true);
@@ -214,25 +213,23 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 	if (isNewEventsBlock || isNewLumiBlock) {
 	}
 
-	bool isNewInterval = (m_testMerge) ? isNewLumiBlock : isNewRun;
-	if (isNewInterval) {
+	if (isNewRun) {
 
 		std::string dir(m_rootDir + "/Reco/EmEfficiencies");
-		ManagedMonitorToolBase::Interval_t interval = (m_testMerge) ? lumiBlock : run;
 
-		MonGroup monEmDead(this, dir + "/DeadOrBadChannels", expert, interval, "", "lowerLB");
-		MonGroup monClusterRawNum(this, dir + "/ClusterRaw_Et/numerator", expert, interval);
-		MonGroup monClusterRawDen(this, dir + "/ClusterRaw_Et/denominator", expert, interval);
-		MonGroup monClusterRawEff(this, dir + "/ClusterRaw_Et", expert, interval, "", "perBinEffPerCent");
-		MonGroup monClusterRaw10GeVNum(this, dir + "/ClusterRaw_10GeV_EtaVsPhi/numerator", expert, interval);
-		MonGroup monClusterRaw10GeVDen(this, dir + "/ClusterRaw_10GeV_EtaVsPhi/denominator", expert, interval);
-		MonGroup monClusterRaw10GeVEff(this, dir + "/ClusterRaw_10GeV_EtaVsPhi", expert, interval, "", "perBinEffPerCent");
-		MonGroup monClusterRaw20GeVNum(this, dir + "/ClusterRaw_20GeV_EtaVsPhi/numerator", expert, interval);
-		MonGroup monClusterRaw20GeVDen(this, dir + "/ClusterRaw_20GeV_EtaVsPhi/denominator", expert, interval);
-		MonGroup monClusterRaw20GeVEff(this, dir + "/ClusterRaw_20GeV_EtaVsPhi", expert, interval, "",  "perBinEffPerCent");
-		MonGroup monClusterRaw30GeVNum(this, dir + "/ClusterRaw_30GeV_EtaVsPhi/numerator", expert, interval);
-		MonGroup monClusterRaw30GeVDen(this, dir + "/ClusterRaw_30GeV_EtaVsPhi/denominator", expert, interval);
-		MonGroup monClusterRaw30GeVEff(this, dir + "/ClusterRaw_30GeV_EtaVsPhi", expert, interval, "", "perBinEffPerCent");
+		MonGroup monEmDead(this, dir + "/DeadOrBadChannels", expert, run, "", "lowerLB");
+		MonGroup monClusterRawNum(this, dir + "/ClusterRaw_Et/numerator", expert, run);
+		MonGroup monClusterRawDen(this, dir + "/ClusterRaw_Et/denominator", expert, run);
+		MonGroup monClusterRawEff(this, dir + "/ClusterRaw_Et", expert, run, "", "perBinEffPerCent");
+		MonGroup monClusterRaw10GeVNum(this, dir + "/ClusterRaw_10GeV_EtaVsPhi/numerator", expert, run);
+		MonGroup monClusterRaw10GeVDen(this, dir + "/ClusterRaw_10GeV_EtaVsPhi/denominator", expert, run);
+		MonGroup monClusterRaw10GeVEff(this, dir + "/ClusterRaw_10GeV_EtaVsPhi", expert, run, "", "perBinEffPerCent");
+		MonGroup monClusterRaw20GeVNum(this, dir + "/ClusterRaw_20GeV_EtaVsPhi/numerator", expert, run);
+		MonGroup monClusterRaw20GeVDen(this, dir + "/ClusterRaw_20GeV_EtaVsPhi/denominator", expert, run);
+		MonGroup monClusterRaw20GeVEff(this, dir + "/ClusterRaw_20GeV_EtaVsPhi", expert, run, "",  "perBinEffPerCent");
+		MonGroup monClusterRaw30GeVNum(this, dir + "/ClusterRaw_30GeV_EtaVsPhi/numerator", expert, run);
+		MonGroup monClusterRaw30GeVDen(this, dir + "/ClusterRaw_30GeV_EtaVsPhi/denominator", expert, run);
+		MonGroup monClusterRaw30GeVEff(this, dir + "/ClusterRaw_30GeV_EtaVsPhi", expert, run, "", "perBinEffPerCent");
 
 		//Set up EMTAU thresholds array with threshold names
 		std::string thrNum[ROI_BITS] = { "0", "1", "2", "3", "4", "5", "6", "7",
@@ -419,6 +416,16 @@ StatusCode EmEfficienciesMonTool::fillHistograms()
 	const bool debug = msgLvl(MSG::DEBUG);
 	if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
+	// On first event plot disabled channels/bad calo
+	if (m_firstEvent) {
+		m_firstEvent = false;
+	        StatusCode sc = this->triggerTowerAnalysis();
+		if (sc.isFailure()) {
+			if (debug) msg(MSG::DEBUG) << "Problem running triggerTowerAnalysis" << endreq;
+			return sc;
+		}
+	}
+
 	// Here we can use the trigger menu to decide if we want an event.
 	bool useEvent = false;
 	if (m_useTrigger == true) {
@@ -454,10 +461,6 @@ StatusCode EmEfficienciesMonTool::fillHistograms()
 		}
 		
 		if (debug) msg(MSG::DEBUG) << "Run number "<< m_eventInfo->event_ID()->run_number()<< " : Lumi Block "<< m_eventInfo->event_ID()->lumi_block() << " : Event "<< m_eventInfo->event_ID()->event_number() << endreq;
-		
-		if (m_numEvents == 1) {
-			this->triggerTowerAnalysis();
-		}
 
 		// Look at vertex requirements
 		int numVtx = 0, numTrk = 0;
@@ -502,40 +505,39 @@ StatusCode EmEfficienciesMonTool::procHistograms(bool isEndOfEventsBlock,
 {
 	msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
-	if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
+	if (isEndOfEventsBlock || isEndOfLumiBlock) {
 	}
 
-	bool isEndOfInterval = (m_testMerge) ? isEndOfLumiBlock : isEndOfRun;
-	if (isEndOfInterval) {
+	if (isEndOfRun) {
 		msg(MSG::DEBUG) << "Number of offline electrons = " << m_numOffElec << endreq;
 		msg(MSG::DEBUG) << "Number of offline photons = " << m_numOffPhot << endreq;
 		msg(MSG::DEBUG) << "Number of events = " << m_numEvents << endreq;
 
-		efficienciesForMerge(m_h_ClusterRaw_Et_gdEta,
+		m_histTool->efficienciesForMerge(m_h_ClusterRaw_Et_gdEta,
 				m_h_ClusterRaw_Et_triggered_gdEta,
 				m_h_ClusterRaw_Et_triggered_Eff);
 
 		for (int i = 0; i < ROI_BITS; ++i) {
 			if (!emType(i)) continue;
-			efficienciesForMerge(m_h_ClusterRaw_Et_gdEta,
+			m_histTool->efficienciesForMerge(m_h_ClusterRaw_Et_gdEta,
 					m_h_ClusterRaw_Et_bitcheck[i],
 					m_h_ClusterRaw_Et_bitcheck_Eff[i]);
-			efficienciesForMerge(m_h_ClusterRaw_10GeV_Eta_vs_Phi,
+			m_histTool->efficienciesForMerge(m_h_ClusterRaw_10GeV_Eta_vs_Phi,
 					m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[i],
 					m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[i]);
-			//efficienciesForMerge(m_h_ClusterRaw_10GeV_Eta_vs_Phi,
+			//m_histTool->efficienciesForMerge(m_h_ClusterRaw_10GeV_Eta_vs_Phi,
 			//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[i],
 			//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
-			efficienciesForMerge(m_h_ClusterRaw_20GeV_Eta_vs_Phi,
+			m_histTool->efficienciesForMerge(m_h_ClusterRaw_20GeV_Eta_vs_Phi,
 					m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[i],
 					m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[i]);
-			//efficienciesForMerge(m_h_ClusterRaw_20GeV_Eta_vs_Phi,
+			//m_histTool->efficienciesForMerge(m_h_ClusterRaw_20GeV_Eta_vs_Phi,
 			//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[i],
 			//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
-			efficienciesForMerge(m_h_ClusterRaw_30GeV_Eta_vs_Phi,
+			m_histTool->efficienciesForMerge(m_h_ClusterRaw_30GeV_Eta_vs_Phi,
 					m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[i],
 					m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[i]);
-			//efficienciesForMerge(m_h_ClusterRaw_30GeV_Eta_vs_Phi,
+			//m_histTool->efficienciesForMerge(m_h_ClusterRaw_30GeV_Eta_vs_Phi,
 			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i],
 			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
 		}
@@ -543,39 +545,6 @@ StatusCode EmEfficienciesMonTool::procHistograms(bool isEndOfEventsBlock,
 	}
 
 	return StatusCode::SUCCESS;
-}
-
-void EmEfficienciesMonTool::efficienciesForMerge(LWHist* lw1, LWHist* lw2,
-		LWHist* lw3) {
-	TH1* hist1 = lw1->getROOTHistBase();
-	TH1* hist2 = lw2->getROOTHistBase();
-	TH1* hist3 = lw3->getROOTHistBase();
-	// Modify errors to suit merging algorithm
-	hist3->Sumw2();
-	const double OneSigOneSided = 0.159;
-	int nbins = hist3->GetNbinsX() + 2;
-	if (hist3->GetDimension() == 2)
-		nbins *= (hist3->GetNbinsY() + 2);
-	for (int bin = 0; bin < nbins; ++bin) {
-		double denom = hist1->GetBinContent(bin);
-		if (denom == 0.)
-			continue;
-		float eff = hist2->GetBinContent(bin)/denom;
-		float err = 0.;
-		if (eff == 0. || eff > 0.99) {
-			err = 1. - std::pow(OneSigOneSided, 1. / denom);
-		} else {
-			err = std::sqrt(eff * (1. - eff) / denom);
-		}
-		hist3->SetBinContent(bin, eff*100.);
-		hist3->SetBinError(bin, err*100.);
-	}
-	hist3->SetEntries(hist1->GetEntries());
-	// Set plot limits
-	if (hist3->GetDimension() == 1) {
-		hist3->SetMinimum(0.);
-		hist3->SetMaximum(110.);
-	}
 }
 
 bool EmEfficienciesMonTool::emType(int bitNumber) {
@@ -1510,10 +1479,24 @@ bool EmEfficienciesMonTool::isolatedEmObjectEF(double phi, double eta) {
 //---------------------------------------------------------------
 // Trigger Tower Analysis
 //---------------------------------------------------------------
-void EmEfficienciesMonTool::triggerTowerAnalysis() {
+StatusCode EmEfficienciesMonTool::triggerTowerAnalysis() {
 	// We will loop over all TriggerTowers, so we will use an iterator.
 	// We use the ++i convention rather than i++. With i++ a copy has to be made and is
 	// therefore a lot slower. Don't really matter for ints, certainly does for iterators
+
+	m_dbPpmDeadChannels = 0;
+	StatusCode sc = detStore()->retrieve(m_dbPpmDeadChannels, m_dbPpmDeadChannelsFolder);
+	if (sc.isFailure()) {
+		msg(MSG::WARNING) << "Failed to load DB PPM Dead Channels" << endreq;
+		return sc;
+	}
+
+	m_triggerTowers = 0;
+	sc = evtStore()->retrieve(m_triggerTowers, m_triggerTowersLocation);
+	if (sc.isFailure()) {
+		msg(MSG::WARNING) << "Failed to load Trigger Towers" << endreq;
+		return sc;
+	}
 
 	// Look at trigger towers around physics objects
 
@@ -1541,8 +1524,7 @@ void EmEfficienciesMonTool::triggerTowerAnalysis() {
 		// The Calibration folder
 		//const coral::AttributeList* emDbCalib = m_tools->emDbAttributes(*ttItr,m_dbPpmChanCalib);
 		// The dead channels folder (only has entries for dead channels - no entry = good channel)
-		const coral::AttributeList* emDbDead = m_tools->emDbAttributes(*ttItr,
-				m_dbPpmDeadChannels);
+		const coral::AttributeList* emDbDead = m_tools->emDbAttributes(*ttItr, m_dbPpmDeadChannels);
 
 		int emDead(0), emBadCalo(0);
 		if (emDbDead != 0) {
@@ -1557,6 +1539,7 @@ void EmEfficienciesMonTool::triggerTowerAnalysis() {
 			m_h_TrigTower_emDeadChannel->Fill(ttEta, tempTtPhi);
 		}
 	}
+	return StatusCode::SUCCESS;
 }
 
 //---------------------------------------------------------------
@@ -1663,27 +1646,11 @@ StatusCode EmEfficienciesMonTool::loadContainers() {
 		return sc;
 	}
 
-	m_dbPpmDeadChannels = 0;
-	sc = detStore()->retrieve(m_dbPpmDeadChannels, m_dbPpmDeadChannelsFolder);
-	if (sc.isFailure()) {
-		msg(MSG::WARNING) << "Failed to load DB PPM Dead Channels" << endreq;
-		return sc;
-	}
-
 	m_primaryVtx = 0;
 	sc = evtStore()->retrieve(m_primaryVtx, m_primaryVertexLocation);
 	if (sc.isFailure()) {
 		msg(MSG::WARNING) << "Failed to load Primary Vertices" << endreq;
 		return sc;
-	}
-
-	if (m_numEvents == 1) {
-		m_triggerTowers = 0;
-		sc = evtStore()->retrieve(m_triggerTowers, m_triggerTowersLocation);
-		if (sc.isFailure()) {
-			msg(MSG::WARNING) << "Failed to load Trigger Towers" << endreq;
-			return sc;
-		}
 	}
 
 	m_lvl1RoIs = 0;

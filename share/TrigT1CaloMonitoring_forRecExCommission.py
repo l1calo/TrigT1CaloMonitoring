@@ -22,8 +22,7 @@ if l1caloRawMon or l1caloESDMon:
     #================================= Monitoring configuration ======================
     from AthenaCommon.AlgSequence import AlgSequence
     topSequence = AlgSequence()
-    topSequence += AthenaMonManager( "L1CaloMonManager" )
-    L1CaloMan = topSequence.L1CaloMonManager
+    L1CaloMan = AthenaMonManager( "L1CaloMonManager" )
     
     ## get a handle on the ToolSvc
     from AthenaCommon.AppMgr import ToolSvc
@@ -247,7 +246,7 @@ if l1caloRawMon or l1caloESDMon:
             ToolSvc += L1GlobalMonTool
             L1CaloMan.AthenaMonTools += [ L1GlobalMonTool ]
     
-        if l1caloESDMon and (globalflags.DataSource() == "data" and Offline
+        if l1caloRawMon and (globalflags.DataSource() == "data" and Offline
                              and rec.doCalo() and rec.doLArg() and rec.doTile()
                              and (rec.triggerStream() == "JetTauEtmiss"
                                or rec.triggerStream() == "Muons"
@@ -268,9 +267,33 @@ if l1caloRawMon or l1caloESDMon:
                 tdt = Trig__TrigDecisionTool('TrigDecisionTool')
                 ToolSvc += tdt
     
+        if l1caloRawMon and (globalflags.DataSource() == "data" and Offline
+                             and rec.doCalo() and rec.doLArg() and rec.doTile()
+                             and (rec.triggerStream() == "Egamma"
+                               or rec.triggerStream() == "Muons"
+                               or rec.triggerStream() == "express")):
+    
+            #=================================================================================
+            #=============================== Jet Efficiencies ================================
+            #=================================================================================
+            trigstring = ['EF_.*']
+            from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import JetEfficienciesMonTool
+            L1JetEfficienciesMonTool = JetEfficienciesMonTool ( name = "JetEfficienciesMonTool",
+                                                                  TriggerStrings = trigstring
+                                                              )
+            ToolSvc += L1JetEfficienciesMonTool
+            L1CaloMan.AthenaMonTools += [ L1JetEfficienciesMonTool ]
+            from TileRecAlgs.TileRecAlgsConf import TileCellToTTL1
+            topSequence += TileCellToTTL1()
+            if not hasattr( ToolSvc, "TrigDecisionTool" ):
+                from TrigDecisionTool.TrigDecisionToolConf import Trig__TrigDecisionTool
+                tdt = Trig__TrigDecisionTool('TrigDecisionTool')
+                ToolSvc += tdt
+    
     #=================================================================================
     # FileKey must match that given to THistSvc
     L1CaloMan.FileKey             = DQMonFlags.monManFileKey()
     L1CaloMan.Environment         = DQMonFlags.monManEnvironment()
     L1CaloMan.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
     L1CaloMan.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan

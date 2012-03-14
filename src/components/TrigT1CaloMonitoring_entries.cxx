@@ -11,6 +11,7 @@
 #include "TrigT1CaloMonitoring/CMMMon.h"
 #include "TrigT1CaloMonitoring/PPMSimBSMon.h"
 #include "TrigT1CaloMonitoring/EmEfficienciesMonTool.h"
+#include "TrigT1CaloMonitoring/JetEfficienciesMonTool.h"
 
 #include "GaudiKernel/DeclareFactoryEntries.h"
 
@@ -27,6 +28,7 @@ DECLARE_TOOL_FACTORY(JEMMon)
 DECLARE_TOOL_FACTORY(CMMMon)
 DECLARE_TOOL_FACTORY(PPMSimBSMon)
 DECLARE_TOOL_FACTORY(EmEfficienciesMonTool)
+DECLARE_TOOL_FACTORY(JetEfficienciesMonTool)
 
 DECLARE_FACTORY_ENTRIES(TrigT1CaloMonitoring) {
   DECLARE_ALGTOOL(TrigT1CaloCpmMonTool)
@@ -42,5 +44,6 @@ DECLARE_FACTORY_ENTRIES(TrigT1CaloMonitoring) {
   DECLARE_ALGTOOL(CMMMon)
   DECLARE_ALGTOOL(PPMSimBSMon)
   DECLARE_ALGTOOL(EmEfficienciesMonTool)
+  DECLARE_ALGTOOL(JetEfficienciesMonTool)
 }
 
