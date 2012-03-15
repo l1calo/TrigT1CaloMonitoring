@@ -654,13 +654,13 @@ double JetEfficienciesMonTool::calcDeltaR(double eta1, double phi1, double eta2,
 //------------------------------------------------------------------
  //Check for electron that it is of the right jet quality type as required from jobOptions
 //------------------------------------------------------------------
-bool JetEfficienciesMonTool::correctJetQuality(Jet* jet) {
+bool JetEfficienciesMonTool::correctJetQuality(const Jet* jet) {
 	
 	bool correctType = false;
 	switch (m_jetQualityLevel) {
   	    case 0: //"None"
         	    correctType = true; break;
-        case 10: //"Jet Loose" 
+            case 10: //"Jet Loose" 
         	    correctType = (JetCaloQualityUtils::isGood(jet,false)!=0) ? true : false; break;
 	    case 20: //"Jet Medium"
         	    correctType = (JetCaloQualityUtils::isGoodMedium(jet,false)!=0) ? true : false; break;
@@ -670,19 +670,6 @@ bool JetEfficienciesMonTool::correctJetQuality(Jet* jet) {
         	    correctType = false; break;
 	}
 	return correctType;
-}
-
-//------------------------------------------------------------------
- //Check for electron that it is of the right jet quality type as required from jobOptions
-//------------------------------------------------------------------
-std::string JetEfficienciesMonTool::JetQualityLevel(Jet* jet, int &code) {
-	
-	std::string jetQualityLevel = "None"; code = 0;
-	if(JetCaloQualityUtils::isGood(jet,false)!=0)       { jetQualityLevel = "Loose";  code = 10; }
-	if(JetCaloQualityUtils::isGoodMedium(jet,false)!=0) { jetQualityLevel = "Medium"; code = 20; }
-	if(JetCaloQualityUtils::isGoodTight(jet,false)!=0)  { jetQualityLevel = "Tight";  code = 30; }	
-	
-	return jetQualityLevel;
 }
 
 /**********************************************/
@@ -744,10 +731,6 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 			
 			//Check that the good jet (not bad, ugly) matches the type selected (if any was chosen in jobOptions file)
 			correctType = correctJetQuality((*jetItr));
-
-			// Ask jet which is the highest quality definition it has passed 
-			int jetCode = 0;
-			std::string jetLevel = JetQualityLevel((*jetItr), jetCode);
 
 			//Have the correct type of jet so do some analysis with it   
 			if (correctType) {

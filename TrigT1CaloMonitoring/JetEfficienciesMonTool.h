@@ -73,8 +73,7 @@ private:
   double correctDeltaPhi(double dPhi);
   double calcDeltaR(double eta1, double phi1, double eta2, double phi2);
 	        
-  bool correctJetQuality(Jet* jet);
-  std::string JetQualityLevel(Jet* jet, int &code);
+  bool correctJetQuality(const Jet* jet);
   
   bool isolatedJetObjectL1(double phi, double eta);
   bool isolatedJetObjectEF(double phi, double eta);    
