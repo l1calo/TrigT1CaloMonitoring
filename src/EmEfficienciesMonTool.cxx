@@ -289,11 +289,11 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_10GeV_Eta_vs_Phi_trig_" + thrNum[i];
-			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 			m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
 
 			//name = "ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 			//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 		    } else m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[i] = 0;
 		}
@@ -309,11 +309,11 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff_" + thrNum[i];
-			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 			m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
 
 			//name = "ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 			//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 		    } else m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[i] = 0;
 		}
@@ -324,11 +324,11 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_20GeV_Eta_vs_Phi_trig_" + thrNum[i];
-			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 			m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
 
 			//name = "ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 			//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 		    } else m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[i] = 0;
 		}
@@ -344,11 +344,11 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff_" + thrNum[i];
-			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 			m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
 
 			//name = "ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 			//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 		    } else m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[i] = 0;
 		}
@@ -363,7 +363,7 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 			m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
 
 			//name = "ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 		    } else m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[i] = 0;
 		}
@@ -379,11 +379,11 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff_" + thrNum[i];
-			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 			m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
 
 			//name = "ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster)";
+			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
 			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
 		    } else m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[i] = 0;
 		}

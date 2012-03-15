@@ -1,4 +1,8 @@
 2012-03-15  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-11-02
+        * Cosmetic change to EmEfficienciesMonTool.
+
+2012-03-15  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-11-01
         * Fix compilation errors.
 
