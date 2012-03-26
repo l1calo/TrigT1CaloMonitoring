@@ -30,9 +30,11 @@ if l1caloRawMon or l1caloESDMon:
     if globalflags.InputFormat() == "bytestream":
         include ("TrigT1CaloByteStream/ReadLVL1CaloBS_jobOptions.py")
     
-    if l1caloESDMon:
-        include("CaloConditions/CaloConditions_jobOptions.py")
+    include("CaloConditions/CaloConditions_jobOptions.py")
+    if Offline:
         include("LArDetDescr/LArDetDescr_joboptions.py")
+    else:
+        include("LArConditionsCommon/LArIdMap_comm_jobOptions.py")
 
     if l1caloESDMon and globalflags.DataSource() == "data":
         include("TrigT1CaloCalibConditions/L1CaloCalibConditionsTier0_jobOptions.py")
