@@ -20,8 +20,8 @@
 #include "GaudiKernel/StatusCode.h"
 #include "StoreGate/StoreGateSvc.h"
 #include "CLHEP/Units/SystemOfUnits.h"
-#include "CoralBase/AttributeList.h"
 #include "AthenaPoolUtilities/CondAttrListCollection.h"
+#include "AthenaPoolUtilities/AthenaAttributeList.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
@@ -31,7 +31,8 @@
 #include "AnalysisTriggerEvent/LVL1_ROI.h"
 #include "AnalysisTriggerEvent/EmTau_ROI.h"
 #include "AnalysisTriggerEvent/Jet_ROI.h"
-#include "TrigT1CaloCalibToolInterfaces/IL1CaloOfflineTriggerTowerTools.h"
+#include "TrigT1CaloToolInterfaces/IL1TriggerTowerTool.h"
+#include "TrigT1CaloCalibToolInterfaces/IL1CaloLArTowerEnergy.h"
 #include "EventInfo/EventInfo.h"
 #include "EventInfo/EventID.h"
 #include "egammaEvent/ElectronContainer.h"
@@ -43,6 +44,8 @@
 #include "VxVertex/VxTrackAtVertex.h"
 #include "CaloEvent/CaloCell.h"
 #include "CaloEvent/CaloCluster.h"
+#include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
+#include "Identifier/Identifier.h"
 
 #include "TrigT1CaloMonitoring/EmEfficienciesMonTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
@@ -52,7 +55,8 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
 		const std::string & name, const IInterface* parent) 
 		  : ManagedMonitorToolBase(type, name, parent),
 			m_histTool("TrigT1CaloLWHistogramTool"),
-			m_tools("LVL1::L1CaloOfflineTriggerTowerTools/L1CaloOfflineTriggerTowerTools"),
+			m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"),
+			m_larEnergy("LVL1::L1CaloLArTowerEnergy/L1CaloLArTowerEnergy"),
 			m_trigger("Trig::TrigDecisionTool/TrigDecisionTool"),
 			m_dbPpmDeadChannelsFolder("/TRIGGER/L1Calo/V1/Calibration/PpmDeadChannels"),
 			m_triggerTowersLocation("TriggerTowers"),
@@ -98,7 +102,8 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
 {
 
 	declareProperty("HistogramTool", m_histTool);
-	declareProperty("OfflineTriggerTowerTool", m_tools);
+	declareProperty("TriggerTowerTool", m_ttTool);
+	declareProperty("LArTowerEnergyTool", m_larEnergy);
 	declareProperty("TrigDecisionTool", m_trigger);
 	declareProperty("DeadChannelsFolder", m_dbPpmDeadChannelsFolder);
 	declareProperty("TriggerTowersLocation", m_triggerTowersLocation);
@@ -171,9 +176,15 @@ StatusCode EmEfficienciesMonTool::initialize()
 		return sc;
 	}
 
-	sc = m_tools.retrieve();
+	sc = m_ttTool.retrieve();
 	if (sc.isFailure()) {
-		msg(MSG::ERROR) << "Cannot retrieve L1CaloOfflineTriggerTowerTools" << endreq;
+		msg(MSG::ERROR) << "Cannot retrieve L1TriggerTowerTool" << endreq;
+		return sc;
+	}
+
+	sc = m_larEnergy.retrieve();
+	if (sc.isFailure()) {
+		msg(MSG::ERROR) << "Cannot retrieve L1CaloLArTowerEnergy" << endreq;
 		return sc;
 	}
 
@@ -1504,35 +1515,22 @@ StatusCode EmEfficienciesMonTool::triggerTowerAnalysis() {
 	typedef std::vector<int>::const_iterator Itr_i;
 	for (Itr_tt ttItr = m_triggerTowers->begin(); ttItr	!= m_triggerTowers->end(); ++ttItr) {
 		
-		// Set up variables to store the Trigger Tower values as they will be required in several places
-		double /*ttEtEm  = 0.0, ttEtHad = 0.0,*/ttEta = 0.0, ttPhi = 0.0;
-
-		// Get the values for the electromagnetic and hadronic Et in the towers
-		//ttEtEm  = (*ttItr)->emEnergy();
-		//ttEtHad = (*ttItr)->hadEnergy();
-
 		// Get the values of eta and phi for the trigger towers
-		ttEta = (*ttItr)->eta();
-		ttPhi = (*ttItr)->phi();
+		double ttEta = (*ttItr)->eta();
+		double ttPhi = (*ttItr)->phi();
 		double tempTtPhi = (ttPhi > M_PI) ? ttPhi - (2 * M_PI) : ttPhi;
+		const L1CaloCoolChannelId emCoolId(m_ttTool->channelID(ttEta, ttPhi, 0));
+		const Identifier emIdent(m_ttTool->identifier(ttEta, ttPhi, 0));
 
-		// Calculate index of trigger tower for reference
-		//TriggerTowerCollection::size_type idxVal = (ttItr - m_triggerTowers->begin());
-
-		// Lets look at the database, disabled(dead) channels and for bad Calo Cells
-		// We use 4 Database folders:
-		// The Calibration folder
-		//const coral::AttributeList* emDbCalib = m_tools->emDbAttributes(*ttItr,m_dbPpmChanCalib);
 		// The dead channels folder (only has entries for dead channels - no entry = good channel)
-		const coral::AttributeList* emDbDead = m_tools->emDbAttributes(*ttItr, m_dbPpmDeadChannels);
+		unsigned int emDead(0);
+		CondAttrListCollection::const_iterator itr = m_dbPpmDeadChannels->chanAttrListPair(emCoolId.id());
+		if (itr != m_dbPpmDeadChannels->end()) {
+		        const AthenaAttributeList& attrList(itr->second);
+		        emDead = attrList["ErrorCode"].data<unsigned int>();
+                }
 
-		int emDead(0), emBadCalo(0);
-		if (emDbDead != 0) {
-			emDead = m_tools->DeadChannel(emDbDead);
-		}
-		emBadCalo = m_tools->emBadCalo(*ttItr);
-
-		if (emBadCalo) {
+		if (m_larEnergy->hasMissingFEB(emIdent)) {
 			m_h_TrigTower_emBadCalo->Fill(ttEta, tempTtPhi);
 		}
 		if (emDead) {

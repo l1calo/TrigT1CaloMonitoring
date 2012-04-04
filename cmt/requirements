@@ -15,7 +15,6 @@ private
 use StoreGate                   StoreGate-*             Control
 use SGTools                     SGTools-*               Control
 use AtlasCLHEP                  AtlasCLHEP-*            External
-use AtlasCORAL                  AtlasCORAL-*            External
 use AtlasROOT			AtlasROOT-*		External
 use LWHists                     LWHists-*               Tools
 

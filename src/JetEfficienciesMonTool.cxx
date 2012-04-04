@@ -21,8 +21,8 @@
 #include "GaudiKernel/StatusCode.h"
 #include "StoreGate/StoreGateSvc.h"
 #include "CLHEP/Units/SystemOfUnits.h"
-#include "CoralBase/AttributeList.h"
 #include "AthenaPoolUtilities/CondAttrListCollection.h"
+#include "AthenaPoolUtilities/AthenaAttributeList.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
@@ -32,7 +32,8 @@
 #include "AnalysisTriggerEvent/LVL1_ROI.h"
 #include "AnalysisTriggerEvent/EmTau_ROI.h"
 #include "AnalysisTriggerEvent/Jet_ROI.h"
-#include "TrigT1CaloCalibToolInterfaces/IL1CaloOfflineTriggerTowerTools.h"
+#include "TrigT1CaloToolInterfaces/IL1TriggerTowerTool.h"
+#include "TrigT1CaloCalibToolInterfaces/IL1CaloLArTowerEnergy.h"
 #include "EventInfo/EventInfo.h"
 #include "EventInfo/EventID.h"
 #include "VxVertex/VxContainer.h"
@@ -41,6 +42,8 @@
 #include "JetEvent/Jet.h"
 #include "JetUtils/JetCaloQualityUtils.h"
 #include "TileEvent/TileTTL1Cell.h"
+#include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
+#include "Identifier/Identifier.h"
 
 #include "TrigT1CaloMonitoring/JetEfficienciesMonTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
@@ -50,7 +53,8 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 		const std::string & name, const IInterface* parent) 
 		  : ManagedMonitorToolBase(type, name, parent),
 			m_histTool("TrigT1CaloLWHistogramTool"),
-			m_tools("LVL1::L1CaloOfflineTriggerTowerTools/L1CaloOfflineTriggerTowerTools"),
+			m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"),
+			m_larEnergy("LVL1::L1CaloLArTowerEnergy/L1CaloLArTowerEnergy"),
 			m_trigger("Trig::TrigDecisionTool/TrigDecisionTool"),
 			m_dbPpmDeadChannelsFolder("/TRIGGER/L1Calo/V1/Calibration/PpmDeadChannels"),
 			m_triggerTowersLocation("TriggerTowers"),
@@ -105,7 +109,8 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 {
 
 	declareProperty("HistogramTool", m_histTool);
-	declareProperty("OfflineTriggerTowerTool", m_tools);
+	declareProperty("TriggerTowerTool", m_ttTool);
+	declareProperty("LArTowerEnergyTool", m_larEnergy);
 	declareProperty("TrigDecisionTool", m_trigger);
 	declareProperty("DeadChannelsFolder", m_dbPpmDeadChannelsFolder);
 	declareProperty("TriggerTowersLocation", m_triggerTowersLocation);
@@ -177,9 +182,15 @@ StatusCode JetEfficienciesMonTool::initialize()
 		return sc;
 	}
 
-	sc = m_tools.retrieve();
+	sc = m_ttTool.retrieve();
 	if (sc.isFailure()) {
-		msg(MSG::ERROR) << "Cannot retrieve L1CaloOfflineTriggerTowerTools" << endreq;
+		msg(MSG::ERROR) << "Cannot retrieve L1TriggerTowerTool" << endreq;
+		return sc;
+	}
+
+	sc = m_larEnergy.retrieve();
+	if (sc.isFailure()) {
+		msg(MSG::ERROR) << "Cannot retrieve L1CaloLArTowerEnergy" << endreq;
 		return sc;
 	}
 
@@ -1009,18 +1020,36 @@ StatusCode JetEfficienciesMonTool::triggerTowerAnalysis() {
     // Get the values of eta and phi for the trigger towers
     double ttEta = (*ttItr)->eta();
     double ttPhi = (*ttItr)->phi();
+    const L1CaloCoolChannelId emCoolId(m_ttTool->channelID(ttEta, ttPhi, 0));
+    const L1CaloCoolChannelId hadCoolId(m_ttTool->channelID(ttEta, ttPhi, 1));
+    const Identifier emIdent(m_ttTool->identifier(ttEta, ttPhi, 0));
+    const Identifier hadIdent(m_ttTool->identifier(ttEta, ttPhi, 1));
 
     // The Disabled Towers DB folder is used for 2011 data (& 2012 hopefully)
-    int emDisabled(0),hadDisabled(0);
+    unsigned int emDisabled(0), hadDisabled(0);
 	// The dead channels folder (only has entries for dead channels - no entry = good channel)
-	const coral::AttributeList* emDbDead = m_tools->emDbAttributes(*ttItr,m_dbPpmDeadChannels);
-	const coral::AttributeList* hadDbDead = m_tools->hadDbAttributes(*ttItr,m_dbPpmDeadChannels);
-	if(emDbDead != 0){emDisabled = m_tools->DeadChannel(emDbDead);}
-	if(hadDbDead != 0){hadDisabled = m_tools->DeadChannel(hadDbDead);}
+	CondAttrListCollection::const_iterator itr = m_dbPpmDeadChannels->chanAttrListPair(emCoolId.id());
+        if (itr != m_dbPpmDeadChannels->end()) {
+                const AthenaAttributeList& attrList(itr->second);
+                emDisabled = attrList["ErrorCode"].data<unsigned int>();
+        }
+	itr = m_dbPpmDeadChannels->chanAttrListPair(hadCoolId.id());
+        if (itr != m_dbPpmDeadChannels->end()) {
+                const AthenaAttributeList& attrList(itr->second);
+                hadDisabled = attrList["ErrorCode"].data<unsigned int>();
+        }
     
     int emBadCalo(0),hadBadCalo(0);
-	emBadCalo = m_tools->emBadCalo(*ttItr);
-	hadBadCalo = m_tools->hadBadCalo(*ttItr,m_idTTL1CellMap);
+	emBadCalo = m_larEnergy->hasMissingFEB(emIdent);
+	if (fabs(ttEta) > 1.5) {
+	        hadBadCalo = m_larEnergy->hasMissingFEB(hadIdent);
+        } else {
+		IdTTL1CellMapType::const_iterator ttL1Cell(m_idTTL1CellMap.find(hadIdent));
+		IdTTL1CellMapType::const_iterator ttL1Cell_E(m_idTTL1CellMap.end());
+		if (ttL1Cell != ttL1Cell_E) {
+		    hadBadCalo = (ttL1Cell->second)->qualTower();
+		}
+        }
     
     if(emBadCalo || hadBadCalo) m_histTool->fillPPMHadEtaVsPhi(m_h_TrigTower_jetBadCalo,ttEta,ttPhi,(double)(emBadCalo+hadBadCalo));
     if(emDisabled || hadDisabled) m_histTool->fillPPMHadEtaVsPhi(m_h_TrigTower_jetDeadChannel,ttEta,ttPhi,(double)(emDisabled+hadDisabled));

@@ -37,7 +37,8 @@ namespace Analysis {
   class Photon;
 }
 namespace LVL1 {
-  class IL1CaloOfflineTriggerTowerTools;
+  class IL1TriggerTowerTool;
+  class IL1CaloLArTowerEnergy;
   class TriggerTower;
 }
 namespace Trig {
@@ -104,7 +105,8 @@ private:
   static const int ROI_BITS = 16;
 
   ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
-  ToolHandle<LVL1::IL1CaloOfflineTriggerTowerTools> m_tools;
+  ToolHandle<LVL1::IL1TriggerTowerTool> m_ttTool;
+  ToolHandle<LVL1::IL1CaloLArTowerEnergy> m_larEnergy;
   ToolHandle<Trig::TrigDecisionTool> m_trigger;
 
   // Configured chains
