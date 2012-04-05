@@ -18,7 +18,6 @@
 #include "DataModel/DataVector.h"
 #include "GaudiKernel/ToolHandle.h"
 #include "Identifier/Identifier.h"
-#include "TileEvent/TileTTL1CellContainer.h"
 #include "AnalysisTriggerEvent/EmTau_ROI.h"
 #include "AnalysisTriggerEvent/Jet_ROI.h"
 
@@ -33,8 +32,10 @@ class CondAttrListCollection;
 class LVL1_ROI;
 class JetCollection;
 class Jet;
-class TileTTL1Cell;
 class VxContainer;
+class TileID;
+class CaloLVL1_ID;
+class TileCablingService;
 
 namespace LVL1 {
   class IL1TriggerTowerTool;
@@ -85,7 +86,7 @@ private:
   StatusCode triggerChainAnalysis();  
   StatusCode loadContainers();
   unsigned int nPrimaryVertex();
-  void preCacheTTL1Cell(const TileTTL1CellContainer* cont);
+  StatusCode mapTileQuality();
 
   //----------------------------------    
 
@@ -97,6 +98,10 @@ private:
   ToolHandle<LVL1::IL1CaloLArTowerEnergy> m_larEnergy;
   ToolHandle<Trig::TrigDecisionTool> m_trigger;
 
+  const TileID*             m_tileID;
+  const CaloLVL1_ID*        m_TT_ID;
+  const TileCablingService* m_tileCablingService;
+
   // Configured chains
   std::vector<std::string> m_configuredChains; 
   // Trigger strings
@@ -104,7 +109,7 @@ private:
 
   std::string m_dbPpmDeadChannelsFolder;
   std::string m_triggerTowersLocation;
-  std::string m_tileTTL1ContainerLocation;
+  std::string m_caloCellContainerLocation;
   std::string m_lvl1RoIsLocation;
   std::string m_offlineJetsLocation;
   std::string m_primaryVertexLocation;
@@ -114,15 +119,14 @@ private:
   const DataVector<LVL1::TriggerTower>* m_triggerTowers;
   const LVL1_ROI* m_lvl1RoIs;
   const JetCollection* m_offlineJets;
-  const TileTTL1CellContainer* m_tileTTL1Container;
   const VxContainer* m_primaryVertex;
 
   std::vector<EmTau_ROI> m_emTauROIs;
   std::vector<Jet_ROI> m_jetROIs;
 
-  // Tile Calorimeter
-  typedef std::map<Identifier, const TileTTL1Cell*> IdTTL1CellMapType;
-  IdTTL1CellMapType m_idTTL1CellMap;
+  // Tile Calorimeter quality map
+  typedef std::map<Identifier, uint16_t> IdTileQualityMapType;
+  IdTileQualityMapType m_idTileQualityMap;
 
   /// Root directory
   std::string m_rootDir;

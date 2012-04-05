@@ -9,7 +9,6 @@ use AthenaMonitoring    	AthenaMonitoring-* 	Control
 use DataModel 			DataModel-*		Control 
 use AnalysisTriggerEvent        AnalysisTriggerEvent-*  PhysicsAnalysis/AnalysisTrigger
 use Identifier                  Identifier-*            DetectorDescription
-use TileEvent                   TileEvent-*             TileCalorimeter
 
 private
 use StoreGate                   StoreGate-*             Control
@@ -21,6 +20,9 @@ use LWHists                     LWHists-*               Tools
 use EventInfo            	EventInfo-*	        Event
 use AthenaPoolUtilities         AthenaPoolUtilities-*   Database/AthenaPOOL
 use CaloEvent                   CaloEvent-*             Calorimeter
+use CaloIdentifier              CaloIdentifier-*        Calorimeter
+use TileConditions              TileConditions-*        TileCalorimeter
+use TileEvent                   TileEvent-*             TileCalorimeter
 use TrigDecisionTool            TrigDecisionTool-*      Trigger/TrigAnalysis
 use VxVertex                    VxVertex-*              Tracking/TrkEvent
 use egammaEvent                 egammaEvent-*           Reconstruction/egamma

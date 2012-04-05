@@ -41,9 +41,15 @@
 #include "JetEvent/JetCollection.h"
 #include "JetEvent/Jet.h"
 #include "JetUtils/JetCaloQualityUtils.h"
-#include "TileEvent/TileTTL1Cell.h"
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
 #include "Identifier/Identifier.h"
+
+#include "CaloIdentifier/TileID.h"
+#include "CaloIdentifier/CaloLVL1_ID.h"
+#include "CaloEvent/CaloCellContainer.h"
+#include "TileEvent/TileCell.h"
+#include "TileEvent/TileTTL1Cell.h"
+#include "TileConditions/TileCablingService.h"
 
 #include "TrigT1CaloMonitoring/JetEfficienciesMonTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
@@ -56,9 +62,12 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 			m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"),
 			m_larEnergy("LVL1::L1CaloLArTowerEnergy/L1CaloLArTowerEnergy"),
 			m_trigger("Trig::TrigDecisionTool/TrigDecisionTool"),
+			m_tileID(0),
+			m_TT_ID(0),
+			m_tileCablingService(0),
 			m_dbPpmDeadChannelsFolder("/TRIGGER/L1Calo/V1/Calibration/PpmDeadChannels"),
 			m_triggerTowersLocation("TriggerTowers"),
-			m_tileTTL1ContainerLocation("TileCellTTL1Container"),
+			m_caloCellContainerLocation("AllCalo"),
 			m_lvl1RoIsLocation("LVL1_ROI"),
 			m_offlineJetsLocation("AntiKt4TopoEMJets"),
 			m_primaryVertexLocation("VxPrimaryCandidate"), 
@@ -67,7 +76,6 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 			m_triggerTowers(0), 
 			m_lvl1RoIs(0),
 			m_offlineJets(0),
-			m_tileTTL1Container(0),
 			m_primaryVertex(0),
 			m_numEvents(0), 
 			m_numOffJets(0), 
@@ -114,10 +122,10 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 	declareProperty("TrigDecisionTool", m_trigger);
 	declareProperty("DeadChannelsFolder", m_dbPpmDeadChannelsFolder);
 	declareProperty("TriggerTowersLocation", m_triggerTowersLocation);
-	declareProperty("TileCellTTL1Location", m_tileTTL1ContainerLocation);
 	declareProperty("RoIsLocation", m_lvl1RoIsLocation);
 	declareProperty("OfflineJetsLocation",m_offlineJetsLocation);
 	declareProperty("PrimaryVertexLocation", m_primaryVertexLocation);
+        declareProperty("CaloCellContainerLocation", m_caloCellContainerLocation);
 
 	declareProperty("RootDirectory", m_rootDir = "L1Calo");
 	declareProperty("UseTrigger", m_useTrigger = true);
@@ -201,6 +209,21 @@ StatusCode JetEfficienciesMonTool::initialize()
 		msg(MSG::ERROR) << "Can't get handle on TrigDecisionTool" << endreq;
 		return sc;
 	}
+
+        // retrieve CaloLVL1_ID, TileID, from det store
+        sc = detStore()->retrieve(m_TT_ID);
+        if (sc.isFailure()) {
+                msg(MSG::ERROR) << "Unable to retrieve CaloLVL1_ID helper from DetectorStore" << endreq;
+                return sc;
+        }
+
+        sc = detStore()->retrieve(m_tileID);
+        if (sc.isFailure()) {
+                msg(MSG::ERROR) << "Unable to retrieve TileID helper from DetectorStore" << endreq;
+                return sc;
+        }
+
+        m_tileCablingService = TileCablingService::getInstance();
 
 	std::vector<std::string>::const_iterator iter = m_triggerStrings.begin();
 	std::vector<std::string>::const_iterator iterE = m_triggerStrings.end();
@@ -1006,13 +1029,10 @@ StatusCode JetEfficienciesMonTool::triggerTowerAnalysis() {
     return sc;
   }
 
-  m_tileTTL1Container = 0;
-  sc = evtStore()->retrieve(m_tileTTL1Container,m_tileTTL1ContainerLocation);
+  sc = this->mapTileQuality();
   if (sc.isFailure()) {
-    msg(MSG::WARNING) << "Failed to load TileTTL1" << endreq;
     return sc;
   }
-  this->preCacheTTL1Cell(m_tileTTL1Container);
        
   typedef TriggerTowerCollection::const_iterator Itr_tt;
   for(Itr_tt ttItr=m_triggerTowers->begin();ttItr!=m_triggerTowers->end();++ttItr) {
@@ -1044,17 +1064,16 @@ StatusCode JetEfficienciesMonTool::triggerTowerAnalysis() {
 	if (fabs(ttEta) > 1.5) {
 	        hadBadCalo = m_larEnergy->hasMissingFEB(hadIdent);
         } else {
-		IdTTL1CellMapType::const_iterator ttL1Cell(m_idTTL1CellMap.find(hadIdent));
-		IdTTL1CellMapType::const_iterator ttL1Cell_E(m_idTTL1CellMap.end());
-		if (ttL1Cell != ttL1Cell_E) {
-		    hadBadCalo = (ttL1Cell->second)->qualTower();
+		IdTileQualityMapType::const_iterator qiter(m_idTileQualityMap.find(hadIdent));
+		if (qiter != m_idTileQualityMap.end()) {
+		    hadBadCalo = qiter->second;
 		}
         }
     
     if(emBadCalo || hadBadCalo) m_histTool->fillPPMHadEtaVsPhi(m_h_TrigTower_jetBadCalo,ttEta,ttPhi,(double)(emBadCalo+hadBadCalo));
     if(emDisabled || hadDisabled) m_histTool->fillPPMHadEtaVsPhi(m_h_TrigTower_jetDeadChannel,ttEta,ttPhi,(double)(emDisabled+hadDisabled));
   }
-  m_idTTL1CellMap.clear();
+  m_idTileQualityMap.clear();
   
   return StatusCode::SUCCESS;
 }
@@ -1186,22 +1205,6 @@ unsigned int JetEfficienciesMonTool::nPrimaryVertex(){
 }  
 
 //------------------------------------------------------------------------------------
- // Adjust entries in TileTTL1Cell container to a more suitable format
-//------------------------------------------------------------------------------------
-void JetEfficienciesMonTool::preCacheTTL1Cell(const TileTTL1CellContainer* cont) {
-  if(!cont) return;
-
-  TileTTL1CellContainer::const_iterator it(cont->begin());
-  TileTTL1CellContainer::const_iterator itE(cont->end());
-
-  m_idTTL1CellMap.clear();
-
-  for(;it != itE; ++it) {
-    m_idTTL1CellMap.insert(IdTTL1CellMapType::value_type((*it)->TTL1_ID(), *it));
-  }
-}
-
-//------------------------------------------------------------------------------------
 // Load important containers
 //------------------------------------------------------------------------------------
 StatusCode JetEfficienciesMonTool::loadContainers() {
@@ -1240,4 +1243,114 @@ StatusCode JetEfficienciesMonTool::loadContainers() {
 	}
 
 	return sc;
+}
+
+//------------------------------------------------------------------------------------
+// Map Tile quality.  Adapted from TileRecAlgs/TileCellToTTL1 to avoid running on every event.
+//------------------------------------------------------------------------------------
+StatusCode JetEfficienciesMonTool::mapTileQuality() {
+
+  // -------------------------------------------------
+  // Load the TileCell container
+  // -------------------------------------------------
+
+  const CaloCellContainer* cellcoll = 0;
+  StatusCode sc = evtStore()->retrieve(cellcoll, m_caloCellContainerLocation) ; 
+  if(sc.isFailure()) {
+    msg(MSG::WARNING) <<"Unable to retrieve Cell container: "<< m_caloCellContainerLocation <<endreq; 
+    return sc;
+  }
+
+  // -------------------------------------------------
+  // Create intermediate arrays
+  // -------------------------------------------------
+
+  int ttNpmt[32][64];       // array of TT occupancy
+  Identifier ttId[32][64];  // array of TT identifiers
+  uint16_t ttStatusCells[32][64];   // array of TT status of cells
+  uint16_t ttStatusChans[32][64];   // array of TT status of channels
+
+  // clear the arrays
+  for(int i=0; i<32; i++){
+    for(int j=0;j<64; j++){
+      ttNpmt[i][j] = 0;
+      ttId[i][j] = 0;
+      ttStatusCells[i][j] = 0;
+      ttStatusChans[i][j] = 0;
+    }
+  }
+
+  // -------------------------------------------------
+  // Loop over all cells
+  // -------------------------------------------------
+
+  CaloCellContainer::const_iterator f_cell = cellcoll->begin();
+  CaloCellContainer::const_iterator l_cell = cellcoll->end();
+  for ( ; f_cell!=l_cell; ++f_cell) {
+    const CaloCell* cell = (*f_cell); 
+
+    // keep only cells from TileCal calorimeter barrel or extended barrel
+    Identifier cell_id = cell->ID();
+    if(!(m_tileID->is_tile(cell_id)) ) continue; 
+    
+    const TileCell* tilecell = dynamic_cast<const TileCell*> (cell);
+    if (!tilecell) continue;
+
+    int bad_cell = tilecell->badcell();
+    int bad_chan[2];
+    bad_chan[0] = tilecell->badch1(); bad_chan[1] = tilecell->badch2();
+
+    // In order to make sure that the D-cells are correctly added
+    // across two towers. Loop over the two PMTs in each cell
+
+    for(int ipmt=0; ipmt<2;  ipmt++){
+      Identifier pmt_id = m_tileID->pmt_id(cell_id, ipmt);
+      Identifier tt_id = m_tileCablingService->pmt2tt_id(pmt_id);
+
+      // remove the E-cells
+      int sample = m_tileID->sample(pmt_id);
+      if(sample == TileID::SAMP_E) continue;
+
+      // if in the negative eta region add 16 to the ieta offset arrays
+      int eta_offset = 0;
+      if(m_tileID->is_negative(pmt_id)) eta_offset = 16;
+
+      // the D0 cell is not being split correctly across cells
+      int ieta = m_TT_ID->eta(tt_id);
+      if(sample == TileID::SAMP_D && ieta == 0 && ipmt == 1) eta_offset = 16;
+      
+      ieta += eta_offset;
+      int iphi = m_TT_ID->phi(tt_id);
+
+      if ( ttNpmt[ieta][iphi] > 0) { 
+	ttNpmt[ieta][iphi]++;
+	ttStatusCells[ieta][iphi] += (uint16_t) bad_cell;
+	ttStatusChans[ieta][iphi] += (uint16_t) bad_chan[ipmt] ;
+      } else { 
+	ttId[ieta][iphi] = tt_id;
+	ttNpmt[ieta][iphi]++;
+	ttStatusCells[ieta][iphi] = (uint16_t) bad_cell;
+	ttStatusChans[ieta][iphi] = (uint16_t) bad_chan[ipmt];
+      }
+
+    } // end of loop over pmts in the cell
+  } // end loop over cells
+
+  for(int ieta=0; ieta<32; ieta++) {
+    for(int iphi=0; iphi<64; iphi++) {
+
+      // don't load towers that are empty
+      if(ttNpmt[ieta][iphi] == 0) continue;
+
+      uint16_t qual = 0;
+      if(ttStatusChans[ieta][iphi] == ttNpmt[ieta][iphi]) qual += TileTTL1Cell::MASK_BADTOWER;
+      if(ttStatusCells[ieta][iphi] > 0) qual += TileTTL1Cell::MASK_BADCELL;
+      if(ttStatusChans[ieta][iphi] > 0) qual += TileTTL1Cell::MASK_BADCHAN;
+
+      if (qual != 0) m_idTileQualityMap[ttId[ieta][iphi]] = qual;
+
+    }
+  } 
+
+  return StatusCode::SUCCESS;
 }

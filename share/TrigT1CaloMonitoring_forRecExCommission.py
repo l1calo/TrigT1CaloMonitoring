@@ -285,8 +285,6 @@ if l1caloRawMon or l1caloESDMon:
                                                               )
             ToolSvc += L1JetEfficienciesMonTool
             L1CaloMan.AthenaMonTools += [ L1JetEfficienciesMonTool ]
-            from TileRecAlgs.TileRecAlgsConf import TileCellToTTL1
-            topSequence += TileCellToTTL1()
             if not hasattr( ToolSvc, "TrigDecisionTool" ):
                 from TrigDecisionTool.TrigDecisionToolConf import Trig__TrigDecisionTool
                 tdt = Trig__TrigDecisionTool('TrigDecisionTool')

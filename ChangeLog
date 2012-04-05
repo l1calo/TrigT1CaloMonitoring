@@ -1,3 +1,8 @@
+2012-04-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-11-05
+        * Avoid running TileCellToTTL1 on all events when we
+        * only need it for the first one.
+
 2012-04-04  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-11-04
         * Eliminate need for L1CaloOfflineTriggerTowerTools.
