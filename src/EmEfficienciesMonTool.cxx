@@ -134,17 +134,11 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
 		m_h_ClusterRaw_Et_bitcheck[i] = 0;
 		m_h_ClusterRaw_Et_bitcheck_Eff[i] = 0;
 		m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[i] = 0;
-		//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[i] = 0;
 		m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[i] = 0;
-		//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = 0;
 		m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[i] = 0;
-		//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[i] = 0;
 		m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[i] = 0;
-		//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = 0;
 		m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[i] = 0;
-		//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i] = 0;
 		m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[i] = 0;
-		//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = 0;
 	}
 }
 
@@ -259,9 +253,9 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 
 		m_histTool->setMonGroup(&monEmDead);
 
-		m_h_TrigTower_emDeadChannel = m_histTool->book2F("TrigTower_emDeadChannel", "EM Trigger Towers with dead channels - #eta V #phi;#eta^{Raw} Cluster;#phi^{Raw} Cluster", 50, -2.5, 2.5, 64, -M_PI, M_PI);
+		m_h_TrigTower_emDeadChannel = m_histTool->bookCPMEtaVsPhi("TrigTower_emDeadChannel", "EM Trigger Towers with dead channels - #eta V #phi");
 
-		m_h_TrigTower_emBadCalo = m_histTool->book2F("TrigTower_emBadCalo", "EM Trigger Towers affected by Missing FEBs - #eta V #phi;#eta^{Raw} Cluster;#phi^{Raw} Cluster", 50, -2.5, 2.5, 64, -M_PI, M_PI);
+		m_h_TrigTower_emBadCalo = m_histTool->bookCPMEtaVsPhi("TrigTower_emBadCalo", "EM Trigger Towers affected by Missing FEBs - #eta V #phi");
 
 		//Raw Cluster Histograms
 
@@ -300,32 +294,23 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_10GeV_Eta_vs_Phi_trig_" + thrNum[i];
-			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
-
-			//name = "ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV)";
+			m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[i] = m_histTool->bookCPMEtaVsPhi(name, title);
 		    } else m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[i] = 0;
 		}
 
 		m_histTool->setMonGroup(&monClusterRaw10GeVDen);
 
-		m_h_ClusterRaw_10GeV_Eta_vs_Phi = m_histTool->book2F("ClusterRaw_10GeV_Eta_vs_Phi",
-				"Raw Cluster #eta against #phi (E_{T}^{raw} > 10 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster",
-				50, -2.5, 2.5, 64, -M_PI, M_PI);
+		m_h_ClusterRaw_10GeV_Eta_vs_Phi = m_histTool->bookCPMEtaVsPhi("ClusterRaw_10GeV_Eta_vs_Phi",
+   				                             "Raw Cluster #eta against #phi (E_{T}^{raw} > 10 GeV)");
 
 		m_histTool->setMonGroup(&monClusterRaw10GeVEff);
 
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff_" + thrNum[i];
-			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
-
-			//name = "ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 10 GeV) Efficiency (%)";
+			m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->bookCPMEtaVsPhi(name, title);
 		    } else m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[i] = 0;
 		}
 
@@ -335,32 +320,23 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_20GeV_Eta_vs_Phi_trig_" + thrNum[i];
-			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
-
-			//name = "ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV)";
+			m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[i] = m_histTool->bookCPMEtaVsPhi(name, title);
 		    } else m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[i] = 0;
 		}
 
 		m_histTool->setMonGroup(&monClusterRaw20GeVDen);
 
-		m_h_ClusterRaw_20GeV_Eta_vs_Phi	= m_histTool->book2F("ClusterRaw_20GeV_Eta_vs_Phi", 
-				"Raw Cluster #eta against #phi (E_{T}^{raw} > 20 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster", 
-				50, -2.5, 2.5, 64, -M_PI, M_PI);
+		m_h_ClusterRaw_20GeV_Eta_vs_Phi	= m_histTool->bookCPMEtaVsPhi("ClusterRaw_20GeV_Eta_vs_Phi", 
+				                             "Raw Cluster #eta against #phi (E_{T}^{raw} > 20 GeV)");
 
 		m_histTool->setMonGroup(&monClusterRaw20GeVEff);
 
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff_" + thrNum[i];
-			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
-
-			//name = "ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 20 GeV) Efficiency (%)";
+			m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->bookCPMEtaVsPhi(name, title);
 		    } else m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[i] = 0;
 		}
 
@@ -370,32 +346,23 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_30GeV_Eta_vs_Phi_trig_" + thrNum[i];
-			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i]	+ " with E_{T}^{raw} > 30 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
-
-			//name = "ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i]	+ " with E_{T}^{raw} > 30 GeV)";
+			m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[i] = m_histTool->bookCPMEtaVsPhi(name, title);
 		    } else m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[i] = 0;
 		}
 
 		m_histTool->setMonGroup(&monClusterRaw30GeVDen);
 
-		m_h_ClusterRaw_30GeV_Eta_vs_Phi = m_histTool->book2F("ClusterRaw_30GeV_Eta_vs_Phi",
-				"Raw Cluster #eta V #phi (E_{T}^{raw} > 30 GeV);#eta^{Raw} Cluster;#phi^{Raw} Cluster",
-				50, -2.5, 2.5, 64, -M_PI, M_PI);
+		m_h_ClusterRaw_30GeV_Eta_vs_Phi = m_histTool->bookCPMEtaVsPhi("ClusterRaw_30GeV_Eta_vs_Phi",
+				                                     "Raw Cluster #eta V #phi (E_{T}^{raw} > 30 GeV)");
 
 		m_histTool->setMonGroup(&monClusterRaw30GeVEff);
 
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff_" + thrNum[i];
-			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) Efficiency (%);#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->book2F(name, title, 50, -2.5, 2.5, 64, -M_PI, M_PI);
-
-			//name = "ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff_" + thrNum[i];
-			//title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) Efficiency (%) - Bad Calo and Dead Channel Towers excluded;#eta^{Raw} Cluster;#phi^{Raw} Cluster";
-			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i] = m_histTool->book2F(name,title,50,-2.5,2.5,64,-M_PI,M_PI);
+			title = "Raw Cluster #eta V #phi (Triggered on " + emL1t[i] + " with E_{T}^{raw} > 30 GeV) Efficiency (%)";
+			m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[i] = m_histTool->bookCPMEtaVsPhi(name, title);
 		    } else m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[i] = 0;
 		}
 
@@ -536,21 +503,12 @@ StatusCode EmEfficienciesMonTool::procHistograms(bool isEndOfEventsBlock,
 			m_histTool->efficienciesForMerge(m_h_ClusterRaw_10GeV_Eta_vs_Phi,
 					m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[i],
 					m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig_Eff[i]);
-			//m_histTool->efficienciesForMerge(m_h_ClusterRaw_10GeV_Eta_vs_Phi,
-			//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[i],
-			//m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
 			m_histTool->efficienciesForMerge(m_h_ClusterRaw_20GeV_Eta_vs_Phi,
 					m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[i],
 					m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig_Eff[i]);
-			//m_histTool->efficienciesForMerge(m_h_ClusterRaw_20GeV_Eta_vs_Phi,
-			//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[i],
-			//m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
 			m_histTool->efficienciesForMerge(m_h_ClusterRaw_30GeV_Eta_vs_Phi,
 					m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[i],
 					m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig_Eff[i]);
-			//m_histTool->efficienciesForMerge(m_h_ClusterRaw_30GeV_Eta_vs_Phi,
-			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[i],
-			//m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig_Eff[i]);
 		}
 
 	}
@@ -575,6 +533,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 	// Create variables for electron properties
 	double etaOE = 0.0, phiOE = 0.0, /*EtOE = 0.0, EtCE = 0.0,*/phiCE = 0.0, etaCE = 0.0;
 	double EtCEraw = 0.0, phiCEraw = 0.0, etaCEraw = 0.0/*, calRawRatio = 0.0*/;
+	double phiCErawL1 = 0.0;
 	// Create variable to determine if selecting the right type of electrons based on criteria in jO
 	bool correctType;
 
@@ -597,6 +556,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 		EtCEraw = rawValues.at(0);
 		etaCEraw = rawValues.at(1);
 		phiCEraw = rawValues.at(2);
+		phiCErawL1 = (phiCEraw < 0.) ? phiCEraw + 2.*M_PI : phiCEraw;
 		//----------------------------------------------------------------------
 		//calRawRatio = (EtCEraw > 0.0) ? EtCE/EtCEraw : -1;
 
@@ -649,13 +609,13 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 						m_h_ClusterRaw_Et_gdEta->Fill(EtCEraw);
 
 						if (EtCEraw > 10) {
-							m_h_ClusterRaw_10GeV_Eta_vs_Phi->Fill(etaCEraw, phiCEraw);
+							m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_10GeV_Eta_vs_Phi, etaCEraw, phiCErawL1);
 						}
 						if (EtCEraw > 20) {
-							m_h_ClusterRaw_20GeV_Eta_vs_Phi->Fill(etaCEraw, phiCEraw);
+							m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_20GeV_Eta_vs_Phi, etaCEraw, phiCErawL1);
 						}
 						if (EtCEraw > 30) {
-							m_h_ClusterRaw_30GeV_Eta_vs_Phi->Fill(etaCEraw, phiCEraw);
+							m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_30GeV_Eta_vs_Phi, etaCEraw, phiCErawL1);
 						}
 					}
 				}
@@ -781,19 +741,15 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 									if (emType(k) && ((ROIWord >> k) & 1)) {
 										m_h_ClusterRaw_Et_bitcheck[k]->Fill(EtCEraw);
 
-										//bool deadBadTower = emObjInDeadBadTower(etaCEraw,phiCEraw);
 										if (EtCEraw > 10) {
-											m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[k]->Fill(etaCEraw, phiCEraw);
-											//if(deadBadTower == false) { m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCEraw,phiCEraw); }
+											m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[k], etaCEraw, phiCErawL1);
 
 										}
 										if (EtCEraw > 20) {
-											m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[k]->Fill(etaCEraw, phiCEraw);
-											//if(deadBadTower == false) { m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCEraw,phiCEraw); }
+											m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[k], etaCEraw, phiCErawL1);
 										}
 										if (EtCEraw > 30) {
-											m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[k]->Fill(etaCEraw, phiCEraw);
-											//if(deadBadTower == false) { m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCEraw,phiCEraw); }
+											m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[k], etaCEraw, phiCErawL1);
 										}
 									}
 								}
@@ -821,6 +777,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 	// Variables for accessing properties of recosntructed photons
 	double etaOP = 0.0, phiOP = 0.0, /*EtOP = 0.0, EtCP = 0.0,*/etaCP = 0.0, phiCP = 0.0;
 	double EtCPraw = 0.0, etaCPraw = 0.0, phiCPraw = 0.0/*, calRawRatio = 0.0*/;
+	double phiCPrawL1 = 0.0;
 	// Variable to check if photon is of the right type as defined in the jobOptions
 	bool correctType;
 
@@ -842,6 +799,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 		EtCPraw = rawValues.at(0);
 		etaCPraw = rawValues.at(1);
 		phiCPraw = rawValues.at(2);
+		phiCPrawL1 = (phiCPraw < 0.) ? phiCPraw + 2.*M_PI : phiCPraw;
 		//----------------------------------------------------------------------	
 		//calRawRatio = (EtCPraw > 0.0) ? EtCP/EtCPraw : -1;
 
@@ -899,13 +857,13 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 						m_h_ClusterRaw_Et_gdEta->Fill(EtCPraw);
 
 						if (EtCPraw > 10) {
-							m_h_ClusterRaw_10GeV_Eta_vs_Phi->Fill(etaCPraw, phiCPraw);
+							m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_10GeV_Eta_vs_Phi, etaCPraw, phiCPrawL1);
 						}
 						if (EtCPraw > 20) {
-							m_h_ClusterRaw_20GeV_Eta_vs_Phi->Fill(etaCPraw, phiCPraw);
+							m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_20GeV_Eta_vs_Phi, etaCPraw, phiCPrawL1);
 						}
 						if (EtCPraw > 30) {
-							m_h_ClusterRaw_30GeV_Eta_vs_Phi->Fill(etaCPraw, phiCPraw);
+							m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_30GeV_Eta_vs_Phi, etaCPraw, phiCPrawL1);
 						}
 					}
 				}
@@ -1028,18 +986,14 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 									if (emType(k) && ((ROIWord >> k) & 1)) {
 										m_h_ClusterRaw_Et_bitcheck[k]->Fill(EtCPraw);
 
-										//bool deadBadTower = emObjInDeadBadTower(etaCPraw,phiCPraw);
 										if (EtCPraw > 10) {
-											m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[k]->Fill(etaCPraw, phiCPraw);
-											//if(deadBadTower == false) { m_h_ClusterRaw_10GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCPraw,phiCPraw); }
+											m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[k], etaCPraw, phiCPrawL1);
 										}
 										if (EtCPraw > 20) {
-											m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[k]->Fill(etaCPraw, phiCPraw);
-											//if(deadBadTower == false) { m_h_ClusterRaw_20GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCPraw,phiCPraw); }
+											m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[k], etaCPraw, phiCPrawL1);
 										}
 										if (EtCPraw > 30) {
-											m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[k]->Fill(etaCPraw, phiCPraw);
-											//if(deadBadTower == false) { m_h_ClusterRaw_30GeV_Eta_vs_Phi_noDeadBad_trig[k]->Fill(etaCPraw,phiCPraw); }
+											m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_30GeV_Eta_vs_Phi_trig[k], etaCPraw, phiCPrawL1);
 										}
 									}
 								}
@@ -1518,7 +1472,6 @@ StatusCode EmEfficienciesMonTool::triggerTowerAnalysis() {
 		// Get the values of eta and phi for the trigger towers
 		double ttEta = (*ttItr)->eta();
 		double ttPhi = (*ttItr)->phi();
-		double tempTtPhi = (ttPhi > M_PI) ? ttPhi - (2 * M_PI) : ttPhi;
 		const L1CaloCoolChannelId emCoolId(m_ttTool->channelID(ttEta, ttPhi, 0));
 		const Identifier emIdent(m_ttTool->identifier(ttEta, ttPhi, 0));
 
@@ -1531,10 +1484,10 @@ StatusCode EmEfficienciesMonTool::triggerTowerAnalysis() {
                 }
 
 		if (m_larEnergy->hasMissingFEB(emIdent)) {
-			m_h_TrigTower_emBadCalo->Fill(ttEta, tempTtPhi);
+			m_histTool->fillCPMEtaVsPhi(m_h_TrigTower_emBadCalo, ttEta, ttPhi);
 		}
 		if (emDead) {
-			m_h_TrigTower_emDeadChannel->Fill(ttEta, tempTtPhi);
+			m_histTool->fillCPMEtaVsPhi(m_h_TrigTower_emDeadChannel, ttEta, ttPhi);
 		}
 	}
 	return StatusCode::SUCCESS;

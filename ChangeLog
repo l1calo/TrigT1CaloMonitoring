@@ -1,3 +1,8 @@
+2012-04-18  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-11-06
+        * Change eta/phi plots in EmEfficienciesMonTool to use
+        * L1Calo phi range (0-2PI).
+
 2012-04-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-11-05
         * Avoid running TileCellToTTL1 on all events when we
