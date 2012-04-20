@@ -43,7 +43,7 @@ if l1caloRawMon or l1caloESDMon:
     if LVL1CaloMonFlags.doPPrStabilityMon():
     
         #=================================================================================
-        #  Want PPrStabilityMon to run alone
+        #  Want Full PPrStabilityMon to run alone
         #=================================================================================
     
         if l1caloESDMon:
@@ -62,6 +62,25 @@ if l1caloRawMon or l1caloESDMon:
             L1CaloMan.AthenaMonTools += [ L1PPrStabilityMonTool ]
     
     else:
+    
+        if l1caloESDMon and (globalflags.DataSource() == "data" and Offline
+                             and rec.triggerStream() == "JetTauEtmiss"):
+    
+            #=================================================================================
+            #============== PPrStabilityMon without individual channel plots =================
+            #=================================================================================
+            from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrStabilityMon
+            L1PPrStabilityMonTool = PPrStabilityMon(
+                name = "L1PPrStabilityMonTool",
+                BS_TriggerTowerContainer = "TriggerTowers",
+                ppmADCMinValue = 60,
+                lumiMax = 2000,
+                fineTimeCut = 20,
+                PathInRootFile = "L1Calo/PPM/Stability",
+                #OutputLevel = DEBUG
+                )
+            ToolSvc += L1PPrStabilityMonTool
+            L1CaloMan.AthenaMonTools += [ L1PPrStabilityMonTool ]
     
         if l1caloESDMon:
     
