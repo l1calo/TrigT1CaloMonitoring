@@ -178,7 +178,6 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   MonGroup monEvent ( this, dir + "/MismatchEventNumbers", expert, run, "", "eventSample" );
   std::string dirPed (m_rootDir + "/PPM/ADC/Pedestal");
   MonGroup monPed ( this, dirPed, expert, run);
-  MonGroup monPedrms ( this, dirPed, expert, run, "", "mergeRMS");
 
   // LUT
 
@@ -216,16 +215,10 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_h_ppm_em_2d_etaPhi_tt_ped_runavg = m_histTool->bookProfilePPMEmEtaVsPhi(
     "ppm_em_2d_etaPhi_tt_ped_runavg",
     "PPM Mean Pedestal Difference EM (over run)");
-  // The mergeRMS method only works if the parent profile has "s" option.
-  // (and even then with an inaccuracy of up to 3% per merge)
-  m_h_ppm_em_2d_etaPhi_tt_ped_runavg->SetErrorOption("s");
   m_h_ppm_had_2d_etaPhi_tt_ped_runavg = m_histTool->bookProfilePPMHadEtaVsPhi(
     "ppm_had_2d_etaPhi_tt_ped_runavg",
     "PPM Mean Pedestal Difference Had (over run)");
-  m_h_ppm_had_2d_etaPhi_tt_ped_runavg->SetErrorOption("s");
   
-  m_histTool->setMonGroup(&monPedrms);
-
   m_h_ppm_em_2d_etaPhi_tt_ped_runrms = m_histTool->bookPPMEmEtaVsPhi(
     "ppm_em_2d_etaPhi_tt_ped_runrms",
     "PPM rms Pedestal Difference EM (over run)");
@@ -247,13 +240,9 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
     m_h_ppm_em_2d_etaPhi_tt_ped_instavg = m_histTool->bookProfilePPMEmEtaVsPhi(
       "ppm_em_2d_etaPhi_tt_ped_instavg",
       "PPM Mean Pedestal Difference EM (instantaneous)");
-    m_h_ppm_em_2d_etaPhi_tt_ped_instavg->SetErrorOption("s");
     m_h_ppm_had_2d_etaPhi_tt_ped_instavg = m_histTool->bookProfilePPMHadEtaVsPhi(
       "ppm_had_2d_etaPhi_tt_ped_instavg",
       "PPM Mean Pedestal Difference Had (instantaneous)");
-    m_h_ppm_had_2d_etaPhi_tt_ped_instavg->SetErrorOption("s");
-    
-    m_histTool->setMonGroup(&monPedrms);
 
     m_h_ppm_em_2d_etaPhi_tt_ped_instrms = m_histTool->bookPPMEmEtaVsPhi(
       "ppm_em_2d_etaPhi_tt_ped_instrms",
@@ -267,11 +256,9 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
     m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B = m_histTool->bookProfilePPMEmEtaVsPhi(
       "ppm_em_2d_etaPhi_tt_ped_instavg_B",
       "PPM Mean Pedestal Difference EM (instantaneous [B])");
-    m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B->SetErrorOption("s");
     m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B = m_histTool->bookProfilePPMHadEtaVsPhi(
       "ppm_had_2d_etaPhi_tt_ped_instavg_B",
       "PPM Mean Pedestal Difference Had (instantaneous [B])");
-    m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B->SetErrorOption("s");
    
     m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B = m_histTool->bookPPMEmEtaVsPhi(
       "ppm_em_2d_etaPhi_tt_ped_instrms_B",
@@ -414,30 +401,6 @@ StatusCode PPMSimBSMon::procHistograms(bool isEndOfEventsBlock,
       LWHist::safeDelete(m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B);
       LWHist::safeDelete(m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B);
 
-    } else {
-
-      double entries = 0.;
-      double val = 0.;
-      double rms = 0.;
-      double err = 0.;
-      int nbinsX = m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetNbinsX();
-      int nbinsY = m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetNbinsY();
-      for (int binx = 1; binx <= nbinsX; ++binx) {
-        for (int biny = 1; biny <= nbinsY; ++biny) {
-	  m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
-	                                                             val, rms);
-	  err = (entries != 0.) ? rms/sqrt(2.*entries) : 0.;
-	  m_h_ppm_em_2d_etaPhi_tt_ped_runrms->SetBinContentAndError(
-	                                                 binx, biny, rms, err);
-	  m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetBinInfo(binx, biny, entries,
-	                                                             val, rms);
-	  err = (entries != 0.) ? rms/sqrt(2.*entries) : 0.;
-	  m_h_ppm_had_2d_etaPhi_tt_ped_runrms->SetBinContentAndError(
-	                                                 binx, biny, rms, err);
-        }
-      }
-      m_h_ppm_em_2d_etaPhi_tt_ped_runrms->SetEntries(m_h_ppm_em_2d_etaPhi_tt_ped_runavg->GetEntries());
-      m_h_ppm_had_2d_etaPhi_tt_ped_runrms->SetEntries(m_h_ppm_had_2d_etaPhi_tt_ped_runavg->GetEntries());
     }
   }
 
@@ -593,6 +556,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 	  m_histTool->fillPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_runavg,
 	                          eta, phi, ((tt->emADC()).at(i)-em_offset));
 
+          // On Tier0 runrms hists are filled in post-processing
 	  if (m_environment == AthenaMonManager::online || m_onlineTest) {
 	    m_histTool->fillPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_ped_instavg,
 	                          eta, phi, ((tt->emADC()).at(i)-em_offset));
