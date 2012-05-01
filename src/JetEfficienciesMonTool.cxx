@@ -633,12 +633,20 @@ StatusCode JetEfficienciesMonTool::procHistograms(bool isEndOfEventsBlock,
  // The check to see if an object is triggered w.r.t. a RoI
  // It can be done in two ways so allow it to handle either one
 //------------------------------------------------------------------
-bool JetEfficienciesMonTool::deltaMatch(double etaJet, double dR, double dPhi, bool isForward) {
+bool JetEfficienciesMonTool::deltaMatch(double etaJet, double etaRoi, double dR, double dPhi, bool isForward) {
 	
 	// If within Tile & HEC then use delta R matching
 	// if within FCAL then use delta Phi matching
 
 	double fabsEtaJet = fabs(etaJet); 
+	
+	bool etaJetPos = false;
+	if(etaJet >= 0.0) { etaJetPos = true; } else { etaJetPos = false; }
+	bool etaRoiPos = false;
+	if(etaRoi >= 0.0) { etaRoiPos = true; } else { etaRoiPos = false; }
+	
+	bool etaRoiSameSideMatch = false;
+	if(etaJetPos == etaRoiPos) { etaRoiSameSideMatch = true; } 
 	
 	if(fabsEtaJet < 2.899) { //within Tile&Hec
 		if(dR < m_goodHadDeltaRMatch_Cut) {
@@ -647,13 +655,13 @@ bool JetEfficienciesMonTool::deltaMatch(double etaJet, double dR, double dPhi, b
 			return false;
 		}
 	} else if(fabsEtaJet >= 2.899 && fabsEtaJet < 3.2) { //end of HEC so use combined matching between central & forward regions
-		if((dR < m_goodHadDeltaRMatch_Cut && !isForward) || (dPhi < m_goodHadDeltaPhiMatch_Cut && isForward)) {
+		if((dR < m_goodHadDeltaRMatch_Cut && !isForward) || (dPhi < m_goodHadDeltaPhiMatch_Cut && isForward && etaRoiSameSideMatch )) {
 			return true;
 		} else {
 			return false;
 		}
 	} else { //within FCAL (3.2 to 4.9)
-		if(dPhi < m_goodHadDeltaPhiMatch_Cut) {
+		if(dPhi < m_goodHadDeltaPhiMatch_Cut && etaRoiSameSideMatch ) {
 			return true;
 		} else {
 			return false;
@@ -796,6 +804,7 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 				//Set up useful numbers to keep track of RoI information
 				double etaROI = 0.0, phiROI = 0.0, phiROI_L1C = 0.0;
 				double dEta = 0.0, dPhi = 0.0, dR = 1000, temp_dR = 0.0;
+				double bestEtaROI = 0.0;
 				double bestDeltaPhi = 0.0;
 				uint32_t ROIWord = 0;
 				bool isForward = false, bestIsForward = false;
@@ -828,6 +837,7 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 					if (temp_dR < dR) {
 						
 						//RoI information
+						bestEtaROI = etaROI;
 						ROIWord = (*roiItr).getROIWord();
 
 						bestDeltaPhi = dPhi;
@@ -843,7 +853,7 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 				if (dR != 1000) {
 					
 					//Check if jet and RoI matched to a very good level (less than cut) - default now 0.2
-					if(deltaMatch(etaOJ, dR, bestDeltaPhi, bestIsForward)) {
+					if(deltaMatch(etaOJ, bestEtaROI, dR, bestDeltaPhi, bestIsForward)) {
 						
 						m_numOffJetsTriggered++;
 						

@@ -1,4 +1,8 @@
 2012-05-01  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-11-10
+        * Fix to JetEfficienciesMonTool from Hardeep.
+
+2012-05-01  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-11-09
         * JobOptions update.
 

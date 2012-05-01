@@ -71,7 +71,7 @@ private:
   //----------------------------------
   double l1caloPhi(const double atlasPhi) const;
 
-  bool deltaMatch(double etaJet, double dR, double dPhi, bool fRoi);
+  bool deltaMatch(double etaJet, double etaRoi, double dR, double dPhi, bool fRoi);
   double correctDeltaPhi(double dPhi);
   double calcDeltaR(double eta1, double phi1, double eta2, double phi2);
 	        
