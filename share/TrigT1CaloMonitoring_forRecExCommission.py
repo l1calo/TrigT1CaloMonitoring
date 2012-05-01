@@ -64,7 +64,7 @@ if l1caloRawMon or l1caloESDMon:
     else:
     
         if l1caloESDMon and (globalflags.DataSource() == "data" and Offline
-                             and rec.triggerStream() == "JetTauEtmiss"):
+                             and rec.triggerStream() == "express"):
     
             #=================================================================================
             #============== PPrStabilityMon without individual channel plots =================
