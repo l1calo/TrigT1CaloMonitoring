@@ -138,6 +138,7 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 	declareProperty("UseEmThresholdsOnly", m_useEmThresholdsOnly = true);
 	declareProperty("JetQualityLevel",m_jetQualityLevel = 30);
 	declareProperty("NtracksAtPrimaryVertex",m_nTracksAtPrimaryVertex = 4);
+	declareProperty("HadCoreVHCut",m_hadCoreVHCut = 1000);  
 
 	for (int i = 0; i < JET_ROI_BITS; ++i) {
 	        m_h_JetEmScale_Et_J_item[i] = 0;
@@ -969,7 +970,7 @@ bool JetEfficienciesMonTool::isolatedJetObjectL1(double phi, double eta) {
     bool isolated = true;
 	double dREm = 10.0, dR_Max = 10.0; 
 	double ET_Max = -10.0;
-	double etaROI = 0.0, phiROI = 0.0, ET_ROI = 0.0;
+	double etaROI = 0.0, phiROI = 0.0, ET_ROI = 0.0, hadCore_ROI = 0.0;
 
 	typedef std::vector<EmTau_ROI>::const_iterator Itr_emTauRoi;
 
@@ -989,11 +990,12 @@ bool JetEfficienciesMonTool::isolatedJetObjectL1(double phi, double eta) {
 		if(emThresholdPassed == true) {			
 			etaROI = (*roiItr).getEta();
 			phiROI = (*roiItr).getPhi();
-			ET_ROI = (*roiItr).getEMClus(); //(*roiItr).getET8x8();			
+			ET_ROI = (*roiItr).getEMClus(); 	
+			hadCore_ROI = (*roiItr).getHadCore();	
 			dREm = calcDeltaR(eta, phi, etaROI, phiROI);
 			
 			//If this energy exceeds the current record then store the details
-			if(ET_ROI > ET_Max) {
+			if(ET_ROI > ET_Max && (!m_passed_EF_SingleEgamma_Trigger_HighestVH || (m_passed_EF_SingleEgamma_Trigger_HighestVH && hadCore_ROI <= m_hadCoreVHCut))) {
 				ET_Max = ET_ROI;
 				dR_Max = dREm;
 			}
@@ -1151,9 +1153,15 @@ StatusCode JetEfficienciesMonTool::triggerChainAnalysis() {
 					m_passed_EF_MultiJet_Trigger = true;
 				}
 				//Find Event Filter chains corresponding to single electrons or photons
-				if (((*it).find("EF_e") != std::string::npos || (*it).find("EF_eb") == std::string::npos) ||
+				if (((*it).find("EF_e") != std::string::npos && (*it).find("EF_eb") == std::string::npos && (*it).find("EF_j") == std::string::npos) ||
 					(*it).find("EF_g") != std::string::npos) {					
 					m_passed_EF_SingleEgamma_Trigger = true;
+					vhCheck = (*it).substr(4, 6);					
+					int threshVal = atoi(vhCheck.c_str());
+					if(threshVal > maxTV) {
+						maxTV = threshVal;
+						m_passed_EF_SingleEgamma_Trigger_HighestVH = (vhCheck.find("vh") != std::string::npos) ? true : false;
+					}
 				}
 				//Find Event Filter chains corresponding to multiple electrons or photons
 				if ((*it).find("EF_2e") != std::string::npos || 

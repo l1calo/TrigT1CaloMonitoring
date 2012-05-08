@@ -146,6 +146,7 @@ private:
   bool m_passed_EF_Trigger;
   bool m_passed_EF_SingleJet_Trigger;
   bool m_passed_EF_SingleEgamma_Trigger;
+  bool m_passed_EF_SingleEgamma_Trigger_HighestVH;
   bool m_passed_EF_MultiJet_Trigger;
   bool m_passed_EF_MultiEgamma_Trigger;
   bool m_passed_EF_Tau_Trigger;
@@ -157,6 +158,7 @@ private:
   double m_goodEMDeltaRMatch_Cut;
   double m_goodHadDeltaRMatch_Cut;
   double m_goodHadDeltaPhiMatch_Cut;
+  double m_hadCoreVHCut;
   int m_jetQualityLevel;
 
   bool m_useTrigger;
