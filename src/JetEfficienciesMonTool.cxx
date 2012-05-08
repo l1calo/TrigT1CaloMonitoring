@@ -89,6 +89,7 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 			m_passed_EF_Trigger(false),
 			m_passed_EF_SingleJet_Trigger(false),
 			m_passed_EF_SingleEgamma_Trigger(false),
+			m_passed_EF_SingleEgamma_Trigger_HighestVH(false),
 			m_passed_EF_MultiJet_Trigger(false),
 			m_passed_EF_MultiEgamma_Trigger(false),
 			m_passed_EF_Tau_Trigger(false), 
@@ -1104,9 +1105,13 @@ StatusCode JetEfficienciesMonTool::triggerChainAnalysis() {
 	m_passed_EF_SingleJet_Trigger = false;
 	m_passed_EF_MultiJet_Trigger = false;
 	m_passed_EF_SingleEgamma_Trigger = false;
+	m_passed_EF_SingleEgamma_Trigger_HighestVH = false;
 	m_passed_EF_MultiEgamma_Trigger = false;
 	m_passed_EF_Tau_Trigger = false;
 	m_passed_EF_MissingEnergy_Trigger = false;
+
+	std::string vhCheck;
+	int maxTV = 0;
 	
 	// Get the list of all triggers but do this only once in the event loop
 	if (m_configuredChains.size() == 0) {
