@@ -1,4 +1,8 @@
 2012-05-08  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-11-12
+        * Fix initialisation errors.
+
+2012-05-08  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-11-11
         * Another fix from Hardeep.
 
