@@ -1,3 +1,7 @@
+2012-05-15  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-11-14
+        * Fix Savannah bug #94614 - two typos in EmEfficienciesMonTool.
+
 2012-05-14  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-11-13
         * Change cut to improve statistics in EM efficiency plots.
