@@ -671,7 +671,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 						//Calculate delta R
 						tempRmin = sqrt(dEta * dEta + dPhi * dPhi);
 						tempRminClus = sqrt(dEtaClus * dEtaClus + dPhiClus * dPhiClus);
-						tempRminClRaw = sqrt(dEtaClRaw * dEtaClRaw + dPhiClus * dPhiClRaw);
+						tempRminClRaw = sqrt(dEtaClRaw * dEtaClRaw + dPhiClRaw * dPhiClRaw);
 
 						double tempdR = 0., smallestdRSoFar = 0.;
 						switch (m_deltaRMatchType) {
@@ -917,7 +917,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 						//Calculate deltaR
 						tempRmin = sqrt(dEta * dEta + dPhi * dPhi);
 						tempRminClus = sqrt(dEtaClus * dEtaClus + dPhiClus * dPhiClus);
-						tempRminClRaw = sqrt(dEtaClRaw * dEtaClRaw + dPhiClus * dPhiClRaw);
+						tempRminClRaw = sqrt(dEtaClRaw * dEtaClRaw + dPhiClRaw * dPhiClRaw);
 
 						double tempdR = 0., smallestdRSoFar = 0.;
 						switch (m_deltaRMatchType) {
