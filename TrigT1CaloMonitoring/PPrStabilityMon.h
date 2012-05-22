@@ -3,17 +3,19 @@
 // NAME:        PPrStabilityMon.h
 // PACKAGE:     TrigT1CaloMonitoring
 //
-// Author:      Rohin T Narayan (narayan@physi.uni-heidelberg.de)
+// Author:      Rohin T Narayan (narayan@physik.uni-heidelberg.de)
 //              Universitaet Heidelberg
+//              Patrick Rieck - rieck@physik.hu-berlin.de
 //
 // ********************************************************************
 
 /**
- * This class does online monitoring of "FineTime"
- * for each TriggerTower
+ * This class does online monitoring of entities 
+ * to be defined by the properties declared.
+ * The monitoring is done for each TriggerTower
  * 
- * The class uses Trigger/TrigT1/TrigT1CaloCalibTools/L1CaloPprFineTimePlotManager
- * tool to generate the monitoring histogram.
+ * The class uses the Trigger/TrigT1/TrigT1CaloCalibTools/L1CaloPprPlotManager
+ * tool to generate the monitoring histograms.
  * */
 #ifndef TRIGT1CALOMONITORING_PPRSTABILITYMON_H
 #define TRIGT1CALOMONITORING_PPRSTABILITYMON_H
@@ -37,6 +39,8 @@ class EventInfo;
 class TrigT1CaloMonErrorTool;
 class TrigT1CaloLWHistogramTool;
 class L1CaloPprFineTimePlotManager;
+class L1CaloPprPedestalPlotManager;
+class L1CaloPprEtCorrelationPlotManager;
 
 namespace LVL1 {
   class IL1TriggerTowerTool;
@@ -64,14 +68,24 @@ private:
   // Tool to retrieve bytestream errors
   ToolHandle<TrigT1CaloMonErrorTool>      m_errorTool;
   ToolHandle<TrigT1CaloLWHistogramTool>   m_histTool;
-  ToolHandle<LVL1::IL1TriggerTowerTool>   m_ttTool; 
-  L1CaloPprFineTimePlotManager*           m_plotManager;
+  ToolHandle<LVL1::IL1TriggerTowerTool>   m_ttTool;
+  L1CaloPprFineTimePlotManager*           m_fineTimePlotManager;
+  L1CaloPprPedestalPlotManager*           m_pedestalPlotManager;
+  L1CaloPprEtCorrelationPlotManager*      m_etCorrelationPlotManager;
+  
+  bool m_doFineTimeMonitoring;
+  bool m_doPedestalMonitoring;
+  bool m_doEtCorrelationMonitoring;
 
   std::string m_TriggerTowerContainerName;
   std::string m_PathInRootFile;
 
   const EventInfo* m_evtInfo;
-  unsigned int m_fineTimeCut;
+  double m_fineTimeCut;
+  double m_pedestalMaxWidth;
+  std::string m_caloCellContainerName;
+  double m_EtMinForEtCorrelation;
+  
 };
 
 #endif

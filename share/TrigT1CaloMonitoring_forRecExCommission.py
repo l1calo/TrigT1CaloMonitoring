@@ -40,14 +40,14 @@ if l1caloRawMon or l1caloESDMon:
         include("TrigT1CaloCalibConditions/L1CaloCalibConditionsTier0_jobOptions.py")
     
     from TrigT1CaloMonitoringTools.LVL1CaloMonFlags import LVL1CaloMonFlags
-    if LVL1CaloMonFlags.doPPrStabilityMon():
-    
+    if LVL1CaloMonFlags.doPPrStabilityMon():        
+
         #=================================================================================
         #  Want Full PPrStabilityMon to run alone
         #=================================================================================
-    
+
         if l1caloESDMon:
-    
+            
             from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrStabilityMon
             L1PPrStabilityMonTool = PPrStabilityMon(
                 name = "L1PPrStabilityMonTool",
@@ -83,7 +83,7 @@ if l1caloRawMon or l1caloESDMon:
             L1CaloMan.AthenaMonTools += [ L1PPrStabilityMonTool ]
     
         if l1caloESDMon:
-    
+
             #=================================================================================
             #================================= PPr ===========================================
             #=================================================================================
@@ -105,7 +105,7 @@ if l1caloRawMon or l1caloESDMon:
                 )
             ToolSvc += L1PPrMonTool
             L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
-    
+
         if l1caloESDMon and globalflags.DataSource() == "data":
                 
             from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPMSimBSMon
