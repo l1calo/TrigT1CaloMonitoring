@@ -1,3 +1,11 @@
+2012-05-28  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-12-01
+        * Change back to tight electrons in EmEfficienciesMonTool.
+
+2012-05-22  Patrick Rieck <rieck@physik.hu-berlin.de>
+        * Tag as TrigT1CaloMonitoring-00-12-00
+        * Update of PPrStabilityMon for extended monitoring.
+
 2012-05-15  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-11-14
         * Fix Savannah bug #94614 - two typos in EmEfficienciesMonTool.

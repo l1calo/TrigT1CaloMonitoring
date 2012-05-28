@@ -128,7 +128,7 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
 	declareProperty("deltaRMatchType", m_deltaRMatchType = 1);
 	declareProperty("UseEmThresholdsOnly", m_useEmThresholdsOnly = true);
 	declareProperty("UseEmTransRegionCut", m_useEmTRcut = true);
-	declareProperty("IsEmType", m_isEmType = 30);
+	declareProperty("IsEmType", m_isEmType = 32);
 
 	for (int i = 0; i < ROI_BITS; ++i) {
 		m_h_ClusterRaw_Et_bitcheck[i] = 0;
