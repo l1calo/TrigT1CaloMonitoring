@@ -92,11 +92,15 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
 			m_h_ClusterRaw_Et_gdEta(0), 
 			m_h_ClusterRaw_Et_triggered_gdEta(0),
 			m_h_ClusterRaw_Et_triggered_Eff(0),
+			m_h_ClusterRaw_Et_transR(0),
+			m_h_ClusterRaw_Et_triggered_transR(0),
+			m_h_ClusterRaw_Et_triggered_transR_Eff(0),
 			m_h_ClusterRaw_10GeV_Eta_vs_Phi(0),
 			m_h_ClusterRaw_20GeV_Eta_vs_Phi(0),
 			m_h_ClusterRaw_30GeV_Eta_vs_Phi(0), 
 			m_h_TrigTower_emBadCalo(0),
-			m_h_TrigTower_emDeadChannel(0)
+			m_h_TrigTower_emDeadChannel(0),
+			m_h_LAr_Noisy(0)
 
 /*---------------------------------------------------------*/
 {
@@ -125,10 +129,10 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
 	declareProperty("goodEMDeltaEtaMatch_Cut", m_goodEMDeltaEtaMatch_Cut = 0.2);
 	declareProperty("goodHadDeltaEtaMatch_Cut", m_goodHadDeltaEtaMatch_Cut = 0.3);
 	declareProperty("goodHadDeltaPhiMatch_Cut", m_goodHadDeltaPhiMatch_Cut = 0.3);
-	declareProperty("deltaRMatchType", m_deltaRMatchType = 1);
 	declareProperty("UseEmThresholdsOnly", m_useEmThresholdsOnly = true);
 	declareProperty("UseEmTransRegionCut", m_useEmTRcut = true);
-	declareProperty("IsEmType", m_isEmType = 32);
+	declareProperty("RemoveNoiseBursts", m_removeNoiseBursts = true);
+	declareProperty("IsEmType", m_isEmType = 31);
 
 	for (int i = 0; i < ROI_BITS; ++i) {
 		m_h_ClusterRaw_Et_bitcheck[i] = 0;
@@ -223,6 +227,7 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		std::string dir(m_rootDir + "/Reco/EmEfficiencies");
 
 		MonGroup monEmDead(this, dir + "/DeadOrBadChannels", expert, run, "", "lowerLB");
+		MonGroup monEmNoisy(this, dir + "/DeadOrBadChannels", expert, run);
 		MonGroup monClusterRawNum(this, dir + "/ClusterRaw_Et/numerator", expert, run);
 		MonGroup monClusterRawDen(this, dir + "/ClusterRaw_Et/denominator", expert, run);
 		MonGroup monClusterRawEff(this, dir + "/ClusterRaw_Et", expert, run, "", "perBinEffPerCent");
@@ -257,16 +262,34 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 
 		m_h_TrigTower_emBadCalo = m_histTool->bookCPMEtaVsPhi("TrigTower_emBadCalo", "EM Trigger Towers affected by Missing FEBs - #eta V #phi");
 
+                if (m_removeNoiseBursts) {
+
+		        m_histTool->setMonGroup(&monEmNoisy);
+
+		        m_h_LAr_Noisy = m_histTool->book1F("LAr_emNoisy", "LAr Error Bits in Rejected Events", 6, 0, 6);
+			LWHist::LWHistAxis* axis = m_h_LAr_Noisy->GetXaxis();
+			axis->SetBinLabel(1, "BadFEBs");
+			axis->SetBinLabel(2, "MediumSat");
+			axis->SetBinLabel(3, "TightSat");
+			axis->SetBinLabel(4, "NoiseWindow");
+			axis->SetBinLabel(5, "Corrupt");
+			axis->SetBinLabel(6, "CorruptWindow");
+                }
+
 		//Raw Cluster Histograms
 
 		m_histTool->setMonGroup(&monClusterRawDen);
 
 		m_h_ClusterRaw_Et_gdEta = m_histTool->book1F("ClusterRaw_Et_gdEta", "Raw Cluster E_{T};E_{T}^{Raw} Cluster [GeV];Clusters", 100, 0, 100);
+		
+		m_h_ClusterRaw_Et_transR = m_histTool->book1F("ClusterRaw_Et_transR", "Raw Cluster E_{T} (in transition region);E_{T}^{Raw} Cluster [GeV];Clusters", 100, 0, 100);
 
 		m_histTool->setMonGroup(&monClusterRawNum);
 
 		m_h_ClusterRaw_Et_triggered_gdEta = m_histTool->book1F("ClusterRaw_Et_triggered_gdEta", "Raw Cluster E_{T} (Triggered);E_{T}^{Raw} Cluster [GeV];Clusters", 100, 0, 100);
 
+		m_h_ClusterRaw_Et_triggered_transR = m_histTool->book1F("ClusterRaw_Et_triggered_transR", "Raw Cluster E_{T} (Triggered in transition region);E_{T}^{Raw} Cluster [GeV];Clusters", 100, 0, 100);
+		
 		std::string name;
 		std::string title;
 		for (int i = 0; i < ROI_BITS; ++i) {
@@ -280,6 +303,9 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		m_histTool->setMonGroup(&monClusterRawEff);
 
 		m_h_ClusterRaw_Et_triggered_Eff	= m_histTool->book1F("ClusterRaw_Et_triggered_Eff", "Raw Cluster E_{T} (Triggered) Efficiency;E_{T}^{Raw} Cluster [GeV];Efficiency %", 100, 0, 100);
+		
+		m_h_ClusterRaw_Et_triggered_transR_Eff = m_histTool->book1F("ClusterRaw_Et_triggered_transR_Eff", "Raw Cluster E_{T} (Triggered in transition region) Efficiency;E_{T}^{Raw} Cluster [GeV];Efficiency %", 100, 0, 100);
+		
 		for (int i = 0; i < ROI_BITS; ++i) {
 		    if (emType(i)) {
 			name = "ClusterRaw_Et_bitcheck_Eff_" + thrNum[i];
@@ -394,10 +420,12 @@ StatusCode EmEfficienciesMonTool::fillHistograms()
 	const bool debug = msgLvl(MSG::DEBUG);
 	if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
+	StatusCode sc;
+
 	// On first event plot disabled channels/bad calo
 	if (m_firstEvent) {
 		m_firstEvent = false;
-	        StatusCode sc = this->triggerTowerAnalysis();
+	        sc = this->triggerTowerAnalysis();
 		if (sc.isFailure()) {
 			if (debug) msg(MSG::DEBUG) << "Problem running triggerTowerAnalysis" << endreq;
 			return sc;
@@ -416,7 +444,7 @@ StatusCode EmEfficienciesMonTool::fillHistograms()
 			}
 		}
 
-		StatusCode sc = this->triggerChainAnalysis();
+		sc = this->triggerChainAnalysis();
 		if (sc.isFailure()) {
 			if (debug) msg(MSG::DEBUG) << "Problem checking Trigger Chains" << endreq;
 			return sc;
@@ -426,11 +454,26 @@ StatusCode EmEfficienciesMonTool::fillHistograms()
 	else {
 		useEvent = true;
 	}
+	
+	if( useEvent ) {
+	        m_eventInfo = 0;
+	        sc = evtStore()->retrieve(m_eventInfo);
+	        if (sc.isFailure()) {
+		        msg(MSG::WARNING) << "Failed to load EventInfo" << endreq;
+		        return sc;
+	        }
+	        if( m_removeNoiseBursts ) {
+		        if(m_eventInfo->errorState(EventInfo::LAr)) { 
+			        useEvent = false;
+			        for (unsigned char bit = 0; bit < 6; ++bit) {
+			                if (m_eventInfo->isEventFlagBitSet(EventInfo::LAr, bit)) m_h_LAr_Noisy->Fill(bit);
+                                }
+		        }
+	        }
+	}
 
 	if (useEvent == true) {
 		++m_numEvents;
-
-		StatusCode sc;
 
 		sc = this->loadContainers();
 		if (sc.isFailure()) {
@@ -495,6 +538,10 @@ StatusCode EmEfficienciesMonTool::procHistograms(bool isEndOfEventsBlock,
 				m_h_ClusterRaw_Et_triggered_gdEta,
 				m_h_ClusterRaw_Et_triggered_Eff);
 
+		m_histTool->efficienciesForMerge(m_h_ClusterRaw_Et_transR,
+				m_h_ClusterRaw_Et_triggered_transR,
+				m_h_ClusterRaw_Et_triggered_transR_Eff);		
+		
 		for (int i = 0; i < ROI_BITS; ++i) {
 			if (!emType(i)) continue;
 			m_histTool->efficienciesForMerge(m_h_ClusterRaw_Et_gdEta,
@@ -531,11 +578,10 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 	m_numEmObjTotal += m_numOffElecInContainer;
 
 	// Create variables for electron properties
-	double etaOE = 0.0, phiOE = 0.0, /*EtOE = 0.0, EtCE = 0.0,*/phiCE = 0.0, etaCE = 0.0;
 	double EtCEraw = 0.0, phiCEraw = 0.0, etaCEraw = 0.0/*, calRawRatio = 0.0*/;
 	double phiCErawL1 = 0.0;
 	// Create variable to determine if selecting the right type of electrons based on criteria in jO
-	bool correctType;
+	bool correctType, inEmRegion, inEmTrans;
 
 	//bool roiValuesFilled = false;
 
@@ -543,20 +589,14 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 	for (Itr_electrons elItr = m_offlineElectrons->begin(); elItr != m_offlineElectrons->end(); ++elItr) {
 		//Keep track of eta, phi and Et as these will be used often
 		//----------------------------------------------------------------------
-		//EtOE  = (*elItr)->et()/GeV;
-		etaOE = (*elItr)->eta();
-		phiOE = (*elItr)->phi();
-		//----------------------------------------------------------------------
-		//EtCE  = (*elItr)->cluster()->et()/GeV;
-		etaCE = (*elItr)->cluster()->eta();
-		phiCE = (*elItr)->cluster()->phi();
-		//----------------------------------------------------------------------
 		std::vector<double> rawValues = getRawClusterValuesFromCells(
 				const_cast<CaloCluster*> ((*elItr)->cluster()));
 		EtCEraw = rawValues.at(0);
 		etaCEraw = rawValues.at(1);
 		phiCEraw = rawValues.at(2);
 		phiCErawL1 = (phiCEraw < 0.) ? phiCEraw + 2.*M_PI : phiCEraw;
+		inEmRegion = inEgammaGoodEtaRange(etaCEraw);
+		inEmTrans = inEMTransR(etaCEraw, 0);
 		//----------------------------------------------------------------------
 		//calRawRatio = (EtCEraw > 0.0) ? EtCE/EtCEraw : -1;
 
@@ -605,8 +645,12 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 
 				if (EtCEraw > 0.0) {
 
-					if (inEgammaGoodEtaRange(etaCEraw, "el")) {
-						m_h_ClusterRaw_Et_gdEta->Fill(EtCEraw);
+					if (inEmRegion) {
+						if(inEmTrans) {
+							m_h_ClusterRaw_Et_transR->Fill(EtCEraw);
+						} else {
+							m_h_ClusterRaw_Et_gdEta->Fill(EtCEraw);
+						}
 
 						if (EtCEraw > 10) {
 							m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_10GeV_Eta_vs_Phi, etaCEraw, phiCErawL1);
@@ -622,13 +666,9 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 
 				//Set up useful numbers to keep track of RoI information
 				double etaROI = 0.0, phiROI = 0.0/*, EtROI = 0.0*/;
-				double dEta = 0.0, dPhi = 0.0, dR = 1001, tempRmin = 0.0;
-				double dEtaClus = 0.0, dPhiClus = 0.0, dRClus = 1000, tempRminClus = 0.0;
 				double dEtaClRaw = 0.0, dPhiClRaw = 0.0, dRClRaw = 1000, tempRminClRaw = 0.0;
 				//double bestEtaROI = 0.0, bestPhiROI = 0.0, bestEtROI = 0.0, bestEtIsol = 0.0;
 				//double bestEtResClus = 1000, bestEtResClusRaw = 1000;
-				//double bestDeltaPhi = 0.0, bestDeltaEta = 0.0, bestDeltaEt = 0.0;
-				//double bestDeltaPhiClus = 0.0, bestDeltaEtaClus = 0.0, bestDeltaEtClus = 0.0;
 				//double bestDeltaPhiClRaw = 0.0, bestDeltaEtaClRaw = 0.0, bestDeltaEtClRaw = 0.0;
 				uint32_t ROIWord = 0/*, ThrPattern = 0*/;
 
@@ -661,39 +701,15 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 						//EtROI  = (*roiItr).getEMClus()/GeV;
 
 						//Calculate the difference in eta and phi between the electron and RoI
-						dEta = etaOE - etaROI;
-						dPhi = correctDeltaPhi(phiOE - phiROI);
-						dEtaClus = etaCE - etaROI;
-						dPhiClus = correctDeltaPhi(phiCE - phiROI);
 						dEtaClRaw = etaCEraw - etaROI;
 						dPhiClRaw = correctDeltaPhi(phiCEraw - phiROI);
 
 						//Calculate delta R
-						tempRmin = sqrt(dEta * dEta + dPhi * dPhi);
-						tempRminClus = sqrt(dEtaClus * dEtaClus + dPhiClus * dPhiClus);
 						tempRminClRaw = sqrt(dEtaClRaw * dEtaClRaw + dPhiClRaw * dPhiClRaw);
-
-						double tempdR = 0., smallestdRSoFar = 0.;
-						switch (m_deltaRMatchType) {
-						case 0: // Calibrated Clusters
-							tempdR = tempRminClus;
-							smallestdRSoFar = dRClus;
-							break;
-						case 1: // Raw Clusters
-							tempdR = tempRminClRaw;
-							smallestdRSoFar = dRClRaw;
-							break;
-						case 2: // Offline Objects
-							tempdR = tempRmin;
-							smallestdRSoFar = dR;
-							break;
-						default:
-							break;
-						}
 
 						//Check if the new delta R is smaller than any previous delta R value.
 						//In that case, keep track of the new RoI values
-						if (tempdR < smallestdRSoFar) {
+						if (tempRminClRaw < dRClRaw) {
 							//RoI information
 							//bestPhiROI = phiROI;
 							//bestEtaROI = etaROI;
@@ -701,17 +717,6 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 							//bestEtIsol = (*roiItr).getEMIsol()/GeV;
 							ROIWord = (*roiItr).getROIWord();
 							//ThrPattern = (*roiItr).getThrPattern();
-
-							//bestDeltaEta = dEta;
-							//bestDeltaPhi = dPhi;
-							dR = tempRmin;
-							//bestDeltaEt = EtOE-bestEtROI;					   
-
-							//bestDeltaEtaClus = dEtaClus;
-							//bestDeltaPhiClus = dPhiClus;
-							dRClus = tempRminClus;
-							//bestDeltaEtClus = EtCE-bestEtROI;
-							//bestEtResClus = (EtCE-bestEtROI)/EtCE;
 
 							//bestDeltaEtaClRaw = dEtaClRaw;
 							//bestDeltaPhiClRaw = dPhiClRaw;
@@ -725,25 +730,28 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 				//roiValuesFilled = true;
 
 				//Check to see if there was an RoI to match with an electron cluster
-				if (dRClus != 1000) {
+				if (dRClRaw != 1000) {
 					m_numOffElecTriggered++;
 
 					//Check if electron and RoI matched to a very good level (less than cut)
 					//if(deltaMatch(dR, bestDeltaEta, bestDeltaPhi, m_goodEMDeltaRMatch_Cut, m_goodEMDeltaEtaMatch_Cut, m_goodEMDeltaPhiMatch_Cut))
-					if (dRClus < m_goodEMDeltaRMatch_Cut) {
+					if (dRClRaw < m_goodEMDeltaRMatch_Cut) {
 						if (EtCEraw > 0.0) {
-							if (inEgammaGoodEtaRange(etaCEraw, "el")) {
-								m_h_ClusterRaw_Et_triggered_gdEta->Fill(EtCEraw);
+							if (inEmRegion) {
+								if(inEmTrans) {
+									m_h_ClusterRaw_Et_triggered_transR->Fill(EtCEraw);
+								} else {
+									m_h_ClusterRaw_Et_triggered_gdEta->Fill(EtCEraw);
+								}
 
 								//Look at each bit in the RoI word (using bitshift) to see which thresholds were
 								//passed and which ones were not
 								for (int k = 0; k < ROI_BITS; ++k) {
 									if (emType(k) && ((ROIWord >> k) & 1)) {
-										m_h_ClusterRaw_Et_bitcheck[k]->Fill(EtCEraw);
+										if(!inEmTrans) { m_h_ClusterRaw_Et_bitcheck[k]->Fill(EtCEraw); }
 
 										if (EtCEraw > 10) {
 											m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[k], etaCEraw, phiCErawL1);
-
 										}
 										if (EtCEraw > 20) {
 											m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_20GeV_Eta_vs_Phi_trig[k], etaCEraw, phiCErawL1);
@@ -775,11 +783,10 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 	m_numEmObjTotal += m_numOffPhotInContainer;
 
 	// Variables for accessing properties of recosntructed photons
-	double etaOP = 0.0, phiOP = 0.0, /*EtOP = 0.0, EtCP = 0.0,*/etaCP = 0.0, phiCP = 0.0;
 	double EtCPraw = 0.0, etaCPraw = 0.0, phiCPraw = 0.0/*, calRawRatio = 0.0*/;
 	double phiCPrawL1 = 0.0;
 	// Variable to check if photon is of the right type as defined in the jobOptions
-	bool correctType;
+	bool correctType, inEmRegion, inEmTrans;
 
 	//bool roiValuesFilled = false;
 
@@ -787,19 +794,13 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 	for (Itr_photons phItr = m_offlinePhotons->begin(); phItr != m_offlinePhotons->end(); ++phItr) {
 		//Keep track of eta, phi and Et as these will be used often
 		//----------------------------------------------------------------------
-		//EtOP  = (*phItr)->et()/GeV;
-		etaOP = (*phItr)->eta();
-		phiOP = (*phItr)->phi();
-		//----------------------------------------------------------------------
-		//EtCP  = (*phItr)->cluster()->et()/GeV;
-		etaCP = (*phItr)->cluster()->eta();
-		phiCP = (*phItr)->cluster()->phi();
-		//----------------------------------------------------------------------
 		std::vector<double> rawValues = getRawClusterValuesFromCells(const_cast<CaloCluster*> ((*phItr)->cluster()));
 		EtCPraw = rawValues.at(0);
 		etaCPraw = rawValues.at(1);
 		phiCPraw = rawValues.at(2);
 		phiCPrawL1 = (phiCPraw < 0.) ? phiCPraw + 2.*M_PI : phiCPraw;
+		inEmRegion = inEgammaGoodEtaRange(etaCPraw);
+		inEmTrans = inEMTransR(etaCPraw, 0);
 		//----------------------------------------------------------------------	
 		//calRawRatio = (EtCPraw > 0.0) ? EtCP/EtCPraw : -1;
 
@@ -807,22 +808,21 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 		bool unbiasedTrigger = false;
 		//Check that event has passed EF trigger
 		if (m_passed_EF_Trigger == true) {
-			//Ask if passed EF single jet trigger then check if egamma object near triggered jet
-			if (m_passed_EF_SingleJet_Trigger == true) {
+			if (m_passed_EF_SingleJet_Trigger == true && m_passed_EF_MultiJet_Trigger == false) {
 				unbiasedTrigger = isolatedEmObjectEF(phiCPraw, etaCPraw);
-			} else if (m_passed_EF_egTau_Trigger == true) {
-				if (m_passed_EF_SingleJet_Trigger == true) {
-					unbiasedTrigger = isolatedEmObjectEF(phiCPraw, etaCPraw);
-				} else {
-					return StatusCode::SUCCESS;
-				}
 			} else {
-				//unbiasedTrigger = isolatedEmObjectL1(phiCPraw, etaCPraw);
-				unbiasedTrigger = true;
-			}
+				if (m_passed_EF_egTau_Trigger == true || m_passed_EF_MultiJet_Trigger == true) {
+					return StatusCode::SUCCESS;
+				} else {
+					unbiasedTrigger = true;
+				}
+			}			
+		} else if(m_passed_L1_Jet_Trigger == true) {
+			unbiasedTrigger = isolatedEmObjectL1(phiCPraw, etaCPraw);			
 		} else {
-			unbiasedTrigger = true;
+			return StatusCode::SUCCESS;
 		}
+		
 
 		//If only after the highest energy photon, make sure only select the one that has the right index number
 		//Otherwise select all of them	
@@ -839,8 +839,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 			std::string isEmLevel = isEmLevelPhoton((*phItr), isEmCode);
 
 			//Check if the reconstructed photon is reconstructed as a standard egamma object 
-			bool goodAuthor = ((*phItr)->author(egammaParameters::AuthorPhoton)
-					== true) ? true : false;
+			bool goodAuthor = ((*phItr)->author(egammaParameters::AuthorPhoton)	== true) ? true : false;
 			if (goodAuthor == false) {
 				correctType = false;
 			}
@@ -853,8 +852,12 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 				m_numOffPhotPassCuts++;
 
 				if (EtCPraw > 0.0) {
-					if (inEgammaGoodEtaRange(etaCPraw, "ph")) {
-						m_h_ClusterRaw_Et_gdEta->Fill(EtCPraw);
+					if (inEmRegion) {
+						if(inEmTrans) {
+							m_h_ClusterRaw_Et_transR->Fill(EtCPraw);
+						} else {
+							m_h_ClusterRaw_Et_gdEta->Fill(EtCPraw);
+						}
 
 						if (EtCPraw > 10) {
 							m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_10GeV_Eta_vs_Phi, etaCPraw, phiCPrawL1);
@@ -870,13 +873,9 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 
 				//Set up useful numbers to keep track of RoI information
 				double etaROI = 0.0, phiROI = 0.0/*, EtROI = 0.0*/;
-				double dEta = 0.0, dPhi = 0.0, dR = 1001, tempRmin = 0.0;
-				double dEtaClus = 0.0, dPhiClus = 0.0, dRClus = 1000, tempRminClus = 0.0;
 				double dEtaClRaw = 0.0, dPhiClRaw = 0.0, dRClRaw = 1000, tempRminClRaw = 0.0;
 				//double bestPhiROI = 0.0, bestEtaROI = 0.0, bestEtROI = 0.0, bestEtIsol = 0.0; 
 				//double bestEtResClus = 1000, bestEtResClusRaw = 1000;
-				//double bestDeltaPhi = 0.0, bestDeltaEta = 0.0, bestDeltaEt = 0.0;	   
-				//double bestDeltaPhiClus = 0.0, bestDeltaEtaClus = 0.0, bestDeltaEtClus = 0.0;	
 				//double bestDeltaPhiClRaw = 0.0, bestDeltaEtaClRaw = 0.0, bestDeltaEtClRaw = 0.0;				
 				uint32_t ROIWord = 0/*, ThrPattern = 0*/;
 
@@ -907,56 +906,21 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 						//EtROI  = (*roiItr).getEMClus()/GeV;
 
 						//Calculate the difference in eta and phi between the electron and RoI
-						dEta = etaOP - etaROI;
-						dPhi = correctDeltaPhi(phiOP - phiROI);
-						dEtaClus = etaCP - etaROI;
-						dPhiClus = correctDeltaPhi(phiCP - phiROI);
 						dEtaClRaw = etaCPraw - etaROI;
 						dPhiClRaw = correctDeltaPhi(phiCPraw - phiROI);
 
 						//Calculate deltaR
-						tempRmin = sqrt(dEta * dEta + dPhi * dPhi);
-						tempRminClus = sqrt(dEtaClus * dEtaClus + dPhiClus * dPhiClus);
 						tempRminClRaw = sqrt(dEtaClRaw * dEtaClRaw + dPhiClRaw * dPhiClRaw);
-
-						double tempdR = 0., smallestdRSoFar = 0.;
-						switch (m_deltaRMatchType) {
-						case 0:
-							tempdR = tempRminClus;
-							smallestdRSoFar = dRClus;
-							break;
-						case 1:
-							tempdR = tempRminClRaw;
-							smallestdRSoFar = dRClRaw;
-							break;
-						case 2:
-							tempdR = tempRmin;
-							smallestdRSoFar = dR;
-							break;
-						default:
-							break;
-						}
 
 						//Check if the new deltaR is smaller than any previous deltaR value.
 						//In that case, keep track of the new RoI values 
-						if (tempdR < smallestdRSoFar) {
+						if (tempRminClRaw < dRClRaw) {
 							//bestPhiROI = phiROI;
 							//bestEtaROI = etaROI;
 							//bestEtROI  = EtROI;
 							//bestEtIsol = (*roiItr).getEMIsol()/GeV;
 							ROIWord = (*roiItr).getROIWord();
 							//ThrPattern = (*roiItr).getThrPattern();
-
-							//bestDeltaEta = dEta;
-							//bestDeltaPhi = dPhi;
-							dR = tempRmin;
-							//bestDeltaEt  = EtOP-bestEtROI;
-
-							//bestDeltaEtaClus = dEtaClus;
-							//bestDeltaPhiClus = dPhiClus;
-							dRClus = tempRminClus;
-							//bestDeltaEtClus = EtCP-bestEtROI;
-							//bestEtResClus = (EtCP-bestEtROI)/EtCP;
 
 							//bestDeltaEtaClRaw = dEtaClRaw;
 							//bestDeltaPhiClRaw = dPhiClRaw;
@@ -970,21 +934,27 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 				//roiValuesFilled = true;
 
 				//Check to see if there was an RoI to match with a photon
-				if (dRClus != 1000) {
+				if (dRClRaw != 1000) {
 					m_numOffPhotTriggered++;
 
 					//Check if photon and RoI matched to a very good level (less than cut)
 					//if(deltaMatch(dR, bestDeltaEta, bestDeltaPhi, m_goodEMDeltaRMatch_Cut, m_goodEMDeltaEtaMatch_Cut, m_goodEMDeltaPhiMatch_Cut))
-					if (dRClus < m_goodEMDeltaRMatch_Cut) {
+					if (dRClRaw < m_goodEMDeltaRMatch_Cut) {
 						if (EtCPraw > 0.0) {
-							if (inEgammaGoodEtaRange(etaCPraw, "ph")) {
-								m_h_ClusterRaw_Et_triggered_gdEta->Fill(EtCPraw);
+							if (inEmRegion) {
+								if(inEmTrans) {
+									m_h_ClusterRaw_Et_triggered_transR->Fill(EtCPraw); 
+								} else {
+									m_h_ClusterRaw_Et_triggered_gdEta->Fill(EtCPraw);
+								}
 
 								//Look at each bit in the RoI word (using bitshift) to see which thresholds were
 								//passed and which ones were not
 								for (int k = 0; k < ROI_BITS; ++k) {
 									if (emType(k) && ((ROIWord >> k) & 1)) {
-										m_h_ClusterRaw_Et_bitcheck[k]->Fill(EtCPraw);
+										if(!inEmTrans) { 
+											m_h_ClusterRaw_Et_bitcheck[k]->Fill(EtCPraw);
+										}
 
 										if (EtCPraw > 10) {
 											m_histTool->fillCPMEtaVsPhi(m_h_ClusterRaw_10GeV_Eta_vs_Phi_trig[k], etaCPraw, phiCPrawL1);
@@ -1017,8 +987,7 @@ bool EmEfficienciesMonTool::deltaMatch(double dEta, double dPhi, double dR,
 	
 	// Calculate if object passes cuts
 	bool Rmatch = (dR < goodDR) ? true : false;
-	bool EPmatch = ((fabs(dEta) < goodDEta) && (fabs(dPhi) < goodDPhi)) ? true
-			: false;
+	bool EPmatch = ((fabs(dEta) < goodDEta) && (fabs(dPhi) < goodDPhi)) ? true : false;
 
 	// First check that both checks are either on or off
 	if (m_useDeltaRMatch == true && m_useDeltaEtaPhiMatch == true) {
@@ -1229,22 +1198,22 @@ bool EmEfficienciesMonTool::correctIsEmElectron(const Analysis::Electron* el) {
 		correctType = true;
 		break;
 	case 10: //"ElectronLoose" 
-		correctType = (el->isem(egammaPID::ElectronLoose) == 0) ? true : false;
+		correctType = el->passID(egammaPID::ElectronIDLoosePP);
 		break;
 	case 11: //"ElectronMedium"
-		correctType = (el->isem(egammaPID::ElectronMedium) == 0) ? true : false;
+		correctType = el->passID(egammaPID::ElectronIDMediumPP);
 		break;
 	case 12: //"ElectronTight" 
-		correctType = (el->isem(egammaPID::ElectronTight) == 0) ? true : false;
+		correctType = el->passID(egammaPID::ElectronIDTightPP);
 		break;
 	case 30: //"ElectronLoose&PhotonLooseCombination" so just ask if electron loose
-		correctType = (el->isem(egammaPID::ElectronLoose) == 0) ? true : false;
+		correctType = el->passID(egammaPID::ElectronIDLoosePP);
 		break;
 	case 31: //"ElectronMedium&PhotonLooseCombination" so just ask if electron medium
-		correctType = (el->isem(egammaPID::ElectronMedium) == 0) ? true : false;
+		correctType = el->passID(egammaPID::ElectronIDMediumPP);
 		break;
 	case 32: //"ElectronTight&PhotonTightCombination" so just ask if electron tight
-		correctType = (el->isem(egammaPID::ElectronTight) == 0) ? true : false;
+		correctType = el->passID(egammaPID::ElectronIDTightPP);
 		break;
 	default:
 		correctType = false;
@@ -1264,19 +1233,22 @@ bool EmEfficienciesMonTool::correctIsEmPhoton(const Analysis::Photon* ph) {
 		correctType = true;
 		break;
 	case 20: //"PhotonLoose" 
-		correctType = (ph->isem(egammaPID::PhotonLoose) == 0) ? true : false;
+		correctType = ph->passID(egammaPID::PhotonIDLoose);
 		break;
-	case 21: //"PhotonTight" 
-		correctType = (ph->isem(egammaPID::PhotonTight) == 0) ? true : false;
+	case 21: //"PhotonMedium" 
+		correctType = ph->passID(egammaPID::PhotonIDMedium);
+		break;	
+	case 22: //"PhotonTight" 
+		correctType = ph->passID(egammaPID::PhotonIDTight);
 		break;
 	case 30: //"PhotonLoose&ElectronLooseCombination" so just ask if photon loose
-		correctType = (ph->isem(egammaPID::PhotonLoose) == 0) ? true : false;
+		correctType = ph->passID(egammaPID::PhotonIDLoose);
 		break;
-	case 31: //"PhotonLoose&ElectronMediumCombination" so just ask if photon loose
-		correctType = (ph->isem(egammaPID::PhotonLoose) == 0) ? true : false;
+	case 31: //"PhotonMedium&ElectronMediumCombination" so just ask if photon medium
+		correctType = ph->passID(egammaPID::PhotonIDMedium);
 		break;
 	case 32: //"PhotonTight&ElectronTightCombination" so just ask if photon tight
-		correctType = (ph->isem(egammaPID::PhotonTight) == 0) ? true : false;
+		correctType = ph->passID(egammaPID::PhotonIDTight);
 		break;
 	default:
 		correctType = false;
@@ -1292,15 +1264,15 @@ bool EmEfficienciesMonTool::correctIsEmPhoton(const Analysis::Photon* ph) {
 std::string EmEfficienciesMonTool::isEmLevelElectron(const Analysis::Electron* el, int &code) {
 	std::string isEmLevel = "None";
 	code = 0;
-	if (el->isem(egammaPID::ElectronLoose) == 0) {
+	if (el->passID(egammaPID::ElectronIDLoosePP)) {
 		isEmLevel = "Loose";
 		code = 1;
 	}
-	if (el->isem(egammaPID::ElectronMedium) == 0) {
+	if (el->passID(egammaPID::ElectronIDMediumPP)) {
 		isEmLevel = "Medium";
 		code = 2;
 	}
-	if (el->isem(egammaPID::ElectronTight) == 0) {
+	if (el->passID(egammaPID::ElectronIDTightPP)) {
 		isEmLevel = "Tight";
 		code = 3;
 	}
@@ -1314,11 +1286,15 @@ std::string EmEfficienciesMonTool::isEmLevelElectron(const Analysis::Electron* e
 std::string EmEfficienciesMonTool::isEmLevelPhoton(const Analysis::Photon* ph, int &code) {
 	std::string isEmLevel = "None";
 	code = 0;
-	if (ph->isem(egammaPID::PhotonLoose) == 0) {
+	if (ph->passID(egammaPID::PhotonIDLoose)) {
 		isEmLevel = "Loose";
 		code = 1;
 	}
-	if (ph->isem(egammaPID::PhotonTight) == 0) {
+	if (ph->passID(egammaPID::PhotonIDMedium)) {
+		isEmLevel = "Medium";
+		code = 2;
+	}	
+	if (ph->passID(egammaPID::PhotonIDTight)) {
 		isEmLevel = "Tight";
 		code = 3;
 	}
@@ -1328,19 +1304,13 @@ std::string EmEfficienciesMonTool::isEmLevelPhoton(const Analysis::Photon* ph, i
 
 //------------------------------------------------------------------
 // Ask if object is within well defined eta range for EM performance
-// For egamma trig note this range may change
 //------------------------------------------------------------------
-bool EmEfficienciesMonTool::inEgammaGoodEtaRange(double eta, std::string /*egType*/) {
+bool EmEfficienciesMonTool::inEgammaGoodEtaRange(double eta) {
 	//For performance studies, take all egamma within LAr region
 	if (fabs(eta) > 2.50) {
 		return false;
 	}
-
-	bool inGE = true;
-	if (m_useEmTRcut) {
-		inGE = (inEMTransR(eta, 0)) ? false : true;
-	}
-	return inGE;
+	return true;
 }
 
 //------------------------------------------------------------------
@@ -1400,7 +1370,7 @@ bool EmEfficienciesMonTool::inEMEndcap(double eta, int sign) {
 //the event to trigger at HLT level
 //------------------------------------------------------------------
 bool EmEfficienciesMonTool::isolatedEmObjectL1(double phi, double eta) {
-	bool isolated = true;
+	bool isolated = false, tagFound = false;
 	double dREm = 10.0, dR_Max = 10.0;
 	double ET_Max = -10.0, EtaMax = -10.0, PhiMax = -10.0;
 	double etaROI = 0.0, phiROI = 0.0, ET_ROI = 0.0;
@@ -1420,11 +1390,12 @@ bool EmEfficienciesMonTool::isolatedEmObjectL1(double phi, double eta) {
 			PhiMax = phiROI;
 			ET_Max = ET_ROI;
 			dR_Max = dREm;
+			tagFound = true;
 		}
 	}
 
-	// Check that the object is far away enough from highest ET jet RoI
-	if (dR_Max > m_goodHadDeltaRMatch_Cut) {
+	// Check that the object is far away enough from highest ET jet RoI (and that a tag was found)
+	if (dR_Max > m_goodHadDeltaRMatch_Cut && tagFound == true) {
 		isolated = true;
 	} else {
 		isolated = false;
@@ -1520,12 +1491,12 @@ StatusCode EmEfficienciesMonTool::triggerChainAnalysis() {
 		if (m_trigger->isPassed(*it)) {
 
 			//First ask if the event passed the L1 jet trigger items 
-			if ((*it).find("L1_J") != std::string::npos) {
+			if ((*it).find("L1_J") != std::string::npos && (*it).find("L1_JE") == std::string::npos) {
 				m_passed_L1_Jet_Trigger = true;
 				msg(MSG::DEBUG) << "Trigger Analysis: " << *it << endreq;
 			}
 			//First ask if the event passed the L1 em trigger items as a quick check 
-			if ((*it).find("L1_EM") != std::string::npos) {
+			if ((*it).find("L1_EM") != std::string::npos && (*it).find("_XS") == std::string::npos && (*it).find("_XE") == std::string::npos) {
 				msg(MSG::DEBUG) << "Trigger Analysis: " << *it << endreq;
 			}
 
@@ -1589,13 +1560,6 @@ StatusCode EmEfficienciesMonTool::triggerChainAnalysis() {
 //------------------------------------------------------------------------------------
 StatusCode EmEfficienciesMonTool::loadContainers() {
 	StatusCode sc;
-
-	m_eventInfo = 0;
-	sc = evtStore()->retrieve(m_eventInfo);
-	if (sc.isFailure()) {
-		msg(MSG::WARNING) << "Failed to load EventInfo" << endreq;
-		return sc;
-	}
 
 	m_primaryVtx = 0;
 	sc = evtStore()->retrieve(m_primaryVtx, m_primaryVertexLocation);

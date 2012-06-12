@@ -1,3 +1,7 @@
+2012-06-12  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-12-02
+        * Updates from Hardeep.
+
 2012-05-28  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-12-01
         * Change back to tight electrons in EmEfficienciesMonTool.

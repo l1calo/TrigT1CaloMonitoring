@@ -160,6 +160,7 @@ private:
   double m_goodHadDeltaPhiMatch_Cut;
   double m_hadCoreVHCut;
   int m_jetQualityLevel;
+  bool m_removeNoiseBursts;
 
   bool m_useTrigger;
   unsigned int m_nTracksAtPrimaryVertex;
@@ -207,6 +208,7 @@ private:
   //Trigger tower bad/dead
   TH2F_LW* m_h_TrigTower_jetBadCalo;
   TH2F_LW* m_h_TrigTower_jetDeadChannel;
+  TH1F_LW* m_h_LAr_jetNoisy;
 
   // Primary Vertex
   TH1F_LW* m_h_nPriVtx;

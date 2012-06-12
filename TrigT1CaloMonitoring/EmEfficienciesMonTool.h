@@ -77,7 +77,7 @@ private:
 	        
   bool emObjInDeadBadTower(double eta, double phi);
 			        
-  bool inEgammaGoodEtaRange(double eta, std::string egType);    
+  bool inEgammaGoodEtaRange(double eta);    
   bool inEMBarrel(double eta, int sign);
   bool inEMTransR(double eta, int sign);
   bool inEMEndcap(double eta, int sign);
@@ -164,7 +164,7 @@ private:
   bool m_useDeltaRMatch;
   bool m_useDeltaEtaPhiMatch;
   int m_isEmType;
-  int m_deltaRMatchType;
+  bool m_removeNoiseBursts;
        
   bool m_useEmTRcut;    
   bool m_useTrigger;
@@ -180,6 +180,9 @@ private:
   TH1F_LW* m_h_ClusterRaw_Et_gdEta;    
   TH1F_LW* m_h_ClusterRaw_Et_triggered_gdEta;    
   TH1F_LW* m_h_ClusterRaw_Et_triggered_Eff;    
+  TH1F_LW* m_h_ClusterRaw_Et_transR;    
+  TH1F_LW* m_h_ClusterRaw_Et_triggered_transR;
+  TH1F_LW* m_h_ClusterRaw_Et_triggered_transR_Eff;  
   TH1F_LW* m_h_ClusterRaw_Et_bitcheck[ROI_BITS];
   TH1F_LW* m_h_ClusterRaw_Et_bitcheck_Eff[ROI_BITS];
   TH2F_LW* m_h_ClusterRaw_10GeV_Eta_vs_Phi;      
@@ -200,6 +203,7 @@ private:
    
   TH2F_LW* m_h_TrigTower_emBadCalo;   
   TH2F_LW* m_h_TrigTower_emDeadChannel;       
+  TH1F_LW* m_h_LAr_Noisy;
 
 
 };

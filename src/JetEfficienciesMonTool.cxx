@@ -112,6 +112,7 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 			m_h_JetEmScale_200GeV_Eta_vs_Phi(0),
 			m_h_TrigTower_jetBadCalo(0),
 			m_h_TrigTower_jetDeadChannel(0),
+			m_h_LAr_jetNoisy(0),
 			m_h_nPriVtx(0)
 
 /*---------------------------------------------------------*/
@@ -140,6 +141,7 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 	declareProperty("JetQualityLevel",m_jetQualityLevel = 30);
 	declareProperty("NtracksAtPrimaryVertex",m_nTracksAtPrimaryVertex = 4);
 	declareProperty("HadCoreVHCut",m_hadCoreVHCut = 1000);  
+	declareProperty("RemoveNoiseBursts", m_removeNoiseBursts = true);
 
 	for (int i = 0; i < JET_ROI_BITS; ++i) {
 	        m_h_JetEmScale_Et_J_item[i] = 0;
@@ -260,6 +262,7 @@ StatusCode JetEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		std::string dir(m_rootDir + "/Reco/JetEfficiencies");
 
 		MonGroup monJetDead(this, dir + "/DeadOrBadChannels", expert, run, "", "lowerLB");
+		MonGroup monJetNoisy(this, dir + "/DeadOrBadChannels", expert, run);
 		MonGroup monJetEmScaleNum(this, dir + "/JetEmScale_Et/numerator", expert, run);
 		MonGroup monJetEmScaleDen(this, dir + "/JetEmScale_Et/denominator", expert, run);
 		MonGroup monJetEmScaleEff(this, dir + "/JetEmScale_Et", expert, run, "", "perBinEffPerCent");
@@ -321,6 +324,20 @@ StatusCode JetEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		m_h_TrigTower_jetDeadChannel = m_histTool->bookPPMHadEtaVsPhi("TrigTower_jetDeadChannel","jet Trigger Towers with dead channels - #eta against #phi (E_{T} > 5 GeV)");
 
 		m_h_TrigTower_jetBadCalo = m_histTool->bookPPMHadEtaVsPhi("TrigTower_jetBadCalo","jet Trigger Towers - Missing FEBs/Tile Quality - #eta against #phi (E_{T} > 5 GeV)");
+
+                if (m_removeNoiseBursts) {
+
+		        m_histTool->setMonGroup(&monJetNoisy);
+
+		        m_h_LAr_jetNoisy = m_histTool->book1F("LAr_jetNoisy", "LAr Error Bits in Rejected Events", 6, 0, 6);
+			LWHist::LWHistAxis* axis = m_h_LAr_jetNoisy->GetXaxis();
+			axis->SetBinLabel(1, "BadFEBs");
+			axis->SetBinLabel(2, "MediumSat");
+			axis->SetBinLabel(3, "TightSat");
+			axis->SetBinLabel(4, "NoiseWindow");
+			axis->SetBinLabel(5, "Corrupt");
+			axis->SetBinLabel(6, "CorruptWindow");
+                }
 
 		//Raw Jet Histograms
 
@@ -492,10 +509,12 @@ StatusCode JetEfficienciesMonTool::fillHistograms()
 	const bool debug = msgLvl(MSG::DEBUG);
 	if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
+	StatusCode sc;
+
 	// On first event plot disabled channels and bad calo
 	if (m_firstEvent) {
 		m_firstEvent = false;
-		StatusCode sc = this->triggerTowerAnalysis();
+		sc = this->triggerTowerAnalysis();
 		if (sc.isFailure()) {
 		        msg(MSG::WARNING) << "Problem analysing Trigger Towers" << endreq;
 			return sc;
@@ -514,7 +533,7 @@ StatusCode JetEfficienciesMonTool::fillHistograms()
 			}
 		}
 
-		StatusCode sc = this->triggerChainAnalysis();
+		sc = this->triggerChainAnalysis();
 		if (sc.isFailure()) {
 			if (debug) msg(MSG::DEBUG) << "Problem checking Trigger Chains" << endreq;
 			return sc;
@@ -524,11 +543,26 @@ StatusCode JetEfficienciesMonTool::fillHistograms()
 	else {
 		useEvent = true;
 	}
+	
+	if( useEvent ) {
+		m_eventInfo = 0;
+		sc = evtStore()->retrieve(m_eventInfo);
+		if (sc.isFailure()) {
+			msg(MSG::WARNING) << "Failed to load EventInfo" << endreq;
+			return sc;
+		}
+		if( m_removeNoiseBursts ) {
+			if(m_eventInfo->errorState(EventInfo::LAr)) { 
+				useEvent = false;
+				for (unsigned char bit = 0; bit < 6; ++bit) {
+			        	if (m_eventInfo->isEventFlagBitSet(EventInfo::LAr, bit)) m_h_LAr_jetNoisy->Fill(bit);
+                        	}
+			}
+		}
+	}
 
 	if (useEvent == true) {
 		++m_numEvents;
-
-		StatusCode sc;
 
 		sc = this->loadContainers();
 		if (sc.isFailure()) {
@@ -968,7 +1002,7 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 //------------------------------------------------------------------
 bool JetEfficienciesMonTool::isolatedJetObjectL1(double phi, double eta) {
 	
-    bool isolated = true;
+	bool isolated = false, tagFound = false;
 	double dREm = 10.0, dR_Max = 10.0; 
 	double ET_Max = -10.0;
 	double etaROI = 0.0, phiROI = 0.0, ET_ROI = 0.0, hadCore_ROI = 0.0;
@@ -995,16 +1029,17 @@ bool JetEfficienciesMonTool::isolatedJetObjectL1(double phi, double eta) {
 			hadCore_ROI = (*roiItr).getHadCore();	
 			dREm = calcDeltaR(eta, phi, etaROI, phiROI);
 			
-			//If this energy exceeds the current record then store the details
+			//If this energy exceeds the current record then store the details of the 'tag' EM RoI
 			if(ET_ROI > ET_Max && (!m_passed_EF_SingleEgamma_Trigger_HighestVH || (m_passed_EF_SingleEgamma_Trigger_HighestVH && hadCore_ROI <= m_hadCoreVHCut))) {
 				ET_Max = ET_ROI;
 				dR_Max = dREm;
+				tagFound = true;
 			}
 		}
 	}
 	
 	// Check that the object is far away enough from highest ET jet RoI
-	if (dR_Max > m_goodEMDeltaRMatch_Cut) { 
+	if (dR_Max > m_goodEMDeltaRMatch_Cut && tagFound) { 
 		isolated = true;
 	} else {
 		isolated = false;
@@ -1132,7 +1167,7 @@ StatusCode JetEfficienciesMonTool::triggerChainAnalysis() {
 				//std::cout << "Trigger Analysis: " << *it << std::endl;
 			}
 			//First ask if the event passed the L1 em trigger items as a quick check 
-			if ((*it).find("L1_EM") != std::string::npos) {
+			if ((*it).find("L1_EM") != std::string::npos && (*it).find("XS") == std::string::npos && (*it).find("XE") == std::string::npos) {
 				m_passed_L1_EM_Trigger = true;
 				//std::cout << "Trigger Analysis: " << *it << std::endl;
 			}			
@@ -1158,7 +1193,8 @@ StatusCode JetEfficienciesMonTool::triggerChainAnalysis() {
 					m_passed_EF_MultiJet_Trigger = true;
 				}
 				//Find Event Filter chains corresponding to single electrons or photons
-				if (((*it).find("EF_e") != std::string::npos && (*it).find("EF_eb") == std::string::npos && (*it).find("EF_j") == std::string::npos) ||
+				if (((*it).find("EF_e") != std::string::npos && (*it).find("EF_eb") == std::string::npos && (*it).find("EF_j") == std::string::npos
+			    		 && (*it).find("_EF_xe") == std::string::npos && (*it).find("_EF_xs") == std::string::npos) ||
 					(*it).find("EF_g") != std::string::npos) {					
 					m_passed_EF_SingleEgamma_Trigger = true;
 					vhCheck = (*it).substr(4, 6);					
@@ -1232,13 +1268,6 @@ unsigned int JetEfficienciesMonTool::nPrimaryVertex(){
 //------------------------------------------------------------------------------------
 StatusCode JetEfficienciesMonTool::loadContainers() {
 	StatusCode sc;
-
-	m_eventInfo = 0;
-	sc = evtStore()->retrieve(m_eventInfo);
-	if (sc.isFailure()) {
-		msg(MSG::WARNING) << "Failed to load EventInfo" << endreq;
-		return sc;
-	}
 
 	m_primaryVertex = 0;
 	sc = evtStore()->retrieve(m_primaryVertex, m_primaryVertexLocation);
