@@ -698,7 +698,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 						//Get useful values for the EmTauRoI
 						etaROI = (*roiItr).getEta();
 						phiROI = (*roiItr).getPhi();
-						//EtROI  = (*roiItr).getEMClus()/GeV;
+						//EtROI  = (*roiItr).getEMClus()/CLHEP::GeV;
 
 						//Calculate the difference in eta and phi between the electron and RoI
 						dEtaClRaw = etaCEraw - etaROI;
@@ -714,7 +714,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 							//bestPhiROI = phiROI;
 							//bestEtaROI = etaROI;
 							//bestEtROI = EtROI;
-							//bestEtIsol = (*roiItr).getEMIsol()/GeV;
+							//bestEtIsol = (*roiItr).getEMIsol()/CLHEP::GeV;
 							ROIWord = (*roiItr).getROIWord();
 							//ThrPattern = (*roiItr).getThrPattern();
 
@@ -903,7 +903,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 						//Get useful values for the EmTauRoI
 						etaROI = (*roiItr).getEta();
 						phiROI = (*roiItr).getPhi();
-						//EtROI  = (*roiItr).getEMClus()/GeV;
+						//EtROI  = (*roiItr).getEMClus()/CLHEP::GeV;
 
 						//Calculate the difference in eta and phi between the electron and RoI
 						dEtaClRaw = etaCPraw - etaROI;
@@ -918,7 +918,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 							//bestPhiROI = phiROI;
 							//bestEtaROI = etaROI;
 							//bestEtROI  = EtROI;
-							//bestEtIsol = (*roiItr).getEMIsol()/GeV;
+							//bestEtIsol = (*roiItr).getEMIsol()/CLHEP::GeV;
 							ROIWord = (*roiItr).getROIWord();
 							//ThrPattern = (*roiItr).getThrPattern();
 
@@ -1151,7 +1151,7 @@ std::vector<double> EmEfficienciesMonTool::getRawClusterValuesFromCells(CaloClus
 		}
 
 		//Calculate the raw et from the energy and eta
-		rawEt = rawE / (GeV * std::cosh(rawEta));
+		rawEt = rawE / (CLHEP::GeV * std::cosh(rawEta));
 
 		rawV.push_back(rawEt);
 		rawV.push_back(rawEta);

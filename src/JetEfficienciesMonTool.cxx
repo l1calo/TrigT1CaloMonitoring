@@ -774,7 +774,7 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 		//JetCollection::size_type jIdxVal = (jetItr - m_offlineJets->begin());
 		
 		//Keep track of eta, phi and Et as these will be used often
-		EtOJ = (*jetItr)->et() / GeV;
+		EtOJ = (*jetItr)->et() / CLHEP::GeV;
 		etaOJ = (*jetItr)->eta();
 		fabsEtaOJ = fabs(etaOJ); 
 		phiOJ = (*jetItr)->phi();
