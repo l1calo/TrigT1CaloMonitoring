@@ -1,20 +1,6 @@
-#include <cmath>
-#include <utility>
-#include <stdlib.h>
-
-#include "TH1F.h"
-#include "TString.h"
 
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
-#include "SGTools/StlVectorClids.h"
-
-#include "LWHists/LWHist.h"
-#include "LWHists/TH1F_LW.h"
-#include "LWHists/TH2F_LW.h"
-#include "LWHists/TH2I_LW.h"
-#include "LWHists/TProfile_LW.h"
-#include "LWHists/TProfile2D_LW.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
 
@@ -25,24 +11,17 @@
 #include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 #include "TrigT1CaloToolInterfaces/IL1TriggerTowerTool.h"
-#include "TrigT1CaloCalibToolInterfaces/IL1CaloCells2TriggerTowers.h"
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
 #include "TrigT1CaloCalibTools/L1CaloPprFineTimePlotManager.h"
 #include "TrigT1CaloCalibTools/L1CaloPprPedestalPlotManager.h"
 #include "TrigT1CaloCalibTools/L1CaloPprEtCorrelationPlotManager.h"
-#include "TrigConfigSvc/ILVL1ConfigSvc.h"
 
 #include "TrigT1CaloEvent/TriggerTowerCollection.h"
-#include "TrigT1CaloEvent/TriggerTower_ClassDEF.h"
-#include "TrigT1CaloUtils/DataError.h"
-
-using namespace std;
 
 PPrStabilityMon::PPrStabilityMon(const std::string & type, const std::string & name, const IInterface* parent): ManagedMonitorToolBase ( type, name, parent ),
     m_ppmADCMinValue(0),
     m_lumiBlock(0),
     m_lumiBlockMax(0),
-    m_storeGate("StoreGateSvc",name),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"),
@@ -99,9 +78,6 @@ StatusCode PPrStabilityMon::initialize()
     
     sc = m_ttTool.retrieve();
     if( sc.isFailure() ) {msg(MSG::ERROR) << "Unable to locate Tool L1TriggerTowerTool" << endreq;return sc;}
-    
-    sc = m_storeGate.retrieve();
-    if( sc.isFailure() ) {msg(MSG::ERROR) << "Unable to locate Tool StoreGateSvcTools "<< endreq; return sc;}
         
     if (m_doFineTimeMonitoring)
     {
@@ -109,7 +85,7 @@ StatusCode PPrStabilityMon::initialize()
 								m_ttTool,
 								m_ppmADCMinValue,
 								m_lumiBlockMax,
-								Form("%s/FineTime",m_PathInRootFile.data()));
+								m_PathInRootFile+"/FineTime");
 	m_fineTimePlotManager->SetFineTimeCut(m_fineTimeCut);
     }
     if (m_doPedestalMonitoring)
@@ -117,14 +93,14 @@ StatusCode PPrStabilityMon::initialize()
         m_pedestalPlotManager = new L1CaloPprPedestalPlotManager(this,
 								m_ttTool,
 								m_lumiBlockMax,
-								Form("%s/Pedestal",m_PathInRootFile.data()));
+								m_PathInRootFile+"/Pedestal");
 	m_pedestalPlotManager->SetPedestalMaxWidth(m_pedestalMaxWidth);
     }
     if (m_doEtCorrelationMonitoring){
         m_etCorrelationPlotManager = new L1CaloPprEtCorrelationPlotManager(this,
 								m_ttTool,
 								m_lumiBlockMax,
-								Form("%s/EtCorrelation",m_PathInRootFile.data()));
+								m_PathInRootFile+"/EtCorrelation");
 	m_etCorrelationPlotManager->SetCaloCellContainer(m_caloCellContainerName);
 	m_etCorrelationPlotManager->SetEtMin(m_EtMinForEtCorrelation);
     }
@@ -151,7 +127,7 @@ StatusCode PPrStabilityMon::fillHistograms()
 
     //Retrieve eventInfo from storeGate;
     m_evtInfo = 0;
-    sc = m_storeGate->retrieve(m_evtInfo);
+    sc = evtStore()->retrieve(m_evtInfo);
     if( sc.isFailure() ) { msg(MSG::ERROR) <<"Could not retrieve Event Info" <<endreq; return sc;}
    
     //Retrieve TriggerTowers from SG
@@ -166,7 +142,8 @@ StatusCode PPrStabilityMon::fillHistograms()
     if (debug) msg(MSG::DEBUG)<<"In Fill histograms"<<endreq;
     
     if (m_doEtCorrelationMonitoring) {
-        m_etCorrelationPlotManager->getCaloCells();
+        sc = m_etCorrelationPlotManager->getCaloCells();
+	if (sc.isFailure()) return sc;
     }
     
     // ================= Container: TriggerTower ===========================

@@ -21,17 +21,9 @@
 #define TRIGT1CALOMONITORING_PPRSTABILITYMON_H
 
 #include <string>
-#include <vector>
-#include <map>
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 #include "GaudiKernel/ToolHandle.h"
-
-class TH1F_LW;
-class TH2F_LW;
-class TH2I_LW;
-class TProfile_LW;
-class TProfile2D_LW;
 
 class StatusCode;
 class EventInfo;
@@ -64,7 +56,6 @@ private:
   unsigned int m_lumiBlock;
   unsigned int m_lumiBlockMax;
 
-  ServiceHandle<StoreGateSvc>             m_storeGate;
   // Tool to retrieve bytestream errors
   ToolHandle<TrigT1CaloMonErrorTool>      m_errorTool;
   ToolHandle<TrigT1CaloLWHistogramTool>   m_histTool;

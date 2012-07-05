@@ -51,6 +51,9 @@ if l1caloRawMon or l1caloESDMon:
             from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrStabilityMon
             L1PPrStabilityMonTool = PPrStabilityMon(
                 name = "L1PPrStabilityMonTool",
+                doFineTimeMonitoring = LVL1CaloMonFlags.doFineTimeMonitoring(),
+                doPedestalMonitoring = LVL1CaloMonFlags.doPedestalMonitoring(),
+                doEtCorrelationMonitoring = LVL1CaloMonFlags.doEtCorrelationMonitoring(),
                 BS_TriggerTowerContainer = "TriggerTowers",
                 ppmADCMinValue = 60,
                 lumiMax = 2000,
@@ -72,6 +75,7 @@ if l1caloRawMon or l1caloESDMon:
             from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrStabilityMon
             L1PPrStabilityMonTool = PPrStabilityMon(
                 name = "L1PPrStabilityMonTool",
+                doEtCorrelationMonitoring = False, # Needs CaloCells so run with TrigT1Monitoring
                 BS_TriggerTowerContainer = "TriggerTowers",
                 ppmADCMinValue = 60,
                 lumiMax = 2000,
