@@ -22,11 +22,8 @@
 
 class TH2F_LW;
 class TH2I_LW;
-class TProfile2D_LW;
 
 class StatusCode;
-class L1CaloCondSvc;
-class L1CaloPprConditionsContainer;
 
 class TrigT1CaloLWHistogramTool;
 
@@ -64,13 +61,9 @@ private:
 
   void simulateAndCompare(const TriggerTowerCollection* ttIn);
 
-  ServiceHandle<L1CaloCondSvc> m_l1CondSvc;
-
   ToolHandle<LVL1::IL1TriggerTowerTool> m_ttTool;
   ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
       
-  L1CaloPprConditionsContainer* m_conditionsContainer;
-
   bool m_debug;
   bool m_onlineTest;
 
@@ -81,8 +74,6 @@ private:
 
   /// Number of events
   int m_events;
-  /// Number of events over which to sample pedestal
-  int m_instantaneous;
   /// Cut on ADC digits for re-simulation
   int m_simulationADCCut;
   /// Histograms booked flag
@@ -102,23 +93,7 @@ private:
   TH2F_LW* m_h_ppm_had_2d_etaPhi_tt_lut_SimNoData;
   TH2F_LW* m_h_ppm_had_2d_etaPhi_tt_lut_DataNoSim;
   
-  //Overal Pedestal
-  TProfile2D_LW* m_h_ppm_em_2d_etaPhi_tt_ped_runavg;
-  TProfile2D_LW* m_h_ppm_had_2d_etaPhi_tt_ped_runavg;
-  TH2F_LW* m_h_ppm_em_2d_etaPhi_tt_ped_worstavg;
-  TH2F_LW* m_h_ppm_had_2d_etaPhi_tt_ped_worstavg;
-  TH2F_LW* m_h_ppm_em_2d_etaPhi_tt_ped_runrms;
-  TH2F_LW* m_h_ppm_had_2d_etaPhi_tt_ped_runrms;
-  TProfile2D_LW* m_h_ppm_em_2d_etaPhi_tt_ped_instavg;
-  TProfile2D_LW* m_h_ppm_had_2d_etaPhi_tt_ped_instavg;
-  TH2F_LW* m_h_ppm_em_2d_etaPhi_tt_ped_instrms;
-  TH2F_LW* m_h_ppm_had_2d_etaPhi_tt_ped_instrms;
-  TProfile2D_LW* m_h_ppm_em_2d_etaPhi_tt_ped_instavg_B;
-  TProfile2D_LW* m_h_ppm_had_2d_etaPhi_tt_ped_instavg_B;
-  TH2F_LW* m_h_ppm_em_2d_etaPhi_tt_ped_instrms_B;
-  TH2F_LW* m_h_ppm_had_2d_etaPhi_tt_ped_instrms_B;
-  
-  // Mismatch Histograms
+  // Mismatch Event Number Histograms
   TH2I_LW* m_h_ppm_2d_LUT_MismatchEvents_cr0cr1;
   TH2I_LW* m_h_ppm_2d_LUT_MismatchEvents_cr2cr3;
   TH2I_LW* m_h_ppm_2d_LUT_MismatchEvents_cr4cr5;

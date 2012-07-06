@@ -1,3 +1,7 @@
+2012-07-06  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-12-05
+        * Remove obsolete pedestal code from PPMSimBSMon.
+
 2012-07-05  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-12-04
         * Mods to allow extended PPrStabilityMon to run on Tier0.

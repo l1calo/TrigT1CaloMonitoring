@@ -38,7 +38,6 @@ use TrigT1CaloToolInterfaces	TrigT1CaloToolInterfaces-* Trigger/TrigT1
 use TrigT1CaloCalibConditions   TrigT1CaloCalibConditions-* Trigger/TrigT1
 use TrigT1CaloCalibToolInterfaces TrigT1CaloCalibToolInterfaces-* Trigger/TrigT1
 use TrigT1CaloCalibTools	TrigT1CaloCalibTools-*	Trigger/TrigT1
-use TrigT1CaloCondSvc           TrigT1CaloCondSvc-*     Trigger/TrigT1
 use TrigConfigSvc               TrigConfigSvc-*         Trigger/TrigConfiguration
 use TrigConfL1Data              TrigConfL1Data-*        Trigger/TrigConfiguration
 end_private
