@@ -75,7 +75,7 @@ if l1caloRawMon or l1caloESDMon:
             from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrStabilityMon
             L1PPrStabilityMonTool = PPrStabilityMon(
                 name = "L1PPrStabilityMonTool",
-                doEtCorrelationMonitoring = False, # Needs CaloCells so run with TrigT1Monitoring
+                doEtCorrelationMonitoring = (rec.doCalo() and rec.doLArg() and rec.doTile()),
                 BS_TriggerTowerContainer = "TriggerTowers",
                 ppmADCMinValue = 60,
                 lumiMax = 2000,
