@@ -49,7 +49,7 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
   declareProperty("BookJEMThresh", m_jemThresh = false);
   declareProperty("BookCMMThresh", m_cmmThresh = false);
   declareProperty("RecentLumiBlocks", m_recentLumi = 10);
-  declareProperty("OnlineTest", m_onlineTest = true,
+  declareProperty("OnlineTest", m_onlineTest = false,
                   "Test online code when running offline");
 
 }
@@ -330,7 +330,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
   if (!m_h_global) {
-    if (debug) msg(MSG::DEBUG) << "Histogram not booked" << endreq;
+    if (debug) msg(MSG::DEBUG) << "Histograms not booked" << endreq;
     return StatusCode::SUCCESS;
   }
 

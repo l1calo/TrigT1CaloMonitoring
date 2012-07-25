@@ -1,4 +1,8 @@
 2012-07-25  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-12-08
+        * Change OnlineTest property default back to false.
+
+2012-07-25  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-12-07
         * Add more global error plots to help diagnosis.
 
