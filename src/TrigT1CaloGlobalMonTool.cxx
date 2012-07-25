@@ -10,7 +10,11 @@
 
 #include <sstream>
 
-#include "LWHists/LWHist.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TAxis.h"
+#include "TList.h"
+
 #include "LWHists/TH1F_LW.h"
 #include "LWHists/TH2F_LW.h"
 
@@ -19,6 +23,8 @@
 #include "SGTools/StlVectorClids.h"
 
 #include "AthenaMonitoring/AthenaMonManager.h"
+#include "EventInfo/EventInfo.h"
+#include "EventInfo/EventID.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloGlobalMonTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
@@ -29,7 +35,12 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
 				                 const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_h_global(0)
+    m_lumiNo(0),
+    m_h_global(0),
+    m_h_current(0),
+    m_h_lumiblocks(0),
+    m_h_bylumi(0)
+
 /*---------------------------------------------------------*/
 {
 
@@ -37,6 +48,9 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
   declareProperty("BookCPMThresh", m_cpmThresh = false);
   declareProperty("BookJEMThresh", m_jemThresh = false);
   declareProperty("BookCMMThresh", m_cmmThresh = false);
+  declareProperty("RecentLumiBlocks", m_recentLumi = 10);
+  declareProperty("OnlineTest", m_onlineTest = true,
+                  "Test online code when running offline");
 
 }
 
@@ -51,7 +65,7 @@ TrigT1CaloGlobalMonTool::~TrigT1CaloGlobalMonTool()
 #endif
 
 /*---------------------------------------------------------*/
-StatusCode TrigT1CaloGlobalMonTool:: initialize()
+StatusCode TrigT1CaloGlobalMonTool::initialize()
 /*---------------------------------------------------------*/
 {
   msg(MSG::INFO) << "Initializing " << name() << " - package version "
@@ -67,6 +81,20 @@ StatusCode TrigT1CaloGlobalMonTool:: initialize()
     msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
                     << endreq;
     return sc;
+  }
+
+  return StatusCode::SUCCESS;
+}
+
+/*---------------------------------------------------------*/
+StatusCode TrigT1CaloGlobalMonTool::finalize()
+/*---------------------------------------------------------*/
+{
+  delete m_h_current;
+  if (!m_v_lumi.empty()) {
+    for (int i = 0; i < m_recentLumi; ++i) {
+      delete m_v_lumi[i];
+    }
   }
 
   return StatusCode::SUCCESS;
@@ -89,52 +117,113 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 
   if ( isNewEventsBlock || isNewLumiBlock ) { }
 
-  if ((isNewLumiBlock && m_environment != AthenaMonManager::online)
-                                       || isNewRun ) {
+  bool online = (m_onlineTest || m_environment == AthenaMonManager::online);
 
-  std::string dir(m_rootDir + "/Overview/Errors");
-  MonGroup monGlobal( this, dir, shift,
-           (isNewLumiBlock && m_environment != AthenaMonManager::online)
-	   ? lumiBlock : run );
+  if ((isNewLumiBlock && !online) || isNewRun ) {
 
-  // Global Error Overview
+    std::string dir(m_rootDir + "/Overview/Errors");
+    MonGroup monGlobal( this, dir, shift,
+             (isNewLumiBlock && !online) ? lumiBlock : run );
 
-  m_histTool->setMonGroup(&monGlobal);
+    // Global Error Overview
 
-  m_h_global = m_histTool->book2F("l1calo_2d_GlobalOverview",
-                      "L1Calo Global Error Overview",
-	              NumberOfGlobalErrors, 0, NumberOfGlobalErrors,
-		      14, 0, 14);
-  LWHist::LWHistAxis* axis = m_h_global->GetXaxis();
-  axis->SetBinLabel(1+PPMDataStatus,   "PPMDataStatus");
-  axis->SetBinLabel(1+PPMDataError,    "PPMDataError");
-  axis->SetBinLabel(1+SubStatus,       "SubStatus");
-  axis->SetBinLabel(1+Parity,          "Parity");
-  axis->SetBinLabel(1+LinkDown,        "LinkDown");
-  axis->SetBinLabel(1+RoIParity,       "RoIParity");
-  axis->SetBinLabel(1+Transmission,    "Transmission");
-  axis->SetBinLabel(1+Simulation,      "Simulation");
-  axis->SetBinLabel(1+CMMSubStatus,    "CMMSubStatus");
-  axis->SetBinLabel(1+GbCMMParity,     "CMMParity");
-  axis->SetBinLabel(1+CMMTransmission, "CMMTransmission");
-  axis->SetBinLabel(1+CMMSimulation,   "CMMSimulation");
-  axis->SetBinLabel(1+RODStatus,       "RODStatus");
-  axis->SetBinLabel(1+RODMissing,      "RODMissing");
-  axis->SetBinLabel(1+ROBStatus,       "ROBStatus");
-  axis->SetBinLabel(1+Unpacking,       "Unpacking");
+    m_histTool->setMonGroup(&monGlobal);
 
-  axis = m_h_global->GetYaxis();
-  for (int crate = 0; crate < 14; ++crate) {
-    int cr = crate;
-    if (cr >= 12) cr -= 12;
-    if (cr >= 8)  cr -= 8;
-    std::string type = (crate < 8) ? "PP " : (crate < 12) ? "CP " : "JEP ";
-    std::ostringstream cnum;
-    cnum << type << cr;
-    axis->SetBinLabel(crate+1, cnum.str().c_str());
-  }
+    m_h_global = bookOverview("l1calo_2d_GlobalOverview",
+                              "L1Calo Global Error Overview");
+
+    m_histTool->unsetMonGroup();
+
+    if (!m_h_current) { // temporary plot for current event
+      m_h_current = bookOverview("l1calo_2d_CurrentEventOverview",
+                                 "L1Calo Current Event Error Overview");
+    }
+
+    if (online) {
+
+      // Overview for last few lumiblocks
+
+      m_histTool->setMonGroup(&monGlobal);
+
+      std::ostringstream luminum;
+      luminum << m_recentLumi;
+      m_h_lumiblocks = bookOverview("l1calo_2d_GlobalOverviewRecent",
+                       "L1Calo Global Error Overview Last " + luminum.str()
+		                                            + " Lumiblocks");
+
+      m_histTool->unsetMonGroup();
+
+      // Temporary plots for each recent lumiblock
+
+      if (m_v_lumi.empty()) {
+        for (int i = 0; i < m_recentLumi; ++i) {
+	  std::ostringstream cnum;
+	  cnum << i;
+	  TH2F* hist = bookOverview("l1calo_2d_GlobalOverviewBlock" + cnum.str(),
+	               "L1Calo Global Error Overview Block " + cnum.str());
+          m_v_lumi.push_back(hist);
+        }
+      } else {
+        for (int i = 0; i < m_recentLumi; ++i) {
+	  m_v_lumi[i]->Reset();
+        }
+      }
+    }
+  } else if (isNewLumiBlock && online) {
+
+    // Update last few lumiblocks plots
+
+    double entries = m_v_lumi[m_recentLumi-1]->GetEntries();
+    if (entries > 0.) m_h_lumiblocks->Reset();
+    m_v_lumi[m_recentLumi-1]->Reset();
+    TH2F* tmpHist = m_v_lumi[m_recentLumi-1];
+    for (int i = m_recentLumi-2; i >= 0; --i) {
+      if (entries > 0. && m_v_lumi[i]->GetEntries() > 0.) {
+        m_h_lumiblocks->Add(m_v_lumi[i]);
+      }
+      m_v_lumi[i+1] = m_v_lumi[i];
+    }
+    m_v_lumi[0] = tmpHist;
 
   } // end if ((isNewLumiBlock && ...
+
+  if ( isNewRun || isNewLumiBlock ) {
+
+    // Errors by lumiblock/time plots
+
+    m_lumiNo = 0;
+    const EventInfo* evtInfo = 0;
+    StatusCode sc = evtStore()->retrieve(evtInfo);
+    if( sc.isSuccess() ) {
+      m_lumiNo = evtInfo->event_ID()->lumi_block();
+      if (isNewRun) {
+        std::string dir(m_rootDir + "/Overview/Errors");
+	MonGroup monLumi( this, dir, shift, run, "", "mergeRebinned");
+        m_histTool->setMonGroup(&monLumi);
+        m_h_bylumi = m_histTool->bookTH1F("l1calo_1d_ErrorsByLumiblock",
+	             "Events with Errors by Lumiblock;Lumi Block;Number of Events",
+		     1, m_lumiNo, m_lumiNo+1);
+        
+      } else if (m_lumiNo < m_h_bylumi->GetXaxis()->GetXmin() ||
+                 m_lumiNo >= m_h_bylumi->GetXaxis()->GetXmax()) {
+        m_histTool->unsetMonGroup();
+        TH1F* tmphist = m_histTool->bookTH1F("l1calo_1d_Tmp",
+	                                     "Errors by Lumiblock",
+					     1, m_lumiNo, m_lumiNo+1);
+	tmphist->Fill(m_lumiNo);
+	TList* list = new TList;
+	list->Add(tmphist);
+	double entries = m_h_bylumi->GetEntries();
+        if (m_h_bylumi->Merge(list) != -1) {
+	  int bin = m_h_bylumi->GetXaxis()->FindBin(m_lumiNo);
+	  m_h_bylumi->SetBinContent(bin, 0);
+	  m_h_bylumi->SetEntries(entries);
+        }
+	delete tmphist;
+	delete list;
+      }
+    }
+  }
 
   if ( isNewRun ) {
 
@@ -252,6 +341,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   const int ppmCrates = 8;
   const int cpmCrates = 4;
   const int jemCrates = 2;
+  m_h_current->Reset();
 
   // PPM Error data
   const ErrorVector* errTES = 0; 
@@ -265,9 +355,9 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     for (int crate = 0; crate < ppmCrates; ++crate) {
       const int err = (*errTES)[crate];
       if (err == 0) continue;
-      if ((err >> DataStatus) & 0x1)   m_h_global->Fill(PPMDataStatus, crate);
-      if ((err >> DataError) & 0x1)    m_h_global->Fill(PPMDataError,  crate);
-      if ((err >> PPMSubStatus) & 0x1) m_h_global->Fill(SubStatus,     crate);
+      if ((err >> DataStatus) & 0x1)   m_h_current->Fill(PPMDataStatus, crate);
+      if ((err >> DataError) & 0x1)    m_h_current->Fill(PPMDataError,  crate);
+      if ((err >> PPMSubStatus) & 0x1) m_h_current->Fill(SubStatus,     crate);
     }
   }
 
@@ -283,9 +373,9 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     for (int crate = 0; crate < ppmCrates; ++crate) {
       const int err = (*errTES)[crate];
       if (err == 0) continue;
-      if ((err >> DataStatus) & 0x1)   m_h_global->Fill(PPMDataStatus, crate);
-      if ((err >> DataError) & 0x1)    m_h_global->Fill(PPMDataError,  crate);
-      if ((err >> PPMSubStatus) & 0x1) m_h_global->Fill(SubStatus,     crate);
+      if ((err >> DataStatus) & 0x1)   m_h_current->Fill(PPMDataStatus, crate);
+      if ((err >> DataError) & 0x1)    m_h_current->Fill(PPMDataError,  crate);
+      if ((err >> PPMSubStatus) & 0x1) m_h_current->Fill(SubStatus,     crate);
     }
   }
 
@@ -302,14 +392,14 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
       const int err = (*errTES)[crate];
       if (err == 0) continue;
       const int cr = crate + ppmCrates;
-      if ((err >> CPMStatus) & 0x1) m_h_global->Fill(SubStatus, cr);
+      if ((err >> CPMStatus) & 0x1) m_h_current->Fill(SubStatus, cr);
       if (((err >> CPMEMParity) & 0x1) || ((err >> CPMHadParity) & 0x1))
-                                             m_h_global->Fill(Parity, cr);
+                                             m_h_current->Fill(Parity, cr);
       if (((err >> CPMEMLink) & 0x1) || ((err >> CPMHadLink) & 0x1))
-                                             m_h_global->Fill(LinkDown, cr);
-      if ((err >> CPMRoIParity) & 0x1) m_h_global->Fill(RoIParity, cr);
-      if ((err >> CMMCPStatus) & 0x1)  m_h_global->Fill(CMMSubStatus, cr);
-      if ((err >> CMMCPParity) & 0x1)  m_h_global->Fill(GbCMMParity, cr);
+                                             m_h_current->Fill(LinkDown, cr);
+      if ((err >> CPMRoIParity) & 0x1) m_h_current->Fill(RoIParity, cr);
+      if ((err >> CMMCPStatus) & 0x1)  m_h_current->Fill(CMMSubStatus, cr);
+      if ((err >> CMMCPParity) & 0x1)  m_h_current->Fill(GbCMMParity, cr);
     }
   }
 
@@ -326,12 +416,12 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
       const int err = (*errTES)[crate];
       if (err == 0) continue;
       const int cr = crate + ppmCrates + cpmCrates;
-      if ((err >> JEMStatus) & 0x1) m_h_global->Fill(SubStatus, cr);
+      if ((err >> JEMStatus) & 0x1) m_h_current->Fill(SubStatus, cr);
       if (((err >> JEMEMParity) & 0x1) || ((err >> JEMHadParity) & 0x1))
-                                             m_h_global->Fill(Parity, cr);
+                                             m_h_current->Fill(Parity, cr);
       if (((err >> JEMEMLink) & 0x1) || ((err >> JEMHadLink) & 0x1))
-                                             m_h_global->Fill(LinkDown, cr);
-      if ((err >> JEMRoIParity) & 0x1) m_h_global->Fill(RoIParity, cr);
+                                             m_h_current->Fill(LinkDown, cr);
+      if ((err >> JEMRoIParity) & 0x1) m_h_current->Fill(RoIParity, cr);
     }
   }
 
@@ -350,13 +440,13 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
       const int cr = crate + ppmCrates + cpmCrates;
       if (((err >> JEMCMMJetStatus) & 0x1) ||
           ((err >> JEMCMMEnergyStatus) & 0x1)) {
-        m_h_global->Fill(CMMSubStatus, cr);
+        m_h_current->Fill(CMMSubStatus, cr);
       }
       if (((err >> JEMCMMJetParity) & 0x1) ||
           ((err >> JEMCMMEnergyParity) & 0x1)) {
-        m_h_global->Fill(GbCMMParity, cr);
+        m_h_current->Fill(GbCMMParity, cr);
       }
-      if ((err >> JEMCMMRoIParity) & 0x1) m_h_global->Fill(RoIParity, cr);
+      if ((err >> JEMCMMRoIParity) & 0x1) m_h_current->Fill(RoIParity, cr);
     }
   }
 
@@ -373,12 +463,12 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     for (int crate = 0; crate < ppmCrates+cpmCrates+jemCrates; ++crate) {
       const int err = (*errTES)[crate];
       if (err == 0) continue;
-      //if (err & 0x7f) m_h_global->Fill(RODStatus, crate);
-      if (err & 0x3f) m_h_global->Fill(RODStatus, crate);
+      //if (err & 0x7f) m_h_current->Fill(RODStatus, crate);
+      if (err & 0x3f) m_h_current->Fill(RODStatus, crate);
       if (((err >> NoFragment) & 0x1) || ((err >> NoPayload) & 0x1))
-                      m_h_global->Fill(RODMissing, crate);
-      if ((err >> ROBStatusError) & 0x1) m_h_global->Fill(ROBStatus, crate);
-      if ((err >> UnpackingError) & 0x1) m_h_global->Fill(Unpacking, crate);
+                      m_h_current->Fill(RODMissing, crate);
+      if ((err >> ROBStatusError) & 0x1) m_h_current->Fill(ROBStatus, crate);
+      if ((err >> UnpackingError) & 0x1) m_h_current->Fill(Unpacking, crate);
     }
   }
 
@@ -394,7 +484,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     for (int crate = 0; crate < ppmCrates; ++crate) {
       const int err = (*errTES)[crate];
       if (err == 0) continue;
-      if (((err >> LUTMismatch) & 0x1)) m_h_global->Fill(Simulation, crate);
+      if (((err >> LUTMismatch) & 0x1)) m_h_current->Fill(Simulation, crate);
     }
   }
 
@@ -412,13 +502,13 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
       if (err == 0) continue;
       const int cr = crate + ppmCrates;
       if (((err >> EMTowerMismatch) & 0x1) || ((err >> HadTowerMismatch) & 0x1))
-                                        m_h_global->Fill(Transmission, cr);
+                                        m_h_current->Fill(Transmission, cr);
       if (((err >> CPMRoIMismatch) & 0x1) || ((err >> CPMHitsMismatch) & 0x1))
-                                        m_h_global->Fill(Simulation, cr);
+                                        m_h_current->Fill(Simulation, cr);
       if (((err >> CMMHitsMismatch) & 0x1) || ((err >> RemoteSumMismatch) & 0x1))
-                                        m_h_global->Fill(CMMTransmission, cr);
+                                        m_h_current->Fill(CMMTransmission, cr);
       if (((err >> LocalSumMismatch) & 0x1) || ((err >> TotalSumMismatch) & 0x1))
-                                        m_h_global->Fill(CMMSimulation, cr);
+                                        m_h_current->Fill(CMMSimulation, cr);
     }
   }
 
@@ -439,14 +529,14 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
           ((err >> HadElementMismatch) & 0x1) ||
           ((err >> JEMRoIMismatch) & 0x1)     ||
           ((err >> JEMHitsMismatch) & 0x1)    ||
-          ((err >> JEMEtSumsMismatch) & 0x1)) m_h_global->Fill(Simulation, cr);
+          ((err >> JEMEtSumsMismatch) & 0x1)) m_h_current->Fill(Simulation, cr);
       if (((err >> CMMJetHitsMismatch) & 0x1)   ||
           ((err >> RemoteJetMismatch) & 0x1)    ||
 	  ((err >> JetEtRoIMismatch) & 0x1)     ||
 	  ((err >> CMMEtSumsMismatch) & 0x1)    ||
 	  ((err >> RemoteEnergyMismatch) & 0x1) ||
 	  ((err >> EnergyRoIMismatch) & 0x1))
-	                              m_h_global->Fill(CMMTransmission, cr);
+	                              m_h_current->Fill(CMMTransmission, cr);
       if (((err >> LocalJetMismatch) & 0x1)    ||
           ((err >> TotalJetMismatch) & 0x1)    ||
 	  ((err >> JetEtMismatch) & 0x1)       ||
@@ -455,7 +545,16 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 	  ((err >> SumEtMismatch) & 0x1)       ||
 	  ((err >> MissingEtMismatch) & 0x1)   ||
 	  ((err >> MissingEtSigMismatch) & 0x1))
-	                                m_h_global->Fill(CMMSimulation, cr);
+	                                m_h_current->Fill(CMMSimulation, cr);
+    }
+  }
+
+  if (m_h_current->GetEntries() > 0.) {
+    m_h_global->Add(m_h_current);
+    if (m_lumiNo && m_h_bylumi) m_h_bylumi->Fill(m_lumiNo);
+    if (m_onlineTest || m_environment == AthenaMonManager::online) {
+      m_h_lumiblocks->Add(m_h_current);
+      m_v_lumi[0]->Add(m_h_current);
     }
   }
 
@@ -476,4 +575,44 @@ StatusCode TrigT1CaloGlobalMonTool::procHistograms(bool isEndOfEventsBlock,
   }
 
   return StatusCode::SUCCESS;
+}
+
+/*---------------------------------------------------------*/
+TH2F* TrigT1CaloGlobalMonTool::bookOverview(const std::string& name,
+                                            const std::string& title)
+/*---------------------------------------------------------*/
+{
+  TH2F* hist = m_histTool->bookTH2F(name, title,
+	              NumberOfGlobalErrors, 0, NumberOfGlobalErrors,
+		      14, 0, 14);
+  TAxis* axis = hist->GetXaxis();
+  axis->SetBinLabel(1+PPMDataStatus,   "PPMDataStatus");
+  axis->SetBinLabel(1+PPMDataError,    "PPMDataError");
+  axis->SetBinLabel(1+SubStatus,       "SubStatus");
+  axis->SetBinLabel(1+Parity,          "Parity");
+  axis->SetBinLabel(1+LinkDown,        "LinkDown");
+  axis->SetBinLabel(1+RoIParity,       "RoIParity");
+  axis->SetBinLabel(1+Transmission,    "Transmission");
+  axis->SetBinLabel(1+Simulation,      "Simulation");
+  axis->SetBinLabel(1+CMMSubStatus,    "CMMSubStatus");
+  axis->SetBinLabel(1+GbCMMParity,     "CMMParity");
+  axis->SetBinLabel(1+CMMTransmission, "CMMTransmission");
+  axis->SetBinLabel(1+CMMSimulation,   "CMMSimulation");
+  axis->SetBinLabel(1+RODStatus,       "RODStatus");
+  axis->SetBinLabel(1+RODMissing,      "RODMissing");
+  axis->SetBinLabel(1+ROBStatus,       "ROBStatus");
+  axis->SetBinLabel(1+Unpacking,       "Unpacking");
+
+  axis = hist->GetYaxis();
+  for (int crate = 0; crate < 14; ++crate) {
+    int cr = crate;
+    if (cr >= 12) cr -= 12;
+    if (cr >= 8)  cr -= 8;
+    std::string type = (crate < 8) ? "PP " : (crate < 12) ? "CP " : "JEP ";
+    std::ostringstream cnum;
+    cnum << type << cr;
+    axis->SetBinLabel(crate+1, cnum.str().c_str());
+  }
+
+  return hist;
 }

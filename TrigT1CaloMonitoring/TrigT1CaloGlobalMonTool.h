@@ -17,7 +17,8 @@
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 
-class TH2F_LW;
+class TH1F;
+class TH2F;
 class StatusCode;
 class TrigT1CaloLWHistogramTool;
 
@@ -33,6 +34,7 @@ public:
   virtual ~TrigT1CaloGlobalMonTool();
 
   virtual StatusCode initialize();
+  virtual StatusCode finalize();
     
   virtual StatusCode bookHistograms(bool isNewEventsBlock, bool isNewLumiBlock,
                                                            bool isNewRun);
@@ -76,6 +78,8 @@ private:
 
   typedef std::vector<int> ErrorVector;
 
+  TH2F* bookOverview(const std::string& name, const std::string& title);
+
   ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
 
   /// Root directory
@@ -86,11 +90,19 @@ private:
   bool m_jemThresh;
   bool m_cmmThresh;
 
-  //=======================
-  //   Global Overview plot
-  //=======================
+  int m_recentLumi;
+  bool m_onlineTest;
+  unsigned int m_lumiNo;
 
-  TH2F_LW* m_h_global;
+  //========================
+  //   Global Overview plots
+  //========================
+
+  TH2F* m_h_global;
+  TH2F* m_h_current;
+  TH2F* m_h_lumiblocks;
+  TH1F* m_h_bylumi;
+  std::vector<TH2F*> m_v_lumi;
 
 };
 

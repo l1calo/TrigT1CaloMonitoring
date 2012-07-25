@@ -1,3 +1,7 @@
+2012-07-25  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-12-07
+        * Add more global error plots to help diagnosis.
+
 2012-07-10  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-12-06
         * JobOptions update.
