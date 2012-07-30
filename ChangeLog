@@ -1,3 +1,8 @@
+2012-07-30  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-12-09
+        * Coverity fixes.
+        * Small fix to online Global Errors vs Lumiblock plot.
+
 2012-07-25  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-12-08
         * Change OnlineTest property default back to false.

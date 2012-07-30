@@ -214,9 +214,25 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	TList* list = new TList;
 	list->Add(tmphist);
 	double entries = m_h_bylumi->GetEntries();
+	bool earlier = (m_lumiNo < m_h_bylumi->GetXaxis()->GetXmin());
+	double content = 0.;
+	if (earlier) {
+	  int lastBin = m_h_bylumi->GetXaxis()->GetNbins() - 1;
+	  content = m_h_bylumi->GetBinContent(lastBin);
+	  if (content == 0.) m_h_bylumi->SetBinContent(lastBin, 1.);
+        } else {
+	  content = m_h_bylumi->GetBinContent(1);
+	  if (content == 0.) m_h_bylumi->SetBinContent(1, 1.);
+        }
         if (m_h_bylumi->Merge(list) != -1) {
 	  int bin = m_h_bylumi->GetXaxis()->FindBin(m_lumiNo);
-	  m_h_bylumi->SetBinContent(bin, 0);
+	  m_h_bylumi->SetBinContent(bin, 0.);
+	  if (content == 0.) {
+	    if (earlier) {
+	      int lastBin = m_h_bylumi->GetXaxis()->GetNbins() - 1;
+	      m_h_bylumi->SetBinContent(lastBin, 0.);
+	    } else m_h_bylumi->SetBinContent(1, 0.);
+	  }
 	  m_h_bylumi->SetEntries(entries);
         }
 	delete tmphist;

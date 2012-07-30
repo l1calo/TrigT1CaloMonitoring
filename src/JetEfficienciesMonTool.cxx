@@ -552,7 +552,8 @@ StatusCode JetEfficienciesMonTool::fillHistograms()
 			return sc;
 		}
 		if( m_removeNoiseBursts ) {
-			if(m_eventInfo->errorState(EventInfo::LAr)) { 
+			EventInfo::EventFlagErrorState efState = m_eventInfo->errorState(EventInfo::LAr);
+			if(efState == EventInfo::Warning || efState == EventInfo::Error) {
 				useEvent = false;
 				for (unsigned char bit = 0; bit < 6; ++bit) {
 			        	if (m_eventInfo->isEventFlagBitSet(EventInfo::LAr, bit)) m_h_LAr_jetNoisy->Fill(bit);
