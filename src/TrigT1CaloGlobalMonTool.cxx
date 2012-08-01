@@ -190,6 +190,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
   if ( isNewRun || isNewLumiBlock ) {
 
     // Errors by lumiblock/time plots
+    // On Tier0 only kept if non-empty
 
     m_lumiNo = 0;
     const EventInfo* evtInfo = 0;
@@ -198,8 +199,9 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
       m_lumiNo = evtInfo->event_ID()->lumi_block();
       if (isNewRun) {
         std::string dir(m_rootDir + "/Overview/Errors");
-	MonGroup monLumi( this, dir, shift, run, "", "mergeRebinned");
-        m_histTool->setMonGroup(&monLumi);
+	MonGroup monLumi( this, dir, shift, run);
+        if (online) m_histTool->setMonGroup(&monLumi);
+	else        m_histTool->unsetMonGroup();
         m_h_bylumi = m_histTool->bookTH1F("l1calo_1d_ErrorsByLumiblock",
 	             "Events with Errors by Lumiblock;Lumi Block;Number of Events",
 		     1, m_lumiNo, m_lumiNo+1);
@@ -213,11 +215,13 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	tmphist->Fill(m_lumiNo);
 	TList* list = new TList;
 	list->Add(tmphist);
+	// All this rigmarole is to get Merge() to behave as we want,
+	// especially online.
 	double entries = m_h_bylumi->GetEntries();
 	bool earlier = (m_lumiNo < m_h_bylumi->GetXaxis()->GetXmin());
 	double content = 0.;
 	if (earlier) {
-	  int lastBin = m_h_bylumi->GetXaxis()->GetNbins() - 1;
+	  int lastBin = m_h_bylumi->GetXaxis()->GetNbins();
 	  content = m_h_bylumi->GetBinContent(lastBin);
 	  if (content == 0.) m_h_bylumi->SetBinContent(lastBin, 1.);
         } else {
@@ -229,7 +233,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	  m_h_bylumi->SetBinContent(bin, 0.);
 	  if (content == 0.) {
 	    if (earlier) {
-	      int lastBin = m_h_bylumi->GetXaxis()->GetNbins() - 1;
+	      int lastBin = m_h_bylumi->GetXaxis()->GetNbins();
 	      m_h_bylumi->SetBinContent(lastBin, 0.);
 	    } else m_h_bylumi->SetBinContent(1, 0.);
 	  }
@@ -566,12 +570,21 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   }
 
   if (m_h_current->GetEntries() > 0.) {
+    bool online = (m_onlineTest || m_environment == AthenaMonManager::online);
     m_h_global->Add(m_h_current);
-    if (m_lumiNo && m_h_bylumi) m_h_bylumi->Fill(m_lumiNo);
-    if (m_onlineTest || m_environment == AthenaMonManager::online) {
+    if (online) {
       m_h_lumiblocks->Add(m_h_current);
       m_v_lumi[0]->Add(m_h_current);
     }
+    if (m_lumiNo && m_h_bylumi) {
+      if (!online && m_h_bylumi->GetEntries() == 0.) {
+        std::string dir(m_rootDir + "/Overview/Errors");
+	MonGroup monLumi( this, dir, shift, run, "", "mergeRebinned");
+        m_histTool->setMonGroup(&monLumi);
+	m_histTool->registerHist(m_h_bylumi);
+      }
+      m_h_bylumi->Fill(m_lumiNo);
+    }  
   }
 
   if (debug) msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
@@ -587,7 +600,15 @@ StatusCode TrigT1CaloGlobalMonTool::procHistograms(bool isEndOfEventsBlock,
 {
   msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
-  if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
+  if (isEndOfEventsBlock || isEndOfLumiBlock) {
+  }
+
+  bool online = (m_onlineTest || m_environment == AthenaMonManager::online);
+  if (isEndOfRun && !online) {
+    if (m_h_bylumi && m_h_bylumi->GetEntries() == 0.) {
+      delete m_h_bylumi;
+      m_h_bylumi = 0;
+    }
   }
 
   return StatusCode::SUCCESS;
