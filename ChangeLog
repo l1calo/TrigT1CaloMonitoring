@@ -1,3 +1,7 @@
+2012-08-03  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-12-11
+        * Add global error timing plot for online.
+
 2012-08-01  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-12-10
         * Small fix to Lumiblock plot for Tier0.

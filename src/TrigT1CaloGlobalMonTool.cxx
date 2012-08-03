@@ -8,6 +8,7 @@
 //
 // ********************************************************************
 
+#include <ctime>
 #include <sstream>
 
 #include "TH1F.h"
@@ -39,7 +40,8 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
     m_h_global(0),
     m_h_current(0),
     m_h_lumiblocks(0),
-    m_h_bylumi(0)
+    m_h_bylumi(0),
+    m_h_bytime(0)
 
 /*---------------------------------------------------------*/
 {
@@ -205,7 +207,11 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
         m_h_bylumi = m_histTool->bookTH1F("l1calo_1d_ErrorsByLumiblock",
 	             "Events with Errors by Lumiblock;Lumi Block;Number of Events",
 		     1, m_lumiNo, m_lumiNo+1);
-        
+	if (online) { // Would be merge problems offline
+	  m_h_bytime = m_histTool->bookTH1F("l1calo_1d_ErrorsByTime",
+	             "Time of First Event in Lumiblock with Error;Lumi Block;Time (h.mmss)",
+		     1, m_lumiNo, m_lumiNo+1);
+        }
       } else if (m_lumiNo < m_h_bylumi->GetXaxis()->GetXmin() ||
                  m_lumiNo >= m_h_bylumi->GetXaxis()->GetXmax()) {
         m_histTool->unsetMonGroup();
@@ -217,27 +223,32 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	list->Add(tmphist);
 	// All this rigmarole is to get Merge() to behave as we want,
 	// especially online.
-	double entries = m_h_bylumi->GetEntries();
-	bool earlier = (m_lumiNo < m_h_bylumi->GetXaxis()->GetXmin());
-	double content = 0.;
-	if (earlier) {
-	  int lastBin = m_h_bylumi->GetXaxis()->GetNbins();
-	  content = m_h_bylumi->GetBinContent(lastBin);
-	  if (content == 0.) m_h_bylumi->SetBinContent(lastBin, 1.);
-        } else {
-	  content = m_h_bylumi->GetBinContent(1);
-	  if (content == 0.) m_h_bylumi->SetBinContent(1, 1.);
-        }
-        if (m_h_bylumi->Merge(list) != -1) {
-	  int bin = m_h_bylumi->GetXaxis()->FindBin(m_lumiNo);
-	  m_h_bylumi->SetBinContent(bin, 0.);
-	  if (content == 0.) {
-	    if (earlier) {
-	      int lastBin = m_h_bylumi->GetXaxis()->GetNbins();
-	      m_h_bylumi->SetBinContent(lastBin, 0.);
-	    } else m_h_bylumi->SetBinContent(1, 0.);
-	  }
-	  m_h_bylumi->SetEntries(entries);
+	TH1F* hist = m_h_bylumi;
+	for (int i = 0; i < 2; ++i) {
+	  if (!hist) continue;
+	  double entries = hist->GetEntries();
+	  bool earlier = (m_lumiNo < hist->GetXaxis()->GetXmin());
+	  double content = 0.;
+	  if (earlier) {
+	    int lastBin = hist->GetXaxis()->GetNbins();
+	    content = hist->GetBinContent(lastBin);
+	    if (content == 0.) hist->SetBinContent(lastBin, 1.);
+          } else {
+	    content = hist->GetBinContent(1);
+	    if (content == 0.) hist->SetBinContent(1, 1.);
+          }
+          if (hist->Merge(list) != -1) {
+	    int bin = hist->GetXaxis()->FindBin(m_lumiNo);
+	    hist->SetBinContent(bin, 0.);
+	    if (content == 0.) {
+	      if (earlier) {
+	        int lastBin = hist->GetXaxis()->GetNbins();
+	        hist->SetBinContent(lastBin, 0.);
+	      } else hist->SetBinContent(1, 0.);
+	    }
+	    hist->SetEntries(entries);
+          }
+	  hist = m_h_bytime;
         }
 	delete tmphist;
 	delete list;
@@ -585,6 +596,21 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
       }
       m_h_bylumi->Fill(m_lumiNo);
     }  
+    if (m_lumiNo && m_h_bytime) {
+      int bin = m_h_bytime->GetXaxis()->FindBin(m_lumiNo);
+      if (m_h_bytime->GetBinContent(bin) == 0.) {
+        const EventInfo* evtInfo = 0;
+        StatusCode sc = evtStore()->retrieve(evtInfo);
+        if( sc.isSuccess() ) {
+          time_t timeStamp = evtInfo->event_ID()->time_stamp();
+	  std::tm* local = localtime(&timeStamp);
+	  int itime = local->tm_hour*10000 + local->tm_min*100 + local->tm_sec;
+	  if (itime == 0) itime = 1;
+	  double time = itime/10000.;
+	  m_h_bytime->Fill(m_lumiNo, time);
+        }
+      }
+    }
   }
 
   if (debug) msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
