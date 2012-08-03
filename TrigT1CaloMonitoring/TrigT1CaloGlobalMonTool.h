@@ -102,6 +102,7 @@ private:
   TH2F* m_h_current;
   TH2F* m_h_lumiblocks;
   TH1F* m_h_bylumi;
+  TH1F* m_h_bytime;
   std::vector<TH2F*> m_v_lumi;
 
 };
