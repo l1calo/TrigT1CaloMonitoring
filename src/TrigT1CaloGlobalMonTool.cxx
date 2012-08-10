@@ -211,6 +211,10 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	  m_h_bytime = m_histTool->bookTH1F("l1calo_1d_ErrorsByTime",
 	             "Time of First Event in Lumiblock with Error;Lumi Block;Time (h.mmss)",
 		     1, m_lumiNo, m_lumiNo+1);
+        } else {
+	  m_h_bytime = m_histTool->bookTH1F("l1calo_1d_ErrorsByTime",
+	             "Events with Errors by Time;Time (h.mm);Number of Events",
+		     2400, 0., 24.);
         }
       } else if (m_lumiNo < m_h_bylumi->GetXaxis()->GetXmin() ||
                  m_lumiNo >= m_h_bylumi->GetXaxis()->GetXmax()) {
@@ -248,7 +252,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	    }
 	    hist->SetEntries(entries);
           }
-	  hist = m_h_bytime;
+	  hist = (online) ? m_h_bytime : 0;
         }
 	delete tmphist;
 	delete list;
@@ -597,17 +601,27 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
       m_h_bylumi->Fill(m_lumiNo);
     }  
     if (m_lumiNo && m_h_bytime) {
-      int bin = m_h_bytime->GetXaxis()->FindBin(m_lumiNo);
-      if (m_h_bytime->GetBinContent(bin) == 0.) {
-        const EventInfo* evtInfo = 0;
-        StatusCode sc = evtStore()->retrieve(evtInfo);
-        if( sc.isSuccess() ) {
-          time_t timeStamp = evtInfo->event_ID()->time_stamp();
-	  std::tm* local = localtime(&timeStamp);
-	  int itime = local->tm_hour*10000 + local->tm_min*100 + local->tm_sec;
-	  if (itime == 0) itime = 1;
-	  double time = itime/10000.;
-	  m_h_bytime->Fill(m_lumiNo, time);
+      const EventInfo* evtInfo = 0;
+      StatusCode sc = evtStore()->retrieve(evtInfo);
+      if( sc.isSuccess() ) {
+        time_t timeStamp = evtInfo->event_ID()->time_stamp();
+        std::tm* local = localtime(&timeStamp);
+	int itime = local->tm_hour*10000 + local->tm_min*100 + local->tm_sec;
+	if (itime == 0) itime = 1;
+	double time = itime/10000.;
+        if (online) {
+          int bin = m_h_bytime->GetXaxis()->FindBin(m_lumiNo);
+          if (m_h_bytime->GetBinContent(bin) == 0.) {
+	    m_h_bytime->Fill(m_lumiNo, time);
+	  }
+        } else {
+          if (m_h_bytime->GetEntries() == 0.) {
+            std::string dir(m_rootDir + "/Overview/Errors");
+	    MonGroup monLumi( this, dir, shift, run);
+            m_histTool->setMonGroup(&monLumi);
+	    m_histTool->registerHist(m_h_bytime);
+          }
+	  m_h_bytime->Fill(time);
         }
       }
     }
@@ -634,6 +648,8 @@ StatusCode TrigT1CaloGlobalMonTool::procHistograms(bool isEndOfEventsBlock,
     if (m_h_bylumi && m_h_bylumi->GetEntries() == 0.) {
       delete m_h_bylumi;
       m_h_bylumi = 0;
+      delete m_h_bytime;
+      m_h_bytime = 0;
     }
   }
 
