@@ -24,6 +24,7 @@ class TH1F_LW;
 class TH2F_LW;
 class StatusCode;
 class CaloCluster;
+class TrigT1CaloMonErrorTool;
 class TrigT1CaloLWHistogramTool;
 class EventInfo;
 class CondAttrListCollection;
@@ -104,6 +105,7 @@ private:
 
   static const int ROI_BITS = 16;
 
+  ToolHandle<TrigT1CaloMonErrorTool>    m_errorTool;
   ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
   ToolHandle<LVL1::IL1TriggerTowerTool> m_ttTool;
   ToolHandle<LVL1::IL1CaloLArTowerEnergy> m_larEnergy;

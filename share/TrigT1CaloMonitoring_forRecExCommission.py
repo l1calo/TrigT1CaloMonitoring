@@ -104,7 +104,6 @@ if l1caloRawMon or l1caloESDMon:
                 ADCPedestal = 32,
                 PathInRootFile = "L1Calo/PPM",
                 ErrorPathInRootFile = "L1Calo/PPM/Errors",
-                EventPathInRootFile = "L1Calo/Overview",
                 #OutputLevel = DEBUG
                 )
             ToolSvc += L1PPrMonTool
@@ -255,6 +254,11 @@ if l1caloRawMon or l1caloESDMon:
             #=================================================================================
             #=============================== Global Overview =================================
             #=================================================================================
+            #from TrigT1CaloMonitoringTools.TrigT1CaloMonitoringToolsConf import TrigT1CaloMonErrorTool
+            #L1MonErrorTool = TrigT1CaloMonErrorTool( name = "TrigT1CaloMonErrorTool",
+            #                                         FlagCorruptEvents = "None"
+            #                                         )
+            #ToolSvc += L1MonErrorTool
             from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import TrigT1CaloGlobalMonTool
             if l1caloRawMon:
                 prebookThresh = not l1caloESDMon
@@ -262,10 +266,13 @@ if l1caloRawMon or l1caloESDMon:
     	                                                BookCPMThresh = prebookThresh,
     						        BookJEMThresh = prebookThresh,
     						        BookCMMThresh = prebookThresh,
+    						        FirstStep = True,
+    						        #OnlineTest = True,
     						        #OutputLevel = DEBUG
                                                           )
             else:
                 L1GlobalMonTool = TrigT1CaloGlobalMonTool ( name = "L1GlobalESDMonTool",
+    						        FirstStep = False,
     	                                                #OutputLevel = DEBUG
     						  )
             ToolSvc += L1GlobalMonTool

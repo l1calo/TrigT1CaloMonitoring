@@ -1,3 +1,8 @@
+2012-08-24  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-13-00
+        * Update corrupt events veto.
+        * Move TrigT1CaloMonErrorTool to TrigT1CaloMonitoringTools.
+
 2012-08-10  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-12-12
         * Add global error timing plot for Tier0.

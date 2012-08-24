@@ -8,7 +8,7 @@
 #include "EventInfo/EventID.h"
 
 #include "TrigT1CaloMonitoring/PPrStabilityMon.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloMonErrorTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 #include "TrigT1CaloToolInterfaces/IL1TriggerTowerTool.h"
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
@@ -119,11 +119,12 @@ StatusCode PPrStabilityMon::finalize()
 
 StatusCode PPrStabilityMon::fillHistograms()
 {
-    StatusCode sc;
     const bool debug = msgLvl(MSG::DEBUG);
 
     // Skip events believed to be corrupt
     if (m_errorTool->corrupt()){if (debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;return StatusCode::SUCCESS;}
+
+    StatusCode sc;
 
     //Retrieve eventInfo from storeGate;
     m_evtInfo = 0;

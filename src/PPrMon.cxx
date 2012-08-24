@@ -9,7 +9,6 @@
 // ********************************************************************
 
 #include <cmath>
-#include "TH1F.h"
 #include "GaudiKernel/MsgStream.h"
 #include "GaudiKernel/StatusCode.h"
 #include "SGTools/StlVectorClids.h"
@@ -27,7 +26,7 @@
 #include "EventInfo/EventID.h"
 
 #include "TrigT1CaloMonitoring/PPrMon.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloMonErrorTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 #include "TrigT1CaloToolInterfaces/IL1TriggerTowerTool.h"
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
@@ -77,8 +76,7 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
     m_h_TT_EventNumbers(0),
     m_h_TT_ASICEventNumbers(0),
     m_h_TT_triggeredSlice_em(0),
-    m_h_TT_triggeredSlice_had(0),
-    m_h_NumberEvents(0)
+    m_h_TT_triggeredSlice_had(0)
 /*---------------------------------------------------------*/
 {
   declareProperty("BS_TriggerTowerContainer",
@@ -93,8 +91,6 @@ PPrMon::PPrMon(const std::string & type, const std::string & name,
   declareProperty("PathInRootFile", m_PathInRootFile="L1Calo/PPM") ;
   declareProperty("ErrorPathInRootFile",
                   m_ErrorPathInRootFile="L1Calo/PPM/Errors") ;
-  declareProperty("EventPathInRootFile",
-                  m_EventPathInRootFile="L1Calo/Overview") ;
   declareProperty("OnlineTest", m_onlineTest = false,
                   "Test online code when running offline");
 
@@ -186,7 +182,6 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     MonGroup TT_ErrorEvents(this, m_ErrorPathInRootFile, expert, run, "",
                                                                  "eventSample");
     MonGroup TT_ErrorDetail(this, m_ErrorPathInRootFile+"/Detail", expert, run);
-    MonGroup NoEvents(this, m_EventPathInRootFile, expert, run);
 
     m_NoEvents = 0;
 	  
@@ -434,14 +429,6 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       "ppm_had_1d_tt_adc_TriggeredSlice",
       "Number of the HAD Triggered Slice;#Slice", m_SliceNo, 0, m_SliceNo);
     m_histTool->numbers(m_h_TT_triggeredSlice_had, 0, m_SliceNo-1);
-   
-    //----------------------------- number of events -------------------------
-    m_histTool->setMonGroup(&NoEvents);
-
-    m_h_NumberEvents = m_histTool->book1F("l1calo_1d_NumberOfEvents",
-      "Number of processed events", 2, 0., 2.);
-    m_h_NumberEvents->GetXaxis()->SetBinLabel(1,"Processed Events");
-    m_h_NumberEvents->GetXaxis()->SetBinLabel(2,"Corrupt Events Skipped");
 	     
   }	
 
@@ -529,11 +516,9 @@ StatusCode PPrMon::fillHistograms()
   // Skip events believed to be corrupt
 
   if (m_errorTool->corrupt()) {
-    m_h_NumberEvents->Fill(1.);
     if (debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
-  m_h_NumberEvents->Fill(0.);  
   m_NoEvents++;
 
   // Error vector for global overview

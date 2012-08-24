@@ -17,12 +17,15 @@
 #include "GaudiKernel/StatusCode.h"
 #include "SGTools/StlVectorClids.h"
 
+#include "EventInfo/EventInfo.h"
+#include "EventInfo/TriggerInfo.h"
+
 #include "AthenaMonitoring/AthenaMonManager.h"
 
 #include "TrigT1CaloEvent/RODHeader.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloRodMonTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloMonErrorTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 
 /*---------------------------------------------------------*/
@@ -47,6 +50,8 @@ TrigT1CaloRodMonTool::TrigT1CaloRodMonTool(const std::string & type,
     m_h_ROD_PP_robspec(0),
     m_h_ROD_CPJEP_robspec(0),
     m_h_ROD_RoI_robspec(0),
+    m_h_ROD_evtgen(0),
+    m_h_ROD_evtspec(0),
     m_h_ROD_PP_unp(0),
     m_h_ROD_CPJEP_unp(0),
     m_h_ROD_RoI_unp(0),
@@ -55,6 +60,7 @@ TrigT1CaloRodMonTool::TrigT1CaloRodMonTool(const std::string & type,
     m_h_Unp_summary(0),
     m_h_ROD_events(0),
     m_h_ROB_events(0),
+    m_h_Evt_events(0),
     m_h_Unp_events(0)
 /*---------------------------------------------------------*/
 {
@@ -276,6 +282,15 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_histTool->numberPairs2(m_h_ROD_RoI_robspec, 0, 1, 0, 3, 2, 8, false);
   m_h_ROD_RoI_robspec->GetYaxis()->SetBinLabel(9, "JEP 0/0");
 
+  // Event Status bits
+
+  m_h_ROD_evtgen = m_histTool->book1F("rod_1d_EvtStatusGeneric",
+                          "Full Event Status Bits Generic Field", 16, 0, 16);
+  setLabelsROBStatusGen(m_h_ROD_evtgen);
+  m_h_ROD_evtspec = m_histTool->book1F("rod_1d_EvtStatusSpecific",
+                          "Full Event Status Bits Specific Field", 16, 16, 32);
+  setLabelsEvtStatusSpec(m_h_ROD_evtspec);
+
   //  Unpacking Errors
 
   m_histTool->setMonGroup(&monUnpack);
@@ -345,6 +360,12 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_h_ROB_events->GetYaxis()->SetBinLabel(6, "#splitline{Other}{Generic}");
   m_h_ROB_events->GetYaxis()->SetBinLabel(7, "Specific");
 
+  m_h_Evt_events = m_histTool->bookEventNumbers("rod_2d_EvtErrorEventNumbers",
+                         "Full Event Status Error Event Numbers", 7, 0, 7);
+  setLabelsROBStatusGen(m_h_Evt_events, false);
+  m_h_Evt_events->GetYaxis()->SetBinLabel(6, "#splitline{Other}{Generic}");
+  m_h_Evt_events->GetYaxis()->SetBinLabel(7, "Specific");
+
   m_histTool->setMonGroup(&monUnpackEvents);
 
   m_h_Unp_events = m_histTool->bookEventNumbers(
@@ -384,82 +405,111 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   const unsigned int numUnpErr = 19;
   std::vector<int> errors(NumberOfStatusBins);
   std::vector<int> errorsROB(7);
+  std::vector<int> errorsEvt(7);
   std::vector<int> errorsUnpack(numUnpErr+1);
   std::vector<int> crateErr(14);
   std::vector<int> robErrorFlags(80, 0);
 
-  //Retrieve ROB and Unpacking Error vector from SG
-  const ROBErrorCollection* errVecTES = 0;
-  sc = m_errorTool->retrieve(errVecTES);
-  if( sc.isFailure()  ||  !errVecTES ) {
-    if (debug) {
-      msg(MSG::DEBUG) << "No ROB Status and Unpacking Error vector found"
-                      << endreq;
-    }
-  }
+  const bool corrupt(m_errorTool->corrupt());
+  const std::string corruptType(m_errorTool->flagCorruptEvents());
 
   // Update ROB Status and Unpacking Errors
 
-  if (errVecTES && !errVecTES->empty()) {
-    ROBErrorCollection::const_iterator robIter  = errVecTES->begin();
-    ROBErrorCollection::const_iterator robIterE = errVecTES->end();
-    unsigned int numRobErr = *robIter;
-    ++robIter;
-    while (robIter != robIterE) {
-      const unsigned int sourceId = *robIter;
+  if ( !corrupt || corruptType == "AnyROBOrUnpackingError" ) {
+ 
+    //Retrieve ROB and Unpacking Error vector from SG
+    const ROBErrorCollection* errVecTES = 0;
+    sc = m_errorTool->retrieve(errVecTES);
+    if( sc.isFailure()  ||  !errVecTES ) {
+      if (debug) {
+        msg(MSG::DEBUG) << "No ROB Status and Unpacking Error vector found"
+                        << endreq;
+      }
+    }
+
+    if (errVecTES && !errVecTES->empty()) {
+      ROBErrorCollection::const_iterator robIter  = errVecTES->begin();
+      ROBErrorCollection::const_iterator robIterE = errVecTES->end();
+      unsigned int numRobErr = *robIter;
       ++robIter;
-      if (robIter != robIterE) {
-        const int crate = sourceId & 0xf;
-        const int slink = (sourceId >> 4) & 0x3;
-        const int dataType = (sourceId >> 7) & 0x1;
-        const int rob = crate + dataType*6;
-        const int pos = rob*4 + slink;
-	unsigned int err = *robIter;
-	++robIter;
-	if (err == 0) continue;
-        TH2F_LW* hist1 = m_h_ROD_PP_robgen;
-        TH2F_LW* hist2 = m_h_ROD_PP_robspec;
-	TH2F_LW* hist3 = m_h_ROD_PP_unp;
-        int val = pos;
-        if (pos >= 56) {
-          hist1 = m_h_ROD_RoI_robgen;
-	  hist2 = m_h_ROD_RoI_robspec;
-	  hist3 = m_h_ROD_RoI_unp;
-	  val = (pos >= 72) ? (pos-72)/2 + 8 : (pos-56)/2;
-        } else if (pos >= 32) {
-          hist1 = m_h_ROD_CPJEP_robgen;
-	  hist2 = m_h_ROD_CPJEP_robspec;
-	  hist3 = m_h_ROD_CPJEP_unp;
-	  val = (pos >= 48) ? pos-48 + 8 : (pos-32)/2;
-        }
-	if (numRobErr) {
-	  for (int bit = 0; bit < 32; ++bit) {
-	    const int robErr = (err >> bit) & 0x1;
-	    if (robErr) {
-	      if (bit < 16) hist1->Fill(bit, val);
-	      else          hist2->Fill(bit-16, val);
-	      if      (bit < 5)  errorsROB[bit] = 1;
-	      else if (bit < 16) errorsROB[5]   = 1;
-	      else               errorsROB[6]   = 1;
+      while (robIter != robIterE) {
+        const unsigned int sourceId = *robIter;
+        ++robIter;
+        if (robIter != robIterE) {
+          const int crate = sourceId & 0xf;
+          const int slink = (sourceId >> 4) & 0x3;
+          const int dataType = (sourceId >> 7) & 0x1;
+          const int rob = crate + dataType*6;
+          const int pos = rob*4 + slink;
+	  unsigned int err = *robIter;
+	  ++robIter;
+	  if (err == 0) continue;
+          TH2F_LW* hist1 = m_h_ROD_PP_robgen;
+          TH2F_LW* hist2 = m_h_ROD_PP_robspec;
+	  TH2F_LW* hist3 = m_h_ROD_PP_unp;
+          int val = pos;
+          if (pos >= 56) {
+            hist1 = m_h_ROD_RoI_robgen;
+	    hist2 = m_h_ROD_RoI_robspec;
+	    hist3 = m_h_ROD_RoI_unp;
+	    val = (pos >= 72) ? (pos-72)/2 + 8 : (pos-56)/2;
+          } else if (pos >= 32) {
+            hist1 = m_h_ROD_CPJEP_robgen;
+	    hist2 = m_h_ROD_CPJEP_robspec;
+	    hist3 = m_h_ROD_CPJEP_unp;
+	    val = (pos >= 48) ? pos-48 + 8 : (pos-32)/2;
+          }
+	  if (numRobErr) {
+	    for (int bit = 0; bit < 32; ++bit) {
+	      const int robErr = (err >> bit) & 0x1;
+	      if (robErr) {
+	        if (bit < 16) hist1->Fill(bit, val);
+	        else          hist2->Fill(bit-16, val);
+	        if      (bit < 5)  errorsROB[bit] = 1;
+	        else if (bit < 16) errorsROB[5]   = 1;
+	        else               errorsROB[6]   = 1;
+	      }
 	    }
+	    crateErr[crate] |= (1 << ROBStatusError);
+	    robErrorFlags[pos] = 1;
+	    numRobErr--;
+          } else {
+	    if (err > numUnpErr) err = numUnpErr;
+	    hist3->Fill(err, val);
+	    errorsUnpack[err] = 1;
+	    crateErr[crate] |= (1 << UnpackingError);
+	    if (err == 3) robErrorFlags[pos] = 1;
 	  }
-	  crateErr[crate] |= (1 << ROBStatusError);
-	  robErrorFlags[pos] = 1;
-	  numRobErr--;
-        } else {
-	  if (err > numUnpErr) err = numUnpErr;
-	  hist3->Fill(err, val);
-	  errorsUnpack[err] = 1;
-	  crateErr[crate] |= (1 << UnpackingError);
-	  if (err == 3) robErrorFlags[pos] = 1;
         }
+      }
+    }
+  }
+
+  // Event status errors
+
+  unsigned int evtStatus = 0;
+  EventInfo* evtInfo = 0;
+  sc = evtStore()->retrieve(evtInfo);
+  if( sc.isSuccess() ) {
+    TriggerInfo* trigInfo = evtInfo->trigger_info();
+    if (trigInfo) evtStatus = trigInfo->statusElement();
+  }
+  if (evtStatus) {
+    for (int bit = 0; bit < 32; ++bit) {
+      const int evtErr = (evtStatus >> bit) & 0x1;
+      if (evtErr) {
+        if (bit < 16) m_h_ROD_evtgen->Fill(bit);
+        else          m_h_ROD_evtspec->Fill(bit);
+        if      (bit < 5)  errorsEvt[bit] = 1;
+	else if (bit < 16) errorsEvt[5]   = 1;
+	else               errorsEvt[6]   = 1;
       }
     }
   }
 
   // Skip corrupt events in main plots
 
-  if ( !m_errorTool->corrupt() ) {
+  if ( !corrupt ) {
 
     //Retrieve DAQ ROD Headers from SG
     const RodHeaderCollection* rodTES = 0; 
@@ -698,7 +748,11 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
       m_h_ROB_summary->Fill(i);
       m_histTool->fillEventNumber(m_h_ROB_events, i);
     }
+    if (errorsEvt[i]) {
+      m_histTool->fillEventNumber(m_h_Evt_events, i);
+    }
   }
+
   for (unsigned int i = 1; i <= numUnpErr; ++i) {
     if (errorsUnpack[i]) {
       m_h_Unp_summary->Fill(i);
@@ -708,11 +762,13 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
 
   // Save error vector for global summary
 
-  std::vector<int>* save = new std::vector<int>(crateErr);
-  sc = evtStore()->record(save, "L1CaloRODErrorVector");
-  if (sc != StatusCode::SUCCESS) {
-    msg(MSG::ERROR) << "Error recording ROD error vector in TES " << endreq;
-    return sc;
+  if ( !corrupt ) {
+    std::vector<int>* save = new std::vector<int>(crateErr);
+    sc = evtStore()->record(save, "L1CaloRODErrorVector");
+    if (sc != StatusCode::SUCCESS) {
+      msg(MSG::ERROR) << "Error recording ROD error vector in TES " << endreq;
+      return sc;
+    }
   }
 
   if (debug) msg(MSG::DEBUG) << "Leaving fillHistograms" << endreq;
@@ -794,6 +850,27 @@ void TrigT1CaloRodMonTool::setLabelsROBStatusSpec(LWHist* hist, bool xAxis)
   axis->SetBinLabel(14, "Lost");
   axis->SetBinLabel(15, "Pending");
   axis->SetBinLabel(16, "Discard");
+}
+
+void TrigT1CaloRodMonTool::setLabelsEvtStatusSpec(LWHist* hist, bool xAxis)
+{
+  LWHist::LWHistAxis* axis = (xAxis) ? hist->GetXaxis() : hist->GetYaxis();
+  axis->SetBinLabel(1,  "L2Timeout");
+  axis->SetBinLabel(2,  "L2PUTimeout");
+  axis->SetBinLabel(3,  "SFIDupl");
+  axis->SetBinLabel(4,  "DFMDupl");
+  axis->SetBinLabel(5,  "L2PSC");
+  axis->SetBinLabel(6,  "");
+  axis->SetBinLabel(7,  "");
+  axis->SetBinLabel(8,  "");
+  axis->SetBinLabel(9,  "EFTimeout");
+  axis->SetBinLabel(10, "PTTimeout");
+  axis->SetBinLabel(11, "SFODupl");
+  axis->SetBinLabel(12, "EFDRecov");
+  axis->SetBinLabel(13, "EFPSC");
+  axis->SetBinLabel(14, "EFDForcedAcpt");
+  axis->SetBinLabel(15, "");
+  axis->SetBinLabel(16, "PartialEvent");
 }
 
 void TrigT1CaloRodMonTool::setLabelsUnpacking(LWHist* hist, bool xAxis)

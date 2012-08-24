@@ -52,12 +52,14 @@
 #include "TileConditions/TileCablingService.h"
 
 #include "TrigT1CaloMonitoring/JetEfficienciesMonTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloMonErrorTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 
 /*---------------------------------------------------------*/
 JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 		const std::string & name, const IInterface* parent) 
 		  : ManagedMonitorToolBase(type, name, parent),
+                        m_errorTool("TrigT1CaloMonErrorTool"),
 			m_histTool("TrigT1CaloLWHistogramTool"),
 			m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"),
 			m_larEnergy("LVL1::L1CaloLArTowerEnergy/L1CaloLArTowerEnergy"),
@@ -187,6 +189,12 @@ StatusCode JetEfficienciesMonTool::initialize()
 	sc = ManagedMonitorToolBase::initialize();
 	if (sc.isFailure())
 		return sc;
+
+        sc = m_errorTool.retrieve();
+        if (sc.isFailure()) {
+                msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloMonErrorTool" << endreq;
+                return sc;
+        }
 
 	sc = m_histTool.retrieve();
 	if (sc.isFailure()) {
@@ -508,6 +516,13 @@ StatusCode JetEfficienciesMonTool::fillHistograms()
 {
 	const bool debug = msgLvl(MSG::DEBUG);
 	if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
+
+        // Skip events believed to be corrupt
+
+        if (m_errorTool->corrupt()) {
+                if (debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
+                return StatusCode::SUCCESS;
+        }
 
 	StatusCode sc;
 

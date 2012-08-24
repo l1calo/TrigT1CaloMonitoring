@@ -25,6 +25,7 @@ class TH2I_LW;
 
 class StatusCode;
 
+class TrigT1CaloMonErrorTool;
 class TrigT1CaloLWHistogramTool;
 
 namespace LVL1 {
@@ -62,6 +63,7 @@ private:
   void simulateAndCompare(const TriggerTowerCollection* ttIn);
 
   ToolHandle<LVL1::IL1TriggerTowerTool> m_ttTool;
+  ToolHandle<TrigT1CaloMonErrorTool>    m_errorTool;
   ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
       
   bool m_debug;

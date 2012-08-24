@@ -73,7 +73,6 @@ private:
 
   std::string m_PathInRootFile;
   std::string m_ErrorPathInRootFile;
-  std::string m_EventPathInRootFile;
      
   // Tool to retrieve bytestream errors
   ToolHandle<TrigT1CaloMonErrorTool>      m_errorTool;
@@ -126,7 +125,6 @@ private:
   TH1F_LW* m_h_TT_triggeredSlice_em;
   TH1F_LW* m_h_TT_triggeredSlice_had;
    
-  TH1F_LW* m_h_NumberEvents;
 };
 
 #endif

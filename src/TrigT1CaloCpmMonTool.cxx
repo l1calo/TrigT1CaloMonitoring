@@ -35,7 +35,7 @@
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloCpmMonTool.h"
-#include "TrigT1CaloMonitoring/TrigT1CaloMonErrorTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloMonErrorTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 
 const int TrigT1CaloCpmMonTool::s_crates;

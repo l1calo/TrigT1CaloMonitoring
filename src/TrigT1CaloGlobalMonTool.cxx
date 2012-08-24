@@ -28,6 +28,7 @@
 #include "EventInfo/EventID.h"
 
 #include "TrigT1CaloMonitoring/TrigT1CaloGlobalMonTool.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloMonErrorTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 
 /*---------------------------------------------------------*/
@@ -35,13 +36,16 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
 				                 const std::string & name,
 				                 const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
+    m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_lumiNo(0),
     m_h_global(0),
     m_h_current(0),
     m_h_lumiblocks(0),
     m_h_bylumi(0),
-    m_h_bytime(0)
+    m_h_bytime(0),
+    m_h_rejected(0),
+    m_h_numberEvents(0)
 
 /*---------------------------------------------------------*/
 {
@@ -50,6 +54,7 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
   declareProperty("BookCPMThresh", m_cpmThresh = false);
   declareProperty("BookJEMThresh", m_jemThresh = false);
   declareProperty("BookCMMThresh", m_cmmThresh = false);
+  declareProperty("FirstStep", m_firstStep = true);
   declareProperty("RecentLumiBlocks", m_recentLumi = 10);
   declareProperty("OnlineTest", m_onlineTest = false,
                   "Test online code when running offline");
@@ -78,6 +83,12 @@ StatusCode TrigT1CaloGlobalMonTool::initialize()
   sc = ManagedMonitorToolBase::initialize();
   if (sc.isFailure()) return sc;
 
+  sc = m_errorTool.retrieve();
+  if( sc.isFailure() ) {
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                    << endreq;
+    return sc;
+  }
   sc = m_histTool.retrieve();
   if( sc.isFailure() ) {
     msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloHistogramTool"
@@ -216,6 +227,12 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	             "Events with Errors by Time;Time (h.mm);Number of Events",
 		     2400, 0., 24.);
         }
+	if (m_firstStep && m_errorTool->flagCorruptEvents() != "None") {
+	  m_h_rejected = m_histTool->bookTH1F("l1calo_1d_RejectedEvents",
+	             "Rejected Events by Lumiblock;Lumi Block;Number of Events",
+		     1, m_lumiNo, m_lumiNo+1);
+        } else m_h_rejected = 0;
+
       } else if (m_lumiNo < m_h_bylumi->GetXaxis()->GetXmin() ||
                  m_lumiNo >= m_h_bylumi->GetXaxis()->GetXmax()) {
         m_histTool->unsetMonGroup();
@@ -228,7 +245,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	// All this rigmarole is to get Merge() to behave as we want,
 	// especially online.
 	TH1F* hist = m_h_bylumi;
-	for (int i = 0; i < 2; ++i) {
+	for (int i = 0; i < 3; ++i) {
 	  if (!hist) continue;
 	  double entries = hist->GetEntries();
 	  bool earlier = (m_lumiNo < hist->GetXaxis()->GetXmin());
@@ -252,12 +269,30 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	    }
 	    hist->SetEntries(entries);
           }
-	  hist = (online) ? m_h_bytime : 0;
+	  if (i == 0) hist = (online) ? m_h_bytime : 0;
+	  else        hist = m_h_rejected;
         }
 	delete tmphist;
 	delete list;
       }
     }
+  }
+
+  // Total events processed and total rejected as corrupt
+
+  if ( isNewRun ) {
+    if (m_firstStep) { // only run once in processing chain
+      std::string dir(m_rootDir + "/Overview");
+      MonGroup monEvents( this, dir, expert, run);
+      m_histTool->setMonGroup(&monEvents);
+      int bins = (m_errorTool->flagCorruptEvents() == "None") ? 1 : 2;
+      m_h_numberEvents = m_histTool->bookTH1F("l1calo_1d_NumberOfEvents",
+        "Number of processed events", bins, 0., bins);
+      m_h_numberEvents->GetXaxis()->SetBinLabel(1,"Processed Events");
+      if (bins > 1) {
+        m_h_numberEvents->GetXaxis()->SetBinLabel(2,"Corrupt Events Skipped");
+      }
+    } else m_h_numberEvents = 0;
   }
 
   if ( isNewRun ) {
@@ -368,6 +403,27 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     if (debug) msg(MSG::DEBUG) << "Histograms not booked" << endreq;
     return StatusCode::SUCCESS;
   }
+
+  const bool online = (m_onlineTest || m_environment == AthenaMonManager::online);
+
+  // Total events and corrupt event by lumiblock plots
+
+  const bool corrupt = m_errorTool->corrupt();
+  if (m_firstStep) {
+    if (corrupt) {
+      m_h_numberEvents->Fill(1.);
+      if (m_lumiNo && m_h_rejected) {
+        if (!online && m_h_rejected->GetEntries() == 0.) {
+          std::string dir(m_rootDir + "/Overview/Errors");
+	  MonGroup monLumi( this, dir, shift, run, "", "mergeRebinned");
+          m_histTool->setMonGroup(&monLumi);
+	  m_histTool->registerHist(m_h_rejected);
+        }
+        m_h_rejected->Fill(m_lumiNo);
+      }
+    } else m_h_numberEvents->Fill(0.);
+  }
+  if (corrupt) return StatusCode::SUCCESS;
 
   StatusCode sc;
 
@@ -585,7 +641,6 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   }
 
   if (m_h_current->GetEntries() > 0.) {
-    bool online = (m_onlineTest || m_environment == AthenaMonManager::online);
     m_h_global->Add(m_h_current);
     if (online) {
       m_h_lumiblocks->Add(m_h_current);
@@ -650,6 +705,10 @@ StatusCode TrigT1CaloGlobalMonTool::procHistograms(bool isEndOfEventsBlock,
       m_h_bylumi = 0;
       delete m_h_bytime;
       m_h_bytime = 0;
+    }
+    if (m_h_rejected && m_h_rejected->GetEntries() == 0.) {
+      delete m_h_rejected;
+      m_h_rejected = 0;
     }
   }
 

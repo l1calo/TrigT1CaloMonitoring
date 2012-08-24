@@ -20,6 +20,7 @@
 class TH1F;
 class TH2F;
 class StatusCode;
+class TrigT1CaloMonErrorTool;
 class TrigT1CaloLWHistogramTool;
 
 class TrigT1CaloGlobalMonTool: public ManagedMonitorToolBase
@@ -80,6 +81,7 @@ private:
 
   TH2F* bookOverview(const std::string& name, const std::string& title);
 
+  ToolHandle<TrigT1CaloMonErrorTool>    m_errorTool;
   ToolHandle<TrigT1CaloLWHistogramTool> m_histTool;
 
   /// Root directory
@@ -90,6 +92,7 @@ private:
   bool m_jemThresh;
   bool m_cmmThresh;
 
+  bool m_firstStep;
   int m_recentLumi;
   bool m_onlineTest;
   unsigned int m_lumiNo;
@@ -103,6 +106,8 @@ private:
   TH2F* m_h_lumiblocks;
   TH1F* m_h_bylumi;
   TH1F* m_h_bytime;
+  TH1F* m_h_rejected;
+  TH1F* m_h_numberEvents;
   std::vector<TH2F*> m_v_lumi;
 
 };

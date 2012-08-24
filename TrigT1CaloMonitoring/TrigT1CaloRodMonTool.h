@@ -64,6 +64,7 @@ private:
   void setLabelsStatus(LWHist* hist, bool xAxis = true);
   void setLabelsROBStatusGen(LWHist* hist, bool xAxis = true);
   void setLabelsROBStatusSpec(LWHist* hist, bool xAxis = true);
+  void setLabelsEvtStatusSpec(LWHist* hist, bool xAxis = true);
   void setLabelsUnpacking(LWHist* hist, bool xAxis = true);
 
   ToolHandle<TrigT1CaloMonErrorTool>    m_errorTool;
@@ -114,6 +115,8 @@ private:
   TH2F_LW* m_h_ROD_PP_robspec;
   TH2F_LW* m_h_ROD_CPJEP_robspec;
   TH2F_LW* m_h_ROD_RoI_robspec;
+  TH1F_LW* m_h_ROD_evtgen;
+  TH1F_LW* m_h_ROD_evtspec;
   TH2F_LW* m_h_ROD_PP_unp;
   TH2F_LW* m_h_ROD_CPJEP_unp;
   TH2F_LW* m_h_ROD_RoI_unp;
@@ -127,6 +130,7 @@ private:
   TH1F_LW* m_h_Unp_summary;
   TH2I_LW* m_h_ROD_events;
   TH2I_LW* m_h_ROB_events;
+  TH2I_LW* m_h_Evt_events;
   TH2I_LW* m_h_Unp_events;
 
 };

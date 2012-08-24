@@ -24,6 +24,7 @@
 #include "TrigT1CaloToolInterfaces/IL1TriggerTowerTool.h"
 #include "TrigT1Interfaces/TrigT1CaloDefs.h"
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
+#include "TrigT1CaloMonitoringTools/TrigT1CaloMonErrorTool.h"
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 
 #include "TrigT1CaloMonitoring/PPMSimBSMon.h"
@@ -34,6 +35,7 @@ PPMSimBSMon::PPMSimBSMon(const std::string & type,
 			 const IInterface* parent)
   : ManagedMonitorToolBase(type, name, parent),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"), 
+    m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_debug(false), m_events(0),
     m_histBooked(false),
@@ -88,6 +90,13 @@ StatusCode PPMSimBSMon:: initialize()
   sc = m_ttTool.retrieve();
   if( sc.isFailure() ) {
     msg(MSG::ERROR) << "Unable to locate Tool L1TriggerTowerTool" << endreq;
+    return sc;
+  }
+
+  sc = m_errorTool.retrieve();
+  if( sc.isFailure() ) {
+    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                    << endreq;
     return sc;
   }
 
@@ -192,6 +201,13 @@ StatusCode PPMSimBSMon::fillHistograms()
 
   if (!m_histBooked) {
     if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    return StatusCode::SUCCESS;
+  }
+
+  // Skip events believed to be corrupt
+
+  if (m_errorTool->corrupt()) {
+    if (debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
 

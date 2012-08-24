@@ -4,7 +4,6 @@ author Johanna Fleckner
 
 use AtlasPolicy         	AtlasPolicy-*
 use GaudiInterface      	GaudiInterface-*      	External
-use AthenaBaseComps             AthenaBaseComps-*       Control
 use AthenaMonitoring    	AthenaMonitoring-* 	Control
 use DataModel 			DataModel-*		Control 
 use AnalysisTriggerEvent        AnalysisTriggerEvent-*  PhysicsAnalysis/AnalysisTrigger
