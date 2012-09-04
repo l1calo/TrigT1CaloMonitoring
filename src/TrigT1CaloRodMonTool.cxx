@@ -488,10 +488,10 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
   // Event status errors
 
   unsigned int evtStatus = 0;
-  EventInfo* evtInfo = 0;
+  const EventInfo* evtInfo = 0;
   sc = evtStore()->retrieve(evtInfo);
   if( sc.isSuccess() ) {
-    TriggerInfo* trigInfo = evtInfo->trigger_info();
+    const TriggerInfo* trigInfo = evtInfo->trigger_info();
     if (trigInfo) evtStatus = trigInfo->statusElement();
   }
   if (evtStatus) {

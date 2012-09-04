@@ -1,3 +1,7 @@
+2012-09-04  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-13-01
+        * Forgot const.
+
 2012-08-24  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-13-00
         * Update corrupt events veto.
