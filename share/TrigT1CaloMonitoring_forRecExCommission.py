@@ -53,7 +53,8 @@ if l1caloRawMon or l1caloESDMon:
                 name = "L1PPrStabilityMonTool",
                 doFineTimeMonitoring = LVL1CaloMonFlags.doFineTimeMonitoring(),
                 doPedestalMonitoring = LVL1CaloMonFlags.doPedestalMonitoring(),
-                doEtCorrelationMonitoring = LVL1CaloMonFlags.doEtCorrelationMonitoring(),
+                doEtCorrelationMonitoring = (LVL1CaloMonFlags.doEtCorrelationMonitoring()
+                                      and rec.doCalo() and rec.doLArg() and rec.doTile()),
                 BS_TriggerTowerContainer = "TriggerTowers",
                 ppmADCMinValue = 60,
                 lumiMax = 2000,

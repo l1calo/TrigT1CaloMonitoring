@@ -1,3 +1,7 @@
+2012-09-06  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-13-02
+        * Update JobOptions.
+
 2012-09-04  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-13-01
         * Forgot const.
