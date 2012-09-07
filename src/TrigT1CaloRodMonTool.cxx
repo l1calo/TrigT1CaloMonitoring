@@ -354,17 +354,24 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
 
   m_histTool->setMonGroup(&monROBEvents);
 
+  const std::string corruptType(m_errorTool->flagCorruptEvents());
+  nbins = (corruptType == "AnyROBOrUnpackingError") ? 8 : 7;
   m_h_ROB_events = m_histTool->bookEventNumbers("rod_2d_RobErrorEventNumbers",
-                         "ROB Status Error Event Numbers", 7, 0, 7);
+                         "ROB Status Error Event Numbers", nbins, 0, nbins);
   setLabelsROBStatusGen(m_h_ROB_events, false);
   m_h_ROB_events->GetYaxis()->SetBinLabel(6, "#splitline{Other}{Generic}");
   m_h_ROB_events->GetYaxis()->SetBinLabel(7, "Specific");
+  if (nbins == 8) m_h_ROB_events->GetYaxis()->SetBinLabel(8,
+                                              "#splitline{Rejected}{Events}");
 
+  nbins = (corruptType == "FullEventTimeout") ? 8 : 7;
   m_h_Evt_events = m_histTool->bookEventNumbers("rod_2d_EvtErrorEventNumbers",
-                         "Full Event Status Error Event Numbers", 7, 0, 7);
+                    "Full Event Status Error Event Numbers", nbins, 0, nbins);
   setLabelsROBStatusGen(m_h_Evt_events, false);
   m_h_Evt_events->GetYaxis()->SetBinLabel(6, "#splitline{Other}{Generic}");
   m_h_Evt_events->GetYaxis()->SetBinLabel(7, "Specific");
+  if (nbins == 8) m_h_Evt_events->GetYaxis()->SetBinLabel(8,
+                                              "#splitline{Rejected}{Events}");
 
   m_histTool->setMonGroup(&monUnpackEvents);
 
@@ -751,6 +758,12 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
     if (errorsEvt[i]) {
       m_histTool->fillEventNumber(m_h_Evt_events, i);
     }
+  }
+  if (corrupt && corruptType == "AnyROBOrUnpackingError") {
+    m_histTool->fillEventNumber(m_h_ROB_events, 7);
+  }
+  if (corrupt && corruptType == "FullEventTimeout") {
+    m_histTool->fillEventNumber(m_h_Evt_events, 7);
   }
 
   for (unsigned int i = 1; i <= numUnpErr; ++i) {
