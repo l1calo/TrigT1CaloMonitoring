@@ -40,7 +40,15 @@ if l1caloRawMon or l1caloESDMon:
         include("TrigT1CaloCalibConditions/L1CaloCalibConditionsTier0_jobOptions.py")
     
     from TrigT1CaloMonitoringTools.LVL1CaloMonFlags import LVL1CaloMonFlags
-    if LVL1CaloMonFlags.doPPrStabilityMon():        
+    
+    if LVL1CaloMonFlags.doFineTimeMonitoring():
+        # load the sqlite file for the fine time monitoring
+        from EventSelectorAthenaPool.EventSelectorAthenaPoolConf import MetaDataSvc
+        svcMgr += MetaDataSvc( "MetaDataSvc" )
+        svcMgr.IOVDbSvc.Folders += ["<dbConnection>sqlite://;schema=../share/calibJuly.sqlite;dbname=L1CALO</dbConnection>/TRIGGER/L1Calo/V1/References/FineTimeReferences"]
+       
+    
+    if LVL1CaloMonFlags.doPPrStabilityMon():      
 
         #=================================================================================
         #  Want Full PPrStabilityMon to run alone
