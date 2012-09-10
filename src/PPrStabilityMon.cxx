@@ -30,7 +30,7 @@ PPrStabilityMon::PPrStabilityMon(const std::string & type, const std::string & n
     m_etCorrelationPlotManager(0),
     m_doFineTimeMonitoring(0),
     m_doPedestalMonitoring(0),
-    m_doEtCorrelationMonitoring(0),												
+    m_doEtCorrelationMonitoring(0),
     m_evtInfo(0),
     m_fineTimeCut(0),
     m_pedestalMaxWidth(0),
@@ -86,6 +86,7 @@ StatusCode PPrStabilityMon::initialize()
 								m_ppmADCMinValue,
 								m_lumiBlockMax,
 								m_PathInRootFile+"/FineTime");
+	m_fineTimePlotManager->SetCaloCellContainer(m_caloCellContainerName);
 	m_fineTimePlotManager->SetFineTimeCut(m_fineTimeCut);
     }
     if (m_doPedestalMonitoring)
@@ -147,6 +148,14 @@ StatusCode PPrStabilityMon::fillHistograms()
 	if (sc.isFailure()) return sc;
     }
     
+    //load the CaloCells and the Reference Value folder from COOL (or an sqlite file) in case you want to monitor the fine time
+    if (m_doFineTimeMonitoring){
+      sc = m_fineTimePlotManager->getCaloCells();
+      if (sc.isFailure()) { msg(MSG::ERROR) <<"Cannot get the CaloCells!" << endreq; return sc; };
+      sc = m_ttTool->loadFTRefs();
+      if (sc.isFailure()) { msg(MSG::ERROR) <<"Cannot load the fine time references!" << endreq; return sc; };
+    }
+    
     // ================= Container: TriggerTower ===========================
     
     TriggerTowerCollection::const_iterator TriggerTowerIterator = trigTwrColl->begin(); 
@@ -164,6 +173,23 @@ StatusCode PPrStabilityMon::fillHistograms()
         bool hadDead= m_ttTool->disabledChannel(hadCoolChannelID);
 		
         if (m_doFineTimeMonitoring) {
+	      
+	    //Set the reference and calibration values for the fine time, they are stored per cool ID in a data base
+	    std::pair<double, double> emRef = m_ttTool->refValues(emCoolChannelID);
+	    std::pair<double, double> hadRef = m_ttTool->refValues(hadCoolChannelID);
+	    
+	    double emReference = emRef.first;
+	    double emCalFactor = emRef.second;
+	    
+	    double hadReference = hadRef.first;
+	    double hadCalFactor = hadRef.second;   
+
+	    m_fineTimePlotManager->SetEmReferenceValue(emReference);
+	    m_fineTimePlotManager->SetEmCalibrationFactor(emCalFactor);
+    
+	    m_fineTimePlotManager->SetHadReferenceValue(hadReference);
+	    m_fineTimePlotManager->SetHadCalibrationFactor(hadCalFactor);
+	    
 	    m_fineTimePlotManager->Analyze(m_evtInfo, *TriggerTowerIterator,emDead,hadDead);
 	}
 	if (m_doPedestalMonitoring) {
@@ -172,7 +198,6 @@ StatusCode PPrStabilityMon::fillHistograms()
 	if (m_doEtCorrelationMonitoring) {
 	    m_etCorrelationPlotManager->Analyze(m_evtInfo, *TriggerTowerIterator,emDead,hadDead);
 	}
-	
     }
     
     return sc;
