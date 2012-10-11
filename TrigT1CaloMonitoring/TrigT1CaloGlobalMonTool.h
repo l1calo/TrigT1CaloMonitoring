@@ -96,6 +96,8 @@ private:
   int m_recentLumi;
   bool m_onlineTest;
   unsigned int m_lumiNo;
+  int m_lumipos;
+  std::vector<unsigned int> m_v_luminumbers;
 
   //========================
   //   Global Overview plots

@@ -39,6 +39,7 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_lumiNo(0),
+    m_lumipos(0),
     m_h_global(0),
     m_h_current(0),
     m_h_lumiblocks(0),
@@ -131,6 +132,18 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
   if ( isNewEventsBlock || isNewLumiBlock ) { }
 
   bool online = (m_onlineTest || m_environment == AthenaMonManager::online);
+ 
+  if ( isNewRun || isNewLumiBlock ) {
+
+    // Get lumiblock number
+
+    m_lumiNo = 0;
+    const EventInfo* evtInfo = 0;
+    StatusCode sc = evtStore()->retrieve(evtInfo);
+    if( sc.isSuccess() ) {
+      m_lumiNo = evtInfo->event_ID()->lumi_block();
+    }
+  }
 
   if ((isNewLumiBlock && !online) || isNewRun ) {
 
@@ -175,28 +188,41 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	  TH2F* hist = bookOverview("l1calo_2d_GlobalOverviewBlock" + cnum.str(),
 	               "L1Calo Global Error Overview Block " + cnum.str());
           m_v_lumi.push_back(hist);
+	  m_v_luminumbers.push_back(0);
         }
       } else {
         for (int i = 0; i < m_recentLumi; ++i) {
 	  m_v_lumi[i]->Reset();
+	  m_v_luminumbers[i] = 0;
         }
       }
+      m_lumipos = 0;
+      m_v_luminumbers[m_lumipos] = m_lumiNo;
     }
   } else if (isNewLumiBlock && online) {
 
     // Update last few lumiblocks plots
 
-    double entries = m_v_lumi[m_recentLumi-1]->GetEntries();
-    if (entries > 0.) m_h_lumiblocks->Reset();
-    m_v_lumi[m_recentLumi-1]->Reset();
-    TH2F* tmpHist = m_v_lumi[m_recentLumi-1];
-    for (int i = m_recentLumi-2; i >= 0; --i) {
-      if (entries > 0. && m_v_lumi[i]->GetEntries() > 0.) {
-        m_h_lumiblocks->Add(m_v_lumi[i]);
-      }
-      m_v_lumi[i+1] = m_v_lumi[i];
+    m_lumipos = -1;
+    for (int i = 0; i < m_recentLumi; ++i) {
+      if (m_v_luminumbers[i] == m_lumiNo) m_lumipos = i;
     }
-    m_v_lumi[0] = tmpHist;
+    if (m_lumipos == -1) {
+      double entries = m_v_lumi[m_recentLumi-1]->GetEntries();
+      if (entries > 0.) m_h_lumiblocks->Reset();
+      m_v_lumi[m_recentLumi-1]->Reset();
+      TH2F* tmpHist = m_v_lumi[m_recentLumi-1];
+      for (int i = m_recentLumi-2; i >= 0; --i) {
+        if (entries > 0. && m_v_lumi[i]->GetEntries() > 0.) {
+          m_h_lumiblocks->Add(m_v_lumi[i]);
+        }
+        m_v_lumi[i+1] = m_v_lumi[i];
+	m_v_luminumbers[i+1] = m_v_luminumbers[i];
+      }
+      m_v_lumi[0] = tmpHist;
+      m_lumipos = 0;
+      m_v_luminumbers[m_lumipos] = m_lumiNo;
+    }
 
   } // end if ((isNewLumiBlock && ...
 
@@ -205,11 +231,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
     // Errors by lumiblock/time plots
     // On Tier0 only kept if non-empty
 
-    m_lumiNo = 0;
-    const EventInfo* evtInfo = 0;
-    StatusCode sc = evtStore()->retrieve(evtInfo);
-    if( sc.isSuccess() ) {
-      m_lumiNo = evtInfo->event_ID()->lumi_block();
+    if( m_lumiNo ) {
       if (isNewRun) {
         std::string dir(m_rootDir + "/Overview/Errors");
 	MonGroup monLumi( this, dir, shift, run);
@@ -644,7 +666,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     m_h_global->Add(m_h_current);
     if (online) {
       m_h_lumiblocks->Add(m_h_current);
-      m_v_lumi[0]->Add(m_h_current);
+      m_v_lumi[m_lumipos]->Add(m_h_current);
     }
     if (m_lumiNo && m_h_bylumi) {
       if (!online && m_h_bylumi->GetEntries() == 0.) {

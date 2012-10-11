@@ -1,3 +1,11 @@
+2012-10-11  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-13-05
+        * Fix bug in last 10 lumiblock global error plot.
+
+2012-09-13  Julia I. Hofmann <jhofmann@kip.uni-heidelberg.de>
+        * Tag as TrigT1CaloMonitoring-00-13-04
+        * Extending the finetime monitoring to read in reference values.
+
 2012-09-07  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-13-03
         * Record rejected event numbers.
