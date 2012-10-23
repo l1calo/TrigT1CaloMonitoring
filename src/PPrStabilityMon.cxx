@@ -86,7 +86,6 @@ StatusCode PPrStabilityMon::initialize()
 								m_ppmADCMinValue,
 								m_lumiBlockMax,
 								m_PathInRootFile+"/FineTime");
-	m_fineTimePlotManager->SetCaloCellContainer(m_caloCellContainerName);
 	m_fineTimePlotManager->SetFineTimeCut(m_fineTimeCut);
     }
     if (m_doPedestalMonitoring)

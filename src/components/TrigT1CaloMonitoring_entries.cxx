@@ -1,3 +1,4 @@
+#include "TrigT1CaloMonitoring/TrigT1CaloBSMon.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloCpmMonTool.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloRodMonTool.h"
 #include "TrigT1CaloMonitoring/TrigT1CaloGlobalMonTool.h"
@@ -14,6 +15,7 @@
 
 #include "GaudiKernel/DeclareFactoryEntries.h"
 
+DECLARE_TOOL_FACTORY(TrigT1CaloBSMon)
 DECLARE_TOOL_FACTORY(TrigT1CaloCpmMonTool)
 DECLARE_TOOL_FACTORY(TrigT1CaloRodMonTool)
 DECLARE_TOOL_FACTORY(TrigT1CaloGlobalMonTool)
@@ -29,6 +31,7 @@ DECLARE_TOOL_FACTORY(EmEfficienciesMonTool)
 DECLARE_TOOL_FACTORY(JetEfficienciesMonTool)
 
 DECLARE_FACTORY_ENTRIES(TrigT1CaloMonitoring) {
+  DECLARE_ALGTOOL(TrigT1CaloBSMon)
   DECLARE_ALGTOOL(TrigT1CaloCpmMonTool)
   DECLARE_ALGTOOL(TrigT1CaloRodMonTool)
   DECLARE_ALGTOOL(TrigT1CaloGlobalMonTool)

@@ -1,3 +1,5 @@
+# For testing purposes only - runs each monitoring tool in a separate manager
+# so can see their individual cpu usage.
 Offline= not athenaCommonFlags.isOnline
 if not 'DQMonFlags' in dir():
     print "TrigT1CaloMonitoring_forRecExCommission.py: DQMonFlags not yet imported - I import them now"
@@ -22,13 +24,39 @@ if l1caloRawMon or l1caloESDMon:
     #================================= Monitoring configuration ======================
     from AthenaCommon.AlgSequence import AlgSequence
     topSequence = AlgSequence()
-    L1CaloMan = AthenaMonManager( "L1CaloMonManager" )
+    L1CaloMan0A = AthenaMonManager( "L1CaloMonManager0A" )
+    L1CaloMan0B = AthenaMonManager( "L1CaloMonManager0B" )
+    L1CaloMan1A = AthenaMonManager( "L1CaloMonManager1A" )
+    L1CaloMan1B = AthenaMonManager( "L1CaloMonManager1B" )
+    L1CaloMan1C = AthenaMonManager( "L1CaloMonManager1C" )
+    L1CaloMan2 = AthenaMonManager( "L1CaloMonManager2" )
+    L1CaloMan3 = AthenaMonManager( "L1CaloMonManager3" )
+    L1CaloMan4 = AthenaMonManager( "L1CaloMonManager4" )
+    L1CaloMan5 = AthenaMonManager( "L1CaloMonManager5" )
+    L1CaloMan6 = AthenaMonManager( "L1CaloMonManager6" )
+    L1CaloMan7 = AthenaMonManager( "L1CaloMonManager7" )
+    L1CaloMan8 = AthenaMonManager( "L1CaloMonManager8" )
+    L1CaloMan9 = AthenaMonManager( "L1CaloMonManager9" )
+    L1CaloManA = AthenaMonManager( "L1CaloMonManagerA" )
+    L1CaloManB = AthenaMonManager( "L1CaloMonManagerB" )
+    L1CaloManC = AthenaMonManager( "L1CaloMonManagerC" )
+    L1CaloManD = AthenaMonManager( "L1CaloMonManagerD" )
     
     ## get a handle on the ToolSvc
     from AthenaCommon.AppMgr import ToolSvc
     
     if globalflags.InputFormat() == "bytestream":
         include ("TrigT1CaloByteStream/ReadLVL1CaloBS_jobOptions.py")
+
+    # Make sure our data is read in before our monitoring tools run so cpu accounted separately
+    # (NB. other sub-detectors code may read some of it first and so get the cpu hit!)
+    from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import TrigT1CaloBSMon
+    L1TrigT1CaloBSMonToolA = TrigT1CaloBSMon(
+        name = "L1TrigT1CaloBSMonToolA",
+	LoadL1Calo = True
+                )
+    ToolSvc += L1TrigT1CaloBSMonToolA
+    L1CaloMan0A.AthenaMonTools += [ L1TrigT1CaloBSMonToolA ]
     
     include("CaloConditions/CaloConditions_jobOptions.py")
     if Offline:
@@ -38,23 +66,26 @@ if l1caloRawMon or l1caloESDMon:
 
     if l1caloESDMon and globalflags.DataSource() == "data":
         include("TrigT1CaloCalibConditions/L1CaloCalibConditionsTier0_jobOptions.py")
+
+    # Preload CaloCell data
+    L1TrigT1CaloBSMonToolB = TrigT1CaloBSMon(
+        name = "L1TrigT1CaloBSMonToolB",
+        LoadCaloCells = True
+                )
+    ToolSvc += L1TrigT1CaloBSMonToolB
+    L1CaloMan0B.AthenaMonTools += [ L1TrigT1CaloBSMonToolB ]
     
     from TrigT1CaloMonitoringTools.LVL1CaloMonFlags import LVL1CaloMonFlags
-    
-    doFineTime = False
+
     if LVL1CaloMonFlags.doFineTimeMonitoring():
         # load the sqlite file for the fine time monitoring
-        dbpath = "/afs/cern.ch/user/l/l1ccalib/w0/DaemonData/reference/calibJuly.sqlite"
-        import os.path
-        if os.path.isfile(dbpath):
-            from EventSelectorAthenaPool.EventSelectorAthenaPoolConf import MetaDataSvc
-            svcMgr += MetaDataSvc( "MetaDataSvc" )
-            #svcMgr.IOVDbSvc.Folders += ["<dbConnection>sqlite://;schema=../share/calibJuly.sqlite;dbname=L1CALO</dbConnection>/TRIGGER/L1Calo/V1/References/FineTimeReferences"]
-            svcMgr.IOVDbSvc.Folders += ["<dbConnection>sqlite://;schema=" + dbpath + ";dbname=L1CALO</dbConnection>/TRIGGER/L1Calo/V1/References/FineTimeReferences"]
-            doFineTime = True
-       
-    
-    if LVL1CaloMonFlags.doPPrStabilityMon():      
+        from EventSelectorAthenaPool.EventSelectorAthenaPoolConf import MetaDataSvc
+        svcMgr += MetaDataSvc( "MetaDataSvc" )
+        #svcMgr.IOVDbSvc.Folders += ["<dbConnection>sqlite://;schema=../share/calibJuly.sqlite;dbname=L1CALO</dbConnection>/TRIGGER/L1Calo/V1/References/FineTimeReferences"]
+        #svcMgr.IOVDbSvc.Folders += ["<dbConnection>sqlite://;schema=/home/pjwf/Athena/AtlasProduction-17.2.6.2_cpu/Trigger/TrigT1/TrigT1CaloCalibUtils/share/calibJuly.sqlite;dbname=L1CALO</dbConnection>/TRIGGER/L1Calo/V1/References/FineTimeReferences"]
+        svcMgr.IOVDbSvc.Folders += ["<dbConnection>sqlite://;schema=/afs/cern.ch/user/l/l1ccalib/w0/DaemonData/reference/calibJuly.sqlite;dbname=L1CALO</dbConnection>/TRIGGER/L1Calo/V1/References/FineTimeReferences"]
+
+    if LVL1CaloMonFlags.doPPrStabilityMon():        
 
         #=================================================================================
         #  Want Full PPrStabilityMon to run alone
@@ -65,7 +96,7 @@ if l1caloRawMon or l1caloESDMon:
             from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrStabilityMon
             L1PPrStabilityMonTool = PPrStabilityMon(
                 name = "L1PPrStabilityMonTool",
-                doFineTimeMonitoring = (doFineTime and rec.doCalo() and rec.doLArg() and rec.doTile()),
+                doFineTimeMonitoring = LVL1CaloMonFlags.doFineTimeMonitoring(),
                 doPedestalMonitoring = LVL1CaloMonFlags.doPedestalMonitoring(),
                 doEtCorrelationMonitoring = (LVL1CaloMonFlags.doEtCorrelationMonitoring()
                                       and rec.doCalo() and rec.doLArg() and rec.doTile()),
@@ -77,7 +108,7 @@ if l1caloRawMon or l1caloESDMon:
                 #OutputLevel = DEBUG
                 )
             ToolSvc += L1PPrStabilityMonTool
-            L1CaloMan.AthenaMonTools += [ L1PPrStabilityMonTool ]
+            L1CaloMan1A.AthenaMonTools += [ L1PPrStabilityMonTool ]
     
     else:
     
@@ -88,10 +119,11 @@ if l1caloRawMon or l1caloESDMon:
             #============== PPrStabilityMon without individual channel plots =================
             #=================================================================================
             from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPrStabilityMon
-            L1PPrStabilityMonTool = PPrStabilityMon(
-                name = "L1PPrStabilityMonTool",
-                doFineTimeMonitoring = (doFineTime and rec.doCalo() and rec.doLArg() and rec.doTile()),
-                doEtCorrelationMonitoring = (rec.doCalo() and rec.doLArg() and rec.doTile()),
+            L1PPrStabilityMonToolA = PPrStabilityMon(
+                name = "L1PPrStabilityMonToolA",
+                doFineTimeMonitoring = True,
+                doPedestalMonitoring = False,
+                doEtCorrelationMonitoring = False,
                 BS_TriggerTowerContainer = "TriggerTowers",
                 ppmADCMinValue = 60,
                 lumiMax = 2000,
@@ -99,8 +131,38 @@ if l1caloRawMon or l1caloESDMon:
                 PathInRootFile = "L1Calo/PPM/Stability",
                 #OutputLevel = DEBUG
                 )
-            ToolSvc += L1PPrStabilityMonTool
-            L1CaloMan.AthenaMonTools += [ L1PPrStabilityMonTool ]
+            ToolSvc += L1PPrStabilityMonToolA
+            L1CaloMan1A.AthenaMonTools += [ L1PPrStabilityMonToolA ]
+
+            L1PPrStabilityMonToolB = PPrStabilityMon(
+                name = "L1PPrStabilityMonToolB",
+                doFineTimeMonitoring = False,
+                doPedestalMonitoring = True,
+                doEtCorrelationMonitoring = False,
+                BS_TriggerTowerContainer = "TriggerTowers",
+                ppmADCMinValue = 60,
+                lumiMax = 2000,
+                fineTimeCut = 20,
+                PathInRootFile = "L1Calo/PPM/Stability",
+                #OutputLevel = DEBUG
+                )
+            ToolSvc += L1PPrStabilityMonToolB
+            L1CaloMan1B.AthenaMonTools += [ L1PPrStabilityMonToolB ]
+
+            L1PPrStabilityMonToolC = PPrStabilityMon(
+                name = "L1PPrStabilityMonToolC",
+                doFineTimeMonitoring = False,
+                doPedestalMonitoring = False,
+                doEtCorrelationMonitoring = True,
+                BS_TriggerTowerContainer = "TriggerTowers",
+                ppmADCMinValue = 60,
+                lumiMax = 2000,
+                fineTimeCut = 20,
+                PathInRootFile = "L1Calo/PPM/Stability",
+                #OutputLevel = DEBUG
+                )
+            ToolSvc += L1PPrStabilityMonToolC
+            L1CaloMan1C.AthenaMonTools += [ L1PPrStabilityMonToolC ]
     
         if l1caloESDMon:
 
@@ -123,14 +185,14 @@ if l1caloRawMon or l1caloESDMon:
                 #OutputLevel = DEBUG
                 )
             ToolSvc += L1PPrMonTool
-            L1CaloMan.AthenaMonTools += [ L1PPrMonTool ]
+            L1CaloMan2.AthenaMonTools += [ L1PPrMonTool ]
 
         if l1caloESDMon and globalflags.DataSource() == "data":
                 
             from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import PPMSimBSMon
             PPMSimBSMonTool = PPMSimBSMon("PPMSimBSMonTool")
             ToolSvc += PPMSimBSMonTool
-            L1CaloMan.AthenaMonTools += [ PPMSimBSMonTool ]
+            L1CaloMan3.AthenaMonTools += [ PPMSimBSMonTool ]
             #ToolSvc.PPMSimBSMonTool.OutputLevel = DEBUG
             from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1TriggerTowerTool
             L1TriggerTowerTool = LVL1__L1TriggerTowerTool("L1TriggerTowerTool")
@@ -150,7 +212,7 @@ if l1caloRawMon or l1caloESDMon:
                 #OutputLevel = DEBUG
                 )
             ToolSvc += L1PPrSpareMonTool
-            L1CaloMan.AthenaMonTools += [ L1PPrSpareMonTool ]
+            L1CaloMan4.AthenaMonTools += [ L1PPrSpareMonTool ]
     
         if l1caloESDMon:
     
@@ -172,7 +234,7 @@ if l1caloRawMon or l1caloESDMon:
                 #OutputLevel = DEBUG
                 )
             ToolSvc += L1JEMMonTool
-            L1CaloMan.AthenaMonTools += [ L1JEMMonTool ]
+            L1CaloMan5.AthenaMonTools += [ L1JEMMonTool ]
     
             #----------------------------------- CMM ------------------------------------------
             from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import CMMMon
@@ -186,7 +248,7 @@ if l1caloRawMon or l1caloESDMon:
                 #OutputLevel = DEBUG
                 )
             ToolSvc += L1CMMMonTool
-            L1CaloMan.AthenaMonTools += [ L1CMMMonTool ]
+            L1CaloMan6.AthenaMonTools += [ L1CMMMonTool ]
     
         if l1caloRawMon and globalflags.DataSource() == "data":
     
@@ -198,7 +260,7 @@ if l1caloRawMon or l1caloESDMon:
                 JEPEtSumsTool = "LVL1::L1JEPEtSumsTools/L1JEPEtSumsTools_Mon",
                 )
             ToolSvc += JEPSimBSMonTool
-            L1CaloMan.AthenaMonTools += [ JEPSimBSMonTool ]
+            L1CaloMan7.AthenaMonTools += [ JEPSimBSMonTool ]
             #ToolSvc.JEPSimBSMonTool.OutputLevel = DEBUG
     
             from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1JEPHitsTools
@@ -237,7 +299,7 @@ if l1caloRawMon or l1caloESDMon:
                 #OutputLevel = DEBUG,
                 )
             ToolSvc += L1BSCPMMonTool
-            L1CaloMan.AthenaMonTools += [ L1BSCPMMonTool ]
+            L1CaloMan8.AthenaMonTools += [ L1BSCPMMonTool ]
     
         if l1caloRawMon and globalflags.DataSource() == "data":
     
@@ -246,7 +308,7 @@ if l1caloRawMon or l1caloESDMon:
                                       EmTauTool = "LVL1::L1EmTauTools/L1EmTauTools_Mon",
                                       )
             ToolSvc += CPMSimBSMonTool
-            L1CaloMan.AthenaMonTools += [ CPMSimBSMonTool ]
+            L1CaloMan9.AthenaMonTools += [ CPMSimBSMonTool ]
             #ToolSvc.CPMSimBSMonTool.OutputLevel = DEBUG
     
             from TrigT1CaloTools.TrigT1CaloToolsConf import LVL1__L1EmTauTools
@@ -263,7 +325,7 @@ if l1caloRawMon or l1caloESDMon:
                 #OutputLevel = DEBUG,
                 )
             ToolSvc += L1BSRODMonTool
-            L1CaloMan.AthenaMonTools += [ L1BSRODMonTool ]
+            L1CaloManA.AthenaMonTools += [ L1BSRODMonTool ]
     
         if globalflags.DataSource() == "data":
     
@@ -292,7 +354,7 @@ if l1caloRawMon or l1caloESDMon:
     	                                                #OutputLevel = DEBUG
     						  )
             ToolSvc += L1GlobalMonTool
-            L1CaloMan.AthenaMonTools += [ L1GlobalMonTool ]
+            L1CaloManB.AthenaMonTools += [ L1GlobalMonTool ]
     
         if l1caloRawMon and (globalflags.DataSource() == "data" and Offline
                              and rec.doCalo() and rec.doLArg() and rec.doTile()
@@ -309,7 +371,7 @@ if l1caloRawMon or l1caloESDMon:
                                                                   TriggerStrings = trigstring
                                                             )
             ToolSvc += L1EmEfficienciesMonTool
-            L1CaloMan.AthenaMonTools += [ L1EmEfficienciesMonTool ]
+            L1CaloManC.AthenaMonTools += [ L1EmEfficienciesMonTool ]
             if not hasattr( ToolSvc, "TrigDecisionTool" ):
                 from TrigDecisionTool.TrigDecisionToolConf import Trig__TrigDecisionTool
                 tdt = Trig__TrigDecisionTool('TrigDecisionTool')
@@ -330,7 +392,7 @@ if l1caloRawMon or l1caloESDMon:
                                                                   TriggerStrings = trigstring
                                                               )
             ToolSvc += L1JetEfficienciesMonTool
-            L1CaloMan.AthenaMonTools += [ L1JetEfficienciesMonTool ]
+            L1CaloManD.AthenaMonTools += [ L1JetEfficienciesMonTool ]
             if not hasattr( ToolSvc, "TrigDecisionTool" ):
                 from TrigDecisionTool.TrigDecisionToolConf import Trig__TrigDecisionTool
                 tdt = Trig__TrigDecisionTool('TrigDecisionTool')
@@ -338,8 +400,88 @@ if l1caloRawMon or l1caloESDMon:
     
     #=================================================================================
     # FileKey must match that given to THistSvc
-    L1CaloMan.FileKey             = DQMonFlags.monManFileKey()
-    L1CaloMan.Environment         = DQMonFlags.monManEnvironment()
-    L1CaloMan.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
-    L1CaloMan.DataType            = DQMonFlags.monManDataType()
-    topSequence += L1CaloMan
+    L1CaloMan0A.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan0A.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan0A.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan0A.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan0A
+    L1CaloMan0B.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan0B.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan0B.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan0B.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan0B
+    L1CaloMan1A.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan1A.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan1A.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan1A.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan1A
+    L1CaloMan1B.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan1B.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan1B.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan1B.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan1B
+    L1CaloMan1C.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan1C.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan1C.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan1C.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan1C
+    L1CaloMan2.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan2.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan2.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan2.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan2
+    L1CaloMan3.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan3.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan3.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan3.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan3
+    L1CaloMan4.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan4.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan4.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan4.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan4
+    L1CaloMan5.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan5.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan5.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan5.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan5
+    L1CaloMan6.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan6.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan6.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan6.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan6
+    L1CaloMan7.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan7.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan7.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan7.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan7
+    L1CaloMan8.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan8.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan8.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan8.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan8
+    L1CaloMan9.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan9.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan9.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan9.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloMan9
+    L1CaloManA.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloManA.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloManA.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloManA.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloManA
+    L1CaloManB.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloManB.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloManB.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloManB.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloManB
+    L1CaloManC.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloManC.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloManC.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloManC.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloManC
+    L1CaloManD.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloManD.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloManD.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloManD.DataType            = DQMonFlags.monManDataType()
+    topSequence += L1CaloManD
