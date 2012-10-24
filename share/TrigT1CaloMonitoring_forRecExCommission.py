@@ -42,7 +42,9 @@ if l1caloRawMon or l1caloESDMon:
     from TrigT1CaloMonitoringTools.LVL1CaloMonFlags import LVL1CaloMonFlags
     
     doFineTime = False
-    if LVL1CaloMonFlags.doFineTimeMonitoring():
+    if l1caloESDMon and rec.doCalo() and rec.doLArg() and rec.doTile() and (
+        (LVL1CaloMonFlags.doPPrStabilityMon() and LVL1CaloMonFlags.doFineTimeMonitoring()) or
+        (globalflags.DataSource() == "data" and Offline and rec.triggerStream() == "express")):
         # load the sqlite file for the fine time monitoring
         dbpath = "/afs/cern.ch/user/l/l1ccalib/w0/DaemonData/reference/calibJuly.sqlite"
         import os.path
