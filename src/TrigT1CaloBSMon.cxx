@@ -52,17 +52,21 @@ StatusCode TrigT1CaloBSMon::initialize()
   sc = ManagedMonitorToolBase::initialize();
   if (sc.isFailure()) return sc;
 
-  sc = m_errorTool.retrieve();
-  if( sc.isFailure() ) {
-    msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloMonErrorTool"
-                    << endreq;
-    return sc;
+  if (m_l1calo) {
+    sc = m_errorTool.retrieve();
+    if( sc.isFailure() ) {
+      msg(MSG::ERROR) << "Unable to locate Tool TrigT1CaloMonErrorTool"
+                      << endreq;
+      return sc;
+    }
   }
-  sc = m_caloTool.retrieve();
-  if( sc.isFailure() ) {
-    msg(MSG::ERROR) << "Unable to locate Tool L1CaloMonitoringCaloTool"
-                    << endreq;
-    return sc;
+  if (m_caloCells) {
+    sc = m_caloTool.retrieve();
+    if( sc.isFailure() ) {
+      msg(MSG::ERROR) << "Unable to locate Tool L1CaloMonitoringCaloTool"
+                      << endreq;
+      return sc;
+    }
   }
 
   return StatusCode::SUCCESS;
