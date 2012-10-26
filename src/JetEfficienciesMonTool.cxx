@@ -782,7 +782,7 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 	// Create variable to determine if selecting the right type of jets based on criteria in jO
 	bool correctType = false;
 
-	bool roiValuesFilled = false;
+	//bool roiValuesFilled = false;
 
 	//Cycle through all of the offline reconstructed jets
 	for (Itr_jets jetItr = m_offlineJets->begin(); jetItr != m_offlineJets->end(); ++jetItr) {
@@ -899,7 +899,7 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 					}						
 				}
 
-				roiValuesFilled = true;
+				//roiValuesFilled = true;
 
 				//Check to see if there was an RoI to match with an jet
 				if (dR != 1000) {

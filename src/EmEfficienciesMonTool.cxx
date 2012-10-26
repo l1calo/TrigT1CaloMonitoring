@@ -1388,7 +1388,7 @@ bool EmEfficienciesMonTool::inEMEndcap(double eta, int sign) {
 bool EmEfficienciesMonTool::isolatedEmObjectL1(double phi, double eta) {
 	bool isolated = false, tagFound = false;
 	double dREm = 10.0, dR_Max = 10.0;
-	double ET_Max = -10.0, EtaMax = -10.0, PhiMax = -10.0;
+	double ET_Max = -10.0;//, EtaMax = -10.0, PhiMax = -10.0;
 	double etaROI = 0.0, phiROI = 0.0, ET_ROI = 0.0;
 
 	//Cycle over the rois, get their properties and determine the distance from the object
@@ -1402,8 +1402,8 @@ bool EmEfficienciesMonTool::isolatedEmObjectL1(double phi, double eta) {
 
 		//If this energy exceeds the current record then store the details
 		if (ET_ROI > ET_Max) {
-			EtaMax = etaROI;
-			PhiMax = phiROI;
+			//EtaMax = etaROI;
+			//PhiMax = phiROI;
 			ET_Max = ET_ROI;
 			dR_Max = dREm;
 			tagFound = true;
