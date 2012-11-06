@@ -302,72 +302,76 @@ StatusCode PPrSpareMon::fillHistograms()
 
     //------------------------ SubStatus Word errors -------------------------
 
-    using LVL1::DataError;
-    const DataError error((*TriggerTowerIterator)-> emError());
+    if ((*TriggerTowerIterator)-> emError()) {
+
+      using LVL1::DataError;
+      const DataError error((*TriggerTowerIterator)-> emError());
    
-    //Summary
+      //Summary
 
-    int ypos = module+(crate-2)*16;
+      int ypos = module+(crate-2)*16;
 
-    for (int bit = 0; bit < 8; ++bit) {
-      if (error.get(bit + DataError::ChannelDisabled)) {
-        m_h_fwPpmError_Crate_25->Fill(bit, ypos);
-	m_histTool->fillEventNumber(m_h_TT_ASICEventNumbers, bit);
+      for (int bit = 0; bit < 8; ++bit) {
+        if (error.get(bit + DataError::ChannelDisabled)) {
+          m_h_fwPpmError_Crate_25->Fill(bit, ypos);
+ 	  m_histTool->fillEventNumber(m_h_TT_ASICEventNumbers, bit);
+        }
+        if (error.get(bit + DataError::GLinkParity)) {
+          m_h_TT_error_Crate_25->Fill(bit, ypos);
+	  m_h_TT_Error->Fill(bit);
+	  m_histTool->fillEventNumber(m_h_TT_EventNumbers, bit);
+        }
       }
-      if (error.get(bit + DataError::GLinkParity)) {
-        m_h_TT_error_Crate_25->Fill(bit, ypos);
-	m_h_TT_Error->Fill(bit);
-	m_histTool->fillEventNumber(m_h_TT_EventNumbers, bit);
-      }
-    }
 
-    // Detailed plots by MCM
-    ypos = (crate%2)*16+module;
-    const int index = (crate-2)/2;
-    if (error.get(DataError::ChannelDisabled)) {
-      m_h_ErrorDetails[(channel/2)*4+index]->Fill(
+      // Detailed plots by MCM
+      ypos = (crate%2)*16+module;
+      const int index = (crate-2)/2;
+      if (error.get(DataError::ChannelDisabled)) {
+        m_h_ErrorDetails[(channel/2)*4+index]->Fill(
                                                (channel%2)*16+submodule, ypos);
-    }
-    if (error.get(DataError::MCMAbsent)) {
-      m_h_ErrorDetails[4+index]->Fill(submodule, ypos);
-    }
-    if (error.get(DataError::Timeout)) {
-      m_h_ErrorDetails[6+index]->Fill(submodule, ypos);
-    }
-    if (error.get(DataError::ASICFull)) {
-      m_h_ErrorDetails[6+index]->Fill(16+submodule, ypos);
-    }
-    if (error.get(DataError::EventMismatch)) {
-      m_h_ErrorDetails[8+index]->Fill(submodule, ypos);
-    }
-    if (error.get(DataError::BunchMismatch)) {
-      m_h_ErrorDetails[8+index]->Fill(16+submodule, ypos);
-    }
-    if (error.get(DataError::FIFOCorrupt)) {
-      m_h_ErrorDetails[10+index]->Fill(submodule, ypos);
-    }
-    if (error.get(DataError::PinParity)) {
-      m_h_ErrorDetails[10+index]->Fill(16+submodule, ypos);
-    }
+      }
+      if (error.get(DataError::MCMAbsent)) {
+        m_h_ErrorDetails[4+index]->Fill(submodule, ypos);
+      }
+      if (error.get(DataError::Timeout)) {
+        m_h_ErrorDetails[6+index]->Fill(submodule, ypos);
+      }
+      if (error.get(DataError::ASICFull)) {
+        m_h_ErrorDetails[6+index]->Fill(16+submodule, ypos);
+      }
+      if (error.get(DataError::EventMismatch)) {
+        m_h_ErrorDetails[8+index]->Fill(submodule, ypos);
+      }
+      if (error.get(DataError::BunchMismatch)) {
+        m_h_ErrorDetails[8+index]->Fill(16+submodule, ypos);
+      }
+      if (error.get(DataError::FIFOCorrupt)) {
+        m_h_ErrorDetails[10+index]->Fill(submodule, ypos);
+      }
+      if (error.get(DataError::PinParity)) {
+        m_h_ErrorDetails[10+index]->Fill(16+submodule, ypos);
+      }
 
-    if (error.get(DataError::ChannelDisabled) ||
-        error.get(DataError::MCMAbsent)) overview[crate] |= 1;
+      if (error.get(DataError::ChannelDisabled) ||
+          error.get(DataError::MCMAbsent)) overview[crate] |= 1;
 
-    if (error.get(DataError::Timeout)       ||
-        error.get(DataError::ASICFull)      ||
-        error.get(DataError::EventMismatch) ||
-	error.get(DataError::BunchMismatch) ||
-        error.get(DataError::FIFOCorrupt)   ||
-	error.get(DataError::PinParity)) overview[crate] |= (1 << 1);
+      if (error.get(DataError::Timeout)       ||
+          error.get(DataError::ASICFull)      ||
+          error.get(DataError::EventMismatch) ||
+	  error.get(DataError::BunchMismatch) ||
+          error.get(DataError::FIFOCorrupt)   ||
+	  error.get(DataError::PinParity)) overview[crate] |= (1 << 1);
 
-    if (error.get(DataError::GLinkParity)   ||
-        error.get(DataError::GLinkProtocol) ||
-        error.get(DataError::FIFOOverflow)  ||
-	error.get(DataError::ModuleError)   ||
-        error.get(DataError::GLinkDown)     ||
-	error.get(DataError::GLinkTimeout)  ||
-        error.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
+      if (error.get(DataError::GLinkParity)   ||
+          error.get(DataError::GLinkProtocol) ||
+          error.get(DataError::FIFOOverflow)  ||
+	  error.get(DataError::ModuleError)   ||
+          error.get(DataError::GLinkDown)     ||
+	  error.get(DataError::GLinkTimeout)  ||
+          error.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
      
+     }
+
      // number of triggered slice
      m_h_TT_triggeredSlice->Fill((*TriggerTowerIterator)->emADCPeak(),1);
 

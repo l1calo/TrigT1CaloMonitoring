@@ -258,6 +258,13 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
   const int nCrates = 8;
   ErrorVector crateError(nCrates);
   ErrorVector moduleError(nCrates);
+ 
+  std::vector<int> emLut;
+  std::vector<int> emBcidR;
+  std::vector<int> emBcidD;
+  std::vector<int> hadLut;
+  std::vector<int> hadBcidR;
+  std::vector<int> hadBcidD;
   
   m_ttTool->setDebug(false);
   TriggerTowerCollection::const_iterator iter  = ttIn->begin();
@@ -266,29 +273,19 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
   for (; iter != iterE; ++iter) {
     
     const LVL1::TriggerTower* tt = *iter;
-    
-    const L1CaloCoolChannelId em_coolId(m_ttTool->channelID(tt->eta(),
-                                                            tt->phi(),0));
-    const L1CaloCoolChannelId had_coolId(m_ttTool->channelID(tt->eta(),
-                                                             tt->phi(),1));
+    const std::vector<int>& emADC(tt->emADC());
+    const std::vector<int>& hadADC(tt->hadADC());
+    const double eta = tt->eta();
+    const double phi = tt->phi();
 
-    const int had_crate  = had_coolId.crate();
-    const int had_module = had_coolId.module();
-    const int em_crate   = em_coolId.crate();
-    const int em_module  = em_coolId.module();
- 
-    std::vector<int> emLut;
-    std::vector<int> emBcidR;
-    std::vector<int> emBcidD;
-    //
-    const int emPeak = tt->emADCPeak();
-    std::vector<int> emLut1;
-    const int emSlices = (tt->emADC()).size();
+    int simEm = 0;
+    const int datEm = tt->emEnergy();
+    const int emSlices = emADC.size();
     bool keep = true;
-    if (tt->emEnergy()==0) {
+    if (datEm == 0) {
       keep = false;
-      std::vector<int>::const_iterator it1 = (tt->emADC()).begin();
-      std::vector<int>::const_iterator itE = (tt->emADC()).end();
+      std::vector<int>::const_iterator it1 = emADC.begin();
+      std::vector<int>::const_iterator itE = emADC.end();
       for (;it1 != itE; ++it1) {
         if (*it1 >= m_simulationADCCut) {
           keep = true;
@@ -297,33 +294,31 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
       }
     }
     if (keep) {
-      m_ttTool->process(tt->emADC(),em_coolId, emLut, emBcidR, emBcidD);
-      if (emSlices < 7 || emBcidD[emPeak]) emLut1.push_back(emLut[emPeak]);
-      else                 emLut1.push_back(0);
-      std::vector<int> emBcidR1;
-      emBcidR1.push_back(emBcidR[emPeak]);
-      if (m_debug && emLut1[0] != tt->emEnergy() && (emSlices>=7 || tt->emEnergy()!=0)) { // mismatch - repeat with debug on
+      emLut.clear();
+      emBcidR.clear();
+      emBcidD.clear();
+      const int emPeak = tt->emADCPeak();
+      const L1CaloCoolChannelId em_coolId(m_ttTool->channelID(eta, phi, 0));
+      m_ttTool->process(emADC, em_coolId, emLut, emBcidR, emBcidD);
+      if (emSlices < 7 || emBcidD[emPeak]) simEm = emLut[emPeak];
+      if (m_debug && simEm != datEm && (emSlices >= 7 || datEm != 0)) { // mismatch - repeat with debug on
         std::vector<int> emLut2; 
         std::vector<int> emBcidR2;
         std::vector<int> emBcidD2;
         m_ttTool->setDebug(true);
-        m_ttTool->process(tt->emADC(),em_coolId, emLut2, emBcidR2, emBcidD2);
+        m_ttTool->process(emADC, em_coolId, emLut2, emBcidR2, emBcidD2);
         m_ttTool->setDebug(false);
       }
-    } else emLut1.push_back(0);
+    }
     
-    std::vector<int> hadLut;
-    std::vector<int> hadBcidR;
-    std::vector<int> hadBcidD;
-    //
-    const int hadPeak = tt->hadADCPeak();
-    std::vector<int> hadLut1;
-    const int hadSlices = (tt->hadADC()).size();
+    int simHad = 0;
+    const int datHad = tt->hadEnergy();
+    const int hadSlices = hadADC.size();
     keep = true;
-    if (tt->hadEnergy()==0) {
+    if (datHad == 0) {
       keep = false;
-      std::vector<int>::const_iterator it1 = (tt->hadADC()).begin();
-      std::vector<int>::const_iterator itE = (tt->hadADC()).end();
+      std::vector<int>::const_iterator it1 = hadADC.begin();
+      std::vector<int>::const_iterator itE = hadADC.end();
       for (;it1 != itE; ++it1) {
         if (*it1 >= m_simulationADCCut) {
 	  keep = true;
@@ -332,32 +327,27 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
       }
     }
     if (keep) {
-      m_ttTool->process(tt->hadADC(),had_coolId, hadLut, hadBcidR, hadBcidD);
-      if (hadSlices < 7 || hadBcidD[hadPeak]) hadLut1.push_back(hadLut[hadPeak]);
-      else                   hadLut1.push_back(0);
-      std::vector<int> hadBcidR1;
-      hadBcidR1.push_back(hadBcidR[hadPeak]);
-      if (m_debug && hadLut1[0] != tt->hadEnergy() && (hadSlices>=7 || tt->hadEnergy()!=0)) {
+      hadLut.clear();
+      hadBcidR.clear();
+      hadBcidD.clear();
+      const int hadPeak = tt->hadADCPeak();
+      const L1CaloCoolChannelId had_coolId(m_ttTool->channelID(eta, phi, 1));
+      m_ttTool->process(hadADC, had_coolId, hadLut, hadBcidR, hadBcidD);
+      if (hadSlices < 7 || hadBcidD[hadPeak]) simHad = hadLut[hadPeak];
+      if (m_debug && simHad != datHad && (hadSlices >= 7 || datHad !=0 )) {
         std::vector<int> hadLut2;
         std::vector<int> hadBcidR2;
         std::vector<int> hadBcidD2;
         m_ttTool->setDebug(true);
-        m_ttTool->process(tt->hadADC(),had_coolId, hadLut2, hadBcidR2, hadBcidD2);
+        m_ttTool->process(hadADC, had_coolId, hadLut2, hadBcidR2, hadBcidD2);
         m_ttTool->setDebug(false);
       }
-    } else hadLut1.push_back(0);
+    }
     
-    const int simEm  = emLut1[0];
-    const int simHad = hadLut1[0];
-    const int datEm  = tt->emEnergy();
-    const int datHad = tt->hadEnergy();
-
     if (!simEm && !simHad && !datEm && !datHad) continue;
     
     //  Fill in error plots
     
-    const double eta = tt->eta();
-    const double phi = tt->phi();
     int em_mismatch = 0;
     int had_mismatch = 0;
     
@@ -369,7 +359,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
       if (simEm && datEm) {       // non-zero mis-match
         hist1 = m_h_ppm_em_2d_etaPhi_tt_lut_SimNeData;
       } else if (!datEm) {        // no data
-	if(emSlices>=7) {
+	if (emSlices >= 7) {
 	  hist1 = m_h_ppm_em_2d_etaPhi_tt_lut_SimNoData;
 	} else em_mismatch = 0;
       } else {                    // no sim
@@ -383,10 +373,13 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
     
     if (hist1) m_histTool->fillPPMEmEtaVsPhi(hist1, eta, phi);
     
-    if(em_mismatch==1) {
-      crateError[em_crate]=1;
+    if (em_mismatch == 1) {
+      const L1CaloCoolChannelId em_coolId(m_ttTool->channelID(eta, phi, 0));
+      const int em_crate  = em_coolId.crate();
+      const int em_module = em_coolId.module();
+      crateError[em_crate] = 1;
       if (!((moduleError[em_crate]>>em_module)&0x1)) {
-	fillEventSample(em_crate,em_module);
+	fillEventSample(em_crate, em_module);
 	moduleError[em_crate] |= (1 << em_module);
       }
     }
@@ -399,7 +392,7 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
       if (simHad && datHad) {        // non-zero mis-match
         hist1 = m_h_ppm_had_2d_etaPhi_tt_lut_SimNeData;
       } else if (!datHad) {          // no data
-	if(hadSlices>=7) {
+	if (hadSlices >= 7) {
 	  hist1 = m_h_ppm_had_2d_etaPhi_tt_lut_SimNoData;
 	} else had_mismatch = 0;
       } else {                       // no sim
@@ -413,10 +406,13 @@ void PPMSimBSMon::simulateAndCompare(const TriggerTowerCollection* ttIn)
 
     if (hist1) m_histTool->fillPPMHadEtaVsPhi(hist1, eta, phi);
       
-    if(had_mismatch==1) {
+    if (had_mismatch == 1) {
+      const L1CaloCoolChannelId had_coolId(m_ttTool->channelID(eta, phi, 1));
+      const int had_crate  = had_coolId.crate();
+      const int had_module = had_coolId.module();
       crateError[had_crate] = 1;
       if (!((moduleError[had_crate]>>had_module)&0x1)) {
-	fillEventSample(had_crate,had_module);
+	fillEventSample(had_crate, had_module);
 	moduleError[had_crate] |= (1 << had_module);
       }
     }

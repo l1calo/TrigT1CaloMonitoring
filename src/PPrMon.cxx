@@ -696,149 +696,158 @@ StatusCode PPrMon::fillHistograms()
     //----------------------------- em ---------------------------------------
 
     using LVL1::DataError;
-    const DataError emerr((*TriggerTowerIterator)-> emError());
 
-    const L1CaloCoolChannelId emCoolId(m_ttTool->channelID(eta, phi, 0));
-    int crate     = emCoolId.crate();
-    int module    = emCoolId.module();
-    int submodule = emCoolId.subModule();
-    int channel   = emCoolId.channel();
+    if ((*TriggerTowerIterator)-> emError()) {
 
-    // em signals Crate 0-3
-    //em+had FCAL signals get processed in one crate (Crates 4-7)
+      const DataError emerr((*TriggerTowerIterator)-> emError());
 
-    int ypos = (crate < 4) ? module+crate*16 : module+(crate-4)*16;
+      const L1CaloCoolChannelId emCoolId(m_ttTool->channelID(eta, phi, 0));
+      int crate     = emCoolId.crate();
+      int module    = emCoolId.module();
+      int submodule = emCoolId.subModule();
+      int channel   = emCoolId.channel();
 
-    for (int bit = 0; bit < 8; ++bit) {
-      if (emerr.get(bit + DataError::ChannelDisabled)) {
-        if (crate < 4) m_h_fwPpmError_Crate_03->Fill(bit, ypos);
-	else           m_h_fwPpmError_Crate_47->Fill(bit, ypos);
-	m_histTool->fillEventNumber(m_h_TT_ASICEventNumbers, bit);
+      // em signals Crate 0-3
+      //em+had FCAL signals get processed in one crate (Crates 4-7)
+
+      int ypos = (crate < 4) ? module+crate*16 : module+(crate-4)*16;
+
+      for (int bit = 0; bit < 8; ++bit) {
+        if (emerr.get(bit + DataError::ChannelDisabled)) {
+          if (crate < 4) m_h_fwPpmError_Crate_03->Fill(bit, ypos);
+  	  else           m_h_fwPpmError_Crate_47->Fill(bit, ypos);
+	  m_histTool->fillEventNumber(m_h_TT_ASICEventNumbers, bit);
+        }
+        if (emerr.get(bit + DataError::GLinkParity)) {
+	  if (crate < 4) m_h_TT_error_Crate_03->Fill(bit, ypos);
+	  else           m_h_TT_error_Crate_47->Fill(bit, ypos);
+	  m_h_TT_Error->Fill(bit);
+	  m_histTool->fillEventNumber(m_h_TT_EventNumbers, bit);
+        }
       }
-      if (emerr.get(bit + DataError::GLinkParity)) {
-	if (crate < 4) m_h_TT_error_Crate_03->Fill(bit, ypos);
-	else           m_h_TT_error_Crate_47->Fill(bit, ypos);
-	m_h_TT_Error->Fill(bit);
-	m_histTool->fillEventNumber(m_h_TT_EventNumbers, bit);
-      }
-    }
 
-    if (emerr.get(DataError::ChannelDisabled) ||
-        emerr.get(DataError::MCMAbsent)) overview[crate] |= 1;
+      if (emerr.get(DataError::ChannelDisabled) ||
+          emerr.get(DataError::MCMAbsent)) overview[crate] |= 1;
 
-    if (emerr.get(DataError::Timeout)       ||
-        emerr.get(DataError::ASICFull)      ||
-        emerr.get(DataError::EventMismatch) ||
-	emerr.get(DataError::BunchMismatch) ||
-        emerr.get(DataError::FIFOCorrupt)   ||
-	emerr.get(DataError::PinParity)) overview[crate] |= (1 << 1);
+      if (emerr.get(DataError::Timeout)       ||
+          emerr.get(DataError::ASICFull)      ||
+          emerr.get(DataError::EventMismatch) ||
+	  emerr.get(DataError::BunchMismatch) ||
+          emerr.get(DataError::FIFOCorrupt)   ||
+	  emerr.get(DataError::PinParity)) overview[crate] |= (1 << 1);
 
-    if (emerr.get(DataError::GLinkParity)   ||
-        emerr.get(DataError::GLinkProtocol) ||
-        emerr.get(DataError::FIFOOverflow)  ||
-	emerr.get(DataError::ModuleError)   ||
-        emerr.get(DataError::GLinkDown)     ||
-	emerr.get(DataError::GLinkTimeout)  ||
-	emerr.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
+      if (emerr.get(DataError::GLinkParity)   ||
+          emerr.get(DataError::GLinkProtocol) ||
+          emerr.get(DataError::FIFOOverflow)  ||
+	  emerr.get(DataError::ModuleError)   ||
+          emerr.get(DataError::GLinkDown)     ||
+	  emerr.get(DataError::GLinkTimeout)  ||
+	  emerr.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
 
-    // Detailed plots by MCM
-    ypos = (crate%2)*16+module;
-    if (emerr.get(DataError::ChannelDisabled)) {
-      m_h_ErrorDetails[(channel/2)*4+crate/2]->Fill((channel%2)*16+submodule,
+      // Detailed plots by MCM
+      ypos = (crate%2)*16+module;
+      if (emerr.get(DataError::ChannelDisabled)) {
+        m_h_ErrorDetails[(channel/2)*4+crate/2]->Fill((channel%2)*16+submodule,
                                                                           ypos);
-    }
-    if (emerr.get(DataError::MCMAbsent)) {
-      m_h_ErrorDetails[8+crate/2]->Fill(submodule, ypos);
-    }
-    if (emerr.get(DataError::Timeout)) {
-      m_h_ErrorDetails[12+crate/2]->Fill(submodule, ypos);
-    }
-    if (emerr.get(DataError::ASICFull)) {
-      m_h_ErrorDetails[12+crate/2]->Fill(16+submodule, ypos);
-    }
-    if (emerr.get(DataError::EventMismatch)) {
-      m_h_ErrorDetails[16+crate/2]->Fill(submodule, ypos);
-    }
-    if (emerr.get(DataError::BunchMismatch)) {
-      m_h_ErrorDetails[16+crate/2]->Fill(16+submodule, ypos);
-    }
-    if (emerr.get(DataError::FIFOCorrupt)) {
-      m_h_ErrorDetails[20+crate/2]->Fill(submodule, ypos);
-    }
-    if (emerr.get(DataError::PinParity)) {
-      m_h_ErrorDetails[20+crate/2]->Fill(16+submodule, ypos);
+      }
+      if (emerr.get(DataError::MCMAbsent)) {
+        m_h_ErrorDetails[8+crate/2]->Fill(submodule, ypos);
+      }
+      if (emerr.get(DataError::Timeout)) {
+        m_h_ErrorDetails[12+crate/2]->Fill(submodule, ypos);
+      }
+      if (emerr.get(DataError::ASICFull)) {
+        m_h_ErrorDetails[12+crate/2]->Fill(16+submodule, ypos);
+      }
+      if (emerr.get(DataError::EventMismatch)) {
+        m_h_ErrorDetails[16+crate/2]->Fill(submodule, ypos);
+      }
+      if (emerr.get(DataError::BunchMismatch)) {
+        m_h_ErrorDetails[16+crate/2]->Fill(16+submodule, ypos);
+      }
+      if (emerr.get(DataError::FIFOCorrupt)) {
+        m_h_ErrorDetails[20+crate/2]->Fill(submodule, ypos);
+      }
+      if (emerr.get(DataError::PinParity)) {
+        m_h_ErrorDetails[20+crate/2]->Fill(16+submodule, ypos);
+      }
+
     }
     
     //had
 
-    const DataError haderr((*TriggerTowerIterator)-> hadError());
+    if ((*TriggerTowerIterator)-> hadError()) {
 
-    const L1CaloCoolChannelId hadCoolId(m_ttTool->channelID(eta, phi, 1));
-    crate     = hadCoolId.crate();
-    module    = hadCoolId.module();
-    submodule = hadCoolId.subModule();
-    channel   = hadCoolId.channel();
+      const DataError haderr((*TriggerTowerIterator)-> hadError());
+
+      const L1CaloCoolChannelId hadCoolId(m_ttTool->channelID(eta, phi, 1));
+      int crate     = hadCoolId.crate();
+      int module    = hadCoolId.module();
+      int submodule = hadCoolId.subModule();
+      int channel   = hadCoolId.channel();
       
-    ypos = (crate < 4) ? module+crate*16 : module+(crate-4)*16;
+      int ypos = (crate < 4) ? module+crate*16 : module+(crate-4)*16;
 
-    for (int bit = 0; bit < 8; ++bit) {
-      if (haderr.get(bit + DataError::ChannelDisabled)) {
-	if (crate < 4) m_h_fwPpmError_Crate_03->Fill(bit, ypos);
-	else           m_h_fwPpmError_Crate_47->Fill(bit, ypos);
-	m_histTool->fillEventNumber(m_h_TT_ASICEventNumbers, bit);
+      for (int bit = 0; bit < 8; ++bit) {
+        if (haderr.get(bit + DataError::ChannelDisabled)) {
+	  if (crate < 4) m_h_fwPpmError_Crate_03->Fill(bit, ypos);
+	  else           m_h_fwPpmError_Crate_47->Fill(bit, ypos);
+	  m_histTool->fillEventNumber(m_h_TT_ASICEventNumbers, bit);
+        }
+        if (haderr.get(bit + DataError::GLinkParity)) {
+	  if (crate < 4) m_h_TT_error_Crate_03->Fill(bit, ypos);
+	  else           m_h_TT_error_Crate_47->Fill(bit, ypos);
+	  m_h_TT_Error->Fill(bit);
+	  m_histTool->fillEventNumber(m_h_TT_EventNumbers, bit);
+        }
       }
-      if (haderr.get(bit + DataError::GLinkParity)) {
-	if (crate < 4) m_h_TT_error_Crate_03->Fill(bit, ypos);
-	else           m_h_TT_error_Crate_47->Fill(bit, ypos);
-	m_h_TT_Error->Fill(bit);
-	m_histTool->fillEventNumber(m_h_TT_EventNumbers, bit);
-      }
-    }
 
-    if (haderr.get(DataError::ChannelDisabled) ||
-        haderr.get(DataError::MCMAbsent)) overview[crate] |= 1;
+      if (haderr.get(DataError::ChannelDisabled) ||
+          haderr.get(DataError::MCMAbsent)) overview[crate] |= 1;
 
-    if (haderr.get(DataError::Timeout)       ||
-        haderr.get(DataError::ASICFull)      ||
-        haderr.get(DataError::EventMismatch) ||
-	haderr.get(DataError::BunchMismatch) ||
-        haderr.get(DataError::FIFOCorrupt)   ||
-	haderr.get(DataError::PinParity)) overview[crate] |= (1 << 1);
+      if (haderr.get(DataError::Timeout)       ||
+          haderr.get(DataError::ASICFull)      ||
+          haderr.get(DataError::EventMismatch) ||
+	  haderr.get(DataError::BunchMismatch) ||
+          haderr.get(DataError::FIFOCorrupt)   ||
+	  haderr.get(DataError::PinParity)) overview[crate] |= (1 << 1);
 
-    if (haderr.get(DataError::GLinkParity)   ||
-        haderr.get(DataError::GLinkProtocol) ||
-        haderr.get(DataError::FIFOOverflow)  ||
-	haderr.get(DataError::ModuleError)   ||
-        haderr.get(DataError::GLinkDown)     ||
-	haderr.get(DataError::GLinkTimeout)  ||
-	haderr.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
+      if (haderr.get(DataError::GLinkParity)   ||
+          haderr.get(DataError::GLinkProtocol) ||
+          haderr.get(DataError::FIFOOverflow)  ||
+	  haderr.get(DataError::ModuleError)   ||
+          haderr.get(DataError::GLinkDown)     ||
+	  haderr.get(DataError::GLinkTimeout)  ||
+	  haderr.get(DataError::BCNMismatch)) overview[crate] |= (1 << 2);
     
-    // Detailed plots by MCM
-    ypos = (crate%2)*16+module;
-    if (haderr.get(DataError::ChannelDisabled)) {
-      m_h_ErrorDetails[(channel/2)*4+crate/2]->Fill((channel%2)*16+submodule,
+      // Detailed plots by MCM
+      ypos = (crate%2)*16+module;
+      if (haderr.get(DataError::ChannelDisabled)) {
+        m_h_ErrorDetails[(channel/2)*4+crate/2]->Fill((channel%2)*16+submodule,
                                                                           ypos);
-    }
-    if (haderr.get(DataError::MCMAbsent)) {
-      m_h_ErrorDetails[8+crate/2]->Fill(submodule, ypos);
-    }
-    if (haderr.get(DataError::Timeout)) {
-      m_h_ErrorDetails[12+crate/2]->Fill(submodule, ypos);
-    }
-    if (haderr.get(DataError::ASICFull)) {
-      m_h_ErrorDetails[12+crate/2]->Fill(16+submodule, ypos);
-    }
-    if (haderr.get(DataError::EventMismatch)) {
-      m_h_ErrorDetails[16+crate/2]->Fill(submodule, ypos);
-    }
-    if (haderr.get(DataError::BunchMismatch)) {
-      m_h_ErrorDetails[16+crate/2]->Fill(16+submodule, ypos);
-    }
-    if (haderr.get(DataError::FIFOCorrupt)) {
-      m_h_ErrorDetails[20+crate/2]->Fill(submodule, ypos);
-    }
-    if (haderr.get(DataError::PinParity)) {
-      m_h_ErrorDetails[20+crate/2]->Fill(16+submodule, ypos);
+      }
+      if (haderr.get(DataError::MCMAbsent)) {
+        m_h_ErrorDetails[8+crate/2]->Fill(submodule, ypos);
+      }
+      if (haderr.get(DataError::Timeout)) {
+        m_h_ErrorDetails[12+crate/2]->Fill(submodule, ypos);
+      }
+      if (haderr.get(DataError::ASICFull)) {
+        m_h_ErrorDetails[12+crate/2]->Fill(16+submodule, ypos);
+      }
+      if (haderr.get(DataError::EventMismatch)) {
+        m_h_ErrorDetails[16+crate/2]->Fill(submodule, ypos);
+      }
+      if (haderr.get(DataError::BunchMismatch)) {
+        m_h_ErrorDetails[16+crate/2]->Fill(16+submodule, ypos);
+      }
+      if (haderr.get(DataError::FIFOCorrupt)) {
+        m_h_ErrorDetails[20+crate/2]->Fill(submodule, ypos);
+      }
+      if (haderr.get(DataError::PinParity)) {
+        m_h_ErrorDetails[20+crate/2]->Fill(16+submodule, ypos);
+      }
+
     }
       
     // number of triggered slice

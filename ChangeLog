@@ -1,3 +1,7 @@
+2012-11-06  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-13-10
+        * Reduce cpu time of some tools.
+
 2012-10-26  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-13-09
         * Fix gcc46 compiler warnings.
