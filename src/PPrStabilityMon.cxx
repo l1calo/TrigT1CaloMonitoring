@@ -39,6 +39,7 @@ PPrStabilityMon::PPrStabilityMon(const std::string & type, const std::string & n
 {
   declareProperty("BS_TriggerTowerContainer",m_TriggerTowerContainerName = "LVL1TriggerTowers");
   declareProperty("ppmADCMinValue", m_ppmADCMinValue=60);
+  declareProperty("ppmADCMaxValue",m_ppmADCMaxValue=1023); 
   declareProperty("PathInRootFile", m_PathInRootFile="L1Calo/PPrStabilityMon");
   declareProperty("doFineTimeMonitoring",m_doFineTimeMonitoring = true );
   declareProperty("doPedestalMonitoring",m_doPedestalMonitoring = true );
@@ -48,6 +49,7 @@ PPrStabilityMon::PPrStabilityMon(const std::string & type, const std::string & n
   declareProperty("pedestalMaxWidth",m_pedestalMaxWidth = 10 );
   declareProperty("caloCellContainerName",m_caloCellContainerName="AllCalo");
   declareProperty("EtMinForEtCorrelation",m_EtMinForEtCorrelation=5);
+  declareProperty("doCaloQualCut",m_doCaloQualCut=true);
 }
 
 PPrStabilityMon::~PPrStabilityMon()
@@ -87,6 +89,8 @@ StatusCode PPrStabilityMon::initialize()
 								m_lumiBlockMax,
 								m_PathInRootFile+"/FineTime");
 	m_fineTimePlotManager->SetFineTimeCut(m_fineTimeCut);
+	m_fineTimePlotManager->SetPpmAdcMaxValue(m_ppmADCMaxValue); 
+	m_fineTimePlotManager->EnableCaloQualCut(m_doCaloQualCut);
     }
     if (m_doPedestalMonitoring)
     {
@@ -149,10 +153,14 @@ StatusCode PPrStabilityMon::fillHistograms()
     
     //load the CaloCells and the Reference Value folder from COOL (or an sqlite file) in case you want to monitor the fine time
     if (m_doFineTimeMonitoring){
-      sc = m_fineTimePlotManager->getCaloCells();
-      if (sc.isFailure()) { msg(MSG::ERROR) <<"Cannot get the CaloCells!" << endreq; return sc; };
+       //load the standalone sqlite db containing the fine time references and calibration values
       sc = m_ttTool->loadFTRefs();
-      if (sc.isFailure()) { msg(MSG::ERROR) <<"Cannot load the fine time references!" << endreq; return sc; };
+      if (sc.isFailure()) {msg(MSG::WARNING) << "Failed to load FineTimeReference Folder"<< endreq; return sc;}
+      //if you want to use the calo quality cut also load the calo cell container
+      if(m_doCaloQualCut){
+	StatusCode sc2 = m_fineTimePlotManager->getCaloCells();
+	if (sc2.isFailure()) {msg(MSG::WARNING) << "Failed to load Calo Cells"<< endreq; return sc2;}
+      }
     }
     
     // ================= Container: TriggerTower ===========================

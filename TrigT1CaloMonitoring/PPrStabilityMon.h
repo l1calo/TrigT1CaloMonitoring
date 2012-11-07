@@ -52,7 +52,8 @@ class PPrStabilityMon: public ManagedMonitorToolBase
   virtual StatusCode procHistograms(bool isEndofEventsBlock, bool isEndofLumiBlock, bool isEndofRun);
 
 private:
-  unsigned int m_ppmADCMinValue;
+  unsigned int m_ppmADCMinValue; // cut on ADC value, used for fine time monitoring
+  unsigned int m_ppmADCMaxValue; // cut on ADC value, used for fine time monitoring
   unsigned int m_lumiBlock;
   unsigned int m_lumiBlockMax;
 
@@ -76,6 +77,8 @@ private:
   double m_pedestalMaxWidth;
   std::string m_caloCellContainerName;
   double m_EtMinForEtCorrelation;
+  bool m_doCaloQualCut;	   	// handle to switch on and off the calo quality cut (and
+			        // usage of the Calo Containers via job options
   
 };
 
