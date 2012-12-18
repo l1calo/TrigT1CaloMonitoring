@@ -1,3 +1,8 @@
+2012-12-18  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-13-12
+        * Skip simulation checks for events with ROB errors.
+        * (-00-13-11 jhofmann: adding JO to control usage of CaloQuality cut)
+
 2012-11-06  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-13-10
         * Reduce cpu time of some tools.

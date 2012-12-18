@@ -453,9 +453,9 @@ StatusCode CPMSimBSMon::fillHistograms()
     return StatusCode::SUCCESS;
   }
   
-  // Skip events believed to be corrupt
+  // Skip events believed to be corrupt or with ROB errors
 
-  if (m_errorTool->corrupt()) {
+  if (m_errorTool->corrupt() || m_errorTool->robOrUnpackingError()) {
     if (m_debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
