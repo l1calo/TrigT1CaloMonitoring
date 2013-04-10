@@ -102,7 +102,7 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
 			m_h_ClusterRaw_30GeV_Eta_vs_Phi(0), 
 			m_h_TrigTower_emBadCalo(0),
 			m_h_TrigTower_emDeadChannel(0),
-			m_h_LAr_Noisy(0)
+			m_h_LAr_emNoisy(0)
 
 /*---------------------------------------------------------*/
 {
@@ -129,10 +129,7 @@ EmEfficienciesMonTool::EmEfficienciesMonTool(const std::string & type,
 	declareProperty("useDeltaEtaPhiMatch", m_useDeltaEtaPhiMatch = false);
 	declareProperty("goodEMDeltaPhiMatch_Cut", m_goodEMDeltaPhiMatch_Cut = 0.2);
 	declareProperty("goodEMDeltaEtaMatch_Cut", m_goodEMDeltaEtaMatch_Cut = 0.2);
-	declareProperty("goodHadDeltaEtaMatch_Cut", m_goodHadDeltaEtaMatch_Cut = 0.3);
-	declareProperty("goodHadDeltaPhiMatch_Cut", m_goodHadDeltaPhiMatch_Cut = 0.3);
 	declareProperty("UseEmThresholdsOnly", m_useEmThresholdsOnly = true);
-	declareProperty("UseEmTransRegionCut", m_useEmTRcut = true);
 	declareProperty("RemoveNoiseBursts", m_removeNoiseBursts = true);
 	declareProperty("IsEmType", m_isEmType = 31);
 
@@ -274,8 +271,8 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 
 		        m_histTool->setMonGroup(&monEmNoisy);
 
-		        m_h_LAr_Noisy = m_histTool->book1F("LAr_emNoisy", "LAr Error Bits in Rejected Events", 6, 0, 6);
-			LWHist::LWHistAxis* axis = m_h_LAr_Noisy->GetXaxis();
+		        m_h_LAr_emNoisy = m_histTool->book1F("LAr_emNoisy", "LAr Error Bits in Rejected Events", 6, 0, 6);
+			LWHist::LWHistAxis* axis = m_h_LAr_emNoisy->GetXaxis();
 			axis->SetBinLabel(1, "BadFEBs");
 			axis->SetBinLabel(2, "MediumSat");
 			axis->SetBinLabel(3, "TightSat");
@@ -482,7 +479,7 @@ StatusCode EmEfficienciesMonTool::fillHistograms()
 		        if(efState == EventInfo::Warning || efState == EventInfo::Error) { 
 			        useEvent = false;
 			        for (unsigned char bit = 0; bit < 6; ++bit) {
-			                if (m_eventInfo->isEventFlagBitSet(EventInfo::LAr, bit)) m_h_LAr_Noisy->Fill(bit);
+			                if (m_eventInfo->isEventFlagBitSet(EventInfo::LAr, bit)) m_h_LAr_emNoisy->Fill(bit);
                                 }
 		        }
 	        }

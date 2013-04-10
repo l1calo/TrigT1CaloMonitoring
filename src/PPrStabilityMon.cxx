@@ -20,7 +20,6 @@
 
 PPrStabilityMon::PPrStabilityMon(const std::string & type, const std::string & name, const IInterface* parent): ManagedMonitorToolBase ( type, name, parent ),
     m_ppmADCMinValue(0),
-    m_lumiBlock(0),
     m_lumiBlockMax(0),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
@@ -34,22 +33,27 @@ PPrStabilityMon::PPrStabilityMon(const std::string & type, const std::string & n
     m_evtInfo(0),
     m_fineTimeCut(0),
     m_pedestalMaxWidth(0),
-    m_caloCellContainerName(""),
     m_EtMinForEtCorrelation(0)
 {
-  declareProperty("BS_TriggerTowerContainer",m_TriggerTowerContainerName = "LVL1TriggerTowers");
-  declareProperty("ppmADCMinValue", m_ppmADCMinValue=60);
-  declareProperty("ppmADCMaxValue",m_ppmADCMaxValue=1023); 
+  declareProperty("BS_TriggerTowerContainer", m_TriggerTowerContainerName = "LVL1TriggerTowers");
+  declareProperty("ppmADCMinValue", m_ppmADCMinValue=60,
+                  "Cut on ADC minimum value, used for fine time monitoring");
+  declareProperty("ppmADCMaxValue", m_ppmADCMaxValue=1023,
+                  "Cut on ADC maximum value, used for fine time monitoring"); 
   declareProperty("PathInRootFile", m_PathInRootFile="L1Calo/PPrStabilityMon");
-  declareProperty("doFineTimeMonitoring",m_doFineTimeMonitoring = true );
-  declareProperty("doPedestalMonitoring",m_doPedestalMonitoring = true );
-  declareProperty("doEtCorrelationMonitoring",m_doEtCorrelationMonitoring = true );
-  declareProperty("lumiMax", m_lumiBlockMax = 2000);
-  declareProperty("fineTimeCut",m_fineTimeCut = 20 );
-  declareProperty("pedestalMaxWidth",m_pedestalMaxWidth = 10 );
-  declareProperty("caloCellContainerName",m_caloCellContainerName="AllCalo");
-  declareProperty("EtMinForEtCorrelation",m_EtMinForEtCorrelation=5);
-  declareProperty("doCaloQualCut",m_doCaloQualCut=true);
+  declareProperty("doFineTimeMonitoring", m_doFineTimeMonitoring = true );
+  declareProperty("doPedestalMonitoring", m_doPedestalMonitoring = true );
+  declareProperty("doEtCorrelationMonitoring", m_doEtCorrelationMonitoring = true );
+  declareProperty("lumiMax", m_lumiBlockMax = 2000,
+                  "Maximum number of lumiblocks in stability plots");
+  declareProperty("fineTimeCut", m_fineTimeCut = 20,
+                  "Maximum acceptable fine time value");
+  declareProperty("pedestalMaxWidth", m_pedestalMaxWidth = 10,
+                  "Maximum acceptable pedestal deviation from mean");
+  declareProperty("EtMinForEtCorrelation", m_EtMinForEtCorrelation=5,
+                  "Minimum Et cut for Et correlation");
+  declareProperty("doCaloQualCut", m_doCaloQualCut=true,
+                  "Switch for calo quality cut via job options in fine time");
 }
 
 PPrStabilityMon::~PPrStabilityMon()
@@ -105,7 +109,6 @@ StatusCode PPrStabilityMon::initialize()
 								m_ttTool,
 								m_lumiBlockMax,
 								m_PathInRootFile+"/EtCorrelation");
-	m_etCorrelationPlotManager->SetCaloCellContainer(m_caloCellContainerName);
 	m_etCorrelationPlotManager->SetEtMin(m_EtMinForEtCorrelation);
     }
     

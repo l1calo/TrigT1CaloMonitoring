@@ -40,23 +40,20 @@ TrigT1CaloGlobalMonTool::TrigT1CaloGlobalMonTool(const std::string & type,
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_lumiNo(0),
     m_lumipos(0),
-    m_h_global(0),
-    m_h_current(0),
-    m_h_lumiblocks(0),
-    m_h_bylumi(0),
-    m_h_bytime(0),
-    m_h_rejected(0),
-    m_h_numberEvents(0)
+    m_h_l1calo_2d_GlobalOverview(0),
+    m_h_l1calo_2d_CurrentEventOverview(0),
+    m_h_l1calo_2d_GlobalOverviewRecent(0),
+    m_h_l1calo_1d_ErrorsByLumiblock(0),
+    m_h_l1calo_1d_ErrorsByTime(0),
+    m_h_l1calo_1d_RejectedEvents(0),
+    m_h_l1calo_1d_NumberOfEvents(0)
 
 /*---------------------------------------------------------*/
 {
 
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
-  declareProperty("BookCPMThresh", m_cpmThresh = false);
-  declareProperty("BookJEMThresh", m_jemThresh = false);
-  declareProperty("BookCMMThresh", m_cmmThresh = false);
-  declareProperty("FirstStep", m_firstStep = true);
-  declareProperty("RecentLumiBlocks", m_recentLumi = 10);
+  declareProperty("RecentLumiBlocks", m_recentLumi = 10,
+                  "Number of lumiblocks in recent lumiblocks plot");
   declareProperty("OnlineTest", m_onlineTest = false,
                   "Test online code when running offline");
 
@@ -104,10 +101,10 @@ StatusCode TrigT1CaloGlobalMonTool::initialize()
 StatusCode TrigT1CaloGlobalMonTool::finalize()
 /*---------------------------------------------------------*/
 {
-  delete m_h_current;
-  if (!m_v_lumi.empty()) {
+  delete m_h_l1calo_2d_CurrentEventOverview;
+  if (!m_v_l1calo_2d_GlobalOverviewBlock.empty()) {
     for (int i = 0; i < m_recentLumi; ++i) {
-      delete m_v_lumi[i];
+      delete m_v_l1calo_2d_GlobalOverviewBlock[i];
     }
   }
 
@@ -155,14 +152,14 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 
     m_histTool->setMonGroup(&monGlobal);
 
-    m_h_global = bookOverview("l1calo_2d_GlobalOverview",
+    m_h_l1calo_2d_GlobalOverview = bookOverview("l1calo_2d_GlobalOverview",
                               "L1Calo Global Error Overview");
 
     m_histTool->unsetMonGroup();
 
-    if (!m_h_current) { // temporary plot for current event
-      m_h_current = bookOverview("l1calo_2d_CurrentEventOverview",
-                                 "L1Calo Current Event Error Overview");
+    if (!m_h_l1calo_2d_CurrentEventOverview) { // temporary plot for current event
+      m_h_l1calo_2d_CurrentEventOverview = bookOverview(
+        "l1calo_2d_CurrentEventOverview", "L1Calo Current Event Error Overview");
     }
 
     if (online) {
@@ -173,31 +170,31 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 
       std::ostringstream luminum;
       luminum << m_recentLumi;
-      m_h_lumiblocks = bookOverview("l1calo_2d_GlobalOverviewRecent",
-                       "L1Calo Global Error Overview Last " + luminum.str()
-		                                            + " Lumiblocks");
+      m_h_l1calo_2d_GlobalOverviewRecent = bookOverview(
+        "l1calo_2d_GlobalOverviewRecent",
+        "L1Calo Global Error Overview Last " + luminum.str() + " Lumiblocks");
 
       m_histTool->unsetMonGroup();
 
       // Temporary plots for each recent lumiblock
 
-      if (m_v_lumi.empty()) {
+      if (m_v_l1calo_2d_GlobalOverviewBlock.empty()) {
         for (int i = 0; i < m_recentLumi; ++i) {
 	  std::ostringstream cnum;
 	  cnum << i;
 	  TH2F* hist = bookOverview("l1calo_2d_GlobalOverviewBlock" + cnum.str(),
 	               "L1Calo Global Error Overview Block " + cnum.str());
-          m_v_lumi.push_back(hist);
-	  m_v_luminumbers.push_back(0);
+          m_v_l1calo_2d_GlobalOverviewBlock.push_back(hist);
+	  m_luminumbers.push_back(0);
         }
       } else {
         for (int i = 0; i < m_recentLumi; ++i) {
-	  m_v_lumi[i]->Reset();
-	  m_v_luminumbers[i] = 0;
+	  m_v_l1calo_2d_GlobalOverviewBlock[i]->Reset();
+	  m_luminumbers[i] = 0;
         }
       }
       m_lumipos = 0;
-      m_v_luminumbers[m_lumipos] = m_lumiNo;
+      m_luminumbers[m_lumipos] = m_lumiNo;
     }
   } else if (isNewLumiBlock && online) {
 
@@ -205,23 +202,23 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 
     m_lumipos = -1;
     for (int i = 0; i < m_recentLumi; ++i) {
-      if (m_v_luminumbers[i] == m_lumiNo) m_lumipos = i;
+      if (m_luminumbers[i] == m_lumiNo) m_lumipos = i;
     }
     if (m_lumipos == -1) {
-      double entries = m_v_lumi[m_recentLumi-1]->GetEntries();
-      if (entries > 0.) m_h_lumiblocks->Reset();
-      m_v_lumi[m_recentLumi-1]->Reset();
-      TH2F* tmpHist = m_v_lumi[m_recentLumi-1];
+      double entries = m_v_l1calo_2d_GlobalOverviewBlock[m_recentLumi-1]->GetEntries();
+      if (entries > 0.) m_h_l1calo_2d_GlobalOverviewRecent->Reset();
+      m_v_l1calo_2d_GlobalOverviewBlock[m_recentLumi-1]->Reset();
+      TH2F* tmpHist = m_v_l1calo_2d_GlobalOverviewBlock[m_recentLumi-1];
       for (int i = m_recentLumi-2; i >= 0; --i) {
-        if (entries > 0. && m_v_lumi[i]->GetEntries() > 0.) {
-          m_h_lumiblocks->Add(m_v_lumi[i]);
+        if (entries > 0. && m_v_l1calo_2d_GlobalOverviewBlock[i]->GetEntries() > 0.) {
+          m_h_l1calo_2d_GlobalOverviewRecent->Add(m_v_l1calo_2d_GlobalOverviewBlock[i]);
         }
-        m_v_lumi[i+1] = m_v_lumi[i];
-	m_v_luminumbers[i+1] = m_v_luminumbers[i];
+        m_v_l1calo_2d_GlobalOverviewBlock[i+1] = m_v_l1calo_2d_GlobalOverviewBlock[i];
+	m_luminumbers[i+1] = m_luminumbers[i];
       }
-      m_v_lumi[0] = tmpHist;
+      m_v_l1calo_2d_GlobalOverviewBlock[0] = tmpHist;
       m_lumipos = 0;
-      m_v_luminumbers[m_lumipos] = m_lumiNo;
+      m_luminumbers[m_lumipos] = m_lumiNo;
     }
 
   } // end if ((isNewLumiBlock && ...
@@ -237,26 +234,29 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	MonGroup monLumi( this, dir, shift, run);
         if (online) m_histTool->setMonGroup(&monLumi);
 	else        m_histTool->unsetMonGroup();
-        m_h_bylumi = m_histTool->bookTH1F("l1calo_1d_ErrorsByLumiblock",
+        m_h_l1calo_1d_ErrorsByLumiblock = m_histTool->bookTH1F(
+	             "l1calo_1d_ErrorsByLumiblock",
 	             "Events with Errors by Lumiblock;Lumi Block;Number of Events",
 		     1, m_lumiNo, m_lumiNo+1);
 	if (online) { // Would be merge problems offline
-	  m_h_bytime = m_histTool->bookTH1F("l1calo_1d_ErrorsByTime",
-	             "Time of First Event in Lumiblock with Error;Lumi Block;Time (h.mmss)",
-		     1, m_lumiNo, m_lumiNo+1);
+	  m_h_l1calo_1d_ErrorsByTime = m_histTool->bookTH1F(
+	    "l1calo_1d_ErrorsByTime",
+	    "Time of First Event in Lumiblock with Error;Lumi Block;Time (h.mmss)",
+	     1, m_lumiNo, m_lumiNo+1);
         } else {
-	  m_h_bytime = m_histTool->bookTH1F("l1calo_1d_ErrorsByTime",
+	  m_h_l1calo_1d_ErrorsByTime = m_histTool->bookTH1F("l1calo_1d_ErrorsByTime",
 	             "Events with Errors by Time;Time (h.mm);Number of Events",
 		     2400, 0., 24.);
         }
-	if (m_firstStep && m_errorTool->flagCorruptEvents() != "None") {
-	  m_h_rejected = m_histTool->bookTH1F("l1calo_1d_RejectedEvents",
+	if (m_errorTool->flagCorruptEvents() != "None") {
+	  m_h_l1calo_1d_RejectedEvents = m_histTool->bookTH1F(
+	             "l1calo_1d_RejectedEvents",
 	             "Rejected Events by Lumiblock;Lumi Block;Number of Events",
 		     1, m_lumiNo, m_lumiNo+1);
-        } else m_h_rejected = 0;
+        } else m_h_l1calo_1d_RejectedEvents = 0;
 
-      } else if (m_lumiNo < m_h_bylumi->GetXaxis()->GetXmin() ||
-                 m_lumiNo >= m_h_bylumi->GetXaxis()->GetXmax()) {
+      } else if (m_lumiNo < m_h_l1calo_1d_ErrorsByLumiblock->GetXaxis()->GetXmin() ||
+                 m_lumiNo >= m_h_l1calo_1d_ErrorsByLumiblock->GetXaxis()->GetXmax()) {
         m_histTool->unsetMonGroup();
         TH1F* tmphist = m_histTool->bookTH1F("l1calo_1d_Tmp",
 	                                     "Errors by Lumiblock",
@@ -266,7 +266,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	list->Add(tmphist);
 	// All this rigmarole is to get Merge() to behave as we want,
 	// especially online.
-	TH1F* hist = m_h_bylumi;
+	TH1F* hist = m_h_l1calo_1d_ErrorsByLumiblock;
 	for (int i = 0; i < 3; ++i) {
 	  if (!hist) continue;
 	  double entries = hist->GetEntries();
@@ -291,8 +291,8 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 	    }
 	    hist->SetEntries(entries);
           }
-	  if (i == 0) hist = (online) ? m_h_bytime : 0;
-	  else        hist = m_h_rejected;
+	  if (i == 0) hist = (online) ? m_h_l1calo_1d_ErrorsByTime : 0;
+	  else        hist = m_h_l1calo_1d_RejectedEvents;
         }
 	delete tmphist;
 	delete list;
@@ -303,110 +303,18 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
   // Total events processed and total rejected as corrupt
 
   if ( isNewRun ) {
-    if (m_firstStep) { // only run once in processing chain
-      std::string dir(m_rootDir + "/Overview");
-      MonGroup monEvents( this, dir, expert, run);
-      m_histTool->setMonGroup(&monEvents);
-      int bins = (m_errorTool->flagCorruptEvents() == "None") ? 1 : 2;
-      m_h_numberEvents = m_histTool->bookTH1F("l1calo_1d_NumberOfEvents",
-        "Number of processed events", bins, 0., bins);
-      m_h_numberEvents->GetXaxis()->SetBinLabel(1,"Processed Events");
-      if (bins > 1) {
-        m_h_numberEvents->GetXaxis()->SetBinLabel(2,"Corrupt Events Skipped");
-      }
-    } else m_h_numberEvents = 0;
+    std::string dir(m_rootDir + "/Overview");
+    MonGroup monEvents( this, dir, expert, run);
+    m_histTool->setMonGroup(&monEvents);
+    int bins = (m_errorTool->flagCorruptEvents() == "None") ? 1 : 2;
+    m_h_l1calo_1d_NumberOfEvents = m_histTool->bookTH1F("l1calo_1d_NumberOfEvents",
+      "Number of processed events", bins, 0., bins);
+    m_h_l1calo_1d_NumberOfEvents->GetXaxis()->SetBinLabel(1,"Processed Events");
+    if (bins > 1) {
+      m_h_l1calo_1d_NumberOfEvents->GetXaxis()->SetBinLabel(2,"Corrupt Events Skipped");
+    }
   }
 
-  if ( isNewRun ) {
-
-  // If running in RAW to ESD step prebook histograms which need threshold
-  // names for bin labels for those tools which run in ESD to AOD step.
-
-  if (m_cpmThresh) {
-    std::string dir1(m_rootDir + "/CPM");
-    std::string dir2(m_rootDir + "/CPM_CMM");
-    MonGroup monRoIs( this, dir1 + "/Output/RoI", expert, run );
-    MonGroup monCPMout( this, dir1 + "/Output/Thresholds", expert, run);
-    MonGroup monCMMin( this, dir2 + "/Input",  expert, run );
-    MonGroup monCMMout( this, dir2 + "/Output",  expert, run );
-    m_histTool->setMonGroup(&monRoIs);
-    m_histTool->bookCPMCrateModuleVsThreshold(
-      "cpm_2d_roi_Thresholds", "CPM RoI Thresholds");
-    m_histTool->setMonGroup(&monCPMout);
-    m_histTool->bookCPMCrateModuleVsThreshold(
-      "cpm_2d_thresh_Weighted", "CPM Hits Thresholds Weighted");
-    m_histTool->setMonGroup(&monCMMin);
-    m_histTool->bookCPMCrateModuleVsThreshold(
-      "cmm_2d_thresh_Weighted", "CMM-CP Hits Thresholds Weighted");
-    m_histTool->setMonGroup(&monCMMout);
-    m_histTool->bookCPMSumVsThreshold(
-      "cmm_2d_thresh_SumsWeighted", "CMM-CP Hit Sums Thresholds Weighted");
-  }
-  if (m_jemThresh) {
-    std::string dir1(m_rootDir + "/JEM");
-    MonGroup JEM_Thresholds(this, dir1 + "/Output/Thresholds", expert, run);
-    MonGroup JEM_RoI(this, dir1 + "/Output/RoI", shift, run);
-    m_histTool->setMonGroup(&JEM_Thresholds);
-    m_histTool->bookMainJetThresholds("jem_1d_thresh_MainHits",
-      "Main Jet Hit Multiplicity per Threshold  --  JEM DAQ");
-    m_histTool->bookForwardJetThresholds("jem_1d_thresh_FwdHitsRight",
-      "Fwd Right Jet Hit Multiplicity per Threshold  --  JEM DAQ");
-    m_histTool->bookBackwardJetThresholds("jem_1d_thresh_FwdHitsLeft",
-      "Fwd Left Jet Hit Multiplicity per Threshold  --  JEM DAQ");
-    m_histTool->bookJEMCrateModuleVsThresholds(
-      "jem_2d_thresh_HitsPerJem", "HitMap of Hits per JEM");
-    m_histTool->setMonGroup(&JEM_RoI);
-    m_histTool->bookMainJetThresholds("jem_1d_roi_MainHits",
-      "Main Jet Hit Multiplicity per Threshold  --  JEM RoI");
-    m_histTool->bookForwardJetThresholds("jem_1d_roi_FwdHitsRight",
-      "Forward Right Jet Hit Multiplicity per Threshold  --  JEM RoI");
-    m_histTool->bookBackwardJetThresholds("jem_1d_roi_FwdHitsLeft",
-      "Forward Left Jet Hit Multiplicity per Threshold  --  JEM RoI");
-  }
-  if (m_cmmThresh) {
-    std::string dir1(m_rootDir + "/JEM_CMM");
-    MonGroup CMM_inputThresh(this, dir1 + "/Input/Thresholds", expert, run);
-    MonGroup CMM_jet(this, dir1 + "/Output/Jet", expert, run);
-    MonGroup CMM_energy(this, dir1 + "/Output/Energy", expert, run);
-    MonGroup CMM_RoI(this, dir1 + "/Output/RoI", shift, run);
-    m_histTool->setMonGroup(&CMM_inputThresh);
-    m_histTool->bookMainJetThresholds("cmm_1d_thresh_MainHits",
-      "Main Jet Multiplicity per Threshold  --  CMM input");
-    m_histTool->bookForwardJetThresholds("cmm_1d_thresh_FwdHitsRight",
-      "Forward Right Jet Multiplicity per Threshold  --  CMM input");
-    m_histTool->bookBackwardJetThresholds( "cmm_1d_thresh_FwdHitsLeft",
-      "Forward Left Jet Multiplicity per Threshold  --  CMM input");
-    m_histTool->setMonGroup(&CMM_jet);
-    m_histTool->bookMainJetThresholds("cmm_1d_thresh_TotalMainHits",
-      "Main Jet Multiplicity per Threshold  --  CMM DAQ");
-    m_histTool->bookForwardJetThresholds(
-      "cmm_1d_thresh_TotalFwdHitsRight",
-      "Forward Right Jet Multiplicity per Threshold  --  CMM DAQ");
-    m_histTool->bookBackwardJetThresholds(
-      "cmm_1d_thresh_TotalFwdHitsLeft",
-      "Forward Left Jet Multiplicity per Threshold  --  CMM DAQ");
-    m_histTool->bookJetEtThresholds("cmm_1d_thresh_JetEtHits",
-      "JetEt Multiplicity per Threshold  --  CMM DAQ");
-    m_histTool->setMonGroup(&CMM_energy);
-    m_histTool->bookMissingEtThresholds("cmm_1d_energy_MissingEtHits",
-      "MissingEt Multiplicity per Threshold  --  CMM DAQ");
-    m_histTool->bookSumEtThresholds("cmm_1d_energy_SumEtHits",
-      "SumEt Multiplicity per Threshold  --  CMM DAQ");
-    m_histTool->bookMissingEtSigThresholds("cmm_1d_energy_MissingEtSigHits",
-      "MissingEtSig Multiplicity per Threshold  --  CMM DAQ");
-    m_histTool->setMonGroup(&CMM_RoI);
-    m_histTool->bookJetEtThresholds("cmm_1d_roi_JetEtHits",
-      "JetEt Multiplicity per Threshold  --  CMM RoI");
-    m_histTool->bookMissingEtThresholds("cmm_1d_roi_MissingEtHits",
-      "MissingEt Multiplicity per Threshold  --  CMM RoI");
-    m_histTool->bookSumEtThresholds("cmm_1d_roi_SumEtHits",
-      "SumEt Multiplicity per Threshold  --  CMM RoI");
-    m_histTool->bookMissingEtSigThresholds("cmm_1d_roi_MissingEtSigHits",
-      "MissingEtSig Multiplicity per Threshold  --  CMM RoI");
-  }
-
-  } // end if (isNewRun ...
-  
   m_histTool->unsetMonGroup();
 
   msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
@@ -421,7 +329,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   const bool debug = msgLvl(MSG::DEBUG);
   if (debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
-  if (!m_h_global) {
+  if (!m_h_l1calo_2d_GlobalOverview) {
     if (debug) msg(MSG::DEBUG) << "Histograms not booked" << endreq;
     return StatusCode::SUCCESS;
   }
@@ -430,22 +338,19 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 
   // Total events and corrupt event by lumiblock plots
 
-  const bool corrupt = m_errorTool->corrupt();
-  if (m_firstStep) {
-    if (corrupt) {
-      m_h_numberEvents->Fill(1.);
-      if (m_lumiNo && m_h_rejected) {
-        if (!online && m_h_rejected->GetEntries() == 0.) {
-          std::string dir(m_rootDir + "/Overview/Errors");
-	  MonGroup monLumi( this, dir, shift, run, "", "mergeRebinned");
-          m_histTool->setMonGroup(&monLumi);
-	  m_histTool->registerHist(m_h_rejected);
-        }
-        m_h_rejected->Fill(m_lumiNo);
+  if (m_errorTool->corrupt()) {
+    m_h_l1calo_1d_NumberOfEvents->Fill(1.);
+    if (m_lumiNo && m_h_l1calo_1d_RejectedEvents) {
+      if (!online && m_h_l1calo_1d_RejectedEvents->GetEntries() == 0.) {
+        std::string dir(m_rootDir + "/Overview/Errors");
+        MonGroup monLumi( this, dir, shift, run, "", "mergeRebinned");
+        m_histTool->setMonGroup(&monLumi);
+        m_histTool->registerHist(m_h_l1calo_1d_RejectedEvents);
       }
-    } else m_h_numberEvents->Fill(0.);
-  }
-  if (corrupt) return StatusCode::SUCCESS;
+      m_h_l1calo_1d_RejectedEvents->Fill(m_lumiNo);
+    }
+    return StatusCode::SUCCESS;
+  } else m_h_l1calo_1d_NumberOfEvents->Fill(0.);
 
   StatusCode sc;
 
@@ -454,7 +359,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   const int ppmCrates = 8;
   const int cpmCrates = 4;
   const int jemCrates = 2;
-  m_h_current->Reset();
+  m_h_l1calo_2d_CurrentEventOverview->Reset();
 
   // PPM Error data
   const ErrorVector* errTES = 0; 
@@ -468,9 +373,15 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     for (int crate = 0; crate < ppmCrates; ++crate) {
       const int err = (*errTES)[crate];
       if (err == 0) continue;
-      if ((err >> DataStatus) & 0x1)   m_h_current->Fill(PPMDataStatus, crate);
-      if ((err >> DataError) & 0x1)    m_h_current->Fill(PPMDataError,  crate);
-      if ((err >> PPMSubStatus) & 0x1) m_h_current->Fill(SubStatus,     crate);
+      if ((err >> DataStatus) & 0x1) {
+        m_h_l1calo_2d_CurrentEventOverview->Fill(PPMDataStatus, crate);
+      }
+      if ((err >> DataError) & 0x1) {
+        m_h_l1calo_2d_CurrentEventOverview->Fill(PPMDataError, crate);
+      }
+      if ((err >> PPMSubStatus) & 0x1) {
+        m_h_l1calo_2d_CurrentEventOverview->Fill(SubStatus, crate);
+      }
     }
   }
 
@@ -486,9 +397,15 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     for (int crate = 0; crate < ppmCrates; ++crate) {
       const int err = (*errTES)[crate];
       if (err == 0) continue;
-      if ((err >> DataStatus) & 0x1)   m_h_current->Fill(PPMDataStatus, crate);
-      if ((err >> DataError) & 0x1)    m_h_current->Fill(PPMDataError,  crate);
-      if ((err >> PPMSubStatus) & 0x1) m_h_current->Fill(SubStatus,     crate);
+      if ((err >> DataStatus) & 0x1) {
+        m_h_l1calo_2d_CurrentEventOverview->Fill(PPMDataStatus, crate);
+      }
+      if ((err >> DataError) & 0x1) {
+        m_h_l1calo_2d_CurrentEventOverview->Fill(PPMDataError, crate);
+      }
+      if ((err >> PPMSubStatus) & 0x1) {
+        m_h_l1calo_2d_CurrentEventOverview->Fill(SubStatus, crate);
+      }
     }
   }
 
@@ -505,14 +422,14 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
       const int err = (*errTES)[crate];
       if (err == 0) continue;
       const int cr = crate + ppmCrates;
-      if ((err >> CPMStatus) & 0x1) m_h_current->Fill(SubStatus, cr);
+      if ((err >> CPMStatus) & 0x1) m_h_l1calo_2d_CurrentEventOverview->Fill(SubStatus, cr);
       if (((err >> CPMEMParity) & 0x1) || ((err >> CPMHadParity) & 0x1))
-                                             m_h_current->Fill(Parity, cr);
+                                             m_h_l1calo_2d_CurrentEventOverview->Fill(Parity, cr);
       if (((err >> CPMEMLink) & 0x1) || ((err >> CPMHadLink) & 0x1))
-                                             m_h_current->Fill(LinkDown, cr);
-      if ((err >> CPMRoIParity) & 0x1) m_h_current->Fill(RoIParity, cr);
-      if ((err >> CMMCPStatus) & 0x1)  m_h_current->Fill(CMMSubStatus, cr);
-      if ((err >> CMMCPParity) & 0x1)  m_h_current->Fill(GbCMMParity, cr);
+                                             m_h_l1calo_2d_CurrentEventOverview->Fill(LinkDown, cr);
+      if ((err >> CPMRoIParity) & 0x1) m_h_l1calo_2d_CurrentEventOverview->Fill(RoIParity, cr);
+      if ((err >> CMMCPStatus) & 0x1)  m_h_l1calo_2d_CurrentEventOverview->Fill(CMMSubStatus, cr);
+      if ((err >> CMMCPParity) & 0x1)  m_h_l1calo_2d_CurrentEventOverview->Fill(GbCMMParity, cr);
     }
   }
 
@@ -529,12 +446,12 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
       const int err = (*errTES)[crate];
       if (err == 0) continue;
       const int cr = crate + ppmCrates + cpmCrates;
-      if ((err >> JEMStatus) & 0x1) m_h_current->Fill(SubStatus, cr);
+      if ((err >> JEMStatus) & 0x1) m_h_l1calo_2d_CurrentEventOverview->Fill(SubStatus, cr);
       if (((err >> JEMEMParity) & 0x1) || ((err >> JEMHadParity) & 0x1))
-                                             m_h_current->Fill(Parity, cr);
+                                             m_h_l1calo_2d_CurrentEventOverview->Fill(Parity, cr);
       if (((err >> JEMEMLink) & 0x1) || ((err >> JEMHadLink) & 0x1))
-                                             m_h_current->Fill(LinkDown, cr);
-      if ((err >> JEMRoIParity) & 0x1) m_h_current->Fill(RoIParity, cr);
+                                             m_h_l1calo_2d_CurrentEventOverview->Fill(LinkDown, cr);
+      if ((err >> JEMRoIParity) & 0x1) m_h_l1calo_2d_CurrentEventOverview->Fill(RoIParity, cr);
     }
   }
 
@@ -553,13 +470,13 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
       const int cr = crate + ppmCrates + cpmCrates;
       if (((err >> JEMCMMJetStatus) & 0x1) ||
           ((err >> JEMCMMEnergyStatus) & 0x1)) {
-        m_h_current->Fill(CMMSubStatus, cr);
+        m_h_l1calo_2d_CurrentEventOverview->Fill(CMMSubStatus, cr);
       }
       if (((err >> JEMCMMJetParity) & 0x1) ||
           ((err >> JEMCMMEnergyParity) & 0x1)) {
-        m_h_current->Fill(GbCMMParity, cr);
+        m_h_l1calo_2d_CurrentEventOverview->Fill(GbCMMParity, cr);
       }
-      if ((err >> JEMCMMRoIParity) & 0x1) m_h_current->Fill(RoIParity, cr);
+      if ((err >> JEMCMMRoIParity) & 0x1) m_h_l1calo_2d_CurrentEventOverview->Fill(RoIParity, cr);
     }
   }
 
@@ -576,12 +493,12 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     for (int crate = 0; crate < ppmCrates+cpmCrates+jemCrates; ++crate) {
       const int err = (*errTES)[crate];
       if (err == 0) continue;
-      //if (err & 0x7f) m_h_current->Fill(RODStatus, crate);
-      if (err & 0x3f) m_h_current->Fill(RODStatus, crate);
+      //if (err & 0x7f) m_h_l1calo_2d_CurrentEventOverview->Fill(RODStatus, crate);
+      if (err & 0x3f) m_h_l1calo_2d_CurrentEventOverview->Fill(RODStatus, crate);
       if (((err >> NoFragment) & 0x1) || ((err >> NoPayload) & 0x1))
-                      m_h_current->Fill(RODMissing, crate);
-      if ((err >> ROBStatusError) & 0x1) m_h_current->Fill(ROBStatus, crate);
-      if ((err >> UnpackingError) & 0x1) m_h_current->Fill(Unpacking, crate);
+                      m_h_l1calo_2d_CurrentEventOverview->Fill(RODMissing, crate);
+      if ((err >> ROBStatusError) & 0x1) m_h_l1calo_2d_CurrentEventOverview->Fill(ROBStatus, crate);
+      if ((err >> UnpackingError) & 0x1) m_h_l1calo_2d_CurrentEventOverview->Fill(Unpacking, crate);
     }
   }
 
@@ -597,7 +514,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     for (int crate = 0; crate < ppmCrates; ++crate) {
       const int err = (*errTES)[crate];
       if (err == 0) continue;
-      if (((err >> LUTMismatch) & 0x1)) m_h_current->Fill(Simulation, crate);
+      if (((err >> LUTMismatch) & 0x1)) m_h_l1calo_2d_CurrentEventOverview->Fill(Simulation, crate);
     }
   }
 
@@ -615,13 +532,13 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
       if (err == 0) continue;
       const int cr = crate + ppmCrates;
       if (((err >> EMTowerMismatch) & 0x1) || ((err >> HadTowerMismatch) & 0x1))
-                                        m_h_current->Fill(Transmission, cr);
+                                        m_h_l1calo_2d_CurrentEventOverview->Fill(Transmission, cr);
       if (((err >> CPMRoIMismatch) & 0x1) || ((err >> CPMHitsMismatch) & 0x1))
-                                        m_h_current->Fill(Simulation, cr);
+                                        m_h_l1calo_2d_CurrentEventOverview->Fill(Simulation, cr);
       if (((err >> CMMHitsMismatch) & 0x1) || ((err >> RemoteSumMismatch) & 0x1))
-                                        m_h_current->Fill(CMMTransmission, cr);
+                                        m_h_l1calo_2d_CurrentEventOverview->Fill(CMMTransmission, cr);
       if (((err >> LocalSumMismatch) & 0x1) || ((err >> TotalSumMismatch) & 0x1))
-                                        m_h_current->Fill(CMMSimulation, cr);
+                                        m_h_l1calo_2d_CurrentEventOverview->Fill(CMMSimulation, cr);
     }
   }
 
@@ -642,14 +559,14 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
           ((err >> HadElementMismatch) & 0x1) ||
           ((err >> JEMRoIMismatch) & 0x1)     ||
           ((err >> JEMHitsMismatch) & 0x1)    ||
-          ((err >> JEMEtSumsMismatch) & 0x1)) m_h_current->Fill(Simulation, cr);
+          ((err >> JEMEtSumsMismatch) & 0x1)) m_h_l1calo_2d_CurrentEventOverview->Fill(Simulation, cr);
       if (((err >> CMMJetHitsMismatch) & 0x1)   ||
           ((err >> RemoteJetMismatch) & 0x1)    ||
 	  ((err >> JetEtRoIMismatch) & 0x1)     ||
 	  ((err >> CMMEtSumsMismatch) & 0x1)    ||
 	  ((err >> RemoteEnergyMismatch) & 0x1) ||
 	  ((err >> EnergyRoIMismatch) & 0x1))
-	                              m_h_current->Fill(CMMTransmission, cr);
+	                              m_h_l1calo_2d_CurrentEventOverview->Fill(CMMTransmission, cr);
       if (((err >> LocalJetMismatch) & 0x1)    ||
           ((err >> TotalJetMismatch) & 0x1)    ||
 	  ((err >> JetEtMismatch) & 0x1)       ||
@@ -658,26 +575,26 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 	  ((err >> SumEtMismatch) & 0x1)       ||
 	  ((err >> MissingEtMismatch) & 0x1)   ||
 	  ((err >> MissingEtSigMismatch) & 0x1))
-	                                m_h_current->Fill(CMMSimulation, cr);
+	                                m_h_l1calo_2d_CurrentEventOverview->Fill(CMMSimulation, cr);
     }
   }
 
-  if (m_h_current->GetEntries() > 0.) {
-    m_h_global->Add(m_h_current);
+  if (m_h_l1calo_2d_CurrentEventOverview->GetEntries() > 0.) {
+    m_h_l1calo_2d_GlobalOverview->Add(m_h_l1calo_2d_CurrentEventOverview);
     if (online) {
-      m_h_lumiblocks->Add(m_h_current);
-      m_v_lumi[m_lumipos]->Add(m_h_current);
+      m_h_l1calo_2d_GlobalOverviewRecent->Add(m_h_l1calo_2d_CurrentEventOverview);
+      m_v_l1calo_2d_GlobalOverviewBlock[m_lumipos]->Add(m_h_l1calo_2d_CurrentEventOverview);
     }
-    if (m_lumiNo && m_h_bylumi) {
-      if (!online && m_h_bylumi->GetEntries() == 0.) {
+    if (m_lumiNo && m_h_l1calo_1d_ErrorsByLumiblock) {
+      if (!online && m_h_l1calo_1d_ErrorsByLumiblock->GetEntries() == 0.) {
         std::string dir(m_rootDir + "/Overview/Errors");
 	MonGroup monLumi( this, dir, shift, run, "", "mergeRebinned");
         m_histTool->setMonGroup(&monLumi);
-	m_histTool->registerHist(m_h_bylumi);
+	m_histTool->registerHist(m_h_l1calo_1d_ErrorsByLumiblock);
       }
-      m_h_bylumi->Fill(m_lumiNo);
+      m_h_l1calo_1d_ErrorsByLumiblock->Fill(m_lumiNo);
     }  
-    if (m_lumiNo && m_h_bytime) {
+    if (m_lumiNo && m_h_l1calo_1d_ErrorsByTime) {
       const EventInfo* evtInfo = 0;
       StatusCode sc = evtStore()->retrieve(evtInfo);
       if( sc.isSuccess() ) {
@@ -687,18 +604,18 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 	if (itime == 0) itime = 1;
 	double time = itime/10000.;
         if (online) {
-          int bin = m_h_bytime->GetXaxis()->FindBin(m_lumiNo);
-          if (m_h_bytime->GetBinContent(bin) == 0.) {
-	    m_h_bytime->Fill(m_lumiNo, time);
+          int bin = m_h_l1calo_1d_ErrorsByTime->GetXaxis()->FindBin(m_lumiNo);
+          if (m_h_l1calo_1d_ErrorsByTime->GetBinContent(bin) == 0.) {
+	    m_h_l1calo_1d_ErrorsByTime->Fill(m_lumiNo, time);
 	  }
         } else {
-          if (m_h_bytime->GetEntries() == 0.) {
+          if (m_h_l1calo_1d_ErrorsByTime->GetEntries() == 0.) {
             std::string dir(m_rootDir + "/Overview/Errors");
 	    MonGroup monLumi( this, dir, shift, run);
             m_histTool->setMonGroup(&monLumi);
-	    m_histTool->registerHist(m_h_bytime);
+	    m_histTool->registerHist(m_h_l1calo_1d_ErrorsByTime);
           }
-	  m_h_bytime->Fill(time);
+	  m_h_l1calo_1d_ErrorsByTime->Fill(time);
         }
       }
     }
@@ -722,15 +639,15 @@ StatusCode TrigT1CaloGlobalMonTool::procHistograms(bool isEndOfEventsBlock,
 
   bool online = (m_onlineTest || m_environment == AthenaMonManager::online);
   if (isEndOfRun && !online) {
-    if (m_h_bylumi && m_h_bylumi->GetEntries() == 0.) {
-      delete m_h_bylumi;
-      m_h_bylumi = 0;
-      delete m_h_bytime;
-      m_h_bytime = 0;
+    if (m_h_l1calo_1d_ErrorsByLumiblock && m_h_l1calo_1d_ErrorsByLumiblock->GetEntries() == 0.) {
+      delete m_h_l1calo_1d_ErrorsByLumiblock;
+      m_h_l1calo_1d_ErrorsByLumiblock = 0;
+      delete m_h_l1calo_1d_ErrorsByTime;
+      m_h_l1calo_1d_ErrorsByTime = 0;
     }
-    if (m_h_rejected && m_h_rejected->GetEntries() == 0.) {
-      delete m_h_rejected;
-      m_h_rejected = 0;
+    if (m_h_l1calo_1d_RejectedEvents && m_h_l1calo_1d_RejectedEvents->GetEntries() == 0.) {
+      delete m_h_l1calo_1d_RejectedEvents;
+      m_h_l1calo_1d_RejectedEvents = 0;
     }
   }
 

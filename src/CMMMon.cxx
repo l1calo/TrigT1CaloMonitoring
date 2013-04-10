@@ -49,40 +49,38 @@ CMMMon::CMMMon( const std::string & type, const std::string & name,
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_histBooked(false),
-    m_h_CMMJetHits_MainJets(0),
-    m_h_CMMJetHits_FwdJetsRight(0),
-    m_h_CMMJetHits_FwdJetsLeft(0),
-    m_h_CMMJetHits_EtMap(0),
-    m_h_CMMJetHits_JEM_MainHits(0),
-    m_h_CMMJetHits_JEM_FwdHitsRight(0),
-    m_h_CMMJetHits_JEM_FwdHitsLeft(0),
-    m_h_CMMJetHits_JEM_Crate0ParityError(0),
-    m_h_CMMJetHits_JEM_Crate1ParityError(0),
-    m_h_CMMEtSums_Ex(0),
-    m_h_CMMEtSums_Ey(0),
-    m_h_CMMEtSums_Et(0),
-    m_h_CMMEtSums_MissingEtMap(0),
-    m_h_CMMEtSums_SumEtMap(0),
-    m_h_CMMEtSums_MissingEtSigMap(0),
-    m_h_CMMEtSums_Overflow(0),
-    m_h_CMMEtSums_JEM_Ex(0),
-    m_h_CMMEtSums_JEM_Ey(0),
-    m_h_CMMEtSums_JEM_Et(0),
-    m_h_CMMRoI_JetEtHits(0),
-    m_h_CMMRoI_SumEtHits(0),
-    m_h_CMMRoI_MissingEtHits(0),
-    m_h_CMMRoI_MissingEtSigHits(0),
-    m_h_CMMRoI_Ex(0),
-    m_h_CMMRoI_Ey(0),
-    m_h_CMMRoI_Et(0),
-    m_h_CMMJet_error(0),
-    m_h_CMMEnergy_error(0),
-    m_h_CMMJet_parity(0),
-    m_h_CMMEnergy_parity(0),
-    m_h_CMMRoI_error(0),
-    m_h_CMM_ErrorSummary(0),
-    m_h_TriggeredSlice(0),
-    m_h_CMM_Events(0)
+    m_h_cmm_1d_thresh_TotalMainHits(0),
+    m_h_cmm_1d_thresh_TotalFwdHitsRight(0),
+    m_h_cmm_1d_thresh_TotalFwdHitsLeft(0),
+    m_h_cmm_1d_thresh_JetEtHits(0),
+    m_h_cmm_1d_thresh_MainHits(0),
+    m_h_cmm_1d_thresh_FwdHitsRight(0),
+    m_h_cmm_1d_thresh_FwdHitsLeft(0),
+    m_h_cmm_1d_energy_TotalEx(0),
+    m_h_cmm_1d_energy_TotalEy(0),
+    m_h_cmm_1d_energy_TotalEt(0),
+    m_h_cmm_1d_energy_MissingEtHits(0),
+    m_h_cmm_1d_energy_SumEtHits(0),
+    m_h_cmm_1d_energy_MissingEtSigHits(0),
+    m_h_cmm_2d_energy_Overflow(0),
+    m_h_cmm_1d_energy_SubSumsEx(0),
+    m_h_cmm_1d_energy_SubSumsEy(0),
+    m_h_cmm_1d_energy_SubSumsEt(0),
+    m_h_cmm_1d_roi_JetEtHits(0),
+    m_h_cmm_1d_roi_SumEtHits(0),
+    m_h_cmm_1d_roi_MissingEtHits(0),
+    m_h_cmm_1d_roi_MissingEtSigHits(0),
+    m_h_cmm_1d_roi_Ex(0),
+    m_h_cmm_1d_roi_Ey(0),
+    m_h_cmm_1d_roi_Et(0),
+    m_h_cmm_2d_thresh_Status(0),
+    m_h_cmm_2d_energy_Status(0),
+    m_h_cmm_2d_thresh_Parity(0),
+    m_h_cmm_2d_energy_Parity(0),
+    m_h_cmm_1d_roi_Parity(0),
+    m_h_cmm_1d_ErrorSummary(0),
+    m_h_cmm_1d_TriggeredSlices(0),
+    m_h_cmm_2d_ErrorEventNumbers(0)
 /*---------------------------------------------------------*/
 {
   // This is how you declare the parameters to Gaudi so that
@@ -172,67 +170,68 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 
     m_histTool->setMonGroup(&CMM_inputThresh);
 
-    m_h_CMMJetHits_JEM_MainHits = m_histTool->bookMainJetThresholds(
+    m_h_cmm_1d_thresh_MainHits = m_histTool->bookMainJetThresholds(
       "cmm_1d_thresh_MainHits",
       "Main Jet Multiplicity per Threshold  --  CMM input");
-    m_h_CMMJetHits_JEM_FwdHitsRight = m_histTool->bookForwardJetThresholds(
+    m_h_cmm_1d_thresh_FwdHitsRight = m_histTool->bookForwardJetThresholds(
       "cmm_1d_thresh_FwdHitsRight",
       "Forward Right Jet Multiplicity per Threshold  --  CMM input");
-    m_h_CMMJetHits_JEM_FwdHitsLeft = m_histTool->bookBackwardJetThresholds(
+    m_h_cmm_1d_thresh_FwdHitsLeft = m_histTool->bookBackwardJetThresholds(
       "cmm_1d_thresh_FwdHitsLeft",
       "Forward Left Jet Multiplicity per Threshold  --  CMM input");
 
     m_histTool->setMonGroup(&CMM_inputEnergy);
 
-    m_h_CMMEtSums_JEM_Ex = m_histTool->bookJEMQuadLinear(
+    m_h_cmm_1d_energy_SubSumsEx = m_histTool->bookJEMQuadLinear(
       "cmm_1d_energy_SubSumsEx", "CMM E_{x}^{JEM}  --  CMM input;Ex [GeV]");
-    m_h_CMMEtSums_JEM_Ey = m_histTool->bookJEMQuadLinear(
+    m_h_cmm_1d_energy_SubSumsEy = m_histTool->bookJEMQuadLinear(
       "cmm_1d_energy_SubSumsEy", "CMM E_{y}^{JEM}  --  CMM input;Ey [GeV]");
-    m_h_CMMEtSums_JEM_Et = m_histTool->bookJEMQuadLinear(
+    m_h_cmm_1d_energy_SubSumsEt = m_histTool->bookJEMQuadLinear(
       "cmm_1d_energy_SubSumsEt", "CMM E_{t}^{JEM}  --  CMM input;Et [GeV]");
 
     //-------------------------- CMM output to DAQ ---------------------------
 
     m_histTool->setMonGroup(&CMM_jet);
 
-    m_h_CMMJetHits_MainJets = m_histTool->bookMainJetThresholds(
+    m_h_cmm_1d_thresh_TotalMainHits = m_histTool->bookMainJetThresholds(
       "cmm_1d_thresh_TotalMainHits",
       "Main Jet Multiplicity per Threshold  --  CMM DAQ");
-    m_h_CMMJetHits_FwdJetsRight = m_histTool->bookForwardJetThresholds(
+    m_h_cmm_1d_thresh_TotalFwdHitsRight = m_histTool->bookForwardJetThresholds(
       "cmm_1d_thresh_TotalFwdHitsRight",
       "Forward Right Jet Multiplicity per Threshold  --  CMM DAQ");
-    m_h_CMMJetHits_FwdJetsLeft = m_histTool->bookBackwardJetThresholds(
+    m_h_cmm_1d_thresh_TotalFwdHitsLeft = m_histTool->bookBackwardJetThresholds(
       "cmm_1d_thresh_TotalFwdHitsLeft",
       "Forward Left Jet Multiplicity per Threshold  --  CMM DAQ");
-    m_h_CMMJetHits_EtMap = m_histTool->bookJetEtThresholds(
+    m_h_cmm_1d_thresh_JetEtHits = m_histTool->bookJetEtThresholds(
       "cmm_1d_thresh_JetEtHits",
       "JetEt Multiplicity per Threshold  --  CMM DAQ");
 
     m_histTool->setMonGroup(&CMM_energy);
 
-    m_h_CMMEtSums_MissingEtMap = m_histTool->bookMissingEtThresholds(
+    m_h_cmm_1d_energy_MissingEtHits = m_histTool->bookMissingEtThresholds(
       "cmm_1d_energy_MissingEtHits",
       "MissingEt Multiplicity per Threshold  --  CMM DAQ");
-    m_h_CMMEtSums_SumEtMap = m_histTool->bookSumEtThresholds(
+    m_h_cmm_1d_energy_SumEtHits = m_histTool->bookSumEtThresholds(
       "cmm_1d_energy_SumEtHits",
       "SumEt Multiplicity per Threshold  --  CMM DAQ");
-    m_h_CMMEtSums_MissingEtSigMap = m_histTool->bookMissingEtSigThresholds(
+    m_h_cmm_1d_energy_MissingEtSigHits = m_histTool->bookMissingEtSigThresholds(
       "cmm_1d_energy_MissingEtSigHits",
       "MissingEtSig Multiplicity per Threshold  --  CMM DAQ");
 
-    m_h_CMMEtSums_Ex = m_histTool->bookJEMQuadLinear("cmm_1d_energy_TotalEx",
-      "E_{x}^{CMM}  --  CMM DAQ;Ex [GeV]", 8);
-    m_h_CMMEtSums_Ey = m_histTool->bookJEMQuadLinear("cmm_1d_energy_TotalEy",
-      "E_{y}^{CMM}  --  CMM DAQ;Ey [GeV]", 8);
-    m_h_CMMEtSums_Et = m_histTool->bookJEMQuadLinear("cmm_1d_energy_TotalEt",
-      "SumE_{t}^{CMM}  --  CMM DAQ;Et [GeV]", 8);
-    m_h_CMMEtSums_Overflow = m_histTool->bookProfile2D("cmm_2d_energy_Overflow",
+    m_h_cmm_1d_energy_TotalEx = m_histTool->bookJEMQuadLinear(
+      "cmm_1d_energy_TotalEx", "E_{x}^{CMM}  --  CMM DAQ;Ex [GeV]", 8);
+    m_h_cmm_1d_energy_TotalEy = m_histTool->bookJEMQuadLinear(
+      "cmm_1d_energy_TotalEy", "E_{y}^{CMM}  --  CMM DAQ;Ey [GeV]", 8);
+    m_h_cmm_1d_energy_TotalEt = m_histTool->bookJEMQuadLinear(
+      "cmm_1d_energy_TotalEt", "SumE_{t}^{CMM}  --  CMM DAQ;Et [GeV]", 8);
+    m_h_cmm_2d_energy_Overflow = m_histTool->bookProfile2D(
+      "cmm_2d_energy_Overflow",
       "CMM Energy Overflow Rates", 3, 0., 3., 3, 0., 3.);
-    LWHist::LWHistAxis* axis = m_h_CMMEtSums_Overflow->GetXaxis();
+    LWHist::LWHistAxis* axis = m_h_cmm_2d_energy_Overflow->GetXaxis();
     axis->SetBinLabel(1, "Ex");
     axis->SetBinLabel(2, "Ey");
     axis->SetBinLabel(3, "Et");
-    axis = m_h_CMMEtSums_Overflow->GetYaxis();
+    axis = m_h_cmm_2d_energy_Overflow->GetYaxis();
     axis->SetBinLabel(1, "Remote");
     axis->SetBinLabel(2, "Local");
     axis->SetBinLabel(3, "Total");
@@ -241,84 +240,84 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
 
     m_histTool->setMonGroup(&CMM_RoI);
 
-    m_h_CMMRoI_JetEtHits = m_histTool->bookJetEtThresholds(
+    m_h_cmm_1d_roi_JetEtHits = m_histTool->bookJetEtThresholds(
       "cmm_1d_roi_JetEtHits",
       "JetEt Multiplicity per Threshold  --  CMM RoI");
-    m_h_CMMRoI_MissingEtHits = m_histTool->bookMissingEtThresholds(
+    m_h_cmm_1d_roi_MissingEtHits = m_histTool->bookMissingEtThresholds(
       "cmm_1d_roi_MissingEtHits",
       "MissingEt Multiplicity per Threshold  --  CMM RoI");
-    m_h_CMMRoI_SumEtHits = m_histTool->bookSumEtThresholds(
+    m_h_cmm_1d_roi_SumEtHits = m_histTool->bookSumEtThresholds(
       "cmm_1d_roi_SumEtHits",
       "SumEt Multiplicity per Threshold  --  CMM RoI");
-    m_h_CMMRoI_MissingEtSigHits = m_histTool->bookMissingEtSigThresholds(
+    m_h_cmm_1d_roi_MissingEtSigHits = m_histTool->bookMissingEtSigThresholds(
       "cmm_1d_roi_MissingEtSigHits",
       "MissingEtSig Multiplicity per Threshold  --  CMM RoI");
 
-    m_h_CMMRoI_Ex = m_histTool->bookJEMQuadLinear("cmm_1d_roi_Ex",
+    m_h_cmm_1d_roi_Ex = m_histTool->bookJEMQuadLinear("cmm_1d_roi_Ex",
       "E_{x}^{CMM}  --  CMM RoI;Ex [GeV]", 8);
-    m_h_CMMRoI_Ey = m_histTool->bookJEMQuadLinear("cmm_1d_roi_Ey",
+    m_h_cmm_1d_roi_Ey = m_histTool->bookJEMQuadLinear("cmm_1d_roi_Ey",
       "E_{y}^{CMM}  --  CMM RoI;Ey [GeV]", 8);
-    m_h_CMMRoI_Et = m_histTool->bookJEMQuadLinear("cmm_1d_roi_Et",
+    m_h_cmm_1d_roi_Et = m_histTool->bookJEMQuadLinear("cmm_1d_roi_Et",
       "SumE_{t}^{CMM}  --  CMM RoI;Et [GeV]", 8);
 
     //---------------------------- S-Link errors -----------------------------
 
     m_histTool->setMonGroup(&CMM_errorDetail);
 
-    m_h_CMMJet_error = m_histTool->bookJEMSubStatusVsCrate(
+    m_h_cmm_2d_thresh_Status = m_histTool->bookJEMSubStatusVsCrate(
       "cmm_2d_thresh_Status", "Errors from CMM Jet SubStatus Word");
-    m_h_CMMEnergy_error = m_histTool->bookJEMSubStatusVsCrate(
+    m_h_cmm_2d_energy_Status = m_histTool->bookJEMSubStatusVsCrate(
       "cmm_2d_energy_Status", "Errors from CMM Energy SubStatus Word");
-    m_h_CMMJet_parity = m_histTool->book2F("cmm_2d_thresh_Parity",
+    m_h_cmm_2d_thresh_Parity = m_histTool->book2F("cmm_2d_thresh_Parity",
       "CMM Jet Parity Errors;Module or Remote;Crate", 18, 0., 18., 2, 0., 2.);
-    m_histTool->numbers(m_h_CMMJet_parity, 0, 15);
-    m_h_CMMJet_parity->GetXaxis()->SetBinLabel(17, "Main");
-    m_h_CMMJet_parity->GetXaxis()->SetBinLabel(18, "Fwd");
-    m_histTool->numbers(m_h_CMMJet_parity, 0, 1, 1, 0, false);
-    m_h_CMMEnergy_parity = m_histTool->book2F("cmm_2d_energy_Parity",
+    m_histTool->numbers(m_h_cmm_2d_thresh_Parity, 0, 15);
+    m_h_cmm_2d_thresh_Parity->GetXaxis()->SetBinLabel(17, "Main");
+    m_h_cmm_2d_thresh_Parity->GetXaxis()->SetBinLabel(18, "Fwd");
+    m_histTool->numbers(m_h_cmm_2d_thresh_Parity, 0, 1, 1, 0, false);
+    m_h_cmm_2d_energy_Parity = m_histTool->book2F("cmm_2d_energy_Parity",
       "CMM Energy Parity Errors;Module or Remote;Crate",
       19, 0., 19., 2, 0., 2.);
-    m_histTool->numbers(m_h_CMMEnergy_parity, 0, 15);
-    m_h_CMMEnergy_parity->GetXaxis()->SetBinLabel(17, "Ex");
-    m_h_CMMEnergy_parity->GetXaxis()->SetBinLabel(18, "Ey");
-    m_h_CMMEnergy_parity->GetXaxis()->SetBinLabel(19, "Et");
-    m_histTool->numbers(m_h_CMMEnergy_parity, 0, 1, 1, 0, false);
+    m_histTool->numbers(m_h_cmm_2d_energy_Parity, 0, 15);
+    m_h_cmm_2d_energy_Parity->GetXaxis()->SetBinLabel(17, "Ex");
+    m_h_cmm_2d_energy_Parity->GetXaxis()->SetBinLabel(18, "Ey");
+    m_h_cmm_2d_energy_Parity->GetXaxis()->SetBinLabel(19, "Et");
+    m_histTool->numbers(m_h_cmm_2d_energy_Parity, 0, 1, 1, 0, false);
 
-    m_h_CMMRoI_error = m_histTool->book1F("cmm_1d_roi_Parity", 
+    m_h_cmm_1d_roi_Parity = m_histTool->book1F("cmm_1d_roi_Parity", 
       "CMM RoI Parity Errors",
       NumberOfRoIParityBins, 0., NumberOfRoIParityBins);
-    axis = m_h_CMMRoI_error->GetXaxis();
+    axis = m_h_cmm_1d_roi_Parity->GetXaxis();
     axis->SetBinLabel(1+ExParity,    "Ex, MissingEtSig");
     axis->SetBinLabel(1+EyParity,    "Ey, SumEt");
     axis->SetBinLabel(1+EtParity,    "Et, MissingEt");
     axis->SetBinLabel(1+JetEtParity, "JetEt");
 
-    m_h_TriggeredSlice = m_histTool->book1F("cmm_1d_TriggeredSlices",
+    m_h_cmm_1d_TriggeredSlices = m_histTool->book1F("cmm_1d_TriggeredSlices",
       "Comparison of CMM Jet and Energy triggered slice numbers;Difference",
       5, 0., 5.);
-    m_histTool->numbers(m_h_TriggeredSlice, 0, 4);
+    m_histTool->numbers(m_h_cmm_1d_TriggeredSlices, 0, 4);
 
     m_histTool->setMonGroup(&CMM_error);
 
     //Error Summary for all CMMs in system
-    m_h_CMM_ErrorSummary = m_histTool->book1F("cmm_1d_ErrorSummary",
+    m_h_cmm_1d_ErrorSummary = m_histTool->book1F("cmm_1d_ErrorSummary",
       "Error Summary of CMM Jet, Energy and RoI path",
       NumberOfSummaryBins, 0., NumberOfSummaryBins);
 
     m_histTool->setMonGroup(&CMM_errorEvents);
 
-    m_h_CMM_Events = m_histTool->bookEventNumbers("cmm_2d_ErrorEventNumbers",
-      "JEM-CMM Error Event Numbers",
+    m_h_cmm_2d_ErrorEventNumbers = m_histTool->bookEventNumbers(
+      "cmm_2d_ErrorEventNumbers", "JEM-CMM Error Event Numbers",
       NumberOfSummaryBins, 0., NumberOfSummaryBins);
 
-    axis = m_h_CMM_ErrorSummary->GetXaxis();
+    axis = m_h_cmm_1d_ErrorSummary->GetXaxis();
     for (int i = 0; i < 2; ++i) {
       axis->SetBinLabel(1+JetStatus,    "Jet status");
       axis->SetBinLabel(1+EnergyStatus, "Energy status");
       axis->SetBinLabel(1+JetParity,    "Jet parity");
       axis->SetBinLabel(1+EnergyParity, "Energy parity");
       axis->SetBinLabel(1+RoIParity,    "RoI parity");
-      axis = m_h_CMM_Events->GetYaxis();
+      axis = m_h_cmm_2d_ErrorEventNumbers->GetYaxis();
     }
     
     m_histTool->unsetMonGroup();
@@ -397,11 +396,10 @@ StatusCode CMMMon::fillHistograms()
 
       const bool forward = (dataID%8 == 0 || dataID%8 == 7);
       const int nBits = (forward) ?  2 : 3;
-      m_histTool->fillThresholds(m_h_CMMJetHits_JEM_MainHits, jetHits, 8,
-                                                                       nBits);
+      m_histTool->fillThresholds(m_h_cmm_1d_thresh_MainHits, jetHits, 8, nBits);
       if (forward) {
-        TH1F_LW* hist = (dataID%8 == 0) ? m_h_CMMJetHits_JEM_FwdHitsLeft
-	                                : m_h_CMMJetHits_JEM_FwdHitsRight;
+        TH1F_LW* hist = (dataID%8 == 0) ? m_h_cmm_1d_thresh_FwdHitsLeft
+	                                : m_h_cmm_1d_thresh_FwdHitsRight;
         m_histTool->fillThresholds(hist, (jetHits >> 16), 4, nBits);
       }
 
@@ -418,13 +416,13 @@ StatusCode CMMMon::fillHistograms()
     } else {
 
       if (dataID == LVL1::CMMJetHits::TOTAL_MAIN) {
-        m_histTool->fillThresholds(m_h_CMMJetHits_MainJets, jetHits, 8, 3);
+        m_histTool->fillThresholds(m_h_cmm_1d_thresh_TotalMainHits, jetHits, 8, 3);
       } else if (dataID == LVL1::CMMJetHits::TOTAL_FORWARD) {
-        m_histTool->fillThresholds(m_h_CMMJetHits_FwdJetsLeft, jetHits, 4, 2);
-	m_histTool->fillThresholds(m_h_CMMJetHits_FwdJetsRight, (jetHits >> 8),
-	                                                                4, 2);
+        m_histTool->fillThresholds(m_h_cmm_1d_thresh_TotalFwdHitsLeft, jetHits, 4, 2);
+	m_histTool->fillThresholds(m_h_cmm_1d_thresh_TotalFwdHitsRight, (jetHits >> 8),
+	                                                                        4, 2);
       } else if (dataID == LVL1::CMMJetHits::ET_MAP) {
-        m_histTool->fillThresholds(m_h_CMMJetHits_EtMap, jetHits, 4, 1);
+        m_histTool->fillThresholds(m_h_cmm_1d_thresh_JetEtHits, jetHits, 4, 1);
       }
 
       if (debug) {
@@ -451,10 +449,10 @@ StatusCode CMMMon::fillHistograms()
     const int status = (err.error() >> LVL1::DataError::GLinkParity) & 0xff;
     if (status) {
       for (int bit = 0; bit < 8; ++bit) {
-        if ((status >> bit) & 0x1) m_h_CMMJet_error->Fill(bit, crate);
+        if ((status >> bit) & 0x1) m_h_cmm_2d_thresh_Status->Fill(bit, crate);
       }
-      m_h_CMM_ErrorSummary->Fill(JetStatus);
-      m_histTool->fillEventNumber(m_h_CMM_Events, JetStatus);
+      m_h_cmm_1d_ErrorSummary->Fill(JetStatus);
+      m_histTool->fillEventNumber(m_h_cmm_2d_ErrorEventNumbers, JetStatus);
       overview[crate] |= (1 << JetStatus);
     }
 
@@ -465,9 +463,9 @@ StatusCode CMMMon::fillHistograms()
         const int xpos = (dataID < 16)
 	                 ? dataID
 	                 : (dataID == LVL1::CMMJetHits::REMOTE_MAIN) ? 16 : 17;
-	m_h_CMMJet_parity->Fill(xpos, crate);
-	m_h_CMM_ErrorSummary->Fill(JetParity);
-	m_histTool->fillEventNumber(m_h_CMM_Events, JetParity);
+	m_h_cmm_2d_thresh_Parity->Fill(xpos, crate);
+	m_h_cmm_1d_ErrorSummary->Fill(JetParity);
+	m_histTool->fillEventNumber(m_h_cmm_2d_ErrorEventNumbers, JetParity);
 	overview[crate] |= (1 << JetParity);
       }
     }
@@ -512,9 +510,9 @@ StatusCode CMMMon::fillHistograms()
       const int ey = LVL1::QuadLinear::Expand(rawEy);
       const int et = LVL1::QuadLinear::Expand(rawEt);
 	  
-      if (ex > 0) m_h_CMMEtSums_JEM_Ex->Fill(ex, 1.);
-      if (ey > 0) m_h_CMMEtSums_JEM_Ey->Fill(ey, 1.);
-      if (et > 0) m_h_CMMEtSums_JEM_Et->Fill(et, 1.);
+      if (ex > 0) m_h_cmm_1d_energy_SubSumsEx->Fill(ex, 1.);
+      if (ey > 0) m_h_cmm_1d_energy_SubSumsEy->Fill(ey, 1.);
+      if (et > 0) m_h_cmm_1d_energy_SubSumsEt->Fill(et, 1.);
     }
       
     // -----------------------------------------------------------------------
@@ -529,9 +527,9 @@ StatusCode CMMMon::fillHistograms()
       const int ey = std::abs(cen.ey());
       const int et = rawEt;
 
-      if (ex > 0 && !cen.exOverflow()) m_h_CMMEtSums_Ex->Fill(ex, 1.);
-      if (ey > 0 && !cen.eyOverflow()) m_h_CMMEtSums_Ey->Fill(ey, 1.);
-      if (et > 0 && !cen.etOverflow()) m_h_CMMEtSums_Et->Fill(et, 1.);
+      if (ex > 0 && !cen.exOverflow()) m_h_cmm_1d_energy_TotalEx->Fill(ex, 1.);
+      if (ey > 0 && !cen.eyOverflow()) m_h_cmm_1d_energy_TotalEy->Fill(ey, 1.);
+      if (et > 0 && !cen.etOverflow()) m_h_cmm_1d_energy_TotalEt->Fill(et, 1.);
 
       if (debug) {
         msg(MSG::DEBUG) << "    Ex: " << ex << "; Ey: " << ey << "; Et " << et
@@ -546,9 +544,10 @@ StatusCode CMMMon::fillHistograms()
 	 dataID == LVL1::CMMEtSums::MISSING_ET_SIG_MAP) && crate == 1) {
       const int nHits = 8;
       TH1F_LW* hist = (dataID == LVL1::CMMEtSums::MISSING_ET_MAP)
-                       ? m_h_CMMEtSums_MissingEtMap
+                       ? m_h_cmm_1d_energy_MissingEtHits
 		       : (dataID == LVL1::CMMEtSums::SUM_ET_MAP)
-		       ? m_h_CMMEtSums_SumEtMap : m_h_CMMEtSums_MissingEtSigMap;
+		         ? m_h_cmm_1d_energy_SumEtHits
+			 : m_h_cmm_1d_energy_MissingEtSigHits;
       m_histTool->fillThresholds(hist, rawEt, nHits, 1);
 
       if (debug) {
@@ -564,7 +563,7 @@ StatusCode CMMMon::fillHistograms()
     if (e_num_slice < 0) {
       e_num_slice = (*it_CMMEtSums)-> peak();
       if (j_num_slice >= 0) {
-         m_h_TriggeredSlice->Fill(std::abs(e_num_slice - j_num_slice));
+         m_h_cmm_1d_TriggeredSlices->Fill(std::abs(e_num_slice - j_num_slice));
       }
     }
 
@@ -579,10 +578,10 @@ StatusCode CMMMon::fillHistograms()
     const int status = (eterr.error() >> LVL1::DataError::GLinkParity) & 0xff;
     if (status) {
       for (int bit = 0; bit < 8; ++bit) {
-        if ((status >> bit) & 0x1) m_h_CMMEnergy_error->Fill(bit, crate);
+        if ((status >> bit) & 0x1) m_h_cmm_2d_energy_Status->Fill(bit, crate);
       }
-      m_h_CMM_ErrorSummary->Fill(EnergyStatus);
-      m_histTool->fillEventNumber(m_h_CMM_Events, EnergyStatus);
+      m_h_cmm_1d_ErrorSummary->Fill(EnergyStatus);
+      m_histTool->fillEventNumber(m_h_cmm_2d_ErrorEventNumbers, EnergyStatus);
       overview[crate] |= (1 << EnergyStatus);
     }
 
@@ -590,20 +589,20 @@ StatusCode CMMMon::fillHistograms()
       // Parity
       if (eterr.get(DataError::Parity) || exerr.get(DataError::Parity) ||
           eyerr.get(DataError::Parity)) {
-        if (dataID < 16) m_h_CMMEnergy_parity->Fill(dataID, crate);
+        if (dataID < 16) m_h_cmm_2d_energy_Parity->Fill(dataID, crate);
 	else {
 	  if (exerr.get(DataError::Parity)) {
-	    m_h_CMMEnergy_parity->Fill(16, crate);
+	    m_h_cmm_2d_energy_Parity->Fill(16, crate);
 	  }
 	  if (eyerr.get(DataError::Parity)) {
-	    m_h_CMMEnergy_parity->Fill(17, crate);
+	    m_h_cmm_2d_energy_Parity->Fill(17, crate);
           }
 	  if (eterr.get(DataError::Parity)) {
-	    m_h_CMMEnergy_parity->Fill(18, crate);
+	    m_h_cmm_2d_energy_Parity->Fill(18, crate);
 	  }
 	}
-	m_h_CMM_ErrorSummary->Fill(EnergyParity);
-	m_histTool->fillEventNumber(m_h_CMM_Events, EnergyParity);
+	m_h_cmm_1d_ErrorSummary->Fill(EnergyParity);
+	m_histTool->fillEventNumber(m_h_cmm_2d_ErrorEventNumbers, EnergyParity);
 	overview[crate] |= (1 << EnergyParity);
       }
     }
@@ -614,9 +613,9 @@ StatusCode CMMMon::fillHistograms()
 	               dataID == LVL1::CMMEtSums::TOTAL)) {
       const double ypos = (dataID == LVL1::CMMEtSums::REMOTE) ? 0.
                         : (dataID == LVL1::CMMEtSums::LOCAL)  ? 1. : 2.;
-      m_h_CMMEtSums_Overflow->Fill(0., ypos, exerr.get(DataError::Overflow));
-      m_h_CMMEtSums_Overflow->Fill(1., ypos, eyerr.get(DataError::Overflow));
-      m_h_CMMEtSums_Overflow->Fill(2., ypos, eterr.get(DataError::Overflow));
+      m_h_cmm_2d_energy_Overflow->Fill(0., ypos, exerr.get(DataError::Overflow));
+      m_h_cmm_2d_energy_Overflow->Fill(1., ypos, eyerr.get(DataError::Overflow));
+      m_h_cmm_2d_energy_Overflow->Fill(2., ypos, eterr.get(DataError::Overflow));
     }
 
   }
@@ -653,11 +652,11 @@ StatusCode CMMMon::fillHistograms()
   const int missingEtHits = (CR)->missingEtHits();
   const int missingEtSigHits = (CR)->missingEtSigHits();
 
-  m_histTool->fillThresholds(m_h_CMMRoI_JetEtHits, jetEtHits, 4, 1);
-  m_histTool->fillThresholds(m_h_CMMRoI_SumEtHits, sumEtHits, 8, 1);
-  m_histTool->fillThresholds(m_h_CMMRoI_MissingEtHits, missingEtHits, 8, 1);
-  m_histTool->fillThresholds(m_h_CMMRoI_MissingEtSigHits, missingEtSigHits,
-                                                                      8, 1);
+  m_histTool->fillThresholds(m_h_cmm_1d_roi_JetEtHits, jetEtHits, 4, 1);
+  m_histTool->fillThresholds(m_h_cmm_1d_roi_SumEtHits, sumEtHits, 8, 1);
+  m_histTool->fillThresholds(m_h_cmm_1d_roi_MissingEtHits, missingEtHits, 8, 1);
+  m_histTool->fillThresholds(m_h_cmm_1d_roi_MissingEtSigHits, missingEtSigHits,
+                                                                          8, 1);
 
   if (debug) {
     msg(MSG::DEBUG) << "JetEtHits: "
@@ -677,9 +676,9 @@ StatusCode CMMMon::fillHistograms()
   const int ex = std::abs(cen.ex());
   const int ey = std::abs(cen.ey());
 
-  if (ex > 0 && !cen.exOverflow()) m_h_CMMRoI_Ex->Fill(ex,1);
-  if (ey > 0 && !cen.eyOverflow()) m_h_CMMRoI_Ey->Fill(ey,1);
-  if (et > 0 && !cen.etOverflow()) m_h_CMMRoI_Et->Fill(et,1);
+  if (ex > 0 && !cen.exOverflow()) m_h_cmm_1d_roi_Ex->Fill(ex,1);
+  if (ey > 0 && !cen.eyOverflow()) m_h_cmm_1d_roi_Ey->Fill(ey,1);
+  if (et > 0 && !cen.etOverflow()) m_h_cmm_1d_roi_Et->Fill(et,1);
  
   if (debug) {
     msg(MSG::DEBUG) << "    Ex: " << ex << "; Ey: " << ey << "; Et " << et
@@ -697,20 +696,20 @@ StatusCode CMMMon::fillHistograms()
   const DataError jetEterr((CR)-> jetEtError());
 
   // Parity (Ex,MissingEtSigMap)
-  if (exerr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(ExParity);
+  if (exerr.get(DataError::Parity)) m_h_cmm_1d_roi_Parity->Fill(ExParity);
   // Parity (Ey,SumEtMap)
-  if (eyerr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(EyParity);
+  if (eyerr.get(DataError::Parity)) m_h_cmm_1d_roi_Parity->Fill(EyParity);
   // Parity (Et,MissingEtMap)
-  if (eterr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(EtParity);
+  if (eterr.get(DataError::Parity)) m_h_cmm_1d_roi_Parity->Fill(EtParity);
   // Parity (JetEtMap)
-  if (jetEterr.get(DataError::Parity)) m_h_CMMRoI_error->Fill(JetEtParity);
+  if (jetEterr.get(DataError::Parity)) m_h_cmm_1d_roi_Parity->Fill(JetEtParity);
       
   //Error summary plots
   //parity
   if (exerr.get(DataError::Parity) || eyerr.get(DataError::Parity) ||
       eterr.get(DataError::Parity) || jetEterr.get(DataError::Parity)) {
-    m_h_CMM_ErrorSummary->Fill(RoIParity);
-    m_histTool->fillEventNumber(m_h_CMM_Events, RoIParity);
+    m_h_cmm_1d_ErrorSummary->Fill(RoIParity);
+    m_histTool->fillEventNumber(m_h_cmm_2d_ErrorEventNumbers, RoIParity);
     overview[1] |= (1 << RoIParity);
            
   }

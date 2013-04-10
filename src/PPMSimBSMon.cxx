@@ -59,9 +59,8 @@ PPMSimBSMon::PPMSimBSMon(const std::string & type,
   
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
 
-  declareProperty("SimulationADCCut", m_simulationADCCut = 36);
-  declareProperty("OnlineTest", m_onlineTest = false,
-                  "Test online code when running offline");
+  declareProperty("SimulationADCCut", m_simulationADCCut = 36,
+                  "Minimum ADC cut to avoid unnecessary simulation");
 }
 
 /*---------------------------------------------------------*/

@@ -41,52 +41,58 @@
 PPrMon::PPrMon(const std::string & type, const std::string & name,
 					 const IInterface* parent)
   : ManagedMonitorToolBase ( type, name, parent ),
-    m_LumiBlockNo(1), m_SliceNo(15), m_NoEvents(0),
+    m_SliceNo(15),
     m_histBooked(false),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
     m_ttTool("LVL1::L1TriggerTowerTool/L1TriggerTowerTool"),
-    m_h_TT_HitMap_emADC_00100(0),
-    m_h_TT_HitMap_hadADC_00100(0),
-    m_h_dist_had_max(0),
-    m_h_dist_em_max(0),
-    m_p_TT_HitMap_emADC_00100(0),
-    m_p_TT_HitMap_hadADC_00100(0),
-    m_h_TT_ADC_emTiming_signal(0),
-    m_h_TT_ADC_hadTiming_signal(0),
-    m_h_TT_SignalProfile(0),
-    m_h_TT_HitMap_emLUT_Thresh(0),
-    m_h_TT_HitMap_hadLUT_Thresh(0),
-    m_p_TT_HitMap_emLUT_etAv(0),
-    m_p_TT_HitMap_hadLUT_etAv(0),
-    m_h_TT_emLUT(0),
-    m_h_TT_emLUT_eta(0),
-    m_h_TT_emLUT_phi(0),
-    m_h_TT_hadLUT(0),
-    m_h_TT_hadLUT_eta(0),
-    m_h_TT_hadLUT_phi(0),
-    m_h_TT_BCLUT(0),
-    m_h_TT_BCID(0),
-    m_h_TT_Error(0),
-    m_h_TT_error_Crate_03(0),
-    m_h_TT_error_Crate_47(0),
-    m_h_fwPpmError_Crate_03(0),
-    m_h_fwPpmError_Crate_47(0),
-    m_h_ErrorDetails(0),
-    m_h_TT_EventNumbers(0),
-    m_h_TT_ASICEventNumbers(0),
-    m_h_TT_triggeredSlice_em(0),
-    m_h_TT_triggeredSlice_had(0)
+    m_h_ppm_em_2d_etaPhi_tt_adc_HitMap(0),
+    m_h_ppm_had_2d_etaPhi_tt_adc_HitMap(0),
+    m_h_ppm_had_1d_tt_adc_MaxTimeslice(0),
+    m_h_ppm_em_1d_tt_adc_MaxTimeslice(0),
+    m_h_ppm_em_2d_etaPhi_tt_adc_ProfileHitMap(0),
+    m_h_ppm_had_2d_etaPhi_tt_adc_ProfileHitMap(0),
+    m_h_ppm_em_2d_etaPhi_tt_adc_MaxTimeslice(0),
+    m_h_ppm_had_2d_etaPhi_tt_adc_MaxTimeslice(0),
+    m_v_ppm_1d_tt_adc_SignalProfile(0),
+    m_v_ppm_em_2d_etaPhi_tt_lut_Threshold(0),
+    m_v_ppm_had_2d_etaPhi_tt_lut_Threshold(0),
+    m_h_ppm_em_2d_etaPhi_tt_lut_AverageEt(0),
+    m_h_ppm_had_2d_etaPhi_tt_lut_AverageEt(0),
+    m_h_ppm_em_1d_tt_lut_Et(0),
+    m_h_ppm_em_1d_tt_lut_Eta(0),
+    m_h_ppm_em_1d_tt_lut_Phi(0),
+    m_h_ppm_had_1d_tt_lut_Et(0),
+    m_h_ppm_had_1d_tt_lut_Eta(0),
+    m_h_ppm_had_1d_tt_lut_Phi(0),
+    m_h_ppm_1d_tt_lut_LutPerBCN(0),
+    m_h_ppm_2d_tt_lut_BcidBits(0),
+    m_h_ppm_1d_ErrorSummary(0),
+    m_h_ppm_2d_Status03(0),
+    m_h_ppm_2d_Status47(0),
+    m_h_ppm_2d_ErrorField03(0),
+    m_h_ppm_2d_ErrorField47(0),
+    m_v_ppm_2d_ASICErrorsDetail(0),
+    m_h_ppm_2d_ErrorEventNumbers(0),
+    m_h_ppm_2d_ASICErrorEventNumbers(0),
+    m_h_ppm_em_1d_tt_adc_TriggeredSlice(0),
+    m_h_ppm_had_1d_tt_adc_TriggeredSlice(0)
 /*---------------------------------------------------------*/
 {
   declareProperty("BS_TriggerTowerContainer",
                   m_TriggerTowerContainerName = "LVL1TriggerTowers");
-  declareProperty("LUTHitMap_LumiBlocks",  m_TT_HitMap_LumiBlocks = 10);
-  declareProperty("ADCHitMap_Thresh",      m_TT_ADC_HitMap_Thresh = 15);
-  declareProperty("MaxEnergyRange",        m_MaxEnergyRange       = 256);
-  declareProperty("ADCPedestal",           m_TT_ADC_Pedestal      = 32);
-  declareProperty("HADFADCCut",            m_HADFADCCut           = 40);
-  declareProperty("EMFADCCut",             m_EMFADCCut            = 40);
+  declareProperty("LUTHitMap_LumiBlocks",  m_TT_HitMap_LumiBlocks = 10,
+        "The number of back lumiblocks for separate LUT hitmaps online");
+  declareProperty("ADCHitMap_Thresh",      m_TT_ADC_HitMap_Thresh = 15,
+                  "ADC cut for hitmaps");
+  declareProperty("MaxEnergyRange",        m_MaxEnergyRange       = 256,
+                  "Maximum energy for LUT Et plots");
+  declareProperty("ADCPedestal",           m_TT_ADC_Pedestal      = 32,
+                  "Nominal pedestal value");
+  declareProperty("HADFADCCut",            m_HADFADCCut           = 40,
+                  "HAD FADC cut for signal");
+  declareProperty("EMFADCCut",             m_EMFADCCut            = 40,
+                  "EM FADC cut for signal");
 
   declareProperty("PathInRootFile", m_PathInRootFile="L1Calo/PPM") ;
   declareProperty("ErrorPathInRootFile",
@@ -169,10 +175,6 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 
   if ( isNewRun ) {
 
-    MonGroup TT_HadADCTiming(this, m_PathInRootFile+"/ADC/Channels/Timing_Had",
-                                                                 expert, run);
-    MonGroup TT_EmADCTiming(this, m_PathInRootFile+"/ADC/Channels/Timing_Em",
-                                                                 expert, run);
     MonGroup TT_HitMaps(this, m_PathInRootFile+"/LUT/EtaPhiMaps", shift, run);
     MonGroup TT_ADC(this, m_PathInRootFile+"/ADC/EtaPhiMaps", shift, run);
     MonGroup TT_ADCSlices(this, m_PathInRootFile+"/ADC/Timeslices", shift, run);
@@ -183,8 +185,6 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
                                                                  "eventSample");
     MonGroup TT_ErrorDetail(this, m_ErrorPathInRootFile+"/Detail", expert, run);
 
-    m_NoEvents = 0;
-	  
 
     //-------------------- ADC Hitmaps for Triggered Timeslice ---------------
 
@@ -199,48 +199,50 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 
     title = "#eta - #phi Map of EM FADC > "+ buffer.str()
                                            + " for triggered timeslice";
-    m_h_TT_HitMap_emADC_00100 = m_histTool->bookPPMEmEtaVsPhi(
+    m_h_ppm_em_2d_etaPhi_tt_adc_HitMap = m_histTool->bookPPMEmEtaVsPhi(
                                 "ppm_em_2d_etaPhi_tt_adc_HitMap", title);
 
     title = "#eta - #phi Profile Map of EM FADC > "+ buffer.str()
                                            + " for triggered timeslice";
-    m_p_TT_HitMap_emADC_00100 = m_histTool->bookProfilePPMEmEtaVsPhi(
+    m_h_ppm_em_2d_etaPhi_tt_adc_ProfileHitMap = m_histTool->bookProfilePPMEmEtaVsPhi(
                                 "ppm_em_2d_etaPhi_tt_adc_ProfileHitMap", title);
 
     title = "#eta - #phi Map of HAD FADC > "+ buffer.str()
                                             + " for triggered timeslice";
-    m_h_TT_HitMap_hadADC_00100 = m_histTool->bookPPMHadEtaVsPhi(
+    m_h_ppm_had_2d_etaPhi_tt_adc_HitMap = m_histTool->bookPPMHadEtaVsPhi(
                                  "ppm_had_2d_etaPhi_tt_adc_HitMap",title);
 
     title = "#eta - #phi Profile Map of HAD FADC > "+ buffer.str()
                                             + " for triggered timeslice";
-    m_p_TT_HitMap_hadADC_00100 = m_histTool->bookProfilePPMHadEtaVsPhi(
+    m_h_ppm_had_2d_etaPhi_tt_adc_ProfileHitMap = m_histTool->bookProfilePPMHadEtaVsPhi(
                                "ppm_had_2d_etaPhi_tt_adc_ProfileHitMap", title);
 
     //---------------------------------------------------------//
     m_histTool->setMonGroup(&TT_ADCSlices);
 
-    m_h_dist_had_max = m_histTool->book1F("ppm_had_1d_tt_adc_MaxTimeslice",
-		       " had. Distribution of Maximum Timeslice;time slice",
+    m_h_ppm_had_1d_tt_adc_MaxTimeslice = m_histTool->book1F(
+                       "ppm_had_1d_tt_adc_MaxTimeslice",
+		       " HAD Distribution of Maximum Timeslice;time slice",
 		       m_SliceNo, 0, m_SliceNo);
-    m_histTool->numbers(m_h_dist_had_max, 0, m_SliceNo-1);
-    m_h_dist_em_max = m_histTool->book1F("ppm_em_1d_tt_adc_MaxTimeslice",
-		       " em. Distribution of Maximum Timeslice;time slice",
+    m_histTool->numbers(m_h_ppm_had_1d_tt_adc_MaxTimeslice, 0, m_SliceNo-1);
+    m_h_ppm_em_1d_tt_adc_MaxTimeslice = m_histTool->book1F(
+                       "ppm_em_1d_tt_adc_MaxTimeslice",
+		       " EM Distribution of Maximum Timeslice;time slice",
 		       m_SliceNo, 0, m_SliceNo);
-    m_histTool->numbers(m_h_dist_em_max, 0, m_SliceNo-1);
+    m_histTool->numbers(m_h_ppm_em_1d_tt_adc_MaxTimeslice, 0, m_SliceNo-1);
 	  
     //------------------------Average Maximum Timeslice-----------------------
       
-    m_h_TT_ADC_hadTiming_signal = m_histTool->bookProfilePPMHadEtaVsPhi(
+    m_h_ppm_had_2d_etaPhi_tt_adc_MaxTimeslice = m_histTool->bookProfilePPMHadEtaVsPhi(
       "ppm_had_2d_etaPhi_tt_adc_MaxTimeslice",
-      "Average Maximum TimeSlice for had Signal (TS:1-15)");
-    m_h_TT_ADC_emTiming_signal = m_histTool->bookProfilePPMEmEtaVsPhi(
+      "Average Maximum TimeSlice for HAD Signal (TS:1-15)");
+    m_h_ppm_em_2d_etaPhi_tt_adc_MaxTimeslice = m_histTool->bookProfilePPMEmEtaVsPhi(
       "ppm_em_2d_etaPhi_tt_adc_MaxTimeslice",
-      "Average Maximum TimeSlice for em Signal (TS:1-15)");
+      "Average Maximum TimeSlice for EM Signal (TS:1-15)");
 
     //---------------------------- Signal shape ------------------------------
 
-    m_h_TT_SignalProfile.clear();
+    m_v_ppm_1d_tt_adc_SignalProfile.clear();
     const int emPart = MaxPartitions/2;
     for (int p = 0; p < MaxPartitions; ++p) {
       if (p < emPart) name = "ppm_em_1d_tt_adc_SignalProfile"
@@ -248,7 +250,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       else            name = "ppm_had_1d_tt_adc_SignalProfile"
                              + partitionName(p);
       title = "Signal Shape Profile for " + partitionName(p) + ";Timeslice";
-      m_h_TT_SignalProfile.push_back(m_histTool->bookProfile(name, title,
+      m_v_ppm_1d_tt_adc_SignalProfile.push_back(m_histTool->bookProfile(name, title,
 	                                            m_SliceNo, 0, m_SliceNo));
     }
 
@@ -258,8 +260,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 
     // Per run and last N lumiblocks - online only
     if (m_environment == AthenaMonManager::online || m_onlineTest) {
-      m_h_TT_HitMap_emLUT_Thresh.clear();
-      m_h_TT_HitMap_hadLUT_Thresh.clear();
+      m_v_ppm_em_2d_etaPhi_tt_lut_Threshold.clear();
+      m_v_ppm_had_2d_etaPhi_tt_lut_Threshold.clear();
       m_histTool->setMonGroup(&TT_HitMaps);
       for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
         buffer.str("");
@@ -269,11 +271,11 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(
 	       "ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer_name.str(),
 	       "#eta - #phi Map of EM LUT > "+buffer.str());
-	m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
+	m_v_ppm_em_2d_etaPhi_tt_lut_Threshold.push_back(hist);
 	hist = m_histTool->bookPPMHadEtaVsPhi(
 	       "ppm_had_2d_etaPhi_tt_lut_Threshold"+buffer_name.str(),
-	       "#eta - #phi Map of Had LUT > "+buffer.str());
-	m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
+	       "#eta - #phi Map of HAD LUT > "+buffer.str());
+	m_v_ppm_had_2d_etaPhi_tt_lut_Threshold.push_back(hist);
       }
       for (int block = 0; block <= m_TT_HitMap_LumiBlocks; ++block) {
         buffer.str("");
@@ -290,50 +292,50 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	  else            buffer << m_TT_HitMap_ThreshVec[thresh] << ", Lumi-block -" << block;
 	  std::string title = "#eta - #phi Map of EM LUT > "+buffer.str();
 	  TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(name, title);
-	  m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
-	  title = "#eta - #phi Map of Had LUT > "+buffer.str();
+	  m_v_ppm_em_2d_etaPhi_tt_lut_Threshold.push_back(hist);
+	  title = "#eta - #phi Map of HAD LUT > "+buffer.str();
 	  buffer_name.str("");
 	  buffer_name << std::setw(2) << std::setfill('0') << thresh << "Lumi" << block;
 	  name = "ppm_had_2d_etaPhi_tt_lut_Thresh"+buffer_name.str();
 	  hist = m_histTool->bookPPMHadEtaVsPhi(name, title);
-	  m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
+	  m_v_ppm_had_2d_etaPhi_tt_lut_Threshold.push_back(hist);
 	}
       }
     }
 
     m_histTool->setMonGroup(&TT_HitMaps);
 
-    m_p_TT_HitMap_emLUT_etAv = m_histTool->bookProfilePPMEmEtaVsPhi(
+    m_h_ppm_em_2d_etaPhi_tt_lut_AverageEt = m_histTool->bookProfilePPMEmEtaVsPhi(
       "ppm_em_2d_etaPhi_tt_lut_AverageEt","EM Average LUT Et for Et > 5");
-    m_p_TT_HitMap_hadLUT_etAv = m_histTool->bookProfilePPMHadEtaVsPhi(
-      "ppm_had_2d_etaPhi_tt_lut_AverageEt","Had Average LUT Et for Et > 5");
+    m_h_ppm_had_2d_etaPhi_tt_lut_AverageEt = m_histTool->bookProfilePPMHadEtaVsPhi(
+      "ppm_had_2d_etaPhi_tt_lut_AverageEt","HAD Average LUT Et for Et > 5");
     
     //--------------- distribution of LUT peak per detector region -----------
 
     m_histTool->setMonGroup(&TT_LUTPeakDist);
 
-    m_h_TT_emLUT = m_histTool->book1F("ppm_em_1d_tt_lut_Et",
+    m_h_ppm_em_1d_tt_lut_Et = m_histTool->book1F("ppm_em_1d_tt_lut_Et",
       "EM LUT: Distribution of Peak;em LUT Peak [GeV]",
       m_MaxEnergyRange-1, 1, m_MaxEnergyRange);
-    m_h_TT_emLUT_eta = m_histTool->bookPPMEmEta("ppm_em_1d_tt_lut_Eta",
+    m_h_ppm_em_1d_tt_lut_Eta = m_histTool->bookPPMEmEta("ppm_em_1d_tt_lut_Eta",
       "EM LUT: Distribution of Peak per #eta");
-    m_h_TT_emLUT_phi = m_histTool->book1F("ppm_em_1d_tt_lut_Phi",
+    m_h_ppm_em_1d_tt_lut_Phi = m_histTool->book1F("ppm_em_1d_tt_lut_Phi",
       "EM LUT: Distribution of Peak per #phi;phi", 64, 0., 2.*M_PI);
       
-    m_h_TT_hadLUT = m_histTool->book1F("ppm_had_1d_tt_lut_Et",
+    m_h_ppm_had_1d_tt_lut_Et = m_histTool->book1F("ppm_had_1d_tt_lut_Et",
       "HAD LUT: Distribution of Peak;had LUT Peak [GeV]",
       m_MaxEnergyRange-1, 1, m_MaxEnergyRange); 
-    m_h_TT_hadLUT_eta = m_histTool->bookPPMHadEta("ppm_had_1d_tt_lut_Eta",
+    m_h_ppm_had_1d_tt_lut_Eta = m_histTool->bookPPMHadEta("ppm_had_1d_tt_lut_Eta",
       "HAD LUT: Distribution of Peak per #eta");
-    m_h_TT_hadLUT_phi = m_histTool->book1F("ppm_had_1d_tt_lut_Phi",
+    m_h_ppm_had_1d_tt_lut_Phi = m_histTool->book1F("ppm_had_1d_tt_lut_Phi",
       "HAD LUT: Distribution of Peak per #phi;phi", 64, 0., 2.*M_PI);
 
-    m_h_TT_BCLUT = m_histTool->book1F("ppm_1d_tt_lut_LutPerBCN",
+    m_h_ppm_1d_tt_lut_LutPerBCN = m_histTool->book1F("ppm_1d_tt_lut_LutPerBCN",
       "Num of LUT > 5 per BC;Bunch Crossing;Num. of LUT above limit",
       0xdec, 0, 0xdec);
-    m_h_TT_BCID = m_histTool->book2F("ppm_2d_tt_lut_BcidBits",
+    m_h_ppm_2d_tt_lut_BcidBits = m_histTool->book2F("ppm_2d_tt_lut_BcidBits",
       "PPM: Bits of BCID Logic Word Vs. LUT", 8, 0., 8., 256, 0., 256.);
-    LWHist::LWHistAxis* axis = m_h_TT_BCID->GetXaxis();
+    LWHist::LWHistAxis* axis = m_h_ppm_2d_tt_lut_BcidBits->GetXaxis();
     axis->SetBinLabel(1, "none");
     axis->SetBinLabel(2, "extBC only");
     axis->SetBinLabel(3, "satBC only");
@@ -347,37 +349,37 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 
     m_histTool->setMonGroup(&TT_Error);
 
-    m_h_TT_Error = m_histTool->book1F("ppm_1d_ErrorSummary",
+    m_h_ppm_1d_ErrorSummary = m_histTool->book1F("ppm_1d_ErrorSummary",
                                     "Summary of SubStatus Errors", 8, 0., 8.);
-    m_histTool->subStatus(m_h_TT_Error);
+    m_histTool->subStatus(m_h_ppm_1d_ErrorSummary);
 
     //---------------------------- SubStatus Word errors ---------------------
       
     //L1Calo Substatus word
-    m_h_TT_error_Crate_03 = m_histTool->bookPPMSubStatusVsCrateModule(
+    m_h_ppm_2d_Status03 = m_histTool->bookPPMSubStatusVsCrateModule(
       "ppm_2d_Status03", "Errors from TT SubStatus Word (crates 0-3)", 0, 3);
-    m_h_TT_error_Crate_47 = m_histTool->bookPPMSubStatusVsCrateModule(
+    m_h_ppm_2d_Status47 = m_histTool->bookPPMSubStatusVsCrateModule(
       "ppm_2d_Status47", "Errors from TT SubStatus Word (crates 4-7)", 4, 7);
 
     //error bit field from ASIC data
-    m_h_fwPpmError_Crate_03 = m_histTool->bookPPMErrorsVsCrateModule(
+    m_h_ppm_2d_ErrorField03 = m_histTool->bookPPMErrorsVsCrateModule(
       "ppm_2d_ErrorField03", "Errors from ASIC error field (crates 0-3)", 0, 3);
-    m_h_fwPpmError_Crate_47 = m_histTool->bookPPMErrorsVsCrateModule(
+    m_h_ppm_2d_ErrorField47 = m_histTool->bookPPMErrorsVsCrateModule(
       "ppm_2d_ErrorField47", "Errors from ASIC error field (crates 4-7)", 4, 7);
 
     m_histTool->setMonGroup(&TT_ErrorEvents);
 
-    m_h_TT_EventNumbers = m_histTool->bookEventNumbers(
+    m_h_ppm_2d_ErrorEventNumbers = m_histTool->bookEventNumbers(
       "ppm_2d_ErrorEventNumbers", "SubStatus Error Event Numbers", 8, 0., 8.);
-    m_histTool->subStatus(m_h_TT_EventNumbers, 0, false);
-    m_h_TT_ASICEventNumbers = m_histTool->bookEventNumbers(
+    m_histTool->subStatus(m_h_ppm_2d_ErrorEventNumbers, 0, false);
+    m_h_ppm_2d_ASICErrorEventNumbers = m_histTool->bookEventNumbers(
       "ppm_2d_ASICErrorEventNumbers", "ASIC Error Field Event Numbers",
                                                                    8, 0., 8.);
-    m_histTool->ppmErrors(m_h_TT_ASICEventNumbers, 0, false);
+    m_histTool->ppmErrors(m_h_ppm_2d_ASICErrorEventNumbers, 0, false);
 
     m_histTool->setMonGroup(&TT_ErrorDetail);
 
-    m_h_ErrorDetails.clear();
+    m_v_ppm_2d_ASICErrorsDetail.clear();
     std::vector<std::string> errNames;
     errNames.push_back("Channel0Disabled");
     errNames.push_back("Channel1Disabled");
@@ -414,21 +416,21 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	}
 	axis->SetTitle("MCM");
 	m_histTool->ppmCrateModule(hist, crate, crate+1, 0, false);
-	m_h_ErrorDetails.push_back(hist);
+	m_v_ppm_2d_ASICErrorsDetail.push_back(hist);
       }
     }
 
     //---------------------------- number of triggered slice -----------------
     m_histTool->setMonGroup(&TT_ADCSlices);
 
-    m_h_TT_triggeredSlice_em = m_histTool->book1F(
+    m_h_ppm_em_1d_tt_adc_TriggeredSlice = m_histTool->book1F(
       "ppm_em_1d_tt_adc_TriggeredSlice",
       "Number of the EM Triggered Slice;#Slice", m_SliceNo, 0, m_SliceNo);
-    m_histTool->numbers(m_h_TT_triggeredSlice_em, 0, m_SliceNo-1);
-    m_h_TT_triggeredSlice_had = m_histTool->book1F(
+    m_histTool->numbers(m_h_ppm_em_1d_tt_adc_TriggeredSlice, 0, m_SliceNo-1);
+    m_h_ppm_had_1d_tt_adc_TriggeredSlice = m_histTool->book1F(
       "ppm_had_1d_tt_adc_TriggeredSlice",
       "Number of the HAD Triggered Slice;#Slice", m_SliceNo, 0, m_SliceNo);
-    m_histTool->numbers(m_h_TT_triggeredSlice_had, 0, m_SliceNo-1);
+    m_histTool->numbers(m_h_ppm_had_1d_tt_adc_TriggeredSlice, 0, m_SliceNo-1);
 	     
   }	
 
@@ -440,13 +442,13 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       // Current lumi copied to lumi-1 and so on
       for (int block = m_TT_HitMap_LumiBlocks-1; block >= 0; --block) {
 	for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
-	  TH2F_LW* hist1 = m_h_TT_HitMap_emLUT_Thresh[
+	  TH2F_LW* hist1 = m_v_ppm_em_2d_etaPhi_tt_lut_Threshold[
 	                           (block+1)*m_TT_HitMap_ThreshVec.size() + thresh];
-	  TH2F_LW* hist2 = m_h_TT_HitMap_emLUT_Thresh[
+	  TH2F_LW* hist2 = m_v_ppm_em_2d_etaPhi_tt_lut_Threshold[
 	                           (block+2)*m_TT_HitMap_ThreshVec.size() + thresh];
-	  TH2F_LW* hist3 = m_h_TT_HitMap_hadLUT_Thresh[
+	  TH2F_LW* hist3 = m_v_ppm_had_2d_etaPhi_tt_lut_Threshold[
 	                           (block+1)*m_TT_HitMap_ThreshVec.size() + thresh];
-	  TH2F_LW* hist4 = m_h_TT_HitMap_hadLUT_Thresh[
+	  TH2F_LW* hist4 = m_v_ppm_had_2d_etaPhi_tt_lut_Threshold[
 	                           (block+2)*m_TT_HitMap_ThreshVec.size() + thresh];
 	  hist2->Reset();
 	  hist4->Reset();
@@ -471,8 +473,8 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     } else {
 
       // Offline - per lumiblock - merge will give per run
-      m_h_TT_HitMap_emLUT_Thresh.clear();
-      m_h_TT_HitMap_hadLUT_Thresh.clear();
+      m_v_ppm_em_2d_etaPhi_tt_lut_Threshold.clear();
+      m_v_ppm_had_2d_etaPhi_tt_lut_Threshold.clear();
       MonGroup TT_LumiHitMaps(this, m_PathInRootFile+"/LUT/EtaPhiMaps",
                                                          expert, lumiBlock);
       m_histTool->setMonGroup(&TT_LumiHitMaps);
@@ -486,11 +488,11 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	TH2F_LW* hist = m_histTool->bookPPMEmEtaVsPhi(
 	  "ppm_em_2d_etaPhi_tt_lut_Threshold"+buffer_name.str(),
 	  "#eta - #phi Map of EM LUT > "+buffer.str());
-	m_h_TT_HitMap_emLUT_Thresh.push_back(hist);
+	m_v_ppm_em_2d_etaPhi_tt_lut_Threshold.push_back(hist);
 	hist = m_histTool->bookPPMHadEtaVsPhi(
 	  "ppm_had_2d_etaPhi_tt_lut_Threshold"+buffer_name.str(),
 	  "#eta - #phi Map of Had LUT > "+buffer.str());
-	m_h_TT_HitMap_hadLUT_Thresh.push_back(hist);
+	m_v_ppm_had_2d_etaPhi_tt_lut_Threshold.push_back(hist);
       }
     }
 
@@ -519,7 +521,6 @@ StatusCode PPrMon::fillHistograms()
     if (debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
-  m_NoEvents++;
 
   // Error vector for global overview
   std::vector<int> overview(8);
@@ -566,16 +567,16 @@ StatusCode PPrMon::fillHistograms()
 
     // em energy distributions per detector region
     if (EmEnergy > 0) {
-      m_h_TT_emLUT_eta->Fill(eta, 1);
-      m_histTool->fillPPMPhi(m_h_TT_emLUT_phi, eta, phi);
-      m_h_TT_emLUT->Fill(EmEnergy, 1);
+      m_h_ppm_em_1d_tt_lut_Eta->Fill(eta, 1);
+      m_histTool->fillPPMPhi(m_h_ppm_em_1d_tt_lut_Phi, eta, phi);
+      m_h_ppm_em_1d_tt_lut_Et->Fill(EmEnergy, 1);
       if (EmEnergy > 5) {
-        m_histTool->fillPPMEmEtaVsPhi(m_p_TT_HitMap_emLUT_etAv, eta, phi,
+        m_histTool->fillPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_lut_AverageEt, eta, phi,
 	                                                             EmEnergy);
         // Bunch crossing and BCID bits
-        m_h_TT_BCLUT->Fill(bunchCrossing);
+        m_h_ppm_1d_tt_lut_LutPerBCN->Fill(bunchCrossing);
       }
-      m_h_TT_BCID->Fill((*TriggerTowerIterator)->emBCID(), EmEnergy);
+      m_h_ppm_2d_tt_lut_BcidBits->Fill((*TriggerTowerIterator)->emBCID(), EmEnergy);
     }
 	 
     //---------------------------- EM LUT HitMaps -----------------------------
@@ -583,11 +584,11 @@ StatusCode PPrMon::fillHistograms()
       if (EmEnergy > 0) {
         unsigned int u_EmEnergy = static_cast<unsigned int>(EmEnergy); 
         if (u_EmEnergy > m_TT_HitMap_ThreshVec[thresh]) {
-   	  m_histTool->fillPPMEmEtaVsPhi(m_h_TT_HitMap_emLUT_Thresh[thresh],
+   	  m_histTool->fillPPMEmEtaVsPhi(m_v_ppm_em_2d_etaPhi_tt_lut_Threshold[thresh],
 	                                                            eta, phi, 1);
 	  if (m_environment == AthenaMonManager::online || m_onlineTest) {
 	    m_histTool->fillPPMEmEtaVsPhi(
-	      m_h_TT_HitMap_emLUT_Thresh[thresh+m_TT_HitMap_ThreshVec.size()],
+	      m_v_ppm_em_2d_etaPhi_tt_lut_Threshold[thresh+m_TT_HitMap_ThreshVec.size()],
 	      eta, phi, 1);
           }
         }
@@ -600,16 +601,16 @@ StatusCode PPrMon::fillHistograms()
 	
     // had energy distribution per detector region
     if (HadEnergy>0) {
-      m_h_TT_hadLUT_eta->Fill(eta, 1);
-      m_histTool->fillPPMPhi(m_h_TT_hadLUT_phi, eta, phi);
-      m_h_TT_hadLUT->Fill(HadEnergy,1);
+      m_h_ppm_had_1d_tt_lut_Eta->Fill(eta, 1);
+      m_histTool->fillPPMPhi(m_h_ppm_had_1d_tt_lut_Phi, eta, phi);
+      m_h_ppm_had_1d_tt_lut_Et->Fill(HadEnergy,1);
       if (HadEnergy>5) {
-        m_histTool->fillPPMHadEtaVsPhi(m_p_TT_HitMap_hadLUT_etAv, eta, phi,
+        m_histTool->fillPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_lut_AverageEt, eta, phi,
 	                                                            HadEnergy);
         // Bunch crossing and BCID bits
-        m_h_TT_BCLUT->Fill(bunchCrossing);
+        m_h_ppm_1d_tt_lut_LutPerBCN->Fill(bunchCrossing);
       }
-      m_h_TT_BCID->Fill((*TriggerTowerIterator)->hadBCID(), HadEnergy);
+      m_h_ppm_2d_tt_lut_BcidBits->Fill((*TriggerTowerIterator)->hadBCID(), HadEnergy);
     }
     
     //---------------------------- had LUT HitMaps -----------------------------
@@ -617,11 +618,11 @@ StatusCode PPrMon::fillHistograms()
       if (HadEnergy > 0) {
         unsigned int u_HadEnergy = static_cast<unsigned int>(HadEnergy);
         if (u_HadEnergy > m_TT_HitMap_ThreshVec[thresh]) {
-	  m_histTool->fillPPMHadEtaVsPhi(m_h_TT_HitMap_hadLUT_Thresh[thresh],
+	  m_histTool->fillPPMHadEtaVsPhi(m_v_ppm_had_2d_etaPhi_tt_lut_Threshold[thresh],
 	                                                            eta, phi, 1);
           if (m_environment == AthenaMonManager::online || m_onlineTest) {
 	    m_histTool->fillPPMHadEtaVsPhi(
-	      m_h_TT_HitMap_hadLUT_Thresh[thresh+m_TT_HitMap_ThreshVec.size()],
+	      m_v_ppm_had_2d_etaPhi_tt_lut_Threshold[thresh+m_TT_HitMap_ThreshVec.size()],
 	      eta, phi, 1);
           }
         }
@@ -635,8 +636,8 @@ StatusCode PPrMon::fillHistograms()
     if (tslice < ((*TriggerTowerIterator)->emADC()).size()) {
       const int temADC = ((*TriggerTowerIterator)->emADC())[tslice];
       if (temADC > m_TT_ADC_HitMap_Thresh) {
-	m_histTool->fillPPMEmEtaVsPhi(m_h_TT_HitMap_emADC_00100, eta, phi, 1);
-	m_histTool->fillPPMEmEtaVsPhi(m_p_TT_HitMap_emADC_00100, eta, phi,
+	m_histTool->fillPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_adc_HitMap, eta, phi, 1);
+	m_histTool->fillPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_adc_ProfileHitMap, eta, phi,
 	                                                              temADC);
       }
     }
@@ -646,8 +647,8 @@ StatusCode PPrMon::fillHistograms()
     if (tslice < ((*TriggerTowerIterator)->hadADC()).size()) {
       const int thadADC = ((*TriggerTowerIterator)->hadADC())[tslice];
       if (thadADC > m_TT_ADC_HitMap_Thresh) {
-        m_histTool->fillPPMHadEtaVsPhi(m_h_TT_HitMap_hadADC_00100, eta, phi, 1);
-        m_histTool->fillPPMHadEtaVsPhi(m_p_TT_HitMap_hadADC_00100, eta, phi,
+        m_histTool->fillPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_adc_HitMap, eta, phi, 1);
+        m_histTool->fillPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_adc_ProfileHitMap, eta, phi,
 	                                                               thadADC);
       }
     }
@@ -660,17 +661,17 @@ StatusCode PPrMon::fillHistograms()
     double max = recTime(emADC, m_EMFADCCut);
     //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
     if (max >= 0.) {
-      m_histTool->fillPPMEmEtaVsPhi(m_h_TT_ADC_emTiming_signal, eta, phi,
+      m_histTool->fillPPMEmEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_adc_MaxTimeslice, eta, phi,
                                                                        max+1.);
-      m_h_dist_em_max->Fill(max);
+      m_h_ppm_em_1d_tt_adc_MaxTimeslice->Fill(max);
     }
 
     max = recTime(hadADC, m_HADFADCCut);
     //log << MSG::INFO << "TimeSlice of Maximum "<< max<< endreq ;
     if (max >= 0.) {
-      m_histTool->fillPPMHadEtaVsPhi(m_h_TT_ADC_hadTiming_signal, eta, phi,
+      m_histTool->fillPPMHadEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_adc_MaxTimeslice, eta, phi,
                                                                        max+1.);
-      m_h_dist_had_max->Fill(max);
+      m_h_ppm_had_1d_tt_adc_MaxTimeslice->Fill(max);
     }
 
     //------------------------ Signal shape profile --------------------------
@@ -680,7 +681,7 @@ StatusCode PPrMon::fillHistograms()
       std::vector<int>::const_iterator it  = emADC.begin();
       std::vector<int>::const_iterator itE = emADC.end();
       for (int slice = 0; it != itE && slice < m_SliceNo; ++it, ++slice) {
-        m_h_TT_SignalProfile[emPart]->Fill(slice, *it);
+        m_v_ppm_1d_tt_adc_SignalProfile[emPart]->Fill(slice, *it);
       }
     }
     if (HadEnergy > 0) {
@@ -688,7 +689,7 @@ StatusCode PPrMon::fillHistograms()
       std::vector<int>::const_iterator it  = hadADC.begin();
       std::vector<int>::const_iterator itE = hadADC.end();
       for (int slice = 0; it != itE && slice < m_SliceNo; ++it, ++slice) {
-        m_h_TT_SignalProfile[hadPart]->Fill(slice, *it);
+        m_v_ppm_1d_tt_adc_SignalProfile[hadPart]->Fill(slice, *it);
       }
     }
 
@@ -714,15 +715,15 @@ StatusCode PPrMon::fillHistograms()
 
       for (int bit = 0; bit < 8; ++bit) {
         if (emerr.get(bit + DataError::ChannelDisabled)) {
-          if (crate < 4) m_h_fwPpmError_Crate_03->Fill(bit, ypos);
-  	  else           m_h_fwPpmError_Crate_47->Fill(bit, ypos);
-	  m_histTool->fillEventNumber(m_h_TT_ASICEventNumbers, bit);
+          if (crate < 4) m_h_ppm_2d_ErrorField03->Fill(bit, ypos);
+  	  else           m_h_ppm_2d_ErrorField47->Fill(bit, ypos);
+	  m_histTool->fillEventNumber(m_h_ppm_2d_ASICErrorEventNumbers, bit);
         }
         if (emerr.get(bit + DataError::GLinkParity)) {
-	  if (crate < 4) m_h_TT_error_Crate_03->Fill(bit, ypos);
-	  else           m_h_TT_error_Crate_47->Fill(bit, ypos);
-	  m_h_TT_Error->Fill(bit);
-	  m_histTool->fillEventNumber(m_h_TT_EventNumbers, bit);
+	  if (crate < 4) m_h_ppm_2d_Status03->Fill(bit, ypos);
+	  else           m_h_ppm_2d_Status47->Fill(bit, ypos);
+	  m_h_ppm_1d_ErrorSummary->Fill(bit);
+	  m_histTool->fillEventNumber(m_h_ppm_2d_ErrorEventNumbers, bit);
         }
       }
 
@@ -747,29 +748,29 @@ StatusCode PPrMon::fillHistograms()
       // Detailed plots by MCM
       ypos = (crate%2)*16+module;
       if (emerr.get(DataError::ChannelDisabled)) {
-        m_h_ErrorDetails[(channel/2)*4+crate/2]->Fill((channel%2)*16+submodule,
+        m_v_ppm_2d_ASICErrorsDetail[(channel/2)*4+crate/2]->Fill((channel%2)*16+submodule,
                                                                           ypos);
       }
       if (emerr.get(DataError::MCMAbsent)) {
-        m_h_ErrorDetails[8+crate/2]->Fill(submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[8+crate/2]->Fill(submodule, ypos);
       }
       if (emerr.get(DataError::Timeout)) {
-        m_h_ErrorDetails[12+crate/2]->Fill(submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[12+crate/2]->Fill(submodule, ypos);
       }
       if (emerr.get(DataError::ASICFull)) {
-        m_h_ErrorDetails[12+crate/2]->Fill(16+submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[12+crate/2]->Fill(16+submodule, ypos);
       }
       if (emerr.get(DataError::EventMismatch)) {
-        m_h_ErrorDetails[16+crate/2]->Fill(submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[16+crate/2]->Fill(submodule, ypos);
       }
       if (emerr.get(DataError::BunchMismatch)) {
-        m_h_ErrorDetails[16+crate/2]->Fill(16+submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[16+crate/2]->Fill(16+submodule, ypos);
       }
       if (emerr.get(DataError::FIFOCorrupt)) {
-        m_h_ErrorDetails[20+crate/2]->Fill(submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[20+crate/2]->Fill(submodule, ypos);
       }
       if (emerr.get(DataError::PinParity)) {
-        m_h_ErrorDetails[20+crate/2]->Fill(16+submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[20+crate/2]->Fill(16+submodule, ypos);
       }
 
     }
@@ -790,15 +791,15 @@ StatusCode PPrMon::fillHistograms()
 
       for (int bit = 0; bit < 8; ++bit) {
         if (haderr.get(bit + DataError::ChannelDisabled)) {
-	  if (crate < 4) m_h_fwPpmError_Crate_03->Fill(bit, ypos);
-	  else           m_h_fwPpmError_Crate_47->Fill(bit, ypos);
-	  m_histTool->fillEventNumber(m_h_TT_ASICEventNumbers, bit);
+	  if (crate < 4) m_h_ppm_2d_ErrorField03->Fill(bit, ypos);
+	  else           m_h_ppm_2d_ErrorField47->Fill(bit, ypos);
+	  m_histTool->fillEventNumber(m_h_ppm_2d_ASICErrorEventNumbers, bit);
         }
         if (haderr.get(bit + DataError::GLinkParity)) {
-	  if (crate < 4) m_h_TT_error_Crate_03->Fill(bit, ypos);
-	  else           m_h_TT_error_Crate_47->Fill(bit, ypos);
-	  m_h_TT_Error->Fill(bit);
-	  m_histTool->fillEventNumber(m_h_TT_EventNumbers, bit);
+	  if (crate < 4) m_h_ppm_2d_Status03->Fill(bit, ypos);
+	  else           m_h_ppm_2d_Status47->Fill(bit, ypos);
+	  m_h_ppm_1d_ErrorSummary->Fill(bit);
+	  m_histTool->fillEventNumber(m_h_ppm_2d_ErrorEventNumbers, bit);
         }
       }
 
@@ -823,36 +824,36 @@ StatusCode PPrMon::fillHistograms()
       // Detailed plots by MCM
       ypos = (crate%2)*16+module;
       if (haderr.get(DataError::ChannelDisabled)) {
-        m_h_ErrorDetails[(channel/2)*4+crate/2]->Fill((channel%2)*16+submodule,
+        m_v_ppm_2d_ASICErrorsDetail[(channel/2)*4+crate/2]->Fill((channel%2)*16+submodule,
                                                                           ypos);
       }
       if (haderr.get(DataError::MCMAbsent)) {
-        m_h_ErrorDetails[8+crate/2]->Fill(submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[8+crate/2]->Fill(submodule, ypos);
       }
       if (haderr.get(DataError::Timeout)) {
-        m_h_ErrorDetails[12+crate/2]->Fill(submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[12+crate/2]->Fill(submodule, ypos);
       }
       if (haderr.get(DataError::ASICFull)) {
-        m_h_ErrorDetails[12+crate/2]->Fill(16+submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[12+crate/2]->Fill(16+submodule, ypos);
       }
       if (haderr.get(DataError::EventMismatch)) {
-        m_h_ErrorDetails[16+crate/2]->Fill(submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[16+crate/2]->Fill(submodule, ypos);
       }
       if (haderr.get(DataError::BunchMismatch)) {
-        m_h_ErrorDetails[16+crate/2]->Fill(16+submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[16+crate/2]->Fill(16+submodule, ypos);
       }
       if (haderr.get(DataError::FIFOCorrupt)) {
-        m_h_ErrorDetails[20+crate/2]->Fill(submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[20+crate/2]->Fill(submodule, ypos);
       }
       if (haderr.get(DataError::PinParity)) {
-        m_h_ErrorDetails[20+crate/2]->Fill(16+submodule, ypos);
+        m_v_ppm_2d_ASICErrorsDetail[20+crate/2]->Fill(16+submodule, ypos);
       }
 
     }
       
     // number of triggered slice
-    m_h_TT_triggeredSlice_em->Fill((*TriggerTowerIterator)->emADCPeak(), 1);
-    m_h_TT_triggeredSlice_had->Fill((*TriggerTowerIterator)->hadADCPeak(), 1);
+    m_h_ppm_em_1d_tt_adc_TriggeredSlice->Fill((*TriggerTowerIterator)->emADCPeak(), 1);
+    m_h_ppm_had_1d_tt_adc_TriggeredSlice->Fill((*TriggerTowerIterator)->hadADCPeak(), 1);
 
   }	     
 	     

@@ -127,7 +127,7 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 	declareProperty("DeadChannelsFolder", m_dbPpmDeadChannelsFolder);
 	declareProperty("TriggerTowersLocation", m_triggerTowersLocation);
 	declareProperty("RoIsLocation", m_lvl1RoIsLocation);
-	declareProperty("OfflineJetsLocation",m_offlineJetsLocation);
+	declareProperty("OfflineJetsLocation", m_offlineJetsLocation);
 	declareProperty("PrimaryVertexLocation", m_primaryVertexLocation);
         declareProperty("CaloCellContainerLocation", m_caloCellContainerLocation);
 
@@ -140,9 +140,9 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 	declareProperty("goodHadDeltaRMatch_Cut", m_goodHadDeltaRMatch_Cut = 0.2);
 	declareProperty("goodHadDeltaPhiMatch_Cut", m_goodHadDeltaPhiMatch_Cut = 0.3);
 	declareProperty("UseEmThresholdsOnly", m_useEmThresholdsOnly = true);
-	declareProperty("JetQualityLevel",m_jetQualityLevel = 30);
-	declareProperty("NtracksAtPrimaryVertex",m_nTracksAtPrimaryVertex = 4);
-	declareProperty("HadCoreVHCut",m_hadCoreVHCut = 1000);  
+	declareProperty("JetQualityLevel", m_jetQualityLevel = 30);
+	declareProperty("NtracksAtPrimaryVertex", m_nTracksAtPrimaryVertex = 4);
+	declareProperty("HadCoreVHCut", m_hadCoreVHCut = 1000);  
 	declareProperty("RemoveNoiseBursts", m_removeNoiseBursts = true);
 
 	for (int i = 0; i < JET_ROI_BITS; ++i) {
@@ -329,9 +329,9 @@ StatusCode JetEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 
 		m_histTool->setMonGroup(&monJetDead);
 
-		m_h_TrigTower_jetDeadChannel = m_histTool->bookPPMHadEtaVsPhi("TrigTower_jetDeadChannel","jet Trigger Towers with dead channels - #eta against #phi (E_{T} > 5 GeV)");
+		m_h_TrigTower_jetDeadChannel = m_histTool->bookPPMHadEtaVsPhi("TrigTower_jetDeadChannel","Jet Trigger Towers with dead channels - #eta against #phi (E_{T} > 5 GeV)");
 
-		m_h_TrigTower_jetBadCalo = m_histTool->bookPPMHadEtaVsPhi("TrigTower_jetBadCalo","jet Trigger Towers - Missing FEBs/Tile Quality - #eta against #phi (E_{T} > 5 GeV)");
+		m_h_TrigTower_jetBadCalo = m_histTool->bookPPMHadEtaVsPhi("TrigTower_jetBadCalo","Jet Trigger Towers - Missing FEBs/Tile Quality - #eta against #phi (E_{T} > 5 GeV)");
 
                 if (m_removeNoiseBursts) {
 
@@ -363,7 +363,7 @@ StatusCode JetEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		m_h_JetEmScale_Et_triggered = m_histTool->book1F("JetEmScale_Et_triggered","Raw Jet E_{T} (Triggered);E_{T} Jet [GeV];Jets", etbins, 0., etmax);
 		m_h_JetEmScale_Et_triggered_forward = m_histTool->book1F("JetEmScale_Et_triggered_forward","Raw Jet E_{T} Forward (Triggered);E_{T} Jet [GeV];Jets", etbins, 0., etmax);
 		m_h_JetEmScale_Et_triggered_central = m_histTool->book1F("JetEmScale_Et_triggered_central","Raw Jet E_{T} Central (Triggered);E_{T} Jet [GeV];Jets", etbins, 0., etmax);
-		m_h_JetEmScale_Eta_vs_Phi_triggered = m_histTool->bookPPMHadEtaVsPhi("JetEmScale_Eta_vs_Phi_triggered","Raw Jet #eta v #phi");
+		m_h_JetEmScale_Eta_vs_Phi_triggered = m_histTool->bookPPMHadEtaVsPhi("JetEmScale_Eta_vs_Phi_triggered","Raw Jet #eta v #phi (Triggered)");
 
 		std::string name;
 		std::string title;
@@ -1054,7 +1054,7 @@ bool JetEfficienciesMonTool::isolatedJetObjectL1(double phi, double eta) {
 		}
 	}
 	
-	// Check that the object is far away enough from highest ET jet RoI
+	// Check that the object is far away enough from highest ET EM RoI
 	if (dR_Max > m_goodEMDeltaRMatch_Cut && tagFound) { 
 		isolated = true;
 	} else {

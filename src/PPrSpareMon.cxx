@@ -36,27 +36,26 @@ PPrSpareMon::PPrSpareMon(const std::string & type, const std::string & name,
     m_SliceNo(15), m_histBooked(false),
     m_errorTool("TrigT1CaloMonErrorTool"),
     m_histTool("TrigT1CaloLWHistogramTool"),
-    m_h_TT_HitMap_ADC(0),
-    m_p_TT_HitMap_ADC(0),
-    m_h_TT_Error(0),
-    m_h_TT_error_Crate_25(0),
-    m_h_fwPpmError_Crate_25(0),
-    m_h_ErrorDetails(0),
-    m_h_TT_EventNumbers(0),
-    m_h_TT_ASICEventNumbers(0),
-    m_h_TT_triggeredSlice(0)
+    m_h_ppmspare_2d_tt_adc_HitMap(0),
+    m_h_ppmspare_2d_tt_adc_ProfileMap(0),
+    m_h_ppmspare_1d_ErrorSummary(0),
+    m_h_ppmspare_2d_Status25(0),
+    m_h_ppmspare_2d_ErrorField25(0),
+    m_v_ppmspare_2d_ASICErrorsDetail(0),
+    m_h_ppmspare_2d_ErrorEventNumbers(0),
+    m_h_ppmspare_2d_ASICErrorEventNumbers(0),
+    m_h_ppmspare_1d_tt_adc_TriggeredSlice(0)
 /*---------------------------------------------------------*/
 {
   declareProperty("BS_TriggerTowerContainer",
                   m_TriggerTowerContainerName = "TriggerTowersSpare");
-  declareProperty("ADCHitMap_Thresh",  m_TT_ADC_HitMap_Thresh = 40);
+  declareProperty("ADCHitMap_Thresh",  m_TT_ADC_HitMap_Thresh = 40,
+                  "ADC cut for hitmaps");
 
   declareProperty("PathInRootFile",
                   m_PathInRootFile="L1Calo/PPM/SpareChannels") ;
   declareProperty("ErrorPathInRootFile",
                   m_ErrorPathInRootFile="L1Calo/PPM/SpareChannels/Errors") ;
-  declareProperty("OnlineTest", m_onlineTest = false,
-                  "Test online code when running offline");
 
 }
 
@@ -136,46 +135,46 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
 
     title = "Spare Channels Hit Map of FADC > " + buffer.str()
                                                 + " for Triggered Timeslice";
-    m_h_TT_HitMap_ADC = m_histTool->bookPPMCrateModuleVsSubmoduleChannel(
+    m_h_ppmspare_2d_tt_adc_HitMap = m_histTool->bookPPMCrateModuleVsSubmoduleChannel(
                          "ppmspare_2d_tt_adc_HitMap", title, 2, 5);
     title = "Spare Channels Profile Map of FADC for Triggered Timeslice";
-    m_p_TT_HitMap_ADC = m_histTool->bookProfilePPMCrateModuleVsSubmoduleChannel(
+    m_h_ppmspare_2d_tt_adc_ProfileMap = m_histTool->bookProfilePPMCrateModuleVsSubmoduleChannel(
                          "ppmspare_2d_tt_adc_ProfileMap", title, 2, 5);
 
     //-------------------------Summary of Errors------------------------------
 
     m_histTool->setMonGroup(&TT_Error);
 
-    m_h_TT_Error = m_histTool->book1F("ppmspare_1d_ErrorSummary",
+    m_h_ppmspare_1d_ErrorSummary = m_histTool->book1F("ppmspare_1d_ErrorSummary",
                    "Spare Channels Summary of SubStatus Errors", 8, 0., 8.);
-    m_histTool->subStatus(m_h_TT_Error);
+    m_histTool->subStatus(m_h_ppmspare_1d_ErrorSummary);
 
     //---------------------- SubStatus Word errors ---------------------------
       
     //L1Calo Substatus word
-    m_h_TT_error_Crate_25 = m_histTool->bookPPMSubStatusVsCrateModule(
+    m_h_ppmspare_2d_Status25 = m_histTool->bookPPMSubStatusVsCrateModule(
       "ppmspare_2d_Status25",
       "Spare Channels: Errors from TT SubStatus Word (crates 2-5)", 2, 5);
 
     //error bit field from ASIC data
-    m_h_fwPpmError_Crate_25 = m_histTool->bookPPMErrorsVsCrateModule(
+    m_h_ppmspare_2d_ErrorField25 = m_histTool->bookPPMErrorsVsCrateModule(
       "ppmspare_2d_ErrorField25",
       "Spare Channels: Errors from ASIC error field (crates 2-5)", 2, 5);
 
     m_histTool->setMonGroup(&TT_ErrorEvents);
 
-    m_h_TT_EventNumbers = m_histTool->bookEventNumbers(
+    m_h_ppmspare_2d_ErrorEventNumbers = m_histTool->bookEventNumbers(
       "ppmspare_2d_ErrorEventNumbers",
       "Spare Channels SubStatus Error Event Numbers", 8, 0., 8.);
-    m_histTool->subStatus(m_h_TT_EventNumbers, 0, false);
-    m_h_TT_ASICEventNumbers = m_histTool->bookEventNumbers(
+    m_histTool->subStatus(m_h_ppmspare_2d_ErrorEventNumbers, 0, false);
+    m_h_ppmspare_2d_ASICErrorEventNumbers = m_histTool->bookEventNumbers(
       "ppmspare_2d_ASICErrorEventNumbers",
       " Spare Channels ASIC Error Field Event Numbers", 8, 0., 8.);
-    m_histTool->ppmErrors(m_h_TT_ASICEventNumbers, 0, false);
+    m_histTool->ppmErrors(m_h_ppmspare_2d_ASICErrorEventNumbers, 0, false);
 
     m_histTool->setMonGroup(&TT_ErrorDetail);
 
-    m_h_ErrorDetails.clear();
+    m_v_ppmspare_2d_ASICErrorsDetail.clear();
     std::vector<std::string> errNames;
     errNames.push_back("Channel0Disabled");
     errNames.push_back("Channel1Disabled");
@@ -212,17 +211,17 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
         }
 	axis->SetTitle("MCM");
 	m_histTool->ppmCrateModule(hist, crate, crate+1, 0, false);
-	m_h_ErrorDetails.push_back(hist);
+	m_v_ppmspare_2d_ASICErrorsDetail.push_back(hist);
       }
     }
 	  
     //--------------------- number of triggered slice ------------------------
     m_histTool->setMonGroup(&TT_ADC);
     
-    m_h_TT_triggeredSlice = m_histTool->book1F(
+    m_h_ppmspare_1d_tt_adc_TriggeredSlice = m_histTool->book1F(
       "ppmspare_1d_tt_adc_TriggeredSlice",
       "Spare Channels Number of the Triggered Slice", m_SliceNo, 0, m_SliceNo);
-    m_histTool->numbers(m_h_TT_triggeredSlice, 0, m_SliceNo-1);
+    m_histTool->numbers(m_h_ppmspare_1d_tt_adc_TriggeredSlice, 0, m_SliceNo-1);
      
     m_histTool->unsetMonGroup();
     m_histBooked = true;
@@ -296,9 +295,9 @@ StatusCode PPrSpareMon::fillHistograms()
     const int adc = (*TriggerTowerIterator)->emADC()[
                                          (*TriggerTowerIterator)->emADCPeak()];
     if (adc > m_TT_ADC_HitMap_Thresh) {
-      m_h_TT_HitMap_ADC->Fill(crateModule-32., submoduleChannel, 1);
+      m_h_ppmspare_2d_tt_adc_HitMap->Fill(crateModule-32., submoduleChannel, 1);
     }
-    m_p_TT_HitMap_ADC->Fill(crateModule-32., submoduleChannel, adc);
+    m_h_ppmspare_2d_tt_adc_ProfileMap->Fill(crateModule-32., submoduleChannel, adc);
 
     //------------------------ SubStatus Word errors -------------------------
 
@@ -313,13 +312,13 @@ StatusCode PPrSpareMon::fillHistograms()
 
       for (int bit = 0; bit < 8; ++bit) {
         if (error.get(bit + DataError::ChannelDisabled)) {
-          m_h_fwPpmError_Crate_25->Fill(bit, ypos);
- 	  m_histTool->fillEventNumber(m_h_TT_ASICEventNumbers, bit);
+          m_h_ppmspare_2d_ErrorField25->Fill(bit, ypos);
+ 	  m_histTool->fillEventNumber(m_h_ppmspare_2d_ASICErrorEventNumbers, bit);
         }
         if (error.get(bit + DataError::GLinkParity)) {
-          m_h_TT_error_Crate_25->Fill(bit, ypos);
-	  m_h_TT_Error->Fill(bit);
-	  m_histTool->fillEventNumber(m_h_TT_EventNumbers, bit);
+          m_h_ppmspare_2d_Status25->Fill(bit, ypos);
+	  m_h_ppmspare_1d_ErrorSummary->Fill(bit);
+	  m_histTool->fillEventNumber(m_h_ppmspare_2d_ErrorEventNumbers, bit);
         }
       }
 
@@ -327,29 +326,29 @@ StatusCode PPrSpareMon::fillHistograms()
       ypos = (crate%2)*16+module;
       const int index = (crate-2)/2;
       if (error.get(DataError::ChannelDisabled)) {
-        m_h_ErrorDetails[(channel/2)*4+index]->Fill(
+        m_v_ppmspare_2d_ASICErrorsDetail[(channel/2)*4+index]->Fill(
                                                (channel%2)*16+submodule, ypos);
       }
       if (error.get(DataError::MCMAbsent)) {
-        m_h_ErrorDetails[4+index]->Fill(submodule, ypos);
+        m_v_ppmspare_2d_ASICErrorsDetail[4+index]->Fill(submodule, ypos);
       }
       if (error.get(DataError::Timeout)) {
-        m_h_ErrorDetails[6+index]->Fill(submodule, ypos);
+        m_v_ppmspare_2d_ASICErrorsDetail[6+index]->Fill(submodule, ypos);
       }
       if (error.get(DataError::ASICFull)) {
-        m_h_ErrorDetails[6+index]->Fill(16+submodule, ypos);
+        m_v_ppmspare_2d_ASICErrorsDetail[6+index]->Fill(16+submodule, ypos);
       }
       if (error.get(DataError::EventMismatch)) {
-        m_h_ErrorDetails[8+index]->Fill(submodule, ypos);
+        m_v_ppmspare_2d_ASICErrorsDetail[8+index]->Fill(submodule, ypos);
       }
       if (error.get(DataError::BunchMismatch)) {
-        m_h_ErrorDetails[8+index]->Fill(16+submodule, ypos);
+        m_v_ppmspare_2d_ASICErrorsDetail[8+index]->Fill(16+submodule, ypos);
       }
       if (error.get(DataError::FIFOCorrupt)) {
-        m_h_ErrorDetails[10+index]->Fill(submodule, ypos);
+        m_v_ppmspare_2d_ASICErrorsDetail[10+index]->Fill(submodule, ypos);
       }
       if (error.get(DataError::PinParity)) {
-        m_h_ErrorDetails[10+index]->Fill(16+submodule, ypos);
+        m_v_ppmspare_2d_ASICErrorsDetail[10+index]->Fill(16+submodule, ypos);
       }
 
       if (error.get(DataError::ChannelDisabled) ||
@@ -373,7 +372,7 @@ StatusCode PPrSpareMon::fillHistograms()
      }
 
      // number of triggered slice
-     m_h_TT_triggeredSlice->Fill((*TriggerTowerIterator)->emADCPeak(),1);
+     m_h_ppmspare_1d_tt_adc_TriggeredSlice->Fill((*TriggerTowerIterator)->emADCPeak(),1);
 
   }	     
      

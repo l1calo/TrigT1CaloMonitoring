@@ -1,3 +1,7 @@
+2013-04-10  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-14-00
+        * Update Doxygen documentation and some code cleanup.
+
 2012-12-18  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-13-12
         * Skip simulation checks for events with ROB errors.

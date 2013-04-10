@@ -56,44 +56,44 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
     m_emBitMask(0),
     m_tauBitMask(0),
     m_histBooked(false),
-    m_h_CPM_slices(0),
-    m_h_CMM_slices(0),
-    m_h_PP_CP_slice(0),
-    m_h_CP_CM_slice(0),
-    m_h_TT_Em_eta_phi(0),
-    m_h_TT_Had_eta_phi(0),
-    m_h_CT_Em_Et(0),
-    m_h_CT_Had_Et(0),
-    m_h_CT_Em_eta(0),
-    m_h_CT_Had_eta(0),
-    m_h_CT_Em_phi(0),
-    m_h_CT_Had_phi(0),
-    m_h_CT_Em_eta_phi(0),
-    m_h_CT_Had_eta_phi(0),
-    m_h_CT_Em_eta_phi_w(0),
-    m_h_CT_Had_eta_phi_w(0),
-    m_h_CT_Em_parity(0),
-    m_h_CT_Had_parity(0),
-    m_h_CT_Em_link(0),
-    m_h_CT_Had_link(0),
-    m_h_CT_status(0),
-    m_h_RoI_thresholds(0),
-    m_h_RoI_eta_phi(0),
-    m_h_RoI_Em_eta_phi(0),
-    m_h_RoI_Tau_eta_phi(0),
-    m_h_RoI_eta_phi_old(0),
-    m_h_RoI_Em_eta_phi_old(0),
-    m_h_RoI_Tau_eta_phi_old(0),
-    m_h_RoI_Saturation(0),
-    m_h_RoI_Parity(0),
-    m_h_CPM_thresholds(0),
-    m_h_CMM_thresholds(0),
-    m_h_CMM_T_thresholds(0),
-    m_h_CMM_parity(0),
-    m_h_CMM_status(0),
-    m_h_CP_errors(0),
-    m_h_CP_overview(0),
-    m_h_CP_events(0)
+    m_h_cpm_2d_tt_Slices(0),
+    m_h_cmm_2d_thresh_Slices(0),
+    m_h_cpm_2d_tt_SliceMatch(0),
+    m_h_cmm_2d_thresh_SliceMatch(0),
+    m_h_ppm_em_2d_etaPhi_tt_Hitmap(0),
+    m_h_ppm_had_2d_etaPhi_tt_Hitmap(0),
+    m_h_cpm_em_1d_tt_Et(0),
+    m_h_cpm_had_1d_tt_Et(0),
+    m_h_cpm_em_1d_tt_Eta(0),
+    m_h_cpm_had_1d_tt_Eta(0),
+    m_h_cpm_em_1d_tt_Phi(0),
+    m_h_cpm_had_1d_tt_Phi(0),
+    m_h_cpm_em_2d_etaPhi_tt_Hitmap(0),
+    m_h_cpm_had_2d_etaPhi_tt_Hitmap(0),
+    m_h_cpm_em_2d_etaPhi_tt_EtWeighted(0),
+    m_h_cpm_had_2d_etaPhi_tt_EtWeighted(0),
+    m_h_cpm_em_2d_etaPhi_tt_Parity(0),
+    m_h_cpm_had_2d_etaPhi_tt_Parity(0),
+    m_h_cpm_em_2d_etaPhi_tt_LinkDown(0),
+    m_h_cpm_had_2d_etaPhi_tt_LinkDown(0),
+    m_h_cpm_2d_Status(0),
+    m_h_cpm_2d_roi_Thresholds(0),
+    m_h_cpm_2d_etaPhi_roi_HitmapAll(0),
+    m_h_cpm_2d_etaPhi_roi_HitmapEm(0),
+    m_h_cpm_2d_etaPhi_roi_HitmapTau(0),
+    m_h_cpm_2d_etaPhi_roi_Hitmap(0),
+    m_h_cpm_2d_etaPhi_roi_EmHitmap(0),
+    m_h_cpm_2d_etaPhi_roi_TauHitmap(0),
+    m_h_cpm_2d_etaPhi_roi_Saturation(0),
+    m_h_cpm_2d_etaPhi_roi_Parity(0),
+    m_h_cpm_2d_thresh_Weighted(0),
+    m_h_cmm_2d_thresh_Weighted(0),
+    m_h_cmm_2d_thresh_SumsWeighted(0),
+    m_h_cmm_2d_thresh_Parity(0),
+    m_h_cmm_2d_Status(0),
+    m_h_cpm_1d_ErrorSummary(0),
+    m_h_cpm_2d_ErrorOverview(0),
+    m_h_cpm_2d_ErrorEventNumbers(0)
 /*---------------------------------------------------------*/
 {
 
@@ -113,7 +113,8 @@ TrigT1CaloCpmMonTool::TrigT1CaloCpmMonTool(const std::string & type,
                                  LVL1::TrigT1CaloDefs::TriggerTowerLocation);
 
   declareProperty("RootDirectory", m_rootDir = "L1Calo");
-  declareProperty("MaxEnergyRange", m_maxEnergyRange = 256);
+  declareProperty("MaxEnergyRange", m_maxEnergyRange = 256,
+                  "Maximum energy plotted");
 
 }
 
@@ -201,163 +202,163 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_histTool->setMonGroup(&monCPMin);
 
   const int xbins = s_crates*s_maxSlices;
-  m_h_CPM_slices = m_histTool->book2F("cpm_2d_tt_Slices",
+  m_h_cpm_2d_tt_Slices = m_histTool->book2F("cpm_2d_tt_Slices",
        "CPM Slices and Triggered Slice;Crate/Number of Slices;Triggered Slice",
         xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
-  m_histTool->numberPairs(m_h_CPM_slices, 0, s_crates-1, 1, s_maxSlices);
-  m_histTool->numbers(m_h_CPM_slices, 0, s_maxSlices-1, 1, 0, false);
-  m_h_PP_CP_slice = m_histTool->book2F("cpm_2d_tt_SliceMatch",
+  m_histTool->numberPairs(m_h_cpm_2d_tt_Slices, 0, s_crates-1, 1, s_maxSlices);
+  m_histTool->numbers(m_h_cpm_2d_tt_Slices, 0, s_maxSlices-1, 1, 0, false);
+  m_h_cpm_2d_tt_SliceMatch = m_histTool->book2F("cpm_2d_tt_SliceMatch",
         "PPM/CPM Tower Slice Match;Crate/CPM Slice;PPM Slice",
         xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
-  m_histTool->numberPairs(m_h_PP_CP_slice, 0, s_crates-1, 0, s_maxSlices-1);
-  m_histTool->numbers(m_h_PP_CP_slice, 0, s_maxSlices-1, 1, 0, false);
+  m_histTool->numberPairs(m_h_cpm_2d_tt_SliceMatch, 0, s_crates-1, 0, s_maxSlices-1);
+  m_histTool->numbers(m_h_cpm_2d_tt_SliceMatch, 0, s_maxSlices-1, 1, 0, false);
 
   m_histTool->setMonGroup(&monCMMin);
 
-  m_h_CMM_slices = m_histTool->book2F("cmm_2d_thresh_Slices",
+  m_h_cmm_2d_thresh_Slices = m_histTool->book2F("cmm_2d_thresh_Slices",
        "CMM Slices and Triggered Slice;Crate/Number of Slices;Triggered Slice",
         xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
-  m_histTool->numberPairs(m_h_CMM_slices, 0, s_crates-1, 1, s_maxSlices);
-  m_histTool->numbers(m_h_CMM_slices, 0, s_maxSlices-1, 1, 0, false);
-  m_h_CP_CM_slice = m_histTool->book2F("cmm_2d_thresh_SliceMatch",
+  m_histTool->numberPairs(m_h_cmm_2d_thresh_Slices, 0, s_crates-1, 1, s_maxSlices);
+  m_histTool->numbers(m_h_cmm_2d_thresh_Slices, 0, s_maxSlices-1, 1, 0, false);
+  m_h_cmm_2d_thresh_SliceMatch = m_histTool->book2F("cmm_2d_thresh_SliceMatch",
         "CPM/CMM Hits Slice Match;Crate/CMM Slice;CPM Slice",
 	xbins, 0, xbins, s_maxSlices, 0, s_maxSlices);
-  m_histTool->numberPairs(m_h_CP_CM_slice, 0, s_crates-1, 0, s_maxSlices-1);
-  m_histTool->numbers(m_h_CP_CM_slice, 0, s_maxSlices-1, 1, 0, false);
+  m_histTool->numberPairs(m_h_cmm_2d_thresh_SliceMatch, 0, s_crates-1, 0, s_maxSlices-1);
+  m_histTool->numbers(m_h_cmm_2d_thresh_SliceMatch, 0, s_maxSlices-1, 1, 0, false);
 
   //  CPM Tower - Trigger Tower Histos
 
   m_histTool->setMonGroup(&monCPMin);
 
-  m_h_TT_Em_eta_phi = m_histTool->bookCPMEtaVsPhi(
+  m_h_ppm_em_2d_etaPhi_tt_Hitmap = m_histTool->bookCPMEtaVsPhi(
     "ppm_em_2d_etaPhi_tt_Hitmap", "PPM Trigger Tower EM eta/phi");
-  m_h_TT_Had_eta_phi = m_histTool->bookCPMEtaVsPhi(
+  m_h_ppm_had_2d_etaPhi_tt_Hitmap = m_histTool->bookCPMEtaVsPhi(
     "ppm_had_2d_etaPhi_tt_Hitmap", "PPM Trigger Tower HAD eta/phi");
 
-  m_h_CT_Em_Et = m_histTool->book1F("cpm_em_1d_tt_Et", "CPM Tower EM Et",
+  m_h_cpm_em_1d_tt_Et = m_histTool->book1F("cpm_em_1d_tt_Et", "CPM Tower EM Et",
                                     m_maxEnergyRange, 0, m_maxEnergyRange);
-  m_h_CT_Had_Et = m_histTool->book1F("cpm_had_1d_tt_Et", "CPM Tower HAD Et",
+  m_h_cpm_had_1d_tt_Et = m_histTool->book1F("cpm_had_1d_tt_Et", "CPM Tower HAD Et",
                                     m_maxEnergyRange, 0, m_maxEnergyRange);
-  m_h_CT_Em_eta = m_histTool->book1F("cpm_em_1d_tt_Eta",
+  m_h_cpm_em_1d_tt_Eta = m_histTool->book1F("cpm_em_1d_tt_Eta",
                                      "CPM Tower EM eta",50,-2.5,2.5);
-  m_h_CT_Had_eta = m_histTool->book1F("cpm_had_1d_tt_Eta",
+  m_h_cpm_had_1d_tt_Eta = m_histTool->book1F("cpm_had_1d_tt_Eta",
                                       "CPM Tower HAD eta",50,-2.5,2.5);
-  m_h_CT_Em_phi = m_histTool->book1F("cpm_em_1d_tt_Phi",
+  m_h_cpm_em_1d_tt_Phi = m_histTool->book1F("cpm_em_1d_tt_Phi",
                                      "CPM Tower EM phi",64,0.,2.*M_PI);
-  m_h_CT_Had_phi = m_histTool->book1F("cpm_had_1d_tt_Phi",
+  m_h_cpm_had_1d_tt_Phi = m_histTool->book1F("cpm_had_1d_tt_Phi",
                                       "CPM Tower HAD phi", 64,0.,2.*M_PI);
-  m_h_CT_Em_eta_phi = m_histTool->bookCPMEtaVsPhi(
+  m_h_cpm_em_2d_etaPhi_tt_Hitmap = m_histTool->bookCPMEtaVsPhi(
     "cpm_em_2d_etaPhi_tt_Hitmap", "CPM Tower EM eta/phi");
-  m_h_CT_Had_eta_phi = m_histTool->bookCPMEtaVsPhi(
+  m_h_cpm_had_2d_etaPhi_tt_Hitmap = m_histTool->bookCPMEtaVsPhi(
     "cpm_had_2d_etaPhi_tt_Hitmap", "CPM Tower HAD eta/phi");
-  m_h_CT_Em_eta_phi_w = m_histTool->bookCPMEtaVsPhi(
+  m_h_cpm_em_2d_etaPhi_tt_EtWeighted = m_histTool->bookCPMEtaVsPhi(
     "cpm_em_2d_etaPhi_tt_EtWeighted", "CPM Tower EM eta/phi weighted");
-  m_h_CT_Had_eta_phi_w = m_histTool->bookCPMEtaVsPhi(
+  m_h_cpm_had_2d_etaPhi_tt_EtWeighted = m_histTool->bookCPMEtaVsPhi(
     "cpm_had_2d_etaPhi_tt_EtWeighted", "CPM Tower HAD eta/phi weighted");
 
   //  CPM Tower error bits
 
   m_histTool->setMonGroup(&monDetail);
 
-  m_h_CT_Em_parity = m_histTool->bookCPMEtaVsPhi(
+  m_h_cpm_em_2d_etaPhi_tt_Parity = m_histTool->bookCPMEtaVsPhi(
     "cpm_em_2d_etaPhi_tt_Parity", "CPM Tower EM Parity Errors");
-  m_h_CT_Had_parity = m_histTool->bookCPMEtaVsPhi(
+  m_h_cpm_had_2d_etaPhi_tt_Parity = m_histTool->bookCPMEtaVsPhi(
     "cpm_had_2d_etaPhi_tt_Parity", "CPM Tower HAD Parity Errors");
-  m_h_CT_Em_link = m_histTool->bookCPMEtaVsPhi(
+  m_h_cpm_em_2d_etaPhi_tt_LinkDown = m_histTool->bookCPMEtaVsPhi(
     "cpm_em_2d_etaPhi_tt_LinkDown", "CPM Tower EM Link Down Errors");
-  m_h_CT_Had_link = m_histTool->bookCPMEtaVsPhi(
+  m_h_cpm_had_2d_etaPhi_tt_LinkDown = m_histTool->bookCPMEtaVsPhi(
     "cpm_had_2d_etaPhi_tt_LinkDown", "CPM Tower HAD Link Down Errors");
-  m_h_CT_status = m_histTool->bookCPMSubStatusVsCrateModule(
+  m_h_cpm_2d_Status = m_histTool->bookCPMSubStatusVsCrateModule(
                                "cpm_2d_Status", "CPM Sub-status bits");
 
   //  CPM RoIs
 
   m_histTool->setMonGroup(&monRoIs);
 
-  m_h_RoI_thresholds = m_histTool->bookCPMCrateModuleVsThreshold(
+  m_h_cpm_2d_roi_Thresholds = m_histTool->bookCPMCrateModuleVsThreshold(
                        "cpm_2d_roi_Thresholds", "CPM RoI Thresholds");
-  m_h_RoI_eta_phi = m_histTool->bookCPMRoIEtaVsPhi(
+  m_h_cpm_2d_etaPhi_roi_HitmapAll = m_histTool->bookCPMRoIEtaVsPhi(
     "cpm_2d_etaPhi_roi_HitmapAll", "CPM RoIs All Eta-Phi Hit Map");
-  m_h_RoI_Em_eta_phi = m_histTool->bookCPMRoIEtaVsPhi(
+  m_h_cpm_2d_etaPhi_roi_HitmapEm = m_histTool->bookCPMRoIEtaVsPhi(
     "cpm_2d_etaPhi_roi_HitmapEm", "CPM RoIs EM Eta-Phi Hit Map");
-  m_h_RoI_Tau_eta_phi = m_histTool->bookCPMRoIEtaVsPhi(
+  m_h_cpm_2d_etaPhi_roi_HitmapTau = m_histTool->bookCPMRoIEtaVsPhi(
     "cpm_2d_etaPhi_roi_HitmapTau", "CPM RoIs Tau Eta-Phi Hit Map");
   m_emBitMask  = m_histTool->thresholdMaskEm();
   m_tauBitMask = m_histTool->thresholdMaskTau();
   // Delete these duplicates when DQ updated:
-  m_h_RoI_eta_phi_old = m_histTool->bookCPMRoIEtaVsPhi(
+  m_h_cpm_2d_etaPhi_roi_Hitmap = m_histTool->bookCPMRoIEtaVsPhi(
     "cpm_2d_etaPhi_roi_Hitmap", "CPM RoIs All Eta-Phi Hit Map (Duplicate)");
-  m_h_RoI_Em_eta_phi_old = m_histTool->bookCPMRoIEtaVsPhi(
+  m_h_cpm_2d_etaPhi_roi_EmHitmap = m_histTool->bookCPMRoIEtaVsPhi(
     "cpm_2d_etaPhi_roi_EmHitmap", "CPM RoIs EM Eta-Phi Hit Map (Duplicate)");
-  m_h_RoI_Tau_eta_phi_old = m_histTool->bookCPMRoIEtaVsPhi(
+  m_h_cpm_2d_etaPhi_roi_TauHitmap = m_histTool->bookCPMRoIEtaVsPhi(
     "cpm_2d_etaPhi_roi_TauHitmap", "CPM RoIs Tau Eta-Phi Hit Map (Duplicate)");
   // end delete
-  m_h_RoI_Saturation = m_histTool->bookCPMRoIEtaVsPhi(
+  m_h_cpm_2d_etaPhi_roi_Saturation = m_histTool->bookCPMRoIEtaVsPhi(
     "cpm_2d_etaPhi_roi_Saturation", "CPM RoI Tower Saturation");
 
   m_histTool->setMonGroup(&monDetail);
 
-  m_h_RoI_Parity = m_histTool->bookCPMRoIEtaVsPhi("cpm_2d_etaPhi_roi_Parity",
-                                                   "CPM RoI Parity Errors");
+  m_h_cpm_2d_etaPhi_roi_Parity = m_histTool->bookCPMRoIEtaVsPhi(
+    "cpm_2d_etaPhi_roi_Parity", "CPM RoI Parity Errors");
 
   //  CPM Hits
   
   m_histTool->setMonGroup(&monCPMout);
 
-  m_h_CPM_thresholds = m_histTool->bookCPMCrateModuleVsThreshold(
+  m_h_cpm_2d_thresh_Weighted = m_histTool->bookCPMCrateModuleVsThreshold(
     "cpm_2d_thresh_Weighted", "CPM Hits Thresholds Weighted");
 
   //  CMM-CP Hits
 
   m_histTool->setMonGroup(&monCMMin);
 
-  m_h_CMM_thresholds = m_histTool->bookCPMCrateModuleVsThreshold(
+  m_h_cmm_2d_thresh_Weighted = m_histTool->bookCPMCrateModuleVsThreshold(
     "cmm_2d_thresh_Weighted", "CMM-CP Hits Thresholds Weighted");
 
   m_histTool->setMonGroup(&monCMMout);
 
-  m_h_CMM_T_thresholds = m_histTool->bookCPMSumVsThreshold(
+  m_h_cmm_2d_thresh_SumsWeighted = m_histTool->bookCPMSumVsThreshold(
     "cmm_2d_thresh_SumsWeighted", "CMM-CP Hit Sums Thresholds Weighted");
 
   //  CMM error bits
 
   m_histTool->setMonGroup(&monCMM);
 
-  m_h_CMM_parity = m_histTool->book2F("cmm_2d_thresh_Parity",
+  m_h_cmm_2d_thresh_Parity = m_histTool->book2F("cmm_2d_thresh_Parity",
                           "CMM Parity Errors;Module or Remote;Crate/CMM",
 		           15, 1, 16, 8, 0, 8);
-  m_histTool->numbers(m_h_CMM_parity, 1, s_modules);
-  m_h_CMM_parity->GetXaxis()->SetBinLabel(15, "REM");
-  m_histTool->numberPairs(m_h_CMM_parity, 0, s_crates-1, 0, 1, 1, 0, false);
+  m_histTool->numbers(m_h_cmm_2d_thresh_Parity, 1, s_modules);
+  m_h_cmm_2d_thresh_Parity->GetXaxis()->SetBinLabel(15, "REM");
+  m_histTool->numberPairs(m_h_cmm_2d_thresh_Parity, 0, s_crates-1, 0, 1, 1, 0, false);
  
-  m_h_CMM_status = m_histTool->book2F("cmm_2d_Status",
+  m_h_cmm_2d_Status = m_histTool->book2F("cmm_2d_Status",
                           "CMM Sub-status bits;;Crate/CMM",
                            8, 0., 8., 8, 0., 8.);
-  m_histTool->subStatus(m_h_CMM_status);
-  m_histTool->numberPairs(m_h_CMM_status, 0, s_crates-1, 0, 1, 1, 0, false);
+  m_histTool->subStatus(m_h_cmm_2d_Status);
+  m_histTool->numberPairs(m_h_cmm_2d_Status, 0, s_crates-1, 0, 1, 1, 0, false);
   
   //  Error Overview and Summary
 
   m_histTool->setMonGroup(&monExpert);
 
-  m_h_CP_overview = m_histTool->book2F("cpm_2d_ErrorOverview",
+  m_h_cpm_2d_ErrorOverview = m_histTool->book2F("cpm_2d_ErrorOverview",
                            "CP Error Overview", 64, 0, 64,
 			    NumberOfSummaryBins, 0, NumberOfSummaryBins);
-  m_histTool->cpmCMMCrateModule(m_h_CP_overview);
+  m_histTool->cpmCMMCrateModule(m_h_cpm_2d_ErrorOverview);
 
   m_histTool->setMonGroup(&monShift);
 
-  m_h_CP_errors = m_histTool->book1F("cpm_1d_ErrorSummary",
+  m_h_cpm_1d_ErrorSummary = m_histTool->book1F("cpm_1d_ErrorSummary",
                          "CP Error Summary;;Events",
                           NumberOfSummaryBins, 0, NumberOfSummaryBins);
 
   m_histTool->setMonGroup(&monEvents);
 
-  m_h_CP_events = m_histTool->bookEventNumbers("cpm_2d_ErrorEventNumbers",
+  m_h_cpm_2d_ErrorEventNumbers = m_histTool->bookEventNumbers("cpm_2d_ErrorEventNumbers",
                          "CP Error Event Numbers",
 			 NumberOfSummaryBins, 0, NumberOfSummaryBins);
 
-  LWHist* hist = m_h_CP_overview;
+  LWHist* hist = m_h_cpm_2d_ErrorOverview;
   LWHist::LWHistAxis* axis = hist->GetYaxis();
   for (int i = 0; i < 3; ++i) {
     axis->SetBinLabel(1+EMParity,  "EM parity");
@@ -369,10 +370,10 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
     axis->SetBinLabel(1+CMMParity, "CMM parity");
     axis->SetBinLabel(1+CMMStatus, "CMM status");
     if (i == 0) {
-      hist = m_h_CP_errors;
+      hist = m_h_cpm_1d_ErrorSummary;
       axis = hist->GetXaxis();
     } else {
-      hist = m_h_CP_events;
+      hist = m_h_cpm_2d_ErrorEventNumbers;
       axis = hist->GetYaxis();
     }
   }
@@ -485,8 +486,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       const int    em  = tt->emEnergy();
       const int    had = tt->hadEnergy();
       const double phi = tt->phi();
-      if (em)  m_histTool->fillCPMEtaVsPhi(m_h_TT_Em_eta_phi, eta, phi);
-      if (had) m_histTool->fillCPMEtaVsPhi(m_h_TT_Had_eta_phi, eta, phi);
+      if (em)  m_histTool->fillCPMEtaVsPhi(m_h_ppm_em_2d_etaPhi_tt_Hitmap, eta, phi);
+      if (had) m_histTool->fillCPMEtaVsPhi(m_h_ppm_had_2d_etaPhi_tt_Hitmap, eta, phi);
       const unsigned int key = towerKey.ttKey(phi, eta);
       if (key > maxKey) maxKey = key;
       ttMap.insert(std::make_pair(key, tt));
@@ -516,37 +517,37 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         const int loc    = crate * s_modules + cpm - 1;
         const int peak   = ct->peak();
         const int slices = (ct->emEnergyVec()).size();
-        m_h_CPM_slices->Fill(crate*s_maxSlices + slices - 1, peak, 1.);
+        m_h_cpm_2d_tt_Slices->Fill(crate*s_maxSlices + slices - 1, peak, 1.);
         if (em && core) {
-          m_h_CT_Em_Et->Fill(em, 1.);
-          m_h_CT_Em_eta->Fill(eta, 1.);
-          m_h_CT_Em_phi->Fill(phi, 1.);
-	  m_histTool->fillCPMEtaVsPhi(m_h_CT_Em_eta_phi, eta, phi);
-	  m_histTool->fillCPMEtaVsPhi(m_h_CT_Em_eta_phi_w, eta, phi, em);
+          m_h_cpm_em_1d_tt_Et->Fill(em, 1.);
+          m_h_cpm_em_1d_tt_Eta->Fill(eta, 1.);
+          m_h_cpm_em_1d_tt_Phi->Fill(phi, 1.);
+	  m_histTool->fillCPMEtaVsPhi(m_h_cpm_em_2d_etaPhi_tt_Hitmap, eta, phi);
+	  m_histTool->fillCPMEtaVsPhi(m_h_cpm_em_2d_etaPhi_tt_EtWeighted, eta, phi, em);
         }
         if (had && core) {
-          m_h_CT_Had_Et->Fill(had, 1.);
-          m_h_CT_Had_eta->Fill(eta, 1.);
-          m_h_CT_Had_phi->Fill(phi, 1.);
-	  m_histTool->fillCPMEtaVsPhi(m_h_CT_Had_eta_phi, eta, phi);
-	  m_histTool->fillCPMEtaVsPhi(m_h_CT_Had_eta_phi_w, eta, phi, had);
+          m_h_cpm_had_1d_tt_Et->Fill(had, 1.);
+          m_h_cpm_had_1d_tt_Eta->Fill(eta, 1.);
+          m_h_cpm_had_1d_tt_Phi->Fill(phi, 1.);
+	  m_histTool->fillCPMEtaVsPhi(m_h_cpm_had_2d_etaPhi_tt_Hitmap, eta, phi);
+	  m_histTool->fillCPMEtaVsPhi(m_h_cpm_had_2d_etaPhi_tt_EtWeighted, eta, phi, had);
         }
         // Errors
 	int error = ct->emError();
 	if (error) {
 	  const LVL1::DataError emError(error);
 	  if (emError.get(LVL1::DataError::Parity)) {
-	    m_histTool->fillCPMEtaVsPhi(m_h_CT_Em_parity, eta, phi);
+	    m_histTool->fillCPMEtaVsPhi(m_h_cpm_em_2d_etaPhi_tt_Parity, eta, phi);
 	    errorsCPM[loc] |= (1 << EMParity);
 	  }
           if (emError.get(LVL1::DataError::LinkDown)) {
-	    m_histTool->fillCPMEtaVsPhi(m_h_CT_Em_link, eta, phi);
+	    m_histTool->fillCPMEtaVsPhi(m_h_cpm_em_2d_etaPhi_tt_LinkDown, eta, phi);
 	    errorsCPM[loc] |= (1 << EMLink);
           }
 	  const int status = (error >> LVL1::DataError::GLinkParity) & 0xff;
 	  if (status) {
 	    for (int bit = 0; bit < 8; ++bit) {
-	      if ((status >> bit) & 0x1) m_h_CT_status->Fill(bit, loc);
+	      if ((status >> bit) & 0x1) m_h_cpm_2d_Status->Fill(bit, loc);
             }
 	    errorsCPM[loc] |= (1 << CPMStatus);
           }
@@ -555,11 +556,11 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	if (error) {
 	  const LVL1::DataError hadError(error);
 	  if (hadError.get(LVL1::DataError::Parity)) {
-	    m_histTool->fillCPMEtaVsPhi(m_h_CT_Had_parity, eta, phi);
+	    m_histTool->fillCPMEtaVsPhi(m_h_cpm_had_2d_etaPhi_tt_Parity, eta, phi);
 	    errorsCPM[loc] |= (1 << HadParity);
 	  }
           if (hadError.get(LVL1::DataError::LinkDown)) {
-	    m_histTool->fillCPMEtaVsPhi(m_h_CT_Had_link, eta, phi);
+	    m_histTool->fillCPMEtaVsPhi(m_h_cpm_had_2d_etaPhi_tt_LinkDown, eta, phi);
 	    errorsCPM[loc] |= (1 << HadLink);
           }
         }
@@ -604,7 +605,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         if (emLut[slice] > 0) {
 	  for (int slice2 = 0; slice2 < sliceEmVec; ++slice2) {
 	    if (emLut[slice] == emVec[slice2]) {
-	      m_h_PP_CP_slice->Fill(crate*s_maxSlices+slice2, slice, 1.);
+	      m_h_cpm_2d_tt_SliceMatch->Fill(crate*s_maxSlices+slice2, slice, 1.);
             }
           }
         }
@@ -613,7 +614,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         if (hadLut[slice] > 0) {
 	  for (int slice2 = 0; slice2 < sliceHadVec; ++slice2) {
 	    if (hadLut[slice] == hadVec[slice2]) {
-	      m_h_PP_CP_slice->Fill(crate*s_maxSlices+slice2, slice, 1.);
+	      m_h_cpm_2d_tt_SliceMatch->Fill(crate*s_maxSlices+slice2, slice, 1.);
             }
           }
         }
@@ -641,28 +642,28 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       const int cpm   = (*crIterator)->cpm();
       const int bin   = crate * s_modules + cpm - 1;
       if (hits) {
-        m_histTool->fillXVsThresholds(m_h_RoI_thresholds, bin, hits,
+        m_histTool->fillXVsThresholds(m_h_cpm_2d_roi_Thresholds, bin, hits,
                                                              s_thresholds, 1);
-        m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_eta_phi, eta, phi);
+        m_histTool->fillCPMRoIEtaVsPhi(m_h_cpm_2d_etaPhi_roi_HitmapAll, eta, phi);
 	//To be deleted:
-        m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_eta_phi_old, eta, phi);
+        m_histTool->fillCPMRoIEtaVsPhi(m_h_cpm_2d_etaPhi_roi_Hitmap, eta, phi);
 	if (hits & m_emBitMask) {
-	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Em_eta_phi, eta, phi);
+	  m_histTool->fillCPMRoIEtaVsPhi(m_h_cpm_2d_etaPhi_roi_HitmapEm, eta, phi);
 	  //To be deleted:
-	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Em_eta_phi_old, eta, phi);
+	  m_histTool->fillCPMRoIEtaVsPhi(m_h_cpm_2d_etaPhi_roi_EmHitmap, eta, phi);
         }
 	if (hits & m_tauBitMask ) {
-	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Tau_eta_phi, eta, phi);
+	  m_histTool->fillCPMRoIEtaVsPhi(m_h_cpm_2d_etaPhi_roi_HitmapTau, eta, phi);
 	  //To be deleted:
-	  m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Tau_eta_phi_old, eta, phi);
+	  m_histTool->fillCPMRoIEtaVsPhi(m_h_cpm_2d_etaPhi_roi_TauHitmap, eta, phi);
         }
       }
       const LVL1::DataError err((*crIterator)->error());
       if (err.get(LVL1::DataError::Overflow)) {
-	m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Saturation, eta, phi);
+	m_histTool->fillCPMRoIEtaVsPhi(m_h_cpm_2d_etaPhi_roi_Saturation, eta, phi);
       }
       if (err.get(LVL1::DataError::Parity)) {
-	m_histTool->fillCPMRoIEtaVsPhi(m_h_RoI_Parity, eta, phi);
+	m_histTool->fillCPMRoIEtaVsPhi(m_h_cpm_2d_etaPhi_roi_Parity, eta, phi);
 	errorsCPM[bin] |= (1 << RoIParity);
       }
     }
@@ -685,11 +686,11 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       const int bin   = crate * s_modules + cpm - 1;
       const int peak   = (*chIterator)->peak();
       const int slices = ((*chIterator)->HitsVec0()).size();
-      m_h_CPM_slices->Fill(crate*s_maxSlices + slices -1, peak, 1.);
+      m_h_cpm_2d_tt_Slices->Fill(crate*s_maxSlices + slices -1, peak, 1.);
       const int nThresh = s_thresholds/2;
-      if (hits0) m_histTool->fillXVsThresholds(m_h_CPM_thresholds, bin, hits0,
+      if (hits0) m_histTool->fillXVsThresholds(m_h_cpm_2d_thresh_Weighted, bin, hits0,
                                                nThresh, s_threshBits);
-      if (hits1) m_histTool->fillXVsThresholds(m_h_CPM_thresholds, bin, hits1,
+      if (hits1) m_histTool->fillXVsThresholds(m_h_cpm_2d_thresh_Weighted, bin, hits1,
                                                nThresh, s_threshBits, nThresh);
       const unsigned int key = crate * s_modules + cpm;
       cpmMap.insert(std::make_pair(key, *chIterator));
@@ -712,7 +713,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
       const int dataId = (*cmIterator)->dataID();
       const int peak   = (*cmIterator)->peak();
       const int slices = ((*cmIterator)->HitsVec0()).size();
-      m_h_CMM_slices->Fill(crate*s_maxSlices + slices -1, peak, 1.);
+      m_h_cmm_2d_thresh_Slices->Fill(crate*s_maxSlices + slices -1, peak, 1.);
       int bin = 0;
       if (dataId <= s_modules) bin = crate*s_modules + dataId - 1;
       else {
@@ -723,8 +724,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	if (dataId == LVL1::CMMCPHits::TOTAL)    bin = s_crates + 3;
       }
       const int nThresh = s_thresholds/2;
-      TH2F_LW* hist = (dataId <= s_modules) ? m_h_CMM_thresholds
-                                            : m_h_CMM_T_thresholds;
+      TH2F_LW* hist = (dataId <= s_modules) ? m_h_cmm_2d_thresh_Weighted
+                                            : m_h_cmm_2d_thresh_SumsWeighted;
       if (hits0) m_histTool->fillXVsThresholds(hist, bin, hits0, nThresh,
                                                      s_threshBits);
       if (hits1) m_histTool->fillXVsThresholds(hist, bin, hits1, nThresh,
@@ -739,8 +740,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	const int parity1 = hit1Err.get(LVL1::DataError::Parity);
 	if (parity0 || parity1) {
           if (dataId <= s_modules) {
-	    if (parity1) m_h_CMM_parity->Fill(dataId, 2*crate);
-	    if (parity0) m_h_CMM_parity->Fill(dataId, 2*crate + 1);
+	    if (parity1) m_h_cmm_2d_thresh_Parity->Fill(dataId, 2*crate);
+	    if (parity0) m_h_cmm_2d_thresh_Parity->Fill(dataId, 2*crate + 1);
 	    errorsCPM[bin] |= (1 << CMMParity);
           } else {
   	    const int remBin = s_modules + 1;
@@ -749,8 +750,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
             else if (dataId == LVL1::CMMCPHits::REMOTE_1) remCrate = 1;
             else if (dataId == LVL1::CMMCPHits::REMOTE_2) remCrate = 2;
 	    if (remCrate >= 0) {
-	      if (parity1) m_h_CMM_parity->Fill(remBin, 2*remCrate);
-	      if (parity0) m_h_CMM_parity->Fill(remBin, 2*remCrate + 1);
+	      if (parity1) m_h_cmm_2d_thresh_Parity->Fill(remBin, 2*remCrate);
+	      if (parity0) m_h_cmm_2d_thresh_Parity->Fill(remBin, 2*remCrate + 1);
 	    }
           }
 	  if (parity1) errorsCMM[crate*2]     |= (1 << CMMParity);
@@ -761,8 +762,8 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
         const int status1 = error1 >> LVL1::DataError::GLinkParity;
 	if (status0 || status1) {
           for (int bit = 0; bit < 8; ++bit) {
-	    if ((status1 >> bit) & 0x1) m_h_CMM_status->Fill(bit, 2*crate);
-	    if ((status0 >> bit) & 0x1) m_h_CMM_status->Fill(bit, 2*crate + 1);
+	    if ((status1 >> bit) & 0x1) m_h_cmm_2d_Status->Fill(bit, 2*crate);
+	    if ((status0 >> bit) & 0x1) m_h_cmm_2d_Status->Fill(bit, 2*crate + 1);
 	  }
 	  if (status1) errorsCMM[crate*2]     |= (1 << CMMStatus);
 	  if (status0) errorsCMM[crate*2 + 1] |= (1 << CMMStatus);
@@ -809,7 +810,7 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 	    for (int slice2 = 0; slice2 < sliceCmmVec0; ++slice2) {
 	      if (cpmVec0[slice] == cmmVec0[slice2] &&
 	          cpmVec1[slice] == cmmVec1[slice2]) {
-		m_h_CP_CM_slice->Fill(crate*s_maxSlices+slice2, slice, 1.);
+		m_h_cmm_2d_thresh_SliceMatch->Fill(crate*s_maxSlices+slice2, slice, 1.);
 	      }
             }
           }
@@ -827,21 +828,21 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
     int error = 0;
     for (int loc = 0; loc < s_crates*s_modules; ++loc) {
       if ((errorsCPM[loc] >> err) & 0x1) {
-        m_h_CP_overview->Fill(loc, err, 1.);
+        m_h_cpm_2d_ErrorOverview->Fill(loc, err, 1.);
 	error = 1;
 	crateErr[loc/s_modules] |= (1 << err);
       }
       if (loc < s_crates*2) {
         if ((errorsCMM[loc] >> err) & 0x1) {
-          m_h_CP_overview->Fill(loc+s_crates*s_modules, err, 1.);
+          m_h_cpm_2d_ErrorOverview->Fill(loc+s_crates*s_modules, err, 1.);
 	  error = 1;
 	  crateErr[loc/2] |= (1 << err);
         }
       }
     }
     if (error) {
-      m_h_CP_errors->Fill(err);
-      m_histTool->fillEventNumber(m_h_CP_events, err);
+      m_h_cpm_1d_ErrorSummary->Fill(err);
+      m_histTool->fillEventNumber(m_h_cpm_2d_ErrorEventNumbers, err);
     }
   }
   ++m_events;
