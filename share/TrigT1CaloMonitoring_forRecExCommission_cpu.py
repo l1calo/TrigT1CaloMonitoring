@@ -1,5 +1,10 @@
+## @file TrigT1CaloMonitoring_forRecExCommission_cpu.py
+#
 # For testing purposes only - runs each monitoring tool in a separate manager
 # so can see their individual cpu usage.
+#
+# @author Peter Faulkner
+#
 if not 'DQMonFlags' in dir():
     print "TrigT1CaloMonitoring_forRecExCommission.py: DQMonFlags not yet imported - I import them now"
     from AthenaMonitoring.DQMonFlags import DQMonFlags
@@ -71,7 +76,7 @@ if l1caloRawMon:
     if isData:
         include("TrigT1CaloCalibConditions/L1CaloCalibConditionsTier0_jobOptions.py")
 
-    # Preload CaloCell data
+    ## Preload CaloCell data
     L1TrigT1CaloBSMonToolB = TrigT1CaloBSMon(
         name = "L1TrigT1CaloBSMonToolB",
         LoadCaloCells = True

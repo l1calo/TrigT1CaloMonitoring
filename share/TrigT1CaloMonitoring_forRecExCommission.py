@@ -1,3 +1,9 @@
+## @file TrigT1CaloMonitoring_forRecExCommission.py
+#
+# Standard monitoring jobOptions - runs on Tier0 (Reco_trf.py) or online.
+#
+# @authors Johanna Fleckner, Andrea Neusiedl, Peter Faulkner
+#
 if not 'DQMonFlags' in dir():
     print "TrigT1CaloMonitoring_forRecExCommission.py: DQMonFlags not yet imported - I import them now"
     from AthenaMonitoring.DQMonFlags import DQMonFlags

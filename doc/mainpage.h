@@ -10,6 +10,9 @@
   - @ref CPMsection
   - @ref JEMsection
   - @ref RODsection
+- @subpage Rejectionpage
+  - @ref Rejectsection
+  - @ref Streamsection
 - @subpage Testingpage
   - @ref Oldsection
   - @ref Newsection
@@ -44,6 +47,8 @@ are also used by standalone analysis jobs (in TrigT1CaloCalibUtils).
 
 The code is used for both online and Tier0 monitoring although there
 are some differences between the two.
+Standard JobOptions for TrigT1CaloMonitoring are
+TrigT1CaloMonitoring_forRecExCommission.py.
 
 The tools use Light Weight Histograms apart from the global error tool
 which uses ROOT histograms as it needs the ROOT Merge method which is
@@ -82,6 +87,73 @@ not supported by Light Weight Histograms.
 @section RODsection ROD Monitoring Tool
                                                                <hr><p>
   TrigT1CaloRodMonTool    <p> @copydoc TrigT1CaloRodMonTool
+
+*/
+
+/**
+
+@page Rejectionpage Event Rejection Criteria and Stream Restrictions
+
+@section Rejectsection Event Rejection Criteria
+
+  An event can be omitted from the monitoring for a number of reasons.
+  The following table shows the main ones and which monitoring tools
+  are affected.
+
+  <table>
+  <tr><th> Monitoring Tool            </th><th> Corrupt </th><th> ROB Errors </th><th> LAr Noise Bursts </th></tr>
+  <tr><td> @c TrigT1CaloGlobalMonTool </td><td>   Yes   </td><td>     -      </td><td>        -         </td></tr>
+  <tr><td> @c PPrMon                  </td><td>   Yes   </td><td>     -      </td><td>        -         </td></tr>
+  <tr><td> @c PPrSpareMon             </td><td>   Yes   </td><td>     -      </td><td>        -         </td></tr>
+  <tr><td> @c PPMSimBSMon             </td><td>   Yes   </td><td>     -      </td><td>        -         </td></tr>
+  <tr><td> @c PPrStabilityMon         </td><td>   Yes   </td><td>     -      </td><td>        -         </td></tr>
+  <tr><td> @c TrigT1CaloCpmMonTool    </td><td>   Yes   </td><td>     -      </td><td>        -         </td></tr>
+  <tr><td> @c CPMSimBSMon             </td><td>   Yes   </td><td>    Yes     </td><td>        -         </td></tr>
+  <tr><td> @c EmEfficienciesMonTool   </td><td>   Yes   </td><td>     -      </td><td>       Yes        </td></tr>
+  <tr><td> @c JEMMon                  </td><td>   Yes   </td><td>     -      </td><td>        -         </td></tr>
+  <tr><td> @c CMMMon                  </td><td>   Yes   </td><td>     -      </td><td>        -         </td></tr>
+  <tr><td> @c JEPSimBSMon             </td><td>   Yes   </td><td>    Yes     </td><td>        -         </td></tr>
+  <tr><td> @c JetEfficienciesMonTool  </td><td>   Yes   </td><td>     -      </td><td>       Yes        </td></tr>
+  <tr><td> @c TrigT1CaloRodMonTool    </td><td> Yes (1) </td><td>     -      </td><td>        -         </td></tr>
+  </table>
+
+  (1) The errors causing the event rejection are histogrammed in the ROD
+  directory tree.
+
+  See the documentation for TrigT1CaloMonErrorTool in TrigT1CaloMonitoringTools
+  for the definition of Corrupt.
+
+  ROB Errors means any ROB status errors or bytestream unpacking errors.
+  Since these cause the ROB fragment to be skipped they almost inevitably
+  mean there will be mismatches in the data/simulation cross-checks.
+
+  <hr>
+
+@section Streamsection Event Stream Restrictions
+
+  Not all monitoring is needed or makes sense on all streams on Tier0 or online.
+  The following table shows which tools are run on which streams.  The selection
+  is made in the jobOptions.
+
+  <table>
+  <tr><th> Monitoring Tool            </th><th> express </th><th> Egamma </th><th> JetTauEtmiss </th><th> Muons </th><th> Other </th><th> Online </th></tr>
+  <tr><td> @c TrigT1CaloGlobalMonTool </td><td>   Yes   </td><td>  Yes   </td><td>     Yes      </td><td>  Yes  </td><td>  Yes  </td><td>  Yes   </td></tr>
+  <tr><td> @c PPrMon                  </td><td>   Yes   </td><td>  Yes   </td><td>     Yes      </td><td>  Yes  </td><td>  Yes  </td><td>  Yes   </td></tr>
+  <tr><td> @c PPrSpareMon             </td><td>   Yes   </td><td>  Yes   </td><td>     Yes      </td><td>  Yes  </td><td>  Yes  </td><td>  Yes   </td></tr>
+  <tr><td> @c PPMSimBSMon             </td><td>   Yes   </td><td>  Yes   </td><td>     Yes      </td><td>  Yes  </td><td>  Yes  </td><td>  Yes   </td></tr>
+  <tr><td> @c PPrStabilityMon         </td><td>   Yes   </td><td>   -    </td><td>      -       </td><td>   -   </td><td>   -   </td><td>  Yes (1) </td></tr>
+  <tr><td> @c TrigT1CaloCpmMonTool    </td><td>   Yes   </td><td>  Yes   </td><td>     Yes      </td><td>  Yes  </td><td>  Yes  </td><td>  Yes   </td></tr>
+  <tr><td> @c CPMSimBSMon             </td><td>   Yes   </td><td>  Yes   </td><td>     Yes      </td><td>  Yes  </td><td>  Yes  </td><td>  Yes   </td></tr>
+  <tr><td> @c EmEfficienciesMonTool   </td><td>   Yes   </td><td>   -    </td><td>     Yes      </td><td>  Yes  </td><td>   -   </td><td>   -    </td></tr>
+  <tr><td> @c JEMMon                  </td><td>   Yes   </td><td>  Yes   </td><td>     Yes      </td><td>  Yes  </td><td>  Yes  </td><td>  Yes   </td></tr>
+  <tr><td> @c CMMMon                  </td><td>   Yes   </td><td>  Yes   </td><td>     Yes      </td><td>  Yes  </td><td>  Yes  </td><td>  Yes   </td></tr>
+  <tr><td> @c JEPSimBSMon             </td><td>   Yes   </td><td>  Yes   </td><td>     Yes      </td><td>  Yes  </td><td>  Yes  </td><td>  Yes   </td></tr>
+  <tr><td> @c JetEfficienciesMonTool  </td><td>   Yes   </td><td>  Yes   </td><td>      -       </td><td>  Yes  </td><td>   -   </td><td>   -    </td></tr>
+  <tr><td> @c TrigT1CaloRodMonTool    </td><td>   Yes   </td><td>  Yes   </td><td>     Yes      </td><td>  Yes  </td><td>  Yes  </td><td>  Yes   </td></tr>
+  </table>
+
+  (1) Online PPrStabilityMon is run separately as it produces many thousands of histograms.
+  Tier0 runs a much stripped down version.
 
 */
 
@@ -196,7 +268,8 @@ not supported by Light Weight Histograms.
   low as possible.  To help with this an alternative jobOptions is provided
   which runs every L1Calo monitoring tool in a separate manager so that
   the CPU usage of each tool is given at the end of the
-  @c Reco_trf.py job log.  See TrigT1CaloMonitoring_forRecExCommission_cpu.py.
+  @c Reco_trf.py job log.  See TrigT1CaloMonitoring_forRecExCommission_cpu.py
+  (and TrigT1Monitoring_forRecExCommission_cpu.py for TrigT1Monitoring).
 
 */
 
