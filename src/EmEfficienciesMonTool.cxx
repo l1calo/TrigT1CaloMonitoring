@@ -446,10 +446,10 @@ StatusCode EmEfficienciesMonTool::fillHistograms()
 
 	// Here we can use the trigger menu to decide if we want an event.
 	bool useEvent = false;
-	if (m_useTrigger == true) {
+	if (m_useTrigger) {
 		typedef std::vector<std::string>::iterator Itr_s;
 		for (Itr_s i = m_triggerStrings.begin(); i != m_triggerStrings.end(); ++i) {
-			if (m_trigger->isPassed(*i) == true) {
+			if (m_trigger->isPassed(*i)) {
 				useEvent = true;
 				if (debug) msg(MSG::DEBUG)<< "First requested trigger that fired is : "<< (*i) << " with prescale "<< m_trigger->getPrescale(*i);
 				break;
@@ -485,7 +485,7 @@ StatusCode EmEfficienciesMonTool::fillHistograms()
 	        }
 	}
 
-	if (useEvent == true) {
+	if (useEvent) {
 		++m_numEvents;
 
 		sc = this->loadContainers();
@@ -498,7 +498,7 @@ StatusCode EmEfficienciesMonTool::fillHistograms()
 
 		// Look at vertex requirements
 		int numVtx = 0, numTrk = 0;
-		if (vertexRequirementsPassed(numVtx, numTrk) == false) {
+		if (!vertexRequirementsPassed(numVtx, numTrk)) {
 			if (debug) msg(MSG::DEBUG) << "Event " << m_eventInfo->event_ID()->event_number() << " fails vertex requirements " << endreq;
 			return StatusCode::SUCCESS;
 		}
@@ -591,34 +591,28 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 	m_numEmObjTotal += m_numOffElecInContainer;
 
 	// Create variables for electron properties
-	double EtCEraw = 0.0, phiCEraw = 0.0, etaCEraw = 0.0/*, calRawRatio = 0.0*/;
+	double EtCEraw = 0.0, phiCEraw = 0.0, etaCEraw = 0.0;
 	double phiCErawL1 = 0.0;
 	// Create variable to determine if selecting the right type of electrons based on criteria in jO
 	bool correctType, inEmRegion, inEmTrans;
 
-	//bool roiValuesFilled = false;
-
 	//Cycle through all of the offline reconstructed electrons
-	for (Itr_electrons elItr = m_offlineElectrons->begin(); elItr != m_offlineElectrons->end(); ++elItr) {
+	Itr_electrons elItrE = m_offlineElectrons->end();
+	for (Itr_electrons elItr = m_offlineElectrons->begin(); elItr != elItrE; ++elItr) {
 		//Keep track of eta, phi and Et as these will be used often
 		//----------------------------------------------------------------------
-		std::vector<double> rawValues = getRawClusterValuesFromCells(
-				const_cast<CaloCluster*> ((*elItr)->cluster()));
-		EtCEraw = rawValues.at(0);
-		etaCEraw = rawValues.at(1);
-		phiCEraw = rawValues.at(2);
+		getRawClusterValuesFromCells( const_cast<CaloCluster*> ((*elItr)->cluster()), EtCEraw, etaCEraw, phiCEraw);
 		phiCErawL1 = (phiCEraw < 0.) ? phiCEraw + 2.*M_PI : phiCEraw;
 		inEmRegion = inEgammaGoodEtaRange(etaCEraw);
 		inEmTrans = inEMTransR(etaCEraw, 0);
 		//----------------------------------------------------------------------
-		//calRawRatio = (EtCEraw > 0.0) ? EtCE/EtCEraw : -1;
 
 		bool unbiasedTrigger = false;
-		if (m_passed_EF_Trigger == true) {
-			if (m_passed_EF_SingleJet_Trigger == true) {
+		if (m_passed_EF_Trigger) {
+			if (m_passed_EF_SingleJet_Trigger) {
 				unbiasedTrigger = isolatedEmObjectEF(phiCEraw, etaCEraw);
-			} else if (m_passed_EF_egTau_Trigger == true) {
-				if (m_passed_EF_SingleJet_Trigger == true) {
+			} else if (m_passed_EF_egTau_Trigger) {
+				if (m_passed_EF_SingleJet_Trigger) {
 					unbiasedTrigger = isolatedEmObjectEF(phiCEraw, etaCEraw);
 				} else {
 					return StatusCode::SUCCESS;
@@ -632,7 +626,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 		}
 
 		//If passed the trigger conditions then proceed to start analysis
-		if (unbiasedTrigger == true) {
+		if (unbiasedTrigger) {
 
 			correctType = false;
 			m_numEmObjPassTrigger++;
@@ -646,8 +640,8 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 			std::string isEmLevel = isEmLevelElectron((*elItr), isEmCode);
 
 			//Check if the reconstructed electron is reconstructed as a standard egamma object (not forward or softe)
-			bool goodAuthor = ((*elItr)->author(egammaParameters::AuthorElectron) == true) ? true : false;
-			if (goodAuthor == false) {
+			bool goodAuthor = (*elItr)->author(egammaParameters::AuthorElectron);
+			if (!goodAuthor) {
 				correctType = false;
 			}
 
@@ -678,25 +672,24 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 				}
 
 				//Set up useful numbers to keep track of RoI information
-				double etaROI = 0.0, phiROI = 0.0/*, EtROI = 0.0*/;
+				double etaROI = 0.0, phiROI = 0.0;
 				double dEtaClRaw = 0.0, dPhiClRaw = 0.0, dRClRaw = 1000, tempRminClRaw = 0.0;
-				//double bestEtaROI = 0.0, bestPhiROI = 0.0, bestEtROI = 0.0, bestEtIsol = 0.0;
-				//double bestEtResClus = 1000, bestEtResClusRaw = 1000;
-				//double bestDeltaPhiClRaw = 0.0, bestDeltaEtaClRaw = 0.0, bestDeltaEtClRaw = 0.0;
-				uint32_t ROIWord = 0/*, ThrPattern = 0*/;
+				uint32_t ROIWord = 0;
 
 				//Access the EmTauRoIs
-				std::vector < EmTau_ROI > emrois = m_lvl1RoIs->getEmTauROIs();
+				const std::vector<EmTau_ROI>& emrois(m_lvl1RoIs->getEmTauROIs());
 				typedef std::vector<EmTau_ROI>::const_iterator Itr_emroi;
 
 				//Iterate over all of the EmTauRoIs
-				for (Itr_emroi roiItr = emrois.begin(); roiItr != emrois.end(); ++roiItr) {
+				Itr_emroi roiItrE = emrois.end();
+				for (Itr_emroi roiItr = emrois.begin(); roiItr != roiItrE; ++roiItr) {
 					bool emThresholdPassed = false;
-					if (m_useEmThresholdsOnly == true) {
+					if (m_useEmThresholdsOnly) {
 
-						std::vector < std::string > thrPassed = (*roiItr).getThresholdNames();
-						typedef std::vector<std::string>::iterator Itr_s;
-						for (Itr_s i = thrPassed.begin(); i != thrPassed.end(); ++i) {
+						const std::vector<std::string>& thrPassed((*roiItr).getThresholdNames());
+						typedef std::vector<std::string>::const_iterator Itr_s;
+						Itr_s iE = thrPassed.end();
+						for (Itr_s i = thrPassed.begin(); i != iE; ++i) {
 							if ((*i).find("EM") != std::string::npos) {
 								emThresholdPassed = true;
 								break;
@@ -706,12 +699,11 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 						emThresholdPassed = true;
 					}
 
-					if (emThresholdPassed == true) {
+					if (emThresholdPassed) {
 
 						//Get useful values for the EmTauRoI
 						etaROI = (*roiItr).getEta();
 						phiROI = (*roiItr).getPhi();
-						//EtROI  = (*roiItr).getEMClus()/CLHEP::GeV;
 
 						//Calculate the difference in eta and phi between the electron and RoI
 						dEtaClRaw = etaCEraw - etaROI;
@@ -723,31 +715,17 @@ StatusCode EmEfficienciesMonTool::analyseOfflineElectrons() {
 						//Check if the new delta R is smaller than any previous delta R value.
 						//In that case, keep track of the new RoI values
 						if (tempRminClRaw < dRClRaw) {
-							//RoI information
-							//bestPhiROI = phiROI;
-							//bestEtaROI = etaROI;
-							//bestEtROI = EtROI;
-							//bestEtIsol = (*roiItr).getEMIsol()/CLHEP::GeV;
 							ROIWord = (*roiItr).getROIWord();
-							//ThrPattern = (*roiItr).getThrPattern();
-
-							//bestDeltaEtaClRaw = dEtaClRaw;
-							//bestDeltaPhiClRaw = dPhiClRaw;
 							dRClRaw = tempRminClRaw;
-							//bestDeltaEtClRaw = EtCEraw-bestEtROI;					     
-							//if( EtCEraw > 0.0 ) { bestEtResClusRaw = (EtCEraw-bestEtROI)/EtCEraw; }
 						}
 					}
 				}
-
-				//roiValuesFilled = true;
 
 				//Check to see if there was an RoI to match with an electron cluster
 				if (dRClRaw != 1000) {
 					m_numOffElecTriggered++;
 
 					//Check if electron and RoI matched to a very good level (less than cut)
-					//if(deltaMatch(dR, bestDeltaEta, bestDeltaPhi, m_goodEMDeltaRMatch_Cut, m_goodEMDeltaEtaMatch_Cut, m_goodEMDeltaPhiMatch_Cut))
 					if (dRClRaw < m_goodEMDeltaRMatch_Cut) {
 						if (EtCEraw > 0.0) {
 							if (inEmRegion) {
@@ -796,41 +774,36 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 	m_numEmObjTotal += m_numOffPhotInContainer;
 
 	// Variables for accessing properties of recosntructed photons
-	double EtCPraw = 0.0, etaCPraw = 0.0, phiCPraw = 0.0/*, calRawRatio = 0.0*/;
+	double EtCPraw = 0.0, etaCPraw = 0.0, phiCPraw = 0.0;
 	double phiCPrawL1 = 0.0;
 	// Variable to check if photon is of the right type as defined in the jobOptions
 	bool correctType, inEmRegion, inEmTrans;
 
-	//bool roiValuesFilled = false;
-
 	//Cycle through all of the offline reconstructed photons      
-	for (Itr_photons phItr = m_offlinePhotons->begin(); phItr != m_offlinePhotons->end(); ++phItr) {
+	Itr_photons phItrE = m_offlinePhotons->end();
+	for (Itr_photons phItr = m_offlinePhotons->begin(); phItr != phItrE; ++phItr) {
 		//Keep track of eta, phi and Et as these will be used often
 		//----------------------------------------------------------------------
-		std::vector<double> rawValues = getRawClusterValuesFromCells(const_cast<CaloCluster*> ((*phItr)->cluster()));
-		EtCPraw = rawValues.at(0);
-		etaCPraw = rawValues.at(1);
-		phiCPraw = rawValues.at(2);
+		getRawClusterValuesFromCells(const_cast<CaloCluster*> ((*phItr)->cluster()), EtCPraw, etaCPraw, phiCPraw);
 		phiCPrawL1 = (phiCPraw < 0.) ? phiCPraw + 2.*M_PI : phiCPraw;
 		inEmRegion = inEgammaGoodEtaRange(etaCPraw);
 		inEmTrans = inEMTransR(etaCPraw, 0);
 		//----------------------------------------------------------------------	
-		//calRawRatio = (EtCPraw > 0.0) ? EtCP/EtCPraw : -1;
 
 		//Check, based on trigger chain analysis, that we are using an unbiased trigger
 		bool unbiasedTrigger = false;
 		//Check that event has passed EF trigger
-		if (m_passed_EF_Trigger == true) {
-			if (m_passed_EF_SingleJet_Trigger == true && m_passed_EF_MultiJet_Trigger == false) {
+		if (m_passed_EF_Trigger) {
+			if (m_passed_EF_SingleJet_Trigger && !m_passed_EF_MultiJet_Trigger) {
 				unbiasedTrigger = isolatedEmObjectEF(phiCPraw, etaCPraw);
 			} else {
-				if (m_passed_EF_egTau_Trigger == true || m_passed_EF_MultiJet_Trigger == true) {
+				if (m_passed_EF_egTau_Trigger || m_passed_EF_MultiJet_Trigger) {
 					return StatusCode::SUCCESS;
 				} else {
 					unbiasedTrigger = true;
 				}
 			}			
-		} else if(m_passed_L1_Jet_Trigger == true) {
+		} else if(m_passed_L1_Jet_Trigger) {
 			unbiasedTrigger = isolatedEmObjectL1(phiCPraw, etaCPraw);			
 		} else {
 			return StatusCode::SUCCESS;
@@ -839,7 +812,7 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 
 		//If only after the highest energy photon, make sure only select the one that has the right index number
 		//Otherwise select all of them	
-		if (unbiasedTrigger == true) {
+		if (unbiasedTrigger) {
 			//Check that the photon matches the IsEm type selected (if any was chosen in jobOptions file)
 			correctType = false;
 			m_numEmObjPassTrigger++;
@@ -852,8 +825,8 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 			std::string isEmLevel = isEmLevelPhoton((*phItr), isEmCode);
 
 			//Check if the reconstructed photon is reconstructed as a standard egamma object 
-			bool goodAuthor = ((*phItr)->author(egammaParameters::AuthorPhoton)	== true) ? true : false;
-			if (goodAuthor == false) {
+			bool goodAuthor = (*phItr)->author(egammaParameters::AuthorPhoton);
+			if (!goodAuthor) {
 				correctType = false;
 			}
 
@@ -885,24 +858,23 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 				}
 
 				//Set up useful numbers to keep track of RoI information
-				double etaROI = 0.0, phiROI = 0.0/*, EtROI = 0.0*/;
+				double etaROI = 0.0, phiROI = 0.0;
 				double dEtaClRaw = 0.0, dPhiClRaw = 0.0, dRClRaw = 1000, tempRminClRaw = 0.0;
-				//double bestPhiROI = 0.0, bestEtaROI = 0.0, bestEtROI = 0.0, bestEtIsol = 0.0; 
-				//double bestEtResClus = 1000, bestEtResClusRaw = 1000;
-				//double bestDeltaPhiClRaw = 0.0, bestDeltaEtaClRaw = 0.0, bestDeltaEtClRaw = 0.0;				
-				uint32_t ROIWord = 0/*, ThrPattern = 0*/;
+				uint32_t ROIWord = 0;
 
 				//Access the EmTau RoIs
-				std::vector < EmTau_ROI > emrois = m_lvl1RoIs->getEmTauROIs();
+				const std::vector<EmTau_ROI>& emrois(m_lvl1RoIs->getEmTauROIs());
 				typedef std::vector<EmTau_ROI>::const_iterator Itr_emroi;
 
 				//Iterate over the EmTau RoIs 
-				for (Itr_emroi roiItr = emrois.begin(); roiItr != emrois.end(); ++roiItr) {
+				Itr_emroi roiItrE = emrois.end();
+				for (Itr_emroi roiItr = emrois.begin(); roiItr != roiItrE; ++roiItr) {
 					bool emThresholdPassed = false;
-					if (m_useEmThresholdsOnly == true) {
-						std::vector < std::string > thrPassed = (*roiItr).getThresholdNames();
-						typedef std::vector<std::string>::iterator Itr_s;
-						for (Itr_s i = thrPassed.begin(); i != thrPassed.end(); ++i) {
+					if (m_useEmThresholdsOnly) {
+						const std::vector<std::string>& thrPassed((*roiItr).getThresholdNames());
+						typedef std::vector<std::string>::const_iterator Itr_s;
+						Itr_s iE = thrPassed.end();
+						for (Itr_s i = thrPassed.begin(); i != iE; ++i) {
 							if ((*i).find("EM") != std::string::npos) {
 								emThresholdPassed = true;
 								break;
@@ -912,11 +884,10 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 						emThresholdPassed = true;
 					}
 
-					if (emThresholdPassed == true) {
+					if (emThresholdPassed) {
 						//Get useful values for the EmTauRoI
 						etaROI = (*roiItr).getEta();
 						phiROI = (*roiItr).getPhi();
-						//EtROI  = (*roiItr).getEMClus()/CLHEP::GeV;
 
 						//Calculate the difference in eta and phi between the electron and RoI
 						dEtaClRaw = etaCPraw - etaROI;
@@ -928,30 +899,17 @@ StatusCode EmEfficienciesMonTool::analyseOfflinePhotons() {
 						//Check if the new deltaR is smaller than any previous deltaR value.
 						//In that case, keep track of the new RoI values 
 						if (tempRminClRaw < dRClRaw) {
-							//bestPhiROI = phiROI;
-							//bestEtaROI = etaROI;
-							//bestEtROI  = EtROI;
-							//bestEtIsol = (*roiItr).getEMIsol()/CLHEP::GeV;
 							ROIWord = (*roiItr).getROIWord();
-							//ThrPattern = (*roiItr).getThrPattern();
-
-							//bestDeltaEtaClRaw = dEtaClRaw;
-							//bestDeltaPhiClRaw = dPhiClRaw;
 							dRClRaw = tempRminClRaw;
-							//bestDeltaEtClRaw = EtCPraw-bestEtROI;
-							//if(EtCPraw > 0.0) { bestEtResClusRaw = (EtCPraw-bestEtROI)/EtCPraw; }
 						}
 					}
 				}
-
-				//roiValuesFilled = true;
 
 				//Check to see if there was an RoI to match with a photon
 				if (dRClRaw != 1000) {
 					m_numOffPhotTriggered++;
 
 					//Check if photon and RoI matched to a very good level (less than cut)
-					//if(deltaMatch(dR, bestDeltaEta, bestDeltaPhi, m_goodEMDeltaRMatch_Cut, m_goodEMDeltaEtaMatch_Cut, m_goodEMDeltaPhiMatch_Cut))
 					if (dRClRaw < m_goodEMDeltaRMatch_Cut) {
 						if (EtCPraw > 0.0) {
 							if (inEmRegion) {
@@ -999,29 +957,29 @@ bool EmEfficienciesMonTool::deltaMatch(double dEta, double dPhi, double dR,
 		double goodDEta, double goodDPhi, double goodDR) {
 	
 	// Calculate if object passes cuts
-	bool Rmatch = (dR < goodDR) ? true : false;
-	bool EPmatch = ((fabs(dEta) < goodDEta) && (fabs(dPhi) < goodDPhi)) ? true : false;
+	bool Rmatch = (dR < goodDR);
+	bool EPmatch = ((fabs(dEta) < goodDEta) && (fabs(dPhi) < goodDPhi));
 
 	// First check that both checks are either on or off
-	if (m_useDeltaRMatch == true && m_useDeltaEtaPhiMatch == true) {
-		if (Rmatch == true && EPmatch == true) {
+	if (m_useDeltaRMatch && m_useDeltaEtaPhiMatch) {
+		if (Rmatch && EPmatch) {
 			return true;
 		} else {
 			return false;
 		}
-	} else if (m_useDeltaRMatch == false && m_useDeltaEtaPhiMatch == false) {
+	} else if (!m_useDeltaRMatch && !m_useDeltaEtaPhiMatch) {
 		return false;
 	}
 
 	// Only one check is being used so match against it
-	if (m_useDeltaRMatch == true) {
-		if (Rmatch == true) {
+	if (m_useDeltaRMatch) {
+		if (Rmatch) {
 			return true;
 		} else {
 			return false;
 		}
-	} else if (m_useDeltaEtaPhiMatch == true) {
-		if (EPmatch == true) {
+	} else if (m_useDeltaEtaPhiMatch) {
+		if (EPmatch) {
 			return true;
 		} else {
 			return false;
@@ -1082,8 +1040,8 @@ bool EmEfficienciesMonTool::emObjInDeadBadTower(double eta, double phi) {
 	phiBin = 1 + (int) ((phi + M_PI) * 64.0 / (2 * M_PI));
 	etaBin = 1 + (int) ((eta + 2.5) * 50.0 / (2 * 2.5)); //this will need fixing
 
-	bool badCalo = (m_h_TrigTower_emBadCalo->GetBinContent(etaBin, phiBin) > 0) ? true	: false;
-	bool deadChannel = (m_h_TrigTower_emDeadChannel->GetBinContent(etaBin, phiBin) > 0) ? true : false;
+	bool badCalo = (m_h_TrigTower_emBadCalo->GetBinContent(etaBin, phiBin) > 0);
+	bool deadChannel = (m_h_TrigTower_emDeadChannel->GetBinContent(etaBin, phiBin) > 0);
 
 	if (badCalo || deadChannel) {
 		deadBadTower = true;
@@ -1096,7 +1054,8 @@ bool EmEfficienciesMonTool::emObjInDeadBadTower(double eta, double phi) {
 // directly by the cluster by accessing the cells that make it up
 // Uses CaloCells so needs to use ESD files
 //------------------------------------------------------------------
-std::vector<double> EmEfficienciesMonTool::getRawClusterValuesFromCells(CaloCluster* cc) {
+void EmEfficienciesMonTool::getRawClusterValuesFromCells(CaloCluster* cc,
+                               double& et, double& eta, double& phi) {
 	
 	// Add the raw information of the cluster 
 	double rawE = 0., rawEta = 0., rawPhi = 0., rawEt = 0.;
@@ -1151,8 +1110,6 @@ std::vector<double> EmEfficienciesMonTool::getRawClusterValuesFromCells(CaloClus
 		}
 	}
 
-	std::vector<double> rawV;
-
 	if (rawE > 0) {
 		//Unweight the raw eta and phi values
 		rawEta /= rawE;
@@ -1166,16 +1123,17 @@ std::vector<double> EmEfficienciesMonTool::getRawClusterValuesFromCells(CaloClus
 		//Calculate the raw et from the energy and eta
 		rawEt = rawE / (CLHEP::GeV * std::cosh(rawEta));
 
-		rawV.push_back(rawEt);
-		rawV.push_back(rawEta);
-		rawV.push_back(rawPhi);
 	} else {
-		rawV.push_back(-10.0);
-		rawV.push_back(-10.0);
-		rawV.push_back(-10.0);
+		rawEt  = -10.0;
+		rawEta = -10.0;
+		rawPhi = -10.0;
 	}
 
-	return rawV;
+	et  = rawEt;
+	eta = rawEta;
+	phi = rawPhi;
+
+	return;
 
 }
 
@@ -1330,13 +1288,13 @@ bool EmEfficienciesMonTool::inEgammaGoodEtaRange(double eta) {
 //Ask if object is within EM barrel
 //------------------------------------------------------------------
 bool EmEfficienciesMonTool::inEMBarrel(double eta, int sign) {
-	bool inEB = (fabs(eta) <= 1.37) ? true : false;
+	bool inEB = (fabs(eta) <= 1.37);
 
-	if (inEB == true) {
+	if (inEB) {
 		if (sign < 0) {
-			inEB = (eta < 0) ? true : false;
+			inEB = (eta < 0);
 		} else if (sign > 0) {
-			inEB = (eta > 0) ? true : false;
+			inEB = (eta > 0);
 		}
 	}
 
@@ -1347,13 +1305,13 @@ bool EmEfficienciesMonTool::inEMBarrel(double eta, int sign) {
 //Ask if object is within EM Transition region
 //------------------------------------------------------------------
 bool EmEfficienciesMonTool::inEMTransR(double eta, int sign) {
-	bool inTR = (fabs(eta) > 1.37 && fabs(eta) < 1.52) ? true : false;
+	bool inTR = (fabs(eta) > 1.37 && fabs(eta) < 1.52);
 
-	if (inTR == true) {
+	if (inTR) {
 		if (sign < 0) {
-			inTR = (eta < 0) ? true : false;
+			inTR = (eta < 0);
 		} else if (sign > 0) {
-			inTR = (eta > 0) ? true : false;
+			inTR = (eta > 0);
 		}
 	}
 
@@ -1364,13 +1322,13 @@ bool EmEfficienciesMonTool::inEMTransR(double eta, int sign) {
 //Ask if object is within EM endcap
 //------------------------------------------------------------------
 bool EmEfficienciesMonTool::inEMEndcap(double eta, int sign) {
-	bool inEC = (fabs(eta) >= 1.52 && fabs(eta) < 2.50) ? true : false;
+	bool inEC = (fabs(eta) >= 1.52 && fabs(eta) < 2.50);
 
-	if (inEC == true) {
+	if (inEC) {
 		if (sign < 0) {
-			inEC = (eta < 0) ? true : false;
+			inEC = (eta < 0);
 		} else if (sign > 0) {
-			inEC = (eta > 0) ? true : false;
+			inEC = (eta > 0);
 		}
 	}
 
@@ -1385,13 +1343,14 @@ bool EmEfficienciesMonTool::inEMEndcap(double eta, int sign) {
 bool EmEfficienciesMonTool::isolatedEmObjectL1(double phi, double eta) {
 	bool isolated = false, tagFound = false;
 	double dREm = 10.0, dR_Max = 10.0;
-	double ET_Max = -10.0;//, EtaMax = -10.0, PhiMax = -10.0;
+	double ET_Max = -10.0;
 	double etaROI = 0.0, phiROI = 0.0, ET_ROI = 0.0;
 
 	//Cycle over the rois, get their properties and determine the distance from the object
 	const std::vector<Jet_ROI>& jetROIs(m_lvl1RoIs->getJetROIs());
 	typedef std::vector<Jet_ROI>::const_iterator Itr_jetroi;
-	for (Itr_jetroi roiItr = jetROIs.begin(); roiItr != jetROIs.end(); ++roiItr) {
+	Itr_jetroi roiItrE = jetROIs.end();
+	for (Itr_jetroi roiItr = jetROIs.begin(); roiItr != roiItrE; ++roiItr) {
 		etaROI = (*roiItr).getEta();
 		phiROI = (*roiItr).getPhi();
 		ET_ROI = (*roiItr).getET8x8();
@@ -1399,8 +1358,6 @@ bool EmEfficienciesMonTool::isolatedEmObjectL1(double phi, double eta) {
 
 		//If this energy exceeds the current record then store the details
 		if (ET_ROI > ET_Max) {
-			//EtaMax = etaROI;
-			//PhiMax = phiROI;
 			ET_Max = ET_ROI;
 			dR_Max = dREm;
 			tagFound = true;
@@ -1408,7 +1365,7 @@ bool EmEfficienciesMonTool::isolatedEmObjectL1(double phi, double eta) {
 	}
 
 	// Check that the object is far away enough from highest ET jet RoI (and that a tag was found)
-	if (dR_Max > m_goodHadDeltaRMatch_Cut && tagFound == true) {
+	if (dR_Max > m_goodHadDeltaRMatch_Cut && tagFound) {
 		isolated = true;
 	} else {
 		isolated = false;
@@ -1451,7 +1408,8 @@ StatusCode EmEfficienciesMonTool::triggerTowerAnalysis() {
 
 	typedef TriggerTowerCollection::const_iterator Itr_tt;
 	typedef std::vector<int>::const_iterator Itr_i;
-	for (Itr_tt ttItr = m_triggerTowers->begin(); ttItr	!= m_triggerTowers->end(); ++ttItr) {
+	Itr_tt ttItrE = m_triggerTowers->end();
+	for (Itr_tt ttItr = m_triggerTowers->begin(); ttItr != ttItrE; ++ttItr) {
 		
 		// Get the values of eta and phi for the trigger towers
 		double ttEta = (*ttItr)->eta();
@@ -1483,80 +1441,59 @@ StatusCode EmEfficienciesMonTool::triggerTowerAnalysis() {
 //---------------------------------------------------------------
 StatusCode EmEfficienciesMonTool::triggerChainAnalysis() {
 
-	m_passed_L1_Jet_Trigger = false;
-	m_passed_EF_SingleJet_Trigger = false;
-	m_passed_EF_MultiJet_Trigger = false;
-	m_passed_EF_egTau_Trigger = false;
-	m_passed_EF_Trigger = false;
-
 	// Get the list of all triggers but do this only once in the event loop
 	if (m_configuredChains.size() == 0) {
 		m_configuredChains = m_trigger->getListOfTriggers();
-	}
-
-	msg(MSG::DEBUG) << "Trigger Analysis: New Event" << endreq;
-
-	//Fill a count in the histogram for every event
-	for (std::vector<std::string>::const_iterator it =
-			m_configuredChains.begin(); it != m_configuredChains.end(); ++it) {
-
-		//Check that the trigger was passed
-		if (m_trigger->isPassed(*it)) {
-
-			//First ask if the event passed the L1 jet trigger items 
-			if ((*it).find("L1_J") != std::string::npos && (*it).find("L1_JE") == std::string::npos) {
-				m_passed_L1_Jet_Trigger = true;
-				msg(MSG::DEBUG) << "Trigger Analysis: " << *it << endreq;
+		m_wantedTriggers.resize(m_configuredChains.size());
+		int i = 0;
+	        std::vector<std::string>::const_iterator itE = m_configuredChains.end();
+		for (std::vector<std::string>::const_iterator it =
+		      m_configuredChains.begin(); it != itE; ++it, ++i) {
+			// L1 jet trigger items
+		      	if ((*it).find("L1_J") != std::string::npos && (*it).find("L1_JE") == std::string::npos) {
+				m_wantedTriggers[i] |= s_L1_Jet_Trigger_mask;
 			}
-			//First ask if the event passed the L1 em trigger items as a quick check 
-			if ((*it).find("L1_EM") != std::string::npos && (*it).find("_XS") == std::string::npos && (*it).find("_XE") == std::string::npos) {
-				msg(MSG::DEBUG) << "Trigger Analysis: " << *it << endreq;
-			}
-
-			//Then ask if the event passed the EF trigger chains and determine which ones they were			
+			// EF trigger chains
 			if ((*it).find("EF") != std::string::npos) {
-
-				//Print out the trigger name
-				m_passed_EF_Trigger = true;
-				msg(MSG::DEBUG) << "Trigger Analysis: " << *it << endreq;
-
-				//Find Event Filter chains corresponding to single jet triggers (keeping it simple)
+				m_wantedTriggers[i] |= s_EF_Trigger_mask;
+				
+				//Event Filter chains corresponding to single jet triggers (keeping it simple)
 				if (((*it).find("EF_j") != std::string::npos && (*it).find(
 						"EF_je") == std::string::npos) || (*it).find("EF_fj")
 						!= std::string::npos || ((*it).find("EF_L1J")
 						!= std::string::npos && (*it).find("EMPTY")
 						== std::string::npos) || (*it).find("EF_b")
 						!= std::string::npos) {
-					m_passed_EF_SingleJet_Trigger = true;
+					m_wantedTriggers[i] |= s_EF_SingleJet_Trigger_mask;
 				}
-				//Find Event Filter chains corresponding to multiple jet triggers (worry about it later)
+				//Event Filter chains corresponding to multiple jet triggers (worry about it later)
 				if ((*it).find("EF_2j") != std::string::npos || (*it).find(
 						"EF_4j") != std::string::npos) {
-					m_passed_EF_MultiJet_Trigger = true;
+					m_wantedTriggers[i] |= s_EF_MultiJet_Trigger_mask;
 				}
-				//Find Event Filter chains corresponding to photons
+				//Event Filter chains corresponding to photons
 				if ((*it).find("EF_g") != std::string::npos || (*it).find(
 						"EF_2g") != std::string::npos || (*it).find("EF_4g")
 						!= std::string::npos) {
-					m_passed_EF_egTau_Trigger = true;
+					m_wantedTriggers[i] |= s_EF_egTau_Trigger_mask;
 				}
-				//Find Event Filter chains corresponding to electrons
+				//Event Filter chains corresponding to electrons
 				if ((*it).find("EF_e") != std::string::npos || (*it).find(
 						"EF_2e") != std::string::npos || (*it).find("EF_4e")
 						!= std::string::npos) {
-					m_passed_EF_egTau_Trigger = true;
+					m_wantedTriggers[i] |= s_EF_egTau_Trigger_mask;
 				}
-				//Find Event Filter chains corresponding to taus
+				//Event Filter chains corresponding to taus
 				if ((*it).find("EF_tau") != std::string::npos || (*it).find(
 						"EF_2tau") != std::string::npos
 						|| (*it).find("EF_4tau") != std::string::npos) {
-					m_passed_EF_egTau_Trigger = true;
+					m_wantedTriggers[i] |= s_EF_egTau_Trigger_mask;
 				}
-				//Find Event Filter chains corresponding to missing energy
-				//Missing energy could come from electron so it may bias results 
+				//Event Filter chains corresponding to missing energy
+				//Missing energy could come from electron so it may bias results
 				if ((*it).find("EF_xe") != std::string::npos || (*it).find(
 						"EF_xs") != std::string::npos) {
-					m_passed_EF_egTau_Trigger = true;
+					m_wantedTriggers[i] |= s_EF_egTau_Trigger_mask;
 				}
 
 				//Any event filter chains which do not pass any of these checks
@@ -1564,6 +1501,26 @@ StatusCode EmEfficienciesMonTool::triggerChainAnalysis() {
 			}
 		}
 	}
+
+	//msg(MSG::DEBUG) << "Trigger Analysis: New Event" << endreq;
+
+	int trigSet = 0;
+	int i = 0;
+	std::vector<std::string>::const_iterator itE = m_configuredChains.end();
+	for (std::vector<std::string>::const_iterator it =
+			m_configuredChains.begin(); it != itE; ++it, ++i) {
+
+		//Check that the trigger was passed
+		const int trigMap = m_wantedTriggers[i];
+		if (((trigMap^trigSet)&trigMap) && m_trigger->isPassed(*it)) {
+			trigSet |= trigMap;
+		}
+	}
+	m_passed_L1_Jet_Trigger       = (trigSet & s_L1_Jet_Trigger_mask);
+	m_passed_EF_Trigger           = (trigSet & s_EF_Trigger_mask);
+	m_passed_EF_SingleJet_Trigger = (trigSet & s_EF_SingleJet_Trigger_mask);
+	m_passed_EF_MultiJet_Trigger  = (trigSet & s_EF_MultiJet_Trigger_mask);
+	m_passed_EF_egTau_Trigger     = (trigSet & s_EF_egTau_Trigger_mask);
 
 	return StatusCode::SUCCESS;
 }

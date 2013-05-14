@@ -271,6 +271,92 @@ not supported by Light Weight Histograms.
   @c Reco_trf.py job log.  See TrigT1CaloMonitoring_forRecExCommission_cpu.py
   (and TrigT1Monitoring_forRecExCommission_cpu.py for TrigT1Monitoring).
 
+  The following table shows the cpu usage of each tool as a percentage of
+  the total L1Calo cpu.  The express stream runs all tools so gives times
+  for all of them.  The overall column estimates the contribution of each
+  tool for all streams (ES1 and BLK) taking into account numbers of events
+  and which streams the tools run in.  Run 215643 and release 17.2.10.2
+  were used for this.
+
+  <table>
+  <tr><th> Manager            </th><th> Tool(s)                        </th><th> % cpu <br> express      </th><th> % cpu <br> overall      </th></tr>
+  <tr><td> L1CaloMonManager0A </td><td> Bytestream Unpacking (1)       </td><td><center> 38.44  </center></td><td><center> 53.92  </center></td></tr>
+  <tr><td> L1CaloMonManager0B </td><td> L1CaloMonitoringCaloTool (2)   </td><td><center> 14.39  </center></td><td><center>  6.75  </center></td></tr>
+  <tr><td> L1CaloMonManager1A </td><td> PPrStabilityMon /FineTime      </td><td><center>  4.41  </center></td><td><center>  0.17  </center></td></tr>
+  <tr><td> L1CaloMonManager1B </td><td> PPrStabilityMon /Pedestal      </td><td><center>  3.99  </center></td><td><center>  0.16  </center></td></tr>
+  <tr><td> L1CaloMonManager1C </td><td> PPrStabilityMon /EtCorrelation </td><td><center>  0.69  </center></td><td><center>  0.03  </center></td></tr>
+  <tr><td> L1CaloMonManager2  </td><td> PPrMon                         </td><td><center>  0.98  </center></td><td><center>  1.38  </center></td></tr>
+  <tr><td> L1CaloMonManager3  </td><td> PPMSimBSMon                    </td><td><center>  3.83  </center></td><td><center>  5.37  </center></td></tr>
+  <tr><td> L1CaloMonManager4  </td><td> PPrSpareMon                    </td><td><center>  0.18  </center></td><td><center>  0.26  </center></td></tr>
+  <tr><td> L1CaloMonManager5  </td><td> JEMMon                         </td><td><center>  0.20  </center></td><td><center>  0.28  </center></td></tr>
+  <tr><td> L1CaloMonManager6  </td><td> CMMMon                         </td><td><center>  0.05  </center></td><td><center>  0.07  </center></td></tr>
+  <tr><td> L1CaloMonManager7  </td><td> JEPSimBSMon                    </td><td><center>  9.86  </center></td><td><center> 13.83  </center></td></tr>
+  <tr><td> L1CaloMonManager8  </td><td> TrigT1CaloCpmMonTool           </td><td><center>  0.28  </center></td><td><center>  0.39  </center></td></tr>
+  <tr><td> L1CaloMonManager9  </td><td> CPMSimBSMon                    </td><td><center>  3.65  </center></td><td><center>  5.12  </center></td></tr>
+  <tr><td> L1CaloMonManagerA  </td><td> TrigT1CaloRodMonTool           </td><td><center>  0.06  </center></td><td><center>  0.08  </center></td></tr>
+  <tr><td> L1CaloMonManagerB  </td><td> TrigT1CaloGlobalMonTool        </td><td><center>  0.10  </center></td><td><center>  0.14  </center></td></tr>
+  <tr><td> L1CaloMonManagerC  </td><td> EmEfficienciesMonTool          </td><td><center>  6.88  </center></td><td><center>  5.36  </center></td></tr>
+  <tr><td> L1CaloMonManagerD  </td><td> JetEfficienciesMonTool         </td><td><center>  4.50  </center></td><td><center>  2.97  </center></td></tr>
+  <tr><td> L1MonManager0 (3)  </td><td> CalorimeterL1CaloMon (4)       </td><td><center>  7.30  </center></td><td><center>  3.43  </center></td></tr>
+  <tr><td> L1MonManager1 (3)  </td><td> L1CaloCTPMon                   </td><td><center>  0.17  </center></td><td><center>  0.23  </center></td></tr>
+  <tr><td> L1MonManager2 (3)  </td><td> L1CaloLevel2Mon                </td><td><center>  0.05  </center></td><td><center>  0.07  </center></td></tr>
+  </table>
+
+  (1) Needs to run before any other algorithms that may be reading our data, eg RoIBResultToAOD.<br>
+  (2) This tool forms CaloCell Et sums and quality per TriggerTower for the use of other tools.<br>
+  (3) TrigT1Monitoring.<br>
+  (4) Before it was split into three tools.
+  
+  To get the cpu times from the job log do:
+
+  @code
+  grep 'L1' job.log | grep 'MonManager' | grep 'execute' | sort > cpu.log
+  @endcode
+
+  The numbers in the table were generated with this program:
+
+@code
+#include <iostream>
+#include <iomanip>
+
+int main()
+{
+  int ntools = 20;
+  // relative cpu times for each tool in express stream (from job log)
+  float timesE[] = {21.8,8.16,2.5,2.26,0.392,0.556,2.17,0.104,0.112,0.029,
+                    5.59,0.159,2.07,0.034,0.057,3.9,2.55,4.14,0.095,0.027};
+  // flag which tools run in each stream (as in jobOptions)
+  int express[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+  int jetet[]   = {1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1};
+  int egamma[]  = {1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,1,0,1,1};
+  int muons[]   = {1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1};
+  int other[]   = {1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1};
+  // relative number of events per stream
+  // (from plots L1Calo/Overview/l1calo_1d_NumberOfEvents)
+  float events[] = {0.192, 2.11, 1.53, 1.52, 1.53};
+  float timesO[ntools];
+  float totalE = 0;
+  float totalO = 0;
+  for (int i = 0; i < ntools; ++i) {
+    totalE += timesE[i];
+    timesO[i] = express[i]*timesE[i]*events[0] + jetet[i]*timesE[i]*events[1] +
+                 egamma[i]*timesE[i]*events[2] + muons[i]*timesE[i]*events[3] +
+		  other[i]*timesE[i]*events[4];
+    totalO += timesO[i];
+  }
+  float percE, percO;
+  std::cout << "Express  Overall" << std::endl;
+  for (int i = 0; i < ntools; ++i) {
+    percE = 100*timesE[i]/totalE;
+    percO = 100*timesO[i]/totalO;
+    std::cout << std::setiosflags(std::ios::fixed | std::ios::showpoint)
+              << std::setprecision(2)
+              << std::setw(6) << percE
+              << std::setw(9) << percO << std::endl;
+  }
+}
+@endcode
+
 */
 
 /**

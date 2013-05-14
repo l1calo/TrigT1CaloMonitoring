@@ -198,7 +198,7 @@ private:
   typedef std::map<int, LVL1::CMMCPHits*>    CmmCpHitsMap;
   
   /// Compare Trigger Towers and CPM Towers
-  void  compare(const TriggerTowerMap& ttMap, const CpmTowerMap& cpMap,
+  bool  compare(const TriggerTowerMap& ttMap, const CpmTowerMap& cpMap,
                       ErrorVector& errors, bool overlap);
   /// Compare Simulated RoIs with data
   void  compare(const CpmRoiMap& roiSimMap, const CpmRoiMap& roiMap,
@@ -227,6 +227,8 @@ private:
   /// Simulate CPM RoIs from CPM Towers
   void  simulate(const CpmTowerMap towers, const CpmTowerMap towersOv,
                        CpmRoiCollection* rois);
+  /// Simulate CPM RoIs from CPM Towers quick version
+  void  simulate(const CpmTowerMap towers, CpmRoiCollection* rois);
   /// Simulate CPM Hits from CPM RoIs
   void  simulate(const CpmRoiCollection* rois, CpmHitsCollection* hits);
   /// Simulate CMM Hit sums from CMM Hits

@@ -679,10 +679,12 @@ StatusCode JEPSimBSMon::fillHistograms()
   JetElementMap jeSimMap;
   setupMap(jetElementSIM, jeSimMap);
   bool overlap = false;
-  compare(jeSimMap, jeMap, errorsJEM, overlap);
+  bool mismatchCore = false;
+  bool mismatchOverlap = false;
+  mismatchCore = compare(jeSimMap, jeMap, errorsJEM, overlap);
   if (jetElementOvTES) {
     overlap = true;
-    compare(jeSimMap, ovMap, errorsJEM, overlap);
+    mismatchOverlap = compare(jeSimMap, ovMap, errorsJEM, overlap);
   }
   jeSimMap.clear();
   delete jetElementSIM;
@@ -692,7 +694,11 @@ StatusCode JEPSimBSMon::fillHistograms()
   JemRoiCollection* jemRoiSIM = 0;
   if (jetElementTES || jetElementOvTES) {
     jemRoiSIM = new JemRoiCollection;
-    simulate(jetElementTES, jetElementOvTES, jemRoiSIM);
+    if (mismatchCore || mismatchOverlap) {
+      simulate(jetElementTES, jetElementOvTES, jemRoiSIM);
+    } else {
+      simulate(jetElementTES, jemRoiSIM);
+    }
   }
   JemRoiMap jrSimMap;
   setupMap(jemRoiSIM, jrSimMap);
@@ -891,13 +897,15 @@ StatusCode JEPSimBSMon::procHistograms(bool isEndOfEventsBlock,
 
 //  Compare Simulated JetElements with data
 
-void JEPSimBSMon::compare(const JetElementMap& jeSimMap,
+bool JEPSimBSMon::compare(const JetElementMap& jeSimMap,
                           const JetElementMap& jeMap, ErrorVector& errors,
 			  bool overlap)
 {
   if (m_debug) {
     msg(MSG::DEBUG) << "Compare Simulated JetElements with data" << endreq;
   }
+
+  bool mismatch = false;
 
   JetElementMap::const_iterator simMapIter    = jeSimMap.begin();
   JetElementMap::const_iterator simMapIterEnd = jeSimMap.end();
@@ -977,12 +985,15 @@ void JEPSimBSMon::compare(const JetElementMap& jeSimMap,
     if (simHad && simHad == datHad) errors[loc] |= bitHad;
     if (simEm != datEm)     errors[loc+jemBins] |= bitEm;
     if (simHad != datHad)   errors[loc+jemBins] |= bitHad;
-    if (m_debug && (simEm != datEm || simHad != datHad)) {
-      msg(MSG::VERBOSE) << "JE mismatch, EM data/sim: " << datEm << "/"
-            << simEm << " Had data/sim: " << datHad << "/" << simHad
-	    << " crate/jem: " << crate << "/" << jem
-	    << " eta/phi: " << eta << "/" << phi
-	    << endreq;
+    if (simEm != datEm || simHad != datHad) {
+      mismatch = true;
+      if (m_debug) {
+        msg(MSG::VERBOSE) << "JE mismatch, EM data/sim: " << datEm << "/"
+              << simEm << " Had data/sim: " << datHad << "/" << simHad
+	      << " crate/jem: " << crate << "/" << jem
+	      << " eta/phi: " << eta << "/" << phi
+	      << endreq;
+      }
     }
     TH2F_LW* hist1 = 0;
     TH2F_LW* hist2 = 0;
@@ -1008,6 +1019,8 @@ void JEPSimBSMon::compare(const JetElementMap& jeSimMap,
     if (hist1) m_histTool->fillJEMEtaVsPhi(hist1, eta, phi);
     if (hist2) m_histTool->fillJEMEtaVsPhi(hist2, eta, phi);
   }
+
+  return mismatch;
 }
 
 //  Compare Simulated RoIs with data
@@ -2553,6 +2566,26 @@ void JEPSimBSMon::simulate(const JetElementCollection* elements,
     delete intRois;
     delete crateColl[crate];
   }
+}
+
+// Quicker version when core and overlap the same
+
+void JEPSimBSMon::simulate(const JetElementCollection* elements,
+                                 JemRoiCollection* rois)
+{
+  if (m_debug) {
+    msg(MSG::DEBUG) << "Simulate JEM RoIs from Jet Elements" << endreq;
+  }
+
+  InternalRoiCollection* intRois = new InternalRoiCollection;
+  m_jetTool->findRoIs(elements, intRois);
+  InternalRoiCollection::iterator roiIter  = intRois->begin();
+  InternalRoiCollection::iterator roiIterE = intRois->end();
+  for (; roiIter != roiIterE; ++roiIter) {
+    LVL1::JEMRoI* roi = new LVL1::JEMRoI((*roiIter)->RoIWord());
+    rois->push_back(roi);
+  }
+  delete intRois;
 }
 
 void JEPSimBSMon::simulate(const JemRoiCollection* rois,

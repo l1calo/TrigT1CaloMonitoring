@@ -391,7 +391,13 @@ if l1caloRawMon:
     L1CaloMan0A.Environment         = DQMonFlags.monManEnvironment()
     L1CaloMan0A.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
     L1CaloMan0A.DataType            = DQMonFlags.monManDataType()
-    topSequence += L1CaloMan0A
+    # Make sure we run this before RoIBResultToAOD as it also accesses
+    # TriggerTowers and JetElements
+    index = 0
+    for alg in topSequence: 
+        if alg.getName() == 'RoIBResultToAOD': break
+        index += 1
+    topSequence.insert(index, L1CaloMan0A)
     L1CaloMan0B.FileKey             = DQMonFlags.monManFileKey()
     L1CaloMan0B.Environment         = DQMonFlags.monManEnvironment()
     L1CaloMan0B.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()

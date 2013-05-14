@@ -1,3 +1,7 @@
+2013-05-14  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-14-02
+        * Reduce cpu time of some tools.
+
 2013-04-22  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-14-01
         * More doxygen updates.

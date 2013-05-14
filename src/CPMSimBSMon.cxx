@@ -547,10 +547,12 @@ StatusCode CPMSimBSMon::fillHistograms()
   // Compare Trigger Towers and CPM Towers from data
 
   bool overlap = false;
-  compare(ttMap, cpMap, errorsCPM, overlap);
+  bool mismatchCore = false;
+  bool mismatchOverlap = false;
+  mismatchCore = compare(ttMap, cpMap, errorsCPM, overlap);
   if (m_overlapPresent) {
     overlap = true;
-    compare(ttMap, ovMap, errorsCPM, overlap);
+    mismatchOverlap = compare(ttMap, ovMap, errorsCPM, overlap);
   }
 
   // Compare RoIs simulated from CPM Towers with CPM RoIs from data
@@ -558,7 +560,11 @@ StatusCode CPMSimBSMon::fillHistograms()
   CpmRoiCollection* cpmRoiSIM = 0;
   if (cpmTowerTES || cpmTowerOvTES) {
     cpmRoiSIM = new CpmRoiCollection;
-    simulate(cpMap, ovMap, cpmRoiSIM);
+    if (mismatchCore || mismatchOverlap) {
+      simulate(cpMap, ovMap, cpmRoiSIM);
+    } else {
+      simulate(cpMap, cpmRoiSIM);
+    }
   }
   CpmRoiMap crSimMap;
   setupMap(cpmRoiSIM, crSimMap);
@@ -683,14 +689,15 @@ StatusCode CPMSimBSMon::procHistograms(bool isEndOfEventsBlock,
 
 //  Compare Trigger Towers and CPM Towers
 
-void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
+bool CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
                           const CpmTowerMap& cpMap, ErrorVector& errors,
 			  bool overlap)
 {
   if (m_debug) {
     msg(MSG::DEBUG) << "Compare Trigger Towers and CPM Towers" << endreq;
   }
-
+ 
+  bool mismatch = false;
   const int nCrates = 4;
   const int nCPMs   = 14;
   LVL1::CoordToHardware converter;
@@ -793,6 +800,7 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
                         : m_h_cpm_em_2d_etaPhi_tt_PpmEqCore;
       hist2 = m_h_cpm_2d_tt_PpmEqCpmFpga;
     } else if (ttEm != cpEm) {  // mis-match
+      mismatch = true;
       errors[loc+cpmBins] |= bitEm;
       if (ttEm && cpEm) {       // non-zero mis-match
         hist1 = (overlap) ? m_h_cpm_em_2d_etaPhi_tt_PpmNeOverlap
@@ -824,6 +832,7 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
                         : m_h_cpm_had_2d_etaPhi_tt_PpmEqCore;
       hist2 = m_h_cpm_2d_tt_PpmEqCpmFpga;
     } else if (ttHad != cpHad) {   // mis-match
+      mismatch = true;
       errors[loc+cpmBins] |= bitHad;
       if (ttHad && cpHad) {        // non-zero mis-match
         hist1 = (overlap) ? m_h_cpm_had_2d_etaPhi_tt_PpmNeOverlap
@@ -847,6 +856,8 @@ void CPMSimBSMon::compare(const TriggerTowerMap& ttMap,
     if (hist1) m_histTool->fillCPMEtaVsPhi(hist1, eta, phi);
     if (hist2) hist2->Fill(loc, loc2+1);
   }
+
+  return mismatch;
 }
 
 //  Compare Simulated RoIs with data
@@ -1561,6 +1572,23 @@ void CPMSimBSMon::simulate(const CpmTowerMap towers, const CpmTowerMap towersOv,
     delete intRois;
   }
   delete tempColl;
+}
+
+// Quicker version when overlap same as core
+
+void CPMSimBSMon::simulate(const CpmTowerMap towers, CpmRoiCollection* rois)
+{
+  if (m_debug) msg(MSG::DEBUG) << "Simulate CPM RoIs from CPM Towers" << endreq;
+
+  InternalRoiCollection* intRois = new InternalRoiCollection;
+  m_emTauTool->findRoIs(&towers, intRois);
+  InternalRoiCollection::iterator roiIter  = intRois->begin();
+  InternalRoiCollection::iterator roiIterE = intRois->end();
+  for (; roiIter != roiIterE; ++roiIter) {
+    LVL1::CPMRoI* roi = new LVL1::CPMRoI((*roiIter)->RoIWord());
+    rois->push_back(roi);
+  }
+  delete intRois;
 }
 
 void CPMSimBSMon::simulate(const CpmRoiCollection* rois,

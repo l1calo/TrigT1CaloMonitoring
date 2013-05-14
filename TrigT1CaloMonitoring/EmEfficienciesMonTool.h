@@ -230,7 +230,7 @@ private:
   bool isolatedEmObjectEF(double phi, double eta);    
 								        
   /// Get the raw values of the CaloCluster
-  std::vector<double> getRawClusterValuesFromCells(CaloCluster* cc);
+  void getRawClusterValuesFromCells(CaloCluster* cc, double& et, double& eta, double& phi);
 								                
   /// Analysis code for offline reconstructed electrons
   StatusCode analyseOfflineElectrons();
@@ -319,6 +319,12 @@ private:
   bool m_passed_EF_MultiJet_Trigger;
   bool m_passed_EF_egTau_Trigger;
   bool m_passed_EF_Trigger;
+  std::vector<int> m_wantedTriggers;
+  static const int s_L1_Jet_Trigger_mask       = 0x1;
+  static const int s_EF_Trigger_mask           = 0x2;
+  static const int s_EF_SingleJet_Trigger_mask = 0x4;
+  static const int s_EF_MultiJet_Trigger_mask  = 0x8;
+  static const int s_EF_egTau_Trigger_mask     = 0x10;
 
   // Python settable cuts  
   /// Only check EM thresholds in EmTauRoIs

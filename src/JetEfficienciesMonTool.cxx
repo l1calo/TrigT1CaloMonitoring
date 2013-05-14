@@ -87,13 +87,11 @@ JetEfficienciesMonTool::JetEfficienciesMonTool(const std::string & type,
 			m_numJetObjPassTrigger(0), 
 			m_numJetObjTotal(0),
 			m_passed_L1_EM_Trigger(false),
-			m_passed_L1_Jet_Trigger(false),
 			m_passed_EF_Trigger(false),
 			m_passed_EF_SingleJet_Trigger(false),
 			m_passed_EF_SingleEgamma_Trigger(false),
 			m_passed_EF_SingleEgamma_Trigger_HighestVH(false),
 			m_passed_EF_MultiJet_Trigger(false),
-			m_passed_EF_MultiEgamma_Trigger(false),
 			m_passed_EF_Tau_Trigger(false), 
 			m_passed_EF_MissingEnergy_Trigger(false),
 			m_firstEvent(true),
@@ -538,10 +536,10 @@ StatusCode JetEfficienciesMonTool::fillHistograms()
 
 	// Here we can use the trigger menu to decide if we want an event.
 	bool useEvent = false;
-	if (m_useTrigger == true) {
+	if (m_useTrigger) {
 		typedef std::vector<std::string>::iterator Itr_s;
 		for (Itr_s i = m_triggerStrings.begin(); i != m_triggerStrings.end(); ++i) {
-			if (m_trigger->isPassed(*i) == true) {
+			if (m_trigger->isPassed(*i)) {
 				useEvent = true;
 				if (debug) msg(MSG::DEBUG)<< "First requested trigger that fired is : "<< (*i) << " with prescale "<< m_trigger->getPrescale(*i);
 				break;
@@ -577,7 +575,7 @@ StatusCode JetEfficienciesMonTool::fillHistograms()
 		}
 	}
 
-	if (useEvent == true) {
+	if (useEvent) {
 		++m_numEvents;
 
 		sc = this->loadContainers();
@@ -692,13 +690,10 @@ bool JetEfficienciesMonTool::deltaMatch(double etaJet, double etaRoi, double dR,
 
 	double fabsEtaJet = fabs(etaJet); 
 	
-	bool etaJetPos = false;
-	if(etaJet >= 0.0) { etaJetPos = true; } else { etaJetPos = false; }
-	bool etaRoiPos = false;
-	if(etaRoi >= 0.0) { etaRoiPos = true; } else { etaRoiPos = false; }
+	bool etaJetPos = (etaJet >= 0.0);
+	bool etaRoiPos = (etaRoi >= 0.0);
 	
-	bool etaRoiSameSideMatch = false;
-	if(etaJetPos == etaRoiPos) { etaRoiSameSideMatch = true; } 
+	bool etaRoiSameSideMatch = (etaJetPos == etaRoiPos);
 	
 	if(fabsEtaJet < 2.899) { //within Tile&Hec
 		if(dR < m_goodHadDeltaRMatch_Cut) {
@@ -755,11 +750,11 @@ bool JetEfficienciesMonTool::correctJetQuality(const Jet* jet) {
   	    case 0: //"None"
         	    correctType = true; break;
             case 10: //"Jet Loose" 
-        	    correctType = (JetCaloQualityUtils::isGood(jet,false)!=0) ? true : false; break;
+        	    correctType = JetCaloQualityUtils::isGood(jet,false); break;
 	    case 20: //"Jet Medium"
-        	    correctType = (JetCaloQualityUtils::isGoodMedium(jet,false)!=0) ? true : false; break;
+        	    correctType = JetCaloQualityUtils::isGoodMedium(jet,false); break;
 	    case 30: //"Jet Tight"
-        	    correctType = (JetCaloQualityUtils::isGoodTight(jet,false)!=0) ? true : false; break;
+        	    correctType = JetCaloQualityUtils::isGoodTight(jet,false); break;
   	    default:
         	    correctType = false; break;
 	}
@@ -782,12 +777,8 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 	// Create variable to determine if selecting the right type of jets based on criteria in jO
 	bool correctType = false;
 
-	//bool roiValuesFilled = false;
-
 	//Cycle through all of the offline reconstructed jets
 	for (Itr_jets jetItr = m_offlineJets->begin(); jetItr != m_offlineJets->end(); ++jetItr) {
-		
-		//JetCollection::size_type jIdxVal = (jetItr - m_offlineJets->begin());
 		
 		//Keep track of eta, phi and Et as these will be used often
 		EtOJ = (*jetItr)->et() / CLHEP::GeV;
@@ -801,11 +792,11 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 
 		//Check that the trigger selection is not biased
 		bool unbiasedTrigger = false;
-		if (m_passed_EF_Trigger == true) {
-			if (m_passed_EF_SingleEgamma_Trigger == true) {
+		if (m_passed_EF_Trigger) {
+			if (m_passed_EF_SingleEgamma_Trigger) {
 				unbiasedTrigger = isolatedJetObjectEF(phiOJ, etaOJ);
 			} else {
-				if(altTrigger == true) {
+				if(altTrigger) {
 					return StatusCode::SUCCESS;
 				} else {
 					unbiasedTrigger = true;
@@ -818,7 +809,7 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 		}
 		
 		//If passed the trigger conditions then proceed to start analysis
-		if (unbiasedTrigger == true) {
+		if (unbiasedTrigger) {
 			
 			correctType = false;
 			m_numJetObjPassTrigger++;
@@ -862,19 +853,18 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 				bool isForward = false, bestIsForward = false;
 				
 				//Access the Jet RoIs
+				const std::vector<Jet_ROI>& jetROIs(m_lvl1RoIs->getJetROIs());
 				typedef std::vector<Jet_ROI>::const_iterator Itr_jetroi;
 
 				//Iterate over all of the Jet RoIs
-				for (Itr_jetroi roiItr = m_jetROIs.begin(); roiItr != m_jetROIs.end(); ++roiItr) {
+				Itr_jetroi roiItrE = jetROIs.end();
+				for (Itr_jetroi roiItr = jetROIs.begin(); roiItr != roiItrE; ++roiItr) {
 											
-					//std::vector<Jet_ROI>::size_type idxVal = (roiItr - m_jetROIs.begin());
-					
 					//Get useful values for the Jet RoI
 					etaROI = (*roiItr).getEta();
 					phiROI = (*roiItr).getPhi();
 					phiROI_L1C = l1caloPhi(phiROI);
-					if(fabs(etaROI) >= 3.2) { isForward = true; }
-					else { isForward = false; }
+					isForward = (fabs(etaROI) >= 3.2);
 					
 					//Calculate the difference in eta and phi between the jet and RoI
 					dEta = etaOJ - etaROI;
@@ -898,8 +888,6 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 						bestIsForward = isForward;
 					}						
 				}
-
-				//roiValuesFilled = true;
 
 				//Check to see if there was an RoI to match with an jet
 				if (dR != 1000) {
@@ -1023,22 +1011,25 @@ bool JetEfficienciesMonTool::isolatedJetObjectL1(double phi, double eta) {
 	double ET_Max = -10.0;
 	double etaROI = 0.0, phiROI = 0.0, ET_ROI = 0.0, hadCore_ROI = 0.0;
 
+	const std::vector<EmTau_ROI>& emTauROIs(m_lvl1RoIs->getEmTauROIs());
 	typedef std::vector<EmTau_ROI>::const_iterator Itr_emTauRoi;
 
 	//Cycle over the rois, get their properties and determine the distance from the object
-	for (Itr_emTauRoi roiItr = m_emTauROIs.begin(); roiItr != m_emTauROIs.end(); ++roiItr) {
+	Itr_emTauRoi roiItrE = emTauROIs.end();
+	for (Itr_emTauRoi roiItr = emTauROIs.begin(); roiItr != roiItrE; ++roiItr) {
 		bool emThresholdPassed = false;
-		if (m_useEmThresholdsOnly == true) {
-			std::vector<std::string> thrPassed = (*roiItr).getThresholdNames();
-			typedef std::vector<std::string>::iterator Itr_s;				
-			for (Itr_s i = thrPassed.begin(); i != thrPassed.end(); ++i) {					
+		if (m_useEmThresholdsOnly) {
+			const std::vector<std::string>& thrPassed((*roiItr).getThresholdNames());
+			typedef std::vector<std::string>::const_iterator Itr_s;				
+			Itr_s iE = thrPassed.end();
+			for (Itr_s i = thrPassed.begin(); i != iE; ++i) {					
 				if ((*i).find("EM") != std::string::npos) {
 					emThresholdPassed = true;						
 				}
 			}
 		}
 		
-		if(emThresholdPassed == true) {			
+		if(emThresholdPassed) {			
 			etaROI = (*roiItr).getEta();
 			phiROI = (*roiItr).getPhi();
 			ET_ROI = (*roiItr).getEMClus(); 	
@@ -1148,96 +1139,65 @@ StatusCode JetEfficienciesMonTool::triggerTowerAnalysis() {
 //---------------------------------------------------------------
 StatusCode JetEfficienciesMonTool::triggerChainAnalysis() {
 
-	// L1 Triggers
-	m_passed_L1_Jet_Trigger = false;
-	m_passed_L1_EM_Trigger = false;
-	// EF Triggers
-	m_passed_EF_Trigger = false;
-	m_passed_EF_SingleJet_Trigger = false;
-	m_passed_EF_MultiJet_Trigger = false;
-	m_passed_EF_SingleEgamma_Trigger = false;
-	m_passed_EF_SingleEgamma_Trigger_HighestVH = false;
-	m_passed_EF_MultiEgamma_Trigger = false;
-	m_passed_EF_Tau_Trigger = false;
-	m_passed_EF_MissingEnergy_Trigger = false;
-
 	std::string vhCheck;
 	int maxTV = 0;
 	
 	// Get the list of all triggers but do this only once in the event loop
 	if (m_configuredChains.size() == 0) {
 		m_configuredChains = m_trigger->getListOfTriggers();
-	}
-
-	//std::cout << "Trigger Analysis: New Event ---------------------------------" << std::endl;
-
-	//Fill a count in the histogram for every event
-	for (std::vector<std::string>::const_iterator it = m_configuredChains.begin(); it != m_configuredChains.end(); ++it) {
+		m_wantedTriggers.resize(m_configuredChains.size());
+		int i = 0;
+		std::vector<std::string>::const_iterator itE = m_configuredChains.end();
+		for (std::vector<std::string>::const_iterator it =
+		      m_configuredChains.begin(); it != itE; ++it, ++i) {
 		
-		//Check that the trigger was passed
-		if (m_trigger->isPassed(*it)) {
-			
-			//First ask if the event passed the L1 jet trigger items 
-			if ((*it).find("L1_J") != std::string::npos && (*it).find("L1_JE") == std::string::npos) {
-				m_passed_L1_Jet_Trigger = true;
-				//std::cout << "Trigger Analysis: " << *it << std::endl;
-			}
-			//First ask if the event passed the L1 em trigger items as a quick check 
+			// L1 em trigger items
 			if ((*it).find("L1_EM") != std::string::npos && (*it).find("XS") == std::string::npos && (*it).find("XE") == std::string::npos) {
-				m_passed_L1_EM_Trigger = true;
-				//std::cout << "Trigger Analysis: " << *it << std::endl;
+				m_wantedTriggers[i] |= s_L1_EM_Trigger_mask;
 			}			
 			
-			//Then ask if the event passed the EF trigger chains and determine which ones they were			
+			// EF trigger chains
 			if ((*it).find("EF") != std::string::npos) {				
+				m_wantedTriggers[i] |= s_EF_Trigger_mask;
 				
-				//Print out the trigger name
-				m_passed_EF_Trigger = true;				
-				//std::cout << "Trigger Analysis: " << *it << std::endl;
-				
-				//Find Event Filter chains corresponding to single jet triggers (keeping it simple)
+				//Event Filter chains corresponding to single jet triggers (keeping it simple)
 				if (((*it).find("EF_j") != std::string::npos && (*it).find("EF_je") == std::string::npos) ||
 					 (*it).find("EF_fj") != std::string::npos ||
 					 ((*it).find("EF_L1J") != std::string::npos && (*it).find("EMPTY") == std::string::npos) ||
 					 (*it).find("EF_l2j") != std::string::npos ||
 					 (*it).find("EF_b")	!= std::string::npos) {
-					m_passed_EF_SingleJet_Trigger = true;
+					m_wantedTriggers[i] |= s_EF_SingleJet_Trigger_mask;
 				}
-				//Find Event Filter chains corresponding to multiple jet triggers (worry about it later)
+				//Event Filter chains corresponding to multiple jet triggers (worry about it later)
 				if ((*it).find("EF_2j") != std::string::npos || 
 					(*it).find("EF_4j") != std::string::npos) {
-					m_passed_EF_MultiJet_Trigger = true;
+					m_wantedTriggers[i] |= s_EF_MultiJet_Trigger_mask;
 				}
-				//Find Event Filter chains corresponding to single electrons or photons
+				//Event Filter chains corresponding to single electrons or photons
 				if (((*it).find("EF_e") != std::string::npos && (*it).find("EF_eb") == std::string::npos && (*it).find("EF_j") == std::string::npos
 			    		 && (*it).find("_EF_xe") == std::string::npos && (*it).find("_EF_xs") == std::string::npos) ||
 					(*it).find("EF_g") != std::string::npos) {					
-					m_passed_EF_SingleEgamma_Trigger = true;
+					m_wantedTriggers[i] |= s_EF_SingleEgamma_Trigger_mask;
 					vhCheck = (*it).substr(4, 6);					
 					int threshVal = atoi(vhCheck.c_str());
 					if(threshVal > maxTV) {
 						maxTV = threshVal;
-						m_passed_EF_SingleEgamma_Trigger_HighestVH = (vhCheck.find("vh") != std::string::npos) ? true : false;
+						if (vhCheck.find("vh") != std::string::npos) {
+							m_wantedTriggers[i] |= s_EF_SingleEgamma_Trigger_HighestVH_mask;
+						}
 					}
 				}
-				//Find Event Filter chains corresponding to multiple electrons or photons
-				if ((*it).find("EF_2e") != std::string::npos || 
-					(*it).find("EF_4e")	!= std::string::npos ||
-					(*it).find("EF_2g") != std::string::npos || 
-					(*it).find("EF_4g")	!= std::string::npos) {
-					m_passed_EF_MultiEgamma_Trigger = true;
-				}
-				//Find Event Filter chains corresponding to taus
+				//Event Filter chains corresponding to taus
 				if ((*it).find("EF_tau") != std::string::npos || 
 					(*it).find("EF_2tau") != std::string::npos || 
 					(*it).find("EF_4tau") != std::string::npos) {
-					m_passed_EF_Tau_Trigger = true;
+					m_wantedTriggers[i] |= s_EF_Tau_Trigger_mask;
 				}
-				//Find Event Filter chains corresponding to missing energy
+				//Event Filter chains corresponding to missing energy
 				//Missing energy could come from electron so it may bias results 
 				if ((*it).find("EF_xe") != std::string::npos || 
 					(*it).find("EF_xs") != std::string::npos) {
-					m_passed_EF_MissingEnergy_Trigger = true;
+					m_wantedTriggers[i] |= s_EF_MissingEnergy_Trigger_mask;
 				}
 				
 				//Any event filter chains which do not pass any of these checks
@@ -1245,6 +1205,31 @@ StatusCode JetEfficienciesMonTool::triggerChainAnalysis() {
 			}
 		}
 	}
+
+	//msg(MSG::DEBUG) << "Trigger Analysis: New Event" << endreq;
+
+	int trigSet = 0;
+	int i = 0;
+	std::vector<std::string>::const_iterator itE = m_configuredChains.end();
+	for (std::vector<std::string>::const_iterator it =
+			m_configuredChains.begin(); it != itE; ++it, ++i) {
+
+		//Check that the trigger was passed
+		const int trigMap = m_wantedTriggers[i];
+		if (((trigMap^trigSet)&trigMap) && m_trigger->isPassed(*it)) { 
+			trigSet |= trigMap;
+		}
+	}
+	// L1 Triggers
+	m_passed_L1_EM_Trigger                     = (trigSet & s_L1_EM_Trigger_mask);
+	// EF Triggers
+	m_passed_EF_Trigger                        = (trigSet & s_EF_Trigger_mask);
+	m_passed_EF_SingleJet_Trigger              = (trigSet & s_EF_SingleJet_Trigger_mask);
+	m_passed_EF_MultiJet_Trigger               = (trigSet & s_EF_MultiJet_Trigger_mask);
+	m_passed_EF_SingleEgamma_Trigger           = (trigSet & s_EF_SingleEgamma_Trigger_mask);
+	m_passed_EF_SingleEgamma_Trigger_HighestVH = (trigSet & s_EF_SingleEgamma_Trigger_HighestVH_mask);
+	m_passed_EF_Tau_Trigger                    = (trigSet & s_EF_Tau_Trigger_mask);
+	m_passed_EF_MissingEnergy_Trigger          = (trigSet & s_EF_MissingEnergy_Trigger_mask);
 
 	return StatusCode::SUCCESS;
 }
@@ -1298,10 +1283,6 @@ StatusCode JetEfficienciesMonTool::loadContainers() {
 		msg(MSG::WARNING) << "Failed to load LVL1 RoIs" << endreq;
 		return sc;
 	}
-	m_emTauROIs.clear();
-	m_jetROIs.clear();
-	m_emTauROIs = m_lvl1RoIs->getEmTauROIs();
-	m_jetROIs = m_lvl1RoIs->getJetROIs();
 
 	m_offlineJets = 0;
 	sc = evtStore()->retrieve(m_offlineJets, m_offlineJetsLocation);

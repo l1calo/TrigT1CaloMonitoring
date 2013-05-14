@@ -226,7 +226,7 @@ private:
   typedef std::map<int, LVL1::CMMEtSums*>    CmmEtSumsMap;
   
   /// Compare Simulated JetElements with data
-  void  compare(const JetElementMap& jeSimMap, const JetElementMap& jeMap,
+  bool  compare(const JetElementMap& jeSimMap, const JetElementMap& jeMap,
                       ErrorVector& errors, bool overlap);
   /// Compare Simulated RoIs with data
   void  compare(const JemRoiMap& roiSimMap, const JemRoiMap& roiMap,
@@ -285,6 +285,9 @@ private:
   /// Simulate JEM RoIs from Jet Elements
   void  simulate(const JetElementCollection* elements,
                  const JetElementCollection* elementsOv,
+		       JemRoiCollection* rois);
+  /// Simulate JEM RoIs from Jet Elements quick version
+  void  simulate(const JetElementCollection* elements,
 		       JemRoiCollection* rois);
   /// Simulate JEM Hits from JEM RoIs
   void  simulate(const JemRoiCollection* rois, JemHitsCollection* hits);

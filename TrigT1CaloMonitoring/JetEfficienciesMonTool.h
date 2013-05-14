@@ -290,10 +290,6 @@ private:
   /// For primary vertices
   const VxContainer* m_primaryVertex;
 
-  // RoI vectors from LVL1_ROI
-  std::vector<EmTau_ROI> m_emTauROIs;
-  std::vector<Jet_ROI> m_jetROIs;
-
   // Tile Calorimeter quality map
   typedef std::map<Identifier, uint16_t> IdTileQualityMapType;
   IdTileQualityMapType m_idTileQualityMap;
@@ -312,15 +308,22 @@ private:
   
   // Variables for L1 & EF trigger chains 
   bool m_passed_L1_EM_Trigger;
-  bool m_passed_L1_Jet_Trigger;
   bool m_passed_EF_Trigger;
   bool m_passed_EF_SingleJet_Trigger;
   bool m_passed_EF_SingleEgamma_Trigger;
   bool m_passed_EF_SingleEgamma_Trigger_HighestVH;
   bool m_passed_EF_MultiJet_Trigger;
-  bool m_passed_EF_MultiEgamma_Trigger;
   bool m_passed_EF_Tau_Trigger;
   bool m_passed_EF_MissingEnergy_Trigger;
+  std::vector<int> m_wantedTriggers;
+  static const int s_L1_EM_Trigger_mask                     = 0x1;
+  static const int s_EF_Trigger_mask                        = 0x2;
+  static const int s_EF_SingleJet_Trigger_mask              = 0x4;
+  static const int s_EF_MultiJet_Trigger_mask               = 0x8;
+  static const int s_EF_SingleEgamma_Trigger_mask           = 0x10;
+  static const int s_EF_SingleEgamma_Trigger_HighestVH_mask = 0x20;
+  static const int s_EF_Tau_Trigger_mask                    = 0x40;
+  static const int s_EF_MissingEnergy_Trigger_mask          = 0x80;
 
   // Python settable cuts  
   /// Only use EM thresholds for isolation test
