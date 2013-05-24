@@ -276,36 +276,43 @@ not supported by Light Weight Histograms.
   for all of them.  The overall column estimates the contribution of each
   tool for all streams (ES1 and BLK) taking into account numbers of events
   and which streams the tools run in.  Run 215643 and release 17.2.10.2
+  together with TrigT1CaloByteStream-00-08-15, TrigT1CaloMonitoring-00-14-03,
+  TrigT1CaloMonitoringTools-00-02-01 and TrigT1Monitoring-00-05-00
   were used for this.
 
   <table>
-  <tr><th> Manager            </th><th> Tool(s)                        </th><th> % cpu <br> express      </th><th> % cpu <br> overall      </th></tr>
-  <tr><td> L1CaloMonManager0A </td><td> Bytestream Unpacking (1)       </td><td><center> 38.44  </center></td><td><center> 53.92  </center></td></tr>
-  <tr><td> L1CaloMonManager0B </td><td> L1CaloMonitoringCaloTool (2)   </td><td><center> 14.39  </center></td><td><center>  6.75  </center></td></tr>
-  <tr><td> L1CaloMonManager1A </td><td> PPrStabilityMon /FineTime      </td><td><center>  4.41  </center></td><td><center>  0.17  </center></td></tr>
-  <tr><td> L1CaloMonManager1B </td><td> PPrStabilityMon /Pedestal      </td><td><center>  3.99  </center></td><td><center>  0.16  </center></td></tr>
-  <tr><td> L1CaloMonManager1C </td><td> PPrStabilityMon /EtCorrelation </td><td><center>  0.69  </center></td><td><center>  0.03  </center></td></tr>
-  <tr><td> L1CaloMonManager2  </td><td> PPrMon                         </td><td><center>  0.98  </center></td><td><center>  1.38  </center></td></tr>
-  <tr><td> L1CaloMonManager3  </td><td> PPMSimBSMon                    </td><td><center>  3.83  </center></td><td><center>  5.37  </center></td></tr>
-  <tr><td> L1CaloMonManager4  </td><td> PPrSpareMon                    </td><td><center>  0.18  </center></td><td><center>  0.26  </center></td></tr>
-  <tr><td> L1CaloMonManager5  </td><td> JEMMon                         </td><td><center>  0.20  </center></td><td><center>  0.28  </center></td></tr>
-  <tr><td> L1CaloMonManager6  </td><td> CMMMon                         </td><td><center>  0.05  </center></td><td><center>  0.07  </center></td></tr>
-  <tr><td> L1CaloMonManager7  </td><td> JEPSimBSMon                    </td><td><center>  9.86  </center></td><td><center> 13.83  </center></td></tr>
-  <tr><td> L1CaloMonManager8  </td><td> TrigT1CaloCpmMonTool           </td><td><center>  0.28  </center></td><td><center>  0.39  </center></td></tr>
-  <tr><td> L1CaloMonManager9  </td><td> CPMSimBSMon                    </td><td><center>  3.65  </center></td><td><center>  5.12  </center></td></tr>
-  <tr><td> L1CaloMonManagerA  </td><td> TrigT1CaloRodMonTool           </td><td><center>  0.06  </center></td><td><center>  0.08  </center></td></tr>
-  <tr><td> L1CaloMonManagerB  </td><td> TrigT1CaloGlobalMonTool        </td><td><center>  0.10  </center></td><td><center>  0.14  </center></td></tr>
-  <tr><td> L1CaloMonManagerC  </td><td> EmEfficienciesMonTool          </td><td><center>  6.88  </center></td><td><center>  5.36  </center></td></tr>
-  <tr><td> L1CaloMonManagerD  </td><td> JetEfficienciesMonTool         </td><td><center>  4.50  </center></td><td><center>  2.97  </center></td></tr>
-  <tr><td> L1MonManager0 (3)  </td><td> CalorimeterL1CaloMon (4)       </td><td><center>  7.30  </center></td><td><center>  3.43  </center></td></tr>
-  <tr><td> L1MonManager1 (3)  </td><td> L1CaloCTPMon                   </td><td><center>  0.17  </center></td><td><center>  0.23  </center></td></tr>
-  <tr><td> L1MonManager2 (3)  </td><td> L1CaloLevel2Mon                </td><td><center>  0.05  </center></td><td><center>  0.07  </center></td></tr>
+  <tr><th> Manager             </th><th> Tool(s)                        </th><th> % cpu <br> express    </th><th> % cpu <br> overall    </th></tr>
+  <tr><td> L1CaloMonManager0A1 </td><td> Bytestream Unpacking PPM (1)   </td><td><center>  7.0 </center></td><td><center> 11.9 </center></td></tr>
+  <tr><td> L1CaloMonManager0A2 </td><td> Bytestream Unpacking CPM (1)   </td><td><center>  5.5 </center></td><td><center>  9.4 </center></td></tr>
+  <tr><td> L1CaloMonManager0A3 </td><td> Bytestream Unpacking JEM (1)   </td><td><center>  1.9 </center></td><td><center>  3.2 </center></td></tr>
+  <tr><td> L1CaloMonManager0A4 </td><td> Bytestream Unpacking ROD (1)   </td><td><center>  0.1 </center></td><td><center>  0.2 </center></td></tr>
+  <tr><td> L1CaloMonManager0B  </td><td> L1CaloMonitoringCaloTool (2)   </td><td><center> 24.4 </center></td><td><center> 14.0 </center></td></tr>
+  <tr><td> L1CaloMonManager1A  </td><td> PPrStabilityMon /FineTime      </td><td><center>  7.1 </center></td><td><center>  0.3 </center></td></tr>
+  <tr><td> L1CaloMonManager1B  </td><td> PPrStabilityMon /Pedestal      </td><td><center>  6.5 </center></td><td><center>  0.3 </center></td></tr>
+  <tr><td> L1CaloMonManager1C  </td><td> PPrStabilityMon /EtCorrelation </td><td><center>  1.1 </center></td><td><center>  0.1 </center></td></tr>
+  <tr><td> L1CaloMonManager2   </td><td> PPrMon                         </td><td><center>  1.5 </center></td><td><center>  2.6 </center></td></tr>
+  <tr><td> L1CaloMonManager3   </td><td> PPMSimBSMon                    </td><td><center>  6.0 </center></td><td><center> 10.2 </center></td></tr>
+  <tr><td> L1CaloMonManager4   </td><td> PPrSpareMon                    </td><td><center>  0.3 </center></td><td><center>  0.5 </center></td></tr>
+  <tr><td> L1CaloMonManager5   </td><td> JEMMon                         </td><td><center>  0.3 </center></td><td><center>  0.5 </center></td></tr>
+  <tr><td> L1CaloMonManager6   </td><td> CMMMon                         </td><td><center>  0.1 </center></td><td><center>  0.2 </center></td></tr>
+  <tr><td> L1CaloMonManager7   </td><td> JEPSimBSMon                    </td><td><center> 13.6 </center></td><td><center> 23.2 </center></td></tr>
+  <tr><td> L1CaloMonManager8   </td><td> TrigT1CaloCpmMonTool           </td><td><center>  0.5 </center></td><td><center>  0.8 </center></td></tr>
+  <tr><td> L1CaloMonManager9   </td><td> CPMSimBSMon                    </td><td><center>  4.7 </center></td><td><center>  8.1 </center></td></tr>
+  <tr><td> L1CaloMonManagerA   </td><td> TrigT1CaloRodMonTool           </td><td><center>  0.1 </center></td><td><center>  0.2 </center></td></tr>
+  <tr><td> L1CaloMonManagerB   </td><td> TrigT1CaloGlobalMonTool        </td><td><center>  0.1 </center></td><td><center>  0.2 </center></td></tr>
+  <tr><td> L1CaloMonManagerC   </td><td> EmEfficienciesMonTool          </td><td><center>  5.0 </center></td><td><center>  4.8 </center></td></tr>
+  <tr><td> L1CaloMonManagerD   </td><td> JetEfficienciesMonTool         </td><td><center>  3.7 </center></td><td><center>  3.0 </center></td></tr>
+  <tr><td> L1MonManager0A (3)  </td><td> CalorimeterL1CaloMon           </td><td><center>  9.9 </center></td><td><center>  5.7 </center></td></tr>
+  <tr><td> L1MonManager0B (3)  </td><td> L1CaloHVScalesMon (4)          </td><td><center>  0.3 </center></td><td><center>  0.2 </center></td></tr>
+  <tr><td> L1MonManager0C (3)  </td><td> L1CaloPMTScoresMon (4)         </td><td><center>  0.0 </center></td><td><center>  0.0 </center></td></tr>
+  <tr><td> L1MonManager1 (3)   </td><td> L1CaloCTPMon                   </td><td><center>  0.2 </center></td><td><center>  0.4 </center></td></tr>
+  <tr><td> L1MonManager2 (3)   </td><td> L1CaloLevel2Mon                </td><td><center>  0.1 </center></td><td><center>  0.2 </center></td></tr>
   </table>
 
   (1) Needs to run before any other algorithms that may be reading our data, eg RoIBResultToAOD.<br>
   (2) This tool forms CaloCell Et sums and quality per TriggerTower for the use of other tools.<br>
   (3) TrigT1Monitoring.<br>
-  (4) Before it was split into three tools.
+  (4) Runs first event of each job only.
   
   To get the cpu times from the job log do:
 
@@ -321,16 +328,17 @@ not supported by Light Weight Histograms.
 
 int main()
 {
-  int ntools = 20;
+  int ntools = 25;
   // relative cpu times for each tool in express stream (from job log)
-  float timesE[] = {21.8,8.16,2.5,2.26,0.392,0.556,2.17,0.104,0.112,0.029,
-                    5.59,0.159,2.07,0.034,0.057,3.9,2.55,4.14,0.095,0.027};
+  float timesE[] = {2.09,1.64,0.554,0.042,7.31,2.13,1.96,0.317,0.45,1.79,
+                    0.079,0.09,0.028,4.06,0.138,1.42,0.029,0.034,1.51,1.11,
+		    2.97,0.082,0.006,0.067,0.032};
   // flag which tools run in each stream (as in jobOptions)
-  int express[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
-  int jetet[]   = {1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1};
-  int egamma[]  = {1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,1,0,1,1};
-  int muons[]   = {1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1};
-  int other[]   = {1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1};
+  int express[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+  int jetet[]   = {1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1};
+  int egamma[]  = {1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,1,0,0,0,1,1};
+  int muons[]   = {1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1};
+  int other[]   = {1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1};
   // relative number of events per stream
   // (from plots L1Calo/Overview/l1calo_1d_NumberOfEvents)
   float events[] = {0.192, 2.11, 1.53, 1.52, 1.53};
@@ -350,12 +358,16 @@ int main()
     percE = 100*timesE[i]/totalE;
     percO = 100*timesO[i]/totalO;
     std::cout << std::setiosflags(std::ios::fixed | std::ios::showpoint)
-              << std::setprecision(2)
+              << std::setprecision(1)
               << std::setw(6) << percE
               << std::setw(9) << percO << std::endl;
   }
 }
 @endcode
+
+  Times are for 500 events.  Times for L1CaloHVScalesMon and L1CaloPMTScoresMon,
+  which only run on the first event of each job, are divided by 4 assuming an
+  average job size of ~2000 events.
 
 */
 

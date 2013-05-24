@@ -33,7 +33,10 @@ if l1caloRawMon:
     #================================= Monitoring configuration ======================
     from AthenaCommon.AlgSequence import AlgSequence
     topSequence = AlgSequence()
-    L1CaloMan0A = AthenaMonManager( "L1CaloMonManager0A" )
+    L1CaloMan0A1 = AthenaMonManager( "L1CaloMonManager0A1" )
+    L1CaloMan0A2 = AthenaMonManager( "L1CaloMonManager0A2" )
+    L1CaloMan0A3 = AthenaMonManager( "L1CaloMonManager0A3" )
+    L1CaloMan0A4 = AthenaMonManager( "L1CaloMonManager0A4" )
     L1CaloMan0B = AthenaMonManager( "L1CaloMonManager0B" )
     L1CaloMan1A = AthenaMonManager( "L1CaloMonManager1A" )
     L1CaloMan1B = AthenaMonManager( "L1CaloMonManager1B" )
@@ -60,12 +63,34 @@ if l1caloRawMon:
     # Make sure our data is read in before our monitoring tools run so cpu accounted separately
     # (NB. other sub-detectors code may read some of it first and so get the cpu hit!)
     from TrigT1CaloMonitoring.TrigT1CaloMonitoringConf import TrigT1CaloBSMon
-    L1TrigT1CaloBSMonToolA = TrigT1CaloBSMon(
-        name = "L1TrigT1CaloBSMonToolA",
-	LoadL1Calo = True
+    # PPM
+    L1TrigT1CaloBSMonToolA1 = TrigT1CaloBSMon(
+        name = "L1TrigT1CaloBSMonToolA1",
+        LoadL1CaloPPM = True
                 )
-    ToolSvc += L1TrigT1CaloBSMonToolA
-    L1CaloMan0A.AthenaMonTools += [ L1TrigT1CaloBSMonToolA ]
+    ToolSvc += L1TrigT1CaloBSMonToolA1
+    L1CaloMan0A1.AthenaMonTools += [ L1TrigT1CaloBSMonToolA1 ]
+    # CPM
+    L1TrigT1CaloBSMonToolA2 = TrigT1CaloBSMon(
+        name = "L1TrigT1CaloBSMonToolA2",
+        LoadL1CaloCPM = True
+                )
+    ToolSvc += L1TrigT1CaloBSMonToolA2
+    L1CaloMan0A2.AthenaMonTools += [ L1TrigT1CaloBSMonToolA2 ]
+    # JEM
+    L1TrigT1CaloBSMonToolA3 = TrigT1CaloBSMon(
+        name = "L1TrigT1CaloBSMonToolA3",
+        LoadL1CaloJEM = True
+                )
+    ToolSvc += L1TrigT1CaloBSMonToolA3
+    L1CaloMan0A3.AthenaMonTools += [ L1TrigT1CaloBSMonToolA3 ]
+    # ROD headers
+    L1TrigT1CaloBSMonToolA4 = TrigT1CaloBSMon(
+        name = "L1TrigT1CaloBSMonToolA4",
+        LoadL1CaloROD = True
+                )
+    ToolSvc += L1TrigT1CaloBSMonToolA4
+    L1CaloMan0A4.AthenaMonTools += [ L1TrigT1CaloBSMonToolA4 ]
     
     include("CaloConditions/CaloConditions_jobOptions.py")
     if Offline:
@@ -387,17 +412,32 @@ if l1caloRawMon:
     
     #=================================================================================
     # FileKey must match that given to THistSvc
-    L1CaloMan0A.FileKey             = DQMonFlags.monManFileKey()
-    L1CaloMan0A.Environment         = DQMonFlags.monManEnvironment()
-    L1CaloMan0A.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
-    L1CaloMan0A.DataType            = DQMonFlags.monManDataType()
-    # Make sure we run this before RoIBResultToAOD as it also accesses
+    L1CaloMan0A1.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan0A1.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan0A1.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan0A1.DataType            = DQMonFlags.monManDataType()
+    L1CaloMan0A2.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan0A2.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan0A2.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan0A2.DataType            = DQMonFlags.monManDataType()
+    L1CaloMan0A3.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan0A3.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan0A3.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan0A3.DataType            = DQMonFlags.monManDataType()
+    L1CaloMan0A4.FileKey             = DQMonFlags.monManFileKey()
+    L1CaloMan0A4.Environment         = DQMonFlags.monManEnvironment()
+    L1CaloMan0A4.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
+    L1CaloMan0A4.DataType            = DQMonFlags.monManDataType()
+    # Make sure we run these before RoIBResultToAOD as it also accesses
     # TriggerTowers and JetElements
     index = 0
     for alg in topSequence: 
         if alg.getName() == 'RoIBResultToAOD': break
         index += 1
-    topSequence.insert(index, L1CaloMan0A)
+    topSequence.insert(index,   L1CaloMan0A1)
+    topSequence.insert(index+1, L1CaloMan0A2)
+    topSequence.insert(index+2, L1CaloMan0A3)
+    topSequence.insert(index+3, L1CaloMan0A4)
     L1CaloMan0B.FileKey             = DQMonFlags.monManFileKey()
     L1CaloMan0B.Environment         = DQMonFlags.monManEnvironment()
     L1CaloMan0B.ManualDataTypeSetup = DQMonFlags.monManManualDataTypeSetup()
