@@ -184,29 +184,51 @@ StatusCode PPrStabilityMon::fillHistograms()
 		
         if (m_doFineTimeMonitoring) {
 	      
-	    //Set the reference and calibration values for the fine time, they are stored per cool ID in a data base
-	    std::pair<double, double> emRef = m_ttTool->refValues(emCoolChannelID);
-	    std::pair<double, double> hadRef = m_ttTool->refValues(hadCoolChannelID);
-	    
-	    double emReference = emRef.first;
-	    double emCalFactor = emRef.second;
-	    
-	    double hadReference = hadRef.first;
-	    double hadCalFactor = hadRef.second;   
+            // Need signal
+	    int emPeak  = (*TriggerTowerIterator)->emADCPeak();
+	    int hadPeak = (*TriggerTowerIterator)->hadADCPeak();
+	    unsigned int emPeakVal  = (*TriggerTowerIterator)->emADC()[emPeak];
+	    unsigned int hadPeakVal = (*TriggerTowerIterator)->hadADC()[hadPeak];
+	    if (emPeakVal > m_ppmADCMinValue || hadPeakVal > m_ppmADCMinValue) {
 
-	    m_fineTimePlotManager->SetEmReferenceValue(emReference);
-	    m_fineTimePlotManager->SetEmCalibrationFactor(emCalFactor);
+	        //Set the reference and calibration values for the fine time, they are stored per cool ID in a data base
+	        if (emPeakVal > m_ppmADCMinValue) {
+	            std::pair<double, double> emRef = m_ttTool->refValues(emCoolChannelID);
+	            double emReference = emRef.first;
+	            double emCalFactor = emRef.second;
+
+	            m_fineTimePlotManager->SetEmReferenceValue(emReference);
+	            m_fineTimePlotManager->SetEmCalibrationFactor(emCalFactor);
+	        }
+	        if (hadPeakVal > m_ppmADCMinValue) {
+	            std::pair<double, double> hadRef = m_ttTool->refValues(hadCoolChannelID);
+	            double hadReference = hadRef.first;
+	            double hadCalFactor = hadRef.second;   
     
-	    m_fineTimePlotManager->SetHadReferenceValue(hadReference);
-	    m_fineTimePlotManager->SetHadCalibrationFactor(hadCalFactor);
+	            m_fineTimePlotManager->SetHadReferenceValue(hadReference);
+	            m_fineTimePlotManager->SetHadCalibrationFactor(hadCalFactor);
+	        }
 	    
-	    m_fineTimePlotManager->Analyze(m_evtInfo, *TriggerTowerIterator,emDead,hadDead);
+	        m_fineTimePlotManager->Analyze(m_evtInfo, *TriggerTowerIterator,emDead,hadDead);
+	    }
 	}
+
+	const int emEt  = (*TriggerTowerIterator)->emEnergy();
+	const int hadEt = (*TriggerTowerIterator)->hadEnergy();
+
 	if (m_doPedestalMonitoring) {
-	    m_pedestalPlotManager->Analyze(m_evtInfo, *TriggerTowerIterator,emDead,hadDead);
+
+	    // Need no signal
+	    if (emEt == 0 || hadEt == 0) {
+	        m_pedestalPlotManager->Analyze(m_evtInfo, *TriggerTowerIterator,emDead,hadDead);
+	    }
 	}
 	if (m_doEtCorrelationMonitoring) {
-	    m_etCorrelationPlotManager->Analyze(m_evtInfo, *TriggerTowerIterator,emDead,hadDead);
+
+	    // Need signal
+	    if (emEt > m_EtMinForEtCorrelation || hadEt > m_EtMinForEtCorrelation) {
+	        m_etCorrelationPlotManager->Analyze(m_evtInfo, *TriggerTowerIterator,emDead,hadDead);
+	    }
 	}
     }
     
