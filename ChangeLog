@@ -1,3 +1,7 @@
+2013-06-03  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-14-06
+        * Update mainpage doc.
+
 2013-05-31  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-14-05
         * Mods to reduce cpu time.
