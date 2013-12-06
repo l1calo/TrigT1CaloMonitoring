@@ -192,8 +192,7 @@ StatusCode CPMSimBSMon::finalize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
-                                       bool isNewLumiBlock, bool isNewRun)
+StatusCode CPMSimBSMon::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
@@ -206,23 +205,24 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
-  if ( isNewEventsBlock || isNewLumiBlock ) { }
+  if ( newLumiBlock ) { }
 
-  if( isNewRun ) {
+  if ( newRun ) {
 
+  MgmtAttr_t attr = ATTRIB_UNMANAGED;
   std::string dir1(m_rootDir + "/CPM/Errors/Transmission_Simulation");
-  MonGroup monShift( this, dir1, shift, run );
-  MonGroup monExpert( this, dir1, expert, run );
-  MonGroup monCPMin( this, dir1 + "/PPM2CPMTowers", expert, run );
-  MonGroup monRoIs( this, dir1 + "/Towers2RoIs", expert, run );
-  MonGroup monCPMout( this, dir1 + "/RoIs2Hits", expert, run);
-  MonGroup monEvent1( this, dir1 + "/MismatchEventNumbers", expert, run, "",
-                                                            "eventSample" );
+  MonGroup monShift( this, dir1, run, attr );
+  MonGroup monExpert( this, dir1, run, attr );
+  MonGroup monCPMin( this, dir1 + "/PPM2CPMTowers", run, attr );
+  MonGroup monRoIs( this, dir1 + "/Towers2RoIs", run, attr );
+  MonGroup monCPMout( this, dir1 + "/RoIs2Hits", run, attr );
+  MonGroup monEvent1( this, dir1 + "/MismatchEventNumbers", run,
+                                      attr, "", "eventSample" );
   std::string dir2(m_rootDir + "/CPM_CMM/Errors/Transmission_Simulation");
-  MonGroup monCMMin( this, dir2 + "/CPM2CMMHits", expert, run );
-  MonGroup monCMMout( this, dir2 + "/Hits2Sums", expert, run );
-  MonGroup monEvent2( this, dir2 + "/MismatchEventNumbers", expert, run, "",
-                                                            "eventSample" );
+  MonGroup monCMMin( this, dir2 + "/CPM2CMMHits", run, attr );
+  MonGroup monCMMout( this, dir2 + "/Hits2Sums", run, attr );
+  MonGroup monEvent2( this, dir2 + "/MismatchEventNumbers", run,
+                                      attr, "", "eventSample" );
 
   // CPMTowers
 
@@ -437,7 +437,7 @@ StatusCode CPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_histTool->unsetMonGroup();
   m_histBooked = true;
 
-  } // end if (isNewRun ...
+  } // end if (newRun ...
 
   msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
   
@@ -451,7 +451,7 @@ StatusCode CPMSimBSMon::fillHistograms()
   if (m_debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
   if (!m_histBooked) {
-    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    if (m_debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
     return StatusCode::SUCCESS;
   }
   
@@ -675,13 +675,12 @@ StatusCode CPMSimBSMon::fillHistograms()
 }
 
 /*---------------------------------------------------------*/
-StatusCode CPMSimBSMon::procHistograms(bool isEndOfEventsBlock,
-                                  bool isEndOfLumiBlock, bool isEndOfRun)
+StatusCode CPMSimBSMon::procHistograms()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
-  if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
+  if (endOfLumiBlock || endOfRun) {
   }
 
   return StatusCode::SUCCESS;

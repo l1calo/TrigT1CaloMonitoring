@@ -146,7 +146,7 @@ class PPrStabilityMon: public ManagedMonitorToolBase
   virtual StatusCode initialize();
   virtual StatusCode finalize();
   virtual StatusCode fillHistograms();
-  virtual StatusCode procHistograms(bool isEndofEventsBlock, bool isEndofLumiBlock, bool isEndofRun);
+  virtual StatusCode procHistograms();
 
 private:
   /// Cut on ADC minimum value, used for fine time monitoring

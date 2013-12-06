@@ -157,8 +157,7 @@ StatusCode PPrMon::initialize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
-                                                          bool isNewRun )
+StatusCode PPrMon::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
   if (msgLvl(MSG::DEBUG)) msg(MSG::DEBUG) << "in PPrMon::bookHistograms" << endreq;
@@ -171,19 +170,19 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
-  if ( isNewEventsBlock|| isNewLumiBlock) { }
+  MgmtAttr_t attr = ATTRIB_UNMANAGED;
 
-  if ( isNewRun ) {
+  if ( newRun ) {
 
-    MonGroup TT_HitMaps(this, m_PathInRootFile+"/LUT/EtaPhiMaps", shift, run);
-    MonGroup TT_ADC(this, m_PathInRootFile+"/ADC/EtaPhiMaps", shift, run);
-    MonGroup TT_ADCSlices(this, m_PathInRootFile+"/ADC/Timeslices", shift, run);
+    MonGroup TT_HitMaps(this, m_PathInRootFile+"/LUT/EtaPhiMaps", run, attr);
+    MonGroup TT_ADC(this, m_PathInRootFile+"/ADC/EtaPhiMaps", run, attr);
+    MonGroup TT_ADCSlices(this, m_PathInRootFile+"/ADC/Timeslices", run, attr);
     MonGroup TT_LUTPeakDist(this, m_PathInRootFile+"/LUT/Distributions",
-                                                                  shift, run);
-    MonGroup TT_Error(this, m_ErrorPathInRootFile, shift, run);
-    MonGroup TT_ErrorEvents(this, m_ErrorPathInRootFile, expert, run, "",
+                                                                  run, attr);
+    MonGroup TT_Error(this, m_ErrorPathInRootFile, run, attr);
+    MonGroup TT_ErrorEvents(this, m_ErrorPathInRootFile, run, attr, "",
                                                                  "eventSample");
-    MonGroup TT_ErrorDetail(this, m_ErrorPathInRootFile+"/Detail", expert, run);
+    MonGroup TT_ErrorDetail(this, m_ErrorPathInRootFile+"/Detail", run, attr);
 
 
     //-------------------- ADC Hitmaps for Triggered Timeslice ---------------
@@ -281,7 +280,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
         buffer.str("");
 	buffer << block;
         MonGroup lumiGroup(this,
-	  m_PathInRootFile+"/LUT/EtaPhiMaps/lumi_"+buffer.str(), expert, run);
+	  m_PathInRootFile+"/LUT/EtaPhiMaps/lumi_"+buffer.str(), run, attr);
         m_histTool->setMonGroup(&lumiGroup);
 	for (unsigned int thresh = 0; thresh < m_TT_HitMap_ThreshVec.size(); ++thresh) {
           buffer_name.str("");
@@ -434,7 +433,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
 	     
   }	
 
-  if ( isNewLumiBlock ) {
+  if ( newLumiBlock ) {
 
     //---------------------------- LUT Hitmaps per threshold -----------------
     if (m_environment == AthenaMonManager::online || m_onlineTest) {
@@ -476,7 +475,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
       m_v_ppm_em_2d_etaPhi_tt_lut_Threshold.clear();
       m_v_ppm_had_2d_etaPhi_tt_lut_Threshold.clear();
       MonGroup TT_LumiHitMaps(this, m_PathInRootFile+"/LUT/EtaPhiMaps",
-                                                         expert, lumiBlock);
+                                                          lumiBlock, attr);
       m_histTool->setMonGroup(&TT_LumiHitMaps);
       std::stringstream buffer;
       std::stringstream buffer_name;
@@ -497,7 +496,7 @@ StatusCode PPrMon::bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
     }
 
     m_histTool->unsetMonGroup();
-    if (isNewRun) m_histBooked = true;
+    if (newRun) m_histBooked = true;
   }
 
   return StatusCode::SUCCESS;

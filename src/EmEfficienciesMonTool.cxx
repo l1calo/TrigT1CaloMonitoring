@@ -210,8 +210,7 @@ StatusCode EmEfficienciesMonTool::initialize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
-		bool isNewLumiBlock, bool isNewRun)
+StatusCode EmEfficienciesMonTool::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
 	msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
@@ -224,27 +223,28 @@ StatusCode EmEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		// book histograms that are only relevant for cosmics data...
 	}
 
-	if (isNewEventsBlock || isNewLumiBlock) {
+	if (newLumiBlock) {
 	}
 
-	if (isNewRun) {
+	if (newRun) {
 
+                MgmtAttr_t attr = ATTRIB_UNMANAGED;
 		std::string dir(m_rootDir + "/Reco/EmEfficiencies");
 
-		MonGroup monEmDead(this, dir + "/DeadOrBadChannels", expert, run, "", "lowerLB");
-		MonGroup monEmNoisy(this, dir + "/DeadOrBadChannels", expert, run);
-		MonGroup monClusterRawNum(this, dir + "/ClusterRaw_Et/numerator", expert, run);
-		MonGroup monClusterRawDen(this, dir + "/ClusterRaw_Et/denominator", expert, run);
-		MonGroup monClusterRawEff(this, dir + "/ClusterRaw_Et", expert, run, "", "perBinEffPerCent");
-		MonGroup monClusterRaw10GeVNum(this, dir + "/ClusterRaw_10GeV_EtaVsPhi/numerator", expert, run);
-		MonGroup monClusterRaw10GeVDen(this, dir + "/ClusterRaw_10GeV_EtaVsPhi/denominator", expert, run);
-		MonGroup monClusterRaw10GeVEff(this, dir + "/ClusterRaw_10GeV_EtaVsPhi", expert, run, "", "perBinEffPerCent");
-		MonGroup monClusterRaw20GeVNum(this, dir + "/ClusterRaw_20GeV_EtaVsPhi/numerator", expert, run);
-		MonGroup monClusterRaw20GeVDen(this, dir + "/ClusterRaw_20GeV_EtaVsPhi/denominator", expert, run);
-		MonGroup monClusterRaw20GeVEff(this, dir + "/ClusterRaw_20GeV_EtaVsPhi", expert, run, "",  "perBinEffPerCent");
-		MonGroup monClusterRaw30GeVNum(this, dir + "/ClusterRaw_30GeV_EtaVsPhi/numerator", expert, run);
-		MonGroup monClusterRaw30GeVDen(this, dir + "/ClusterRaw_30GeV_EtaVsPhi/denominator", expert, run);
-		MonGroup monClusterRaw30GeVEff(this, dir + "/ClusterRaw_30GeV_EtaVsPhi", expert, run, "", "perBinEffPerCent");
+		MonGroup monEmDead(this, dir + "/DeadOrBadChannels", run, attr, "", "lowerLB");
+		MonGroup monEmNoisy(this, dir + "/DeadOrBadChannels", run, attr);
+		MonGroup monClusterRawNum(this, dir + "/ClusterRaw_Et/numerator", run, attr);
+		MonGroup monClusterRawDen(this, dir + "/ClusterRaw_Et/denominator", run, attr);
+		MonGroup monClusterRawEff(this, dir + "/ClusterRaw_Et", run, attr, "", "perBinEffPerCent");
+		MonGroup monClusterRaw10GeVNum(this, dir + "/ClusterRaw_10GeV_EtaVsPhi/numerator", run, attr);
+		MonGroup monClusterRaw10GeVDen(this, dir + "/ClusterRaw_10GeV_EtaVsPhi/denominator", run, attr);
+		MonGroup monClusterRaw10GeVEff(this, dir + "/ClusterRaw_10GeV_EtaVsPhi", run, attr, "", "perBinEffPerCent");
+		MonGroup monClusterRaw20GeVNum(this, dir + "/ClusterRaw_20GeV_EtaVsPhi/numerator", run, attr);
+		MonGroup monClusterRaw20GeVDen(this, dir + "/ClusterRaw_20GeV_EtaVsPhi/denominator", run, attr);
+		MonGroup monClusterRaw20GeVEff(this, dir + "/ClusterRaw_20GeV_EtaVsPhi", run, attr, "",  "perBinEffPerCent");
+		MonGroup monClusterRaw30GeVNum(this, dir + "/ClusterRaw_30GeV_EtaVsPhi/numerator", run, attr);
+		MonGroup monClusterRaw30GeVDen(this, dir + "/ClusterRaw_30GeV_EtaVsPhi/denominator", run, attr);
+		MonGroup monClusterRaw30GeVEff(this, dir + "/ClusterRaw_30GeV_EtaVsPhi", run, attr, "", "perBinEffPerCent");
 
 		//Set up EMTAU thresholds array with threshold names
 		std::string thrNum[ROI_BITS] = { "0", "1", "2", "3", "4", "5", "6", "7",
@@ -533,16 +533,15 @@ StatusCode EmEfficienciesMonTool::fillHistograms()
 }
 
 /*---------------------------------------------------------*/
-StatusCode EmEfficienciesMonTool::procHistograms(bool isEndOfEventsBlock,
-		bool isEndOfLumiBlock, bool isEndOfRun)
+StatusCode EmEfficienciesMonTool::procHistograms()
 /*---------------------------------------------------------*/
 {
 	msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
-	if (isEndOfEventsBlock || isEndOfLumiBlock) {
+	if (endOfLumiBlock) {
 	}
 
-	if (isEndOfRun) {
+	if (endOfRun) {
 		msg(MSG::DEBUG) << "Number of offline electrons = " << m_numOffElec << endreq;
 		msg(MSG::DEBUG) << "Number of offline photons = " << m_numOffPhot << endreq;
 		msg(MSG::DEBUG) << "Number of events = " << m_numEvents << endreq;

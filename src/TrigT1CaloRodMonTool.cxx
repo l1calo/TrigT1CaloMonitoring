@@ -115,8 +115,7 @@ StatusCode TrigT1CaloRodMonTool:: initialize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
-                                           bool isNewLumiBlock, bool isNewRun)
+StatusCode TrigT1CaloRodMonTool::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
@@ -131,20 +130,21 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
-  if ( isNewEventsBlock || isNewLumiBlock ) { }
+  if ( newLumiBlock ) { }
 
-  if ( isNewRun ) {
+  if ( newRun ) {
 
+  MgmtAttr_t attr = ATTRIB_UNMANAGED;
   std::string dir1(m_rootDir + "/ROD");
-  MonGroup monShift ( this, dir1, shift, run );
-  MonGroup monExpert( this, dir1, expert, run );
-  MonGroup monEvents( this, dir1, expert, run, "", "eventSample" );
-  MonGroup monAverage( this, dir1, expert, run, "", "weightedAverage" );
-  MonGroup monROB( this, dir1 + "/ROBStatus", expert, run );
-  MonGroup monROBEvents( this, dir1 + "/ROBStatus", expert, run, "",
+  MonGroup monShift ( this, dir1, run, attr );
+  MonGroup monExpert( this, dir1, run, attr );
+  MonGroup monEvents( this, dir1, run, attr, "", "eventSample" );
+  MonGroup monAverage( this, dir1, run, attr, "", "weightedAverage" );
+  MonGroup monROB( this, dir1 + "/ROBStatus", run, attr );
+  MonGroup monROBEvents( this, dir1 + "/ROBStatus", run, attr, "",
                                                         "eventSample" );
-  MonGroup monUnpack( this, dir1 + "/Unpacking", expert, run );
-  MonGroup monUnpackEvents( this, dir1 + "/Unpacking", expert, run, "",
+  MonGroup monUnpack( this, dir1 + "/Unpacking", run, attr );
+  MonGroup monUnpackEvents( this, dir1 + "/Unpacking", run, attr, "",
                                                         "eventSample" );
 
   //  Payload Averages
@@ -382,7 +382,7 @@ StatusCode TrigT1CaloRodMonTool::bookHistograms(bool isNewEventsBlock,
   m_histTool->unsetMonGroup();
   m_histBooked = true;
 
-  } // end if (isNewRun ...
+  } // end if (newRun ...
 
   msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
 
@@ -789,13 +789,12 @@ StatusCode TrigT1CaloRodMonTool::fillHistograms()
 }
 
 /*---------------------------------------------------------*/
-StatusCode TrigT1CaloRodMonTool::procHistograms(bool isEndOfEventsBlock,
-                                  bool isEndOfLumiBlock, bool isEndOfRun)
+StatusCode TrigT1CaloRodMonTool::procHistograms()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
-  if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
+  if (endOfLumiBlock || endOfRun) {
   }
 
   return StatusCode::SUCCESS;

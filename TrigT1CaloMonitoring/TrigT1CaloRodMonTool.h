@@ -155,11 +155,9 @@ public:
 
   virtual StatusCode initialize();
     
-  virtual StatusCode bookHistograms(bool isNewEventsBlock, bool isNewLumiBlock,
-                                                           bool isNewRun);
+  virtual StatusCode bookHistogramsRecurrent();
   virtual StatusCode fillHistograms();
-  virtual StatusCode procHistograms(bool isEndOfEventsBlock,
-                                    bool isEndOfLumiBlock, bool isEndOfRun);
+  virtual StatusCode procHistograms();
 
 private:
 

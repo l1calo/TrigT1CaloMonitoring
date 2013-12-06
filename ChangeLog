@@ -1,3 +1,7 @@
+2013-12-06  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-14-07
+        * New monitoring base class updates.
+
 2013-06-03  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-14-06
         * Update mainpage doc.

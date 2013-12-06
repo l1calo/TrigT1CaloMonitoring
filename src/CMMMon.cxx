@@ -138,8 +138,7 @@ StatusCode CMMMon::initialize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode CMMMon::bookHistograms( bool isNewEventsBlock, 
-				   bool isNewLumiBlock, bool isNewRun )
+StatusCode CMMMon::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "in CMMMon::bookHistograms" << endreq;
@@ -152,21 +151,23 @@ StatusCode CMMMon::bookHistograms( bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
   
-  if ( isNewEventsBlock|| isNewLumiBlock) { }
+  if ( newLumiBlock ) { }
 
-  if( isNewRun ) {	
+  if ( newRun ) {
 
+    MgmtAttr_t attr = ATTRIB_UNMANAGED;
     MonGroup CMM_inputThresh( this, m_PathInRootFile+"/Input/Thresholds",
-                                                                expert, run );
+                                                              run, attr );
     MonGroup CMM_inputEnergy( this, m_PathInRootFile+"/Input/EnergySums",
-                                                                expert, run );
-    MonGroup CMM_jet( this, m_PathInRootFile+"/Output/Jet", expert, run );
-    MonGroup CMM_energy( this, m_PathInRootFile+"/Output/Energy", expert, run );
-    MonGroup CMM_RoI( this, m_PathInRootFile+"/Output/RoI", shift, run );
-    MonGroup CMM_error( this, m_ErrorPathInRootFile, shift, run );
-    MonGroup CMM_errorDetail( this, m_ErrorPathInRootFile, expert, run );
-    MonGroup CMM_errorEvents( this, m_ErrorPathInRootFile, expert, run, "",
-                                                                "eventSample" );
+                                                              run, attr );
+    MonGroup CMM_jet( this, m_PathInRootFile+"/Output/Jet", run, attr );
+    MonGroup CMM_energy( this, m_PathInRootFile+"/Output/Energy", run,
+                                                                 attr );
+    MonGroup CMM_RoI( this, m_PathInRootFile+"/Output/RoI", run, attr );
+    MonGroup CMM_error( this, m_ErrorPathInRootFile, run, attr );
+    MonGroup CMM_errorDetail( this, m_ErrorPathInRootFile, run, attr );
+    MonGroup CMM_errorEvents( this, m_ErrorPathInRootFile, run, attr,
+                                                     "", "eventSample" );
 
     m_histTool->setMonGroup(&CMM_inputThresh);
 
@@ -727,13 +728,12 @@ StatusCode CMMMon::fillHistograms()
 }
 
 /*---------------------------------------------------------*/
-StatusCode CMMMon::procHistograms( bool isEndOfEventsBlock, 
-				   bool isEndOfLumiBlock, bool isEndOfRun )
+StatusCode CMMMon::procHistograms()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "in procHistograms" << endreq ;
 
-  if( isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun ) { }
+  if( endOfLumiBlock || endOfRun ) { }
 	
   return StatusCode::SUCCESS;
 }

@@ -246,8 +246,7 @@ StatusCode JetEfficienciesMonTool::initialize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode JetEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
-		bool isNewLumiBlock, bool isNewRun)
+StatusCode JetEfficienciesMonTool::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
 	msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
@@ -260,28 +259,29 @@ StatusCode JetEfficienciesMonTool::bookHistograms(bool isNewEventsBlock,
 		// book histograms that are only relevant for cosmics data...
 	}
 
-	if (isNewEventsBlock || isNewLumiBlock) {
+	if (newLumiBlock) {
 	}
 
-	if (isNewRun) {
+	if (newRun) {
 
+                MgmtAttr_t attr = ATTRIB_UNMANAGED;
 		std::string dir(m_rootDir + "/Reco/JetEfficiencies");
 
-		MonGroup monJetDead(this, dir + "/DeadOrBadChannels", expert, run, "", "lowerLB");
-		MonGroup monJetNoisy(this, dir + "/DeadOrBadChannels", expert, run);
-		MonGroup monJetEmScaleNum(this, dir + "/JetEmScale_Et/numerator", expert, run);
-		MonGroup monJetEmScaleDen(this, dir + "/JetEmScale_Et/denominator", expert, run);
-		MonGroup monJetEmScaleEff(this, dir + "/JetEmScale_Et", expert, run, "", "perBinEffPerCent");
-		MonGroup monJetEmScaleVtx(this, dir + "/JetEmScale_Et", expert, run);
-		MonGroup monJetEmScale50GeVNum(this, dir + "/JetEmScale_50GeV_EtaVsPhi/numerator", expert, run);
-		MonGroup monJetEmScale50GeVDen(this, dir + "/JetEmScale_50GeV_EtaVsPhi/denominator", expert, run);
-		MonGroup monJetEmScale50GeVEff(this, dir + "/JetEmScale_50GeV_EtaVsPhi", expert, run, "", "perBinEffPerCent");
-		MonGroup monJetEmScale100GeVNum(this, dir + "/JetEmScale_100GeV_EtaVsPhi/numerator", expert, run);
-		MonGroup monJetEmScale100GeVDen(this, dir + "/JetEmScale_100GeV_EtaVsPhi/denominator", expert, run);
-		MonGroup monJetEmScale100GeVEff(this, dir + "/JetEmScale_100GeV_EtaVsPhi", expert, run, "", "perBinEffPerCent");
-		MonGroup monJetEmScale200GeVNum(this, dir + "/JetEmScale_200GeV_EtaVsPhi/numerator", expert, run);
-		MonGroup monJetEmScale200GeVDen(this, dir + "/JetEmScale_200GeV_EtaVsPhi/denominator", expert, run);
-		MonGroup monJetEmScale200GeVEff(this, dir + "/JetEmScale_200GeV_EtaVsPhi", expert, run, "", "perBinEffPerCent");
+		MonGroup monJetDead(this, dir + "/DeadOrBadChannels", run, attr, "", "lowerLB");
+		MonGroup monJetNoisy(this, dir + "/DeadOrBadChannels", run, attr);
+		MonGroup monJetEmScaleNum(this, dir + "/JetEmScale_Et/numerator", run, attr);
+		MonGroup monJetEmScaleDen(this, dir + "/JetEmScale_Et/denominator", run, attr);
+		MonGroup monJetEmScaleEff(this, dir + "/JetEmScale_Et", run, attr, "", "perBinEffPerCent");
+		MonGroup monJetEmScaleVtx(this, dir + "/JetEmScale_Et", run, attr);
+		MonGroup monJetEmScale50GeVNum(this, dir + "/JetEmScale_50GeV_EtaVsPhi/numerator", run, attr);
+		MonGroup monJetEmScale50GeVDen(this, dir + "/JetEmScale_50GeV_EtaVsPhi/denominator", run, attr);
+		MonGroup monJetEmScale50GeVEff(this, dir + "/JetEmScale_50GeV_EtaVsPhi", run, attr, "", "perBinEffPerCent");
+		MonGroup monJetEmScale100GeVNum(this, dir + "/JetEmScale_100GeV_EtaVsPhi/numerator", run, attr);
+		MonGroup monJetEmScale100GeVDen(this, dir + "/JetEmScale_100GeV_EtaVsPhi/denominator", run, attr);
+		MonGroup monJetEmScale100GeVEff(this, dir + "/JetEmScale_100GeV_EtaVsPhi", run, attr, "", "perBinEffPerCent");
+		MonGroup monJetEmScale200GeVNum(this, dir + "/JetEmScale_200GeV_EtaVsPhi/numerator", run, attr);
+		MonGroup monJetEmScale200GeVDen(this, dir + "/JetEmScale_200GeV_EtaVsPhi/denominator", run, attr);
+		MonGroup monJetEmScale200GeVEff(this, dir + "/JetEmScale_200GeV_EtaVsPhi", run, attr, "", "perBinEffPerCent");
 
 		//Set up JET thresholds arrays with threshold names
 		std::string thrNum[JET_ROI_BITS] = { "0", "1", "2", "3", "4", "5", "6", "7" };
@@ -615,16 +615,15 @@ StatusCode JetEfficienciesMonTool::fillHistograms()
 }
 
 /*---------------------------------------------------------*/
-StatusCode JetEfficienciesMonTool::procHistograms(bool isEndOfEventsBlock,
-		bool isEndOfLumiBlock, bool isEndOfRun)
+StatusCode JetEfficienciesMonTool::procHistograms()
 /*---------------------------------------------------------*/
 {
 	msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
-	if (isEndOfEventsBlock || isEndOfLumiBlock) {
+	if (endOfLumiBlock) {
 	}
 
-	if (isEndOfRun) {
+	if (endOfRun) {
 		msg(MSG::DEBUG) << "Number of offline jets = " << m_numOffJets << endreq;
 		msg(MSG::DEBUG) << "Number of events = " << m_numEvents << endreq;
 

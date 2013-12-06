@@ -112,8 +112,7 @@ StatusCode TrigT1CaloGlobalMonTool::finalize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
-                                           bool isNewLumiBlock, bool isNewRun)
+StatusCode TrigT1CaloGlobalMonTool::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
@@ -126,11 +125,10 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
-  if ( isNewEventsBlock || isNewLumiBlock ) { }
-
   bool online = (m_onlineTest || m_environment == AthenaMonManager::online);
+  MgmtAttr_t attr = ATTRIB_UNMANAGED;
  
-  if ( isNewRun || isNewLumiBlock ) {
+  if ( newRun || newLumiBlock ) {
 
     // Get lumiblock number
 
@@ -142,11 +140,11 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
     }
   }
 
-  if ((isNewLumiBlock && !online) || isNewRun ) {
+  if ((newLumiBlock && !online) || newRun ) {
 
     std::string dir(m_rootDir + "/Overview/Errors");
-    MonGroup monGlobal( this, dir, shift,
-             (isNewLumiBlock && !online) ? lumiBlock : run );
+    MonGroup monGlobal( this, dir,
+             ((newLumiBlock && !online) ? lumiBlock : run), attr );
 
     // Global Error Overview
 
@@ -196,7 +194,7 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
       m_lumipos = 0;
       m_luminumbers[m_lumipos] = m_lumiNo;
     }
-  } else if (isNewLumiBlock && online) {
+  } else if (newLumiBlock && online) {
 
     // Update last few lumiblocks plots
 
@@ -221,17 +219,17 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
       m_luminumbers[m_lumipos] = m_lumiNo;
     }
 
-  } // end if ((isNewLumiBlock && ...
+  } // end if ((newLumiBlock && ...
 
-  if ( isNewRun || isNewLumiBlock ) {
+  if ( newRun || newLumiBlock ) {
 
     // Errors by lumiblock/time plots
     // On Tier0 only kept if non-empty
 
     if( m_lumiNo ) {
-      if (isNewRun) {
+      if (newRun) {
         std::string dir(m_rootDir + "/Overview/Errors");
-	MonGroup monLumi( this, dir, shift, run);
+	MonGroup monLumi( this, dir, run, attr);
         if (online) m_histTool->setMonGroup(&monLumi);
 	else        m_histTool->unsetMonGroup();
         m_h_l1calo_1d_ErrorsByLumiblock = m_histTool->bookTH1F(
@@ -302,9 +300,9 @@ StatusCode TrigT1CaloGlobalMonTool::bookHistograms(bool isNewEventsBlock,
 
   // Total events processed and total rejected as corrupt
 
-  if ( isNewRun ) {
+  if ( newRun ) {
     std::string dir(m_rootDir + "/Overview");
-    MonGroup monEvents( this, dir, expert, run);
+    MonGroup monEvents( this, dir, run, attr);
     m_histTool->setMonGroup(&monEvents);
     int bins = (m_errorTool->flagCorruptEvents() == "None") ? 1 : 2;
     m_h_l1calo_1d_NumberOfEvents = m_histTool->bookTH1F("l1calo_1d_NumberOfEvents",
@@ -335,6 +333,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
   }
 
   const bool online = (m_onlineTest || m_environment == AthenaMonManager::online);
+  MgmtAttr_t attr = ATTRIB_UNMANAGED;
 
   // Total events and corrupt event by lumiblock plots
 
@@ -343,7 +342,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     if (m_lumiNo && m_h_l1calo_1d_RejectedEvents) {
       if (!online && m_h_l1calo_1d_RejectedEvents->GetEntries() == 0.) {
         std::string dir(m_rootDir + "/Overview/Errors");
-        MonGroup monLumi( this, dir, shift, run, "", "mergeRebinned");
+        MonGroup monLumi( this, dir, run, attr, "", "mergeRebinned");
         m_histTool->setMonGroup(&monLumi);
         m_histTool->registerHist(m_h_l1calo_1d_RejectedEvents);
       }
@@ -588,7 +587,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
     if (m_lumiNo && m_h_l1calo_1d_ErrorsByLumiblock) {
       if (!online && m_h_l1calo_1d_ErrorsByLumiblock->GetEntries() == 0.) {
         std::string dir(m_rootDir + "/Overview/Errors");
-	MonGroup monLumi( this, dir, shift, run, "", "mergeRebinned");
+	MonGroup monLumi( this, dir, run, attr, "", "mergeRebinned");
         m_histTool->setMonGroup(&monLumi);
 	m_histTool->registerHist(m_h_l1calo_1d_ErrorsByLumiblock);
       }
@@ -611,7 +610,7 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
         } else {
           if (m_h_l1calo_1d_ErrorsByTime->GetEntries() == 0.) {
             std::string dir(m_rootDir + "/Overview/Errors");
-	    MonGroup monLumi( this, dir, shift, run);
+	    MonGroup monLumi( this, dir, run, attr);
             m_histTool->setMonGroup(&monLumi);
 	    m_histTool->registerHist(m_h_l1calo_1d_ErrorsByTime);
           }
@@ -628,17 +627,16 @@ StatusCode TrigT1CaloGlobalMonTool::fillHistograms()
 }
 
 /*---------------------------------------------------------*/
-StatusCode TrigT1CaloGlobalMonTool::procHistograms(bool isEndOfEventsBlock,
-                                  bool isEndOfLumiBlock, bool isEndOfRun)
+StatusCode TrigT1CaloGlobalMonTool::procHistograms()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
-  if (isEndOfEventsBlock || isEndOfLumiBlock) {
+  if (endOfLumiBlock) {
   }
 
   bool online = (m_onlineTest || m_environment == AthenaMonManager::online);
-  if (isEndOfRun && !online) {
+  if (endOfRun && !online) {
     if (m_h_l1calo_1d_ErrorsByLumiblock && m_h_l1calo_1d_ErrorsByLumiblock->GetEntries() == 0.) {
       delete m_h_l1calo_1d_ErrorsByLumiblock;
       m_h_l1calo_1d_ErrorsByLumiblock = 0;

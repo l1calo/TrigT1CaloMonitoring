@@ -99,8 +99,7 @@ StatusCode PPrSpareMon::initialize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
-                                        bool isNewLumiBlock, bool isNewRun )
+StatusCode PPrSpareMon::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "in PPrSpareMon::bookHistograms" << endreq;
@@ -113,15 +112,16 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
-  if ( isNewEventsBlock|| isNewLumiBlock) { }
+  if ( newLumiBlock) { }
 
-  if( isNewRun ) {
+  if ( newRun ) {
 
-    MonGroup TT_ADC(this, m_PathInRootFile+"/ADC", shift, run);
-    MonGroup TT_Error(this, m_ErrorPathInRootFile, shift, run);
-    MonGroup TT_ErrorEvents(this, m_ErrorPathInRootFile, expert, run, "",
+    MgmtAttr_t attr = ATTRIB_UNMANAGED;
+    MonGroup TT_ADC(this, m_PathInRootFile+"/ADC", run, attr);
+    MonGroup TT_Error(this, m_ErrorPathInRootFile, run, attr);
+    MonGroup TT_ErrorEvents(this, m_ErrorPathInRootFile, run, attr, "",
                                                                 "eventSample" );
-    MonGroup TT_ErrorDetail(this, m_ErrorPathInRootFile+"/Detail", expert, run);
+    MonGroup TT_ErrorDetail(this, m_ErrorPathInRootFile+"/Detail", run, attr);
 
     std::string name,title;
     std::stringstream buffer;
@@ -227,8 +227,6 @@ StatusCode PPrSpareMon::bookHistograms( bool isNewEventsBlock,
     m_histBooked = true;
   }	
 
-  if ( isNewLumiBlock ) { }
-    
   return StatusCode::SUCCESS;
 }
 
@@ -392,14 +390,12 @@ StatusCode PPrSpareMon::fillHistograms()
 
    
 /*---------------------------------------------------------*/
-StatusCode PPrSpareMon::procHistograms( bool isEndOfEventsBlock,
-                                        bool isEndOfLumiBlock,
-					bool isEndOfRun )
+StatusCode PPrSpareMon::procHistograms()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "in procHistograms" << endreq ;
 
-  if( isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun ) { }
+  if( endOfLumiBlock || endOfRun ) { }
 	
   return StatusCode::SUCCESS;
 }

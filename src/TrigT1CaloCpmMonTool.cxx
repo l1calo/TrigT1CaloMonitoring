@@ -165,8 +165,7 @@ StatusCode TrigT1CaloCpmMonTool:: finalize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
-                                           bool isNewLumiBlock, bool isNewRun)
+StatusCode TrigT1CaloCpmMonTool::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
@@ -179,23 +178,24 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
-  if ( isNewEventsBlock || isNewLumiBlock ) { }
+  if ( newLumiBlock ) { }
 
-  if ( isNewRun ) {
+  if ( newRun ) {
 
+  MgmtAttr_t attr = ATTRIB_UNMANAGED;
   std::string dir1(m_rootDir + "/CPM");
-  MonGroup monShift( this, dir1 + "/Errors/Hardware", shift, run );
-  MonGroup monExpert( this, dir1 + "/Errors/Hardware", expert, run );
-  MonGroup monDetail( this, dir1 + "/Errors/Hardware/Detail", expert, run );
-  MonGroup monEvents( this, dir1 + "/Errors/Hardware/Detail", expert, run, "",
+  MonGroup monShift( this, dir1 + "/Errors/Hardware", run, attr );
+  MonGroup monExpert( this, dir1 + "/Errors/Hardware", run, attr );
+  MonGroup monDetail( this, dir1 + "/Errors/Hardware/Detail", run, attr );
+  MonGroup monEvents( this, dir1 + "/Errors/Hardware/Detail", run, attr, "",
                                                                "eventSample" );
-  MonGroup monCPMin( this, dir1 + "/Input", expert, run );
-  MonGroup monRoIs( this, dir1 + "/Output/RoI", expert, run );
-  MonGroup monCPMout( this, dir1 + "/Output/Thresholds", expert, run);
+  MonGroup monCPMin( this, dir1 + "/Input", run, attr );
+  MonGroup monRoIs( this, dir1 + "/Output/RoI", run, attr );
+  MonGroup monCPMout( this, dir1 + "/Output/Thresholds", run, attr);
   std::string dir2(m_rootDir + "/CPM_CMM");
-  MonGroup monCMM( this, dir2 + "/Errors/Hardware",  expert, run );
-  MonGroup monCMMin( this, dir2 + "/Input",  expert, run );
-  MonGroup monCMMout( this, dir2 + "/Output",  expert, run );
+  MonGroup monCMM( this, dir2 + "/Errors/Hardware",  run, attr );
+  MonGroup monCMMin( this, dir2 + "/Input",  run, attr );
+  MonGroup monCMMout( this, dir2 + "/Output",  run, attr );
 
   //  Timeslice checks
 
@@ -383,7 +383,7 @@ StatusCode TrigT1CaloCpmMonTool::bookHistograms(bool isNewEventsBlock,
   m_events = 0;
   m_histBooked = true;
 
-  } // end if (isNewRun ...
+  } // end if (newRun ...
 
   msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
 
@@ -863,13 +863,12 @@ StatusCode TrigT1CaloCpmMonTool::fillHistograms()
 }
 
 /*---------------------------------------------------------*/
-StatusCode TrigT1CaloCpmMonTool::procHistograms(bool isEndOfEventsBlock,
-                                  bool isEndOfLumiBlock, bool isEndOfRun)
+StatusCode TrigT1CaloCpmMonTool::procHistograms()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
-  if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
+  if (endOfLumiBlock || endOfRun) {
   }
 
   return StatusCode::SUCCESS;

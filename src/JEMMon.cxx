@@ -146,8 +146,7 @@ StatusCode JEMMon::initialize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode JEMMon::bookHistograms( bool isNewEventsBlock, 
-				   bool isNewLumiBlock, bool isNewRun )
+StatusCode JEMMon::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "in JEMMon::bookHistograms" << endreq;
@@ -160,21 +159,22 @@ StatusCode JEMMon::bookHistograms( bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
-  if ( isNewEventsBlock|| isNewLumiBlock) { }
+  if ( newLumiBlock) { }
 
-  if( isNewRun ) {	
+  if ( newRun ) {	
 
-    MonGroup JetElements_expert(this, m_PathInRootFile+"/Input", expert, run);
-    MonGroup JetElements_shift(this, m_PathInRootFile+"/Input", shift, run);
+    MgmtAttr_t attr = ATTRIB_UNMANAGED;
+    MonGroup JetElements_expert(this, m_PathInRootFile+"/Input", run, attr);
+    MonGroup JetElements_shift(this, m_PathInRootFile+"/Input", run, attr);
     MonGroup JEM_Thresholds(this, m_PathInRootFile+"/Output/Thresholds",
-                                                                 expert, run);
+                                                                run, attr);
     MonGroup JEM_EnergySums(this, m_PathInRootFile+"/Output/EnergySums",
-                                                                 expert, run);
-    MonGroup JEM_RoI(this, m_PathInRootFile+"/Output/RoI", shift, run);
-    MonGroup JEM_Error(this, m_ErrorPathInRootFile, shift, run );
-    MonGroup JEM_ErrorDetail(this, m_ErrorPathInRootFile, expert, run );
-    MonGroup JEM_ErrorEvents(this, m_ErrorPathInRootFile, expert, run, "",
-                                                              "eventSample" );
+                                                                run, attr);
+    MonGroup JEM_RoI(this, m_PathInRootFile+"/Output/RoI", run, attr);
+    MonGroup JEM_Error(this, m_ErrorPathInRootFile, run, attr );
+    MonGroup JEM_ErrorDetail(this, m_ErrorPathInRootFile, run, attr );
+    MonGroup JEM_ErrorEvents(this, m_ErrorPathInRootFile, run, attr, "",
+                                                           "eventSample" );
 
     //-------------------------- JetElements histos --------------------------
 
@@ -670,13 +670,12 @@ StatusCode JEMMon::fillHistograms()
 }
 
 /*---------------------------------------------------------*/
-StatusCode JEMMon::procHistograms( bool isEndOfEventsBlock, 
-				   bool isEndOfLumiBlock, bool isEndOfRun )
+StatusCode JEMMon::procHistograms()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "in procHistograms" << endreq ;
 
-  if( isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun ) { }
+  if( endOfLumiBlock || endOfRun ) { }
 	
   return StatusCode::SUCCESS;
 }

@@ -118,8 +118,7 @@ StatusCode PPMSimBSMon:: finalize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
-                                       bool isNewLumiBlock, bool isNewRun)
+StatusCode PPMSimBSMon::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
@@ -132,13 +131,14 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
-  if ( isNewEventsBlock || isNewLumiBlock ) { }
+  if ( newLumiBlock ) { }
   
-  if( isNewRun ) {
+  if ( newRun ) {
 
+  MgmtAttr_t attr = ATTRIB_UNMANAGED;
   std::string dir(m_rootDir + "/PPM/Errors/Data_Simulation");
-  MonGroup monPPM   ( this, dir + "/PPMLUTSim", expert, run );
-  MonGroup monEvent ( this, dir + "/MismatchEventNumbers", expert, run, "", "eventSample" );
+  MonGroup monPPM   ( this, dir + "/PPMLUTSim", run, attr );
+  MonGroup monEvent ( this, dir + "/MismatchEventNumbers", run, attr, "", "eventSample" );
 
   // LUT
 
@@ -185,7 +185,7 @@ StatusCode PPMSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_histTool->unsetMonGroup();
   m_histBooked = true;
 
-  } // end if (isNewRun ...
+  } // end if (newRun ...
 
   msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
   
@@ -199,14 +199,14 @@ StatusCode PPMSimBSMon::fillHistograms()
   if (m_debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
   if (!m_histBooked) {
-    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    if (m_debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
     return StatusCode::SUCCESS;
   }
 
   // Skip events believed to be corrupt
 
   if (m_errorTool->corrupt()) {
-    if (debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
+    if (m_debug) msg(MSG::DEBUG) << "Skipping corrupt event" << endreq;
     return StatusCode::SUCCESS;
   }
 
@@ -232,16 +232,15 @@ StatusCode PPMSimBSMon::fillHistograms()
 }
 
 /*---------------------------------------------------------*/
-StatusCode PPMSimBSMon::procHistograms(bool isEndOfEventsBlock,
-                                  bool isEndOfLumiBlock, bool isEndOfRun)
+StatusCode PPMSimBSMon::procHistograms()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
-  if (isEndOfEventsBlock || isEndOfLumiBlock) {
+  if (endOfLumiBlock) {
   }
 
-  if (isEndOfRun) {
+  if (endOfRun) {
   }
 
   return StatusCode::SUCCESS;

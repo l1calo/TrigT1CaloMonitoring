@@ -221,8 +221,7 @@ StatusCode JEPSimBSMon:: initialize()
 }
 
 /*---------------------------------------------------------*/
-StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
-                                           bool isNewLumiBlock, bool isNewRun)
+StatusCode JEPSimBSMon::bookHistogramsRecurrent()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "bookHistograms entered" << endreq;
@@ -235,25 +234,26 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
     // book histograms that are only relevant for cosmics data...
   }
 
-  if ( isNewEventsBlock || isNewLumiBlock ) { }
+  if ( newLumiBlock ) { }
 
-  if( isNewRun ) {
+  if ( newRun ) {
 
+  MgmtAttr_t attr = ATTRIB_UNMANAGED;
   std::string dir1(m_rootDir + "/JEM/Errors/Transmission_Simulation");
-  MonGroup monShift( this, dir1, shift, run );
-  MonGroup monExpert( this, dir1, expert, run );
-  MonGroup monElements( this, dir1 + "/PPM2Elements", expert, run );
-  MonGroup monRoIs( this, dir1 + "/Elements2RoIs", expert, run );
-  MonGroup monHits( this, dir1 + "/RoIs2Hits", expert, run );
-  MonGroup monEnergy( this, dir1 + "/Elements2Energy", expert, run );
-  MonGroup monEvent1( this, dir1 + "/MismatchEventNumbers", expert, run, "",
+  MonGroup monShift( this, dir1, run, attr );
+  MonGroup monExpert( this, dir1, run, attr );
+  MonGroup monElements( this, dir1 + "/PPM2Elements", run, attr );
+  MonGroup monRoIs( this, dir1 + "/Elements2RoIs", run, attr );
+  MonGroup monHits( this, dir1 + "/RoIs2Hits", run, attr );
+  MonGroup monEnergy( this, dir1 + "/Elements2Energy", run, attr );
+  MonGroup monEvent1( this, dir1 + "/MismatchEventNumbers", run, attr, "",
                                                             "eventSample" );
   std::string dir2(m_rootDir + "/JEM_CMM/Errors/Transmission_Simulation");
-  MonGroup monHits2( this, dir2 + "/JEM2CMMHits", expert, run );
-  MonGroup monHitSums( this, dir2 + "/Hits2Sums", expert, run );
-  MonGroup monEnergy2( this, dir2 + "/JEM2CMMEnergy", expert, run );
-  MonGroup monEnergySums( this, dir2 + "/Energy2Sums", expert, run );
-  MonGroup monEvent2( this, dir2 + "/MismatchEventNumbers", expert, run, "",
+  MonGroup monHits2( this, dir2 + "/JEM2CMMHits", run, attr );
+  MonGroup monHitSums( this, dir2 + "/Hits2Sums", run, attr );
+  MonGroup monEnergy2( this, dir2 + "/JEM2CMMEnergy", run, attr );
+  MonGroup monEnergySums( this, dir2 + "/Energy2Sums", run, attr );
+  MonGroup monEvent2( this, dir2 + "/MismatchEventNumbers", run, attr, "",
                                                             "eventSample" );
 
   // JetElements
@@ -543,7 +543,7 @@ StatusCode JEPSimBSMon::bookHistograms(bool isNewEventsBlock,
   m_histTool->unsetMonGroup();
   m_histBooked = true;
 
-  } // end if (isNewRun ...
+  } // end if (newRun ...
 
   msg(MSG::DEBUG) << "Leaving bookHistograms" << endreq;
   
@@ -557,7 +557,7 @@ StatusCode JEPSimBSMon::fillHistograms()
   if (m_debug) msg(MSG::DEBUG) << "fillHistograms entered" << endreq;
 
   if (!m_histBooked) {
-    if (debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
+    if (m_debug) msg(MSG::DEBUG) << "Histogram(s) not booked" << endreq;
     return StatusCode::SUCCESS;
   }
 
@@ -883,13 +883,12 @@ StatusCode JEPSimBSMon::fillHistograms()
 }
 
 /*---------------------------------------------------------*/
-StatusCode JEPSimBSMon::procHistograms(bool isEndOfEventsBlock,
-                                  bool isEndOfLumiBlock, bool isEndOfRun)
+StatusCode JEPSimBSMon::procHistograms()
 /*---------------------------------------------------------*/
 {
   msg(MSG::DEBUG) << "procHistograms entered" << endreq;
 
-  if (isEndOfEventsBlock || isEndOfLumiBlock || isEndOfRun) {
+  if (endOfLumiBlock || endOfRun) {
   }
 
   return StatusCode::SUCCESS;

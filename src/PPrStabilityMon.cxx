@@ -235,10 +235,9 @@ StatusCode PPrStabilityMon::fillHistograms()
     return sc;
 }
 
-StatusCode PPrStabilityMon::procHistograms(bool /*isEndofEventsBlock*/, bool /*isEndofLumiBlock*/, bool isEndofRun)
+StatusCode PPrStabilityMon::procHistograms()
 {
-    //if(isEndofRun){m_fineTimePlotManager->MakeSummary();}
-    if(isEndofRun){}
+    if(endOfRun){}
     return StatusCode::SUCCESS;
 }
 

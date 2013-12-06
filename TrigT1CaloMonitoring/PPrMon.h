@@ -135,8 +135,7 @@ class PPrMon: public ManagedMonitorToolBase
   virtual ~PPrMon();
 
   virtual StatusCode initialize();
-  virtual StatusCode bookHistograms( bool isNewEventsBlock, bool isNewLumiBlock,
-                                                            bool isNewRun );
+  virtual StatusCode bookHistogramsRecurrent();
   virtual StatusCode fillHistograms();
 private:
   
