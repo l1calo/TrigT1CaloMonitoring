@@ -30,7 +30,7 @@
 #include "TrigT1CaloMonitoringTools/TrigT1CaloLWHistogramTool.h"
 #include "TrigT1CaloToolInterfaces/IL1TriggerTowerTool.h"
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
-#include "TrigConfigSvc/ILVL1ConfigSvc.h"
+//#include "TrigConfigSvc/ILVL1ConfigSvc.h"
 
 #include "TrigT1CaloEvent/TriggerTowerCollection.h"
 #include "TrigT1CaloEvent/TriggerTower_ClassDEF.h"

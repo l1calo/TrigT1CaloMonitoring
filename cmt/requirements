@@ -8,6 +8,7 @@ use AthenaMonitoring    	AthenaMonitoring-* 	Control
 use DataModel 			DataModel-*		Control 
 use AnalysisTriggerEvent        AnalysisTriggerEvent-*  PhysicsAnalysis/AnalysisTrigger
 use Identifier                  Identifier-*            DetectorDescription
+use xAODJet                     xAODJet-*               Event/xAOD
 
 private
 use StoreGate                   StoreGate-*             Control
@@ -25,7 +26,7 @@ use TileEvent                   TileEvent-*             TileCalorimeter
 use TrigDecisionTool            TrigDecisionTool-*      Trigger/TrigAnalysis
 use VxVertex                    VxVertex-*              Tracking/TrkEvent
 use egammaEvent                 egammaEvent-*           Reconstruction/egamma
-use JetEvent                    JetEvent-*              Reconstruction/Jet
+#use JetEvent                    JetEvent-*              Reconstruction/Jet
 use JetUtils                    JetUtils-*              Reconstruction/Jet
 
 use TrigT1CaloUtils             TrigT1CaloUtils-*       Trigger/TrigT1
@@ -37,7 +38,7 @@ use TrigT1CaloToolInterfaces	TrigT1CaloToolInterfaces-* Trigger/TrigT1
 use TrigT1CaloCalibConditions   TrigT1CaloCalibConditions-* Trigger/TrigT1
 use TrigT1CaloCalibToolInterfaces TrigT1CaloCalibToolInterfaces-* Trigger/TrigT1
 use TrigT1CaloCalibTools	TrigT1CaloCalibTools-*	Trigger/TrigT1
-use TrigConfigSvc               TrigConfigSvc-*         Trigger/TrigConfiguration
+#use TrigConfigSvc               TrigConfigSvc-*         Trigger/TrigConfiguration
 use TrigConfL1Data              TrigConfL1Data-*        Trigger/TrigConfiguration
 end_private
 

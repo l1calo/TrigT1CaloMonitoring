@@ -1,3 +1,7 @@
+2014-03-07  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-14-08
+        * Fix compilation errors due to Jet changes.
+
 2013-12-06  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-14-07
         * New monitoring base class updates.

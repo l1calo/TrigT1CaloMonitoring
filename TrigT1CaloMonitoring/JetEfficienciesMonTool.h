@@ -20,6 +20,8 @@
 #include "Identifier/Identifier.h"
 #include "AnalysisTriggerEvent/EmTau_ROI.h"
 #include "AnalysisTriggerEvent/Jet_ROI.h"
+#include "xAODJet/Jet.h"
+#include "xAODJet/JetContainer.h"
 
 #include "AthenaMonitoring/ManagedMonitorToolBase.h"
 
@@ -31,8 +33,8 @@ class TrigT1CaloLWHistogramTool;
 class EventInfo;
 class CondAttrListCollection;
 class LVL1_ROI;
-class JetCollection;
-class Jet;
+//class JetCollection;
+//class Jet;
 class VxContainer;
 class TileID;
 class CaloLVL1_ID;
@@ -177,6 +179,9 @@ namespace Trig {
  *
  */
 
+using xAOD::Jet;
+using xAOD::JetContainer;
+
 class JetEfficienciesMonTool: public ManagedMonitorToolBase
 {
 
@@ -284,7 +289,8 @@ private:
   /// For EmTau_ROIs and Jet_ROIs
   const LVL1_ROI* m_lvl1RoIs;
   /// For offline jets
-  const JetCollection* m_offlineJets;
+  //const JetCollection* m_offlineJets;
+  const JetContainer* m_offlineJets;
   /// For primary vertices
   const VxContainer* m_primaryVertex;
 

@@ -38,8 +38,8 @@
 #include "EventInfo/EventID.h"
 #include "VxVertex/VxContainer.h"
 #include "VxVertex/VxTrackAtVertex.h"
-#include "JetEvent/JetCollection.h"
-#include "JetEvent/Jet.h"
+//#include "JetEvent/JetCollection.h"
+//#include "JetEvent/Jet.h"
 #include "JetUtils/JetCaloQualityUtils.h"
 #include "TrigT1CaloCalibConditions/L1CaloCoolChannelId.h"
 #include "Identifier/Identifier.h"
@@ -749,11 +749,11 @@ bool JetEfficienciesMonTool::correctJetQuality(const Jet* jet) {
   	    case 0: //"None"
         	    correctType = true; break;
             case 10: //"Jet Loose" 
-        	    correctType = JetCaloQualityUtils::isGood(jet,false); break;
+        	    correctType = jet::JetCaloQualityUtils::isGood(jet,false); break;
 	    case 20: //"Jet Medium"
-        	    correctType = JetCaloQualityUtils::isGoodMedium(jet,false); break;
+        	    correctType = jet::JetCaloQualityUtils::isGoodMedium(jet,false); break;
 	    case 30: //"Jet Tight"
-        	    correctType = JetCaloQualityUtils::isGoodTight(jet,false); break;
+        	    correctType = jet::JetCaloQualityUtils::isGoodTight(jet,false); break;
   	    default:
         	    correctType = false; break;
 	}
@@ -767,7 +767,8 @@ bool JetEfficienciesMonTool::correctJetQuality(const Jet* jet) {
 StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 	    	
 	//Access all of the offline reconstructed jet candidates in the event
-	typedef JetCollection::const_iterator Itr_jets;
+	//typedef JetCollection::const_iterator Itr_jets;
+	typedef JetContainer::const_iterator Itr_jets;
 	m_numOffJetsInContainer = m_offlineJets->size();
 	m_numJetObjTotal += m_numOffJetsInContainer;
 	
@@ -780,7 +781,8 @@ StatusCode JetEfficienciesMonTool::analyseOfflineJets() {
 	for (Itr_jets jetItr = m_offlineJets->begin(); jetItr != m_offlineJets->end(); ++jetItr) {
 		
 		//Keep track of eta, phi and Et as these will be used often
-		EtOJ = (*jetItr)->et() / CLHEP::GeV;
+		//EtOJ = (*jetItr)->et() / CLHEP::GeV;
+		EtOJ = (*jetItr)->p4().Et() / CLHEP::GeV;
 		etaOJ = (*jetItr)->eta();
 		fabsEtaOJ = fabs(etaOJ); 
 		phiOJ = (*jetItr)->phi();
