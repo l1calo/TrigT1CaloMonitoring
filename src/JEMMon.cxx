@@ -1,13 +1,18 @@
-// ********************************************************************
+// ===========================================================================
+// $Id:$
+// ===========================================================================
+// @file
+// Monitoring of the JEP on JEM level
 //
-// NAME:        JEMMon.cxx
-// PACKAGE:     TrigT1CaloMonitoring  
+// @author Johanna Fleckner (Johanna.Fleckner@uni-mainz.de)
+// @author Sasha Mazurov (alexander.mazurov@cern.ch)
 //
-// AUTHOR:      Johanna Fleckner (Johanna.Fleckner@uni-mainz.de)
-//           
-// DESCRIPTION: Monitoring of the JEP on JEM level
-//
-// ********************************************************************
+//  
+// $Revision:$
+// Last modification $Date:$
+// by  $Author:$
+// ============================================================================
+
 
 #include <cmath>
 #include <set>
@@ -287,7 +292,14 @@ StatusCode JEMMon::bookHistogramsRecurrent()
     m_histTool->thresholdNames(TrigConf::L1DataDef::jetType(), jetNames);
     m_histTool->thresholdNames(TrigConf::L1DataDef::jfType(),  jfNames);
     m_histTool->thresholdNames(TrigConf::L1DataDef::jbType(),  jbNames);
-    for (int i = 0; i < 8; i++) {
+    
+
+    // Fix ATLASRECTS-781 bug https://its.cern.ch/jira/browse/ATLASRECTS-781
+    // L1 theresholds for RUN2 (l1version==1) have 0  threshholds for JET, FJ and JB
+    // This code is back compativle with RUN1 (l1version==0)
+    // More on theresholds configuration see:
+    //    TrigConf::L1DataDef::setMaxThresholdsFromL1Versionl1version
+    for (int i = 0; i < jetNames.size(); i++) {
       buffer.str("");
       buffer << i;
       name  = "jem_2d_etaPhi_roi_MainThresh" + buffer.str();
@@ -295,10 +307,13 @@ StatusCode JEMMon::bookHistogramsRecurrent()
                                                                +"  --  JEM RoI";
       m_v_jem_2d_etaPhi_roi_MainThresh.push_back(
             m_histTool->bookJEMRoIEtaVsPhi(name.c_str(), title.c_str()));
-      if (i >= 4) continue;
+      
+      if ((i >= jfNames.size()) || (i >= jbNames.size())) continue;
+      
       name  = "jem_2d_etaPhi_roi_FwdThresh" + buffer.str();
       title = "#eta - #phi Map of Fwd Hits passing Threshold "+ jfNames[i];
       if (jfNames[i] != jbNames[i]) title += "/" + jbNames[i];
+      title = "name " + buffer.str();
       title +="  --  JEM RoI";
       m_v_jem_2d_etaPhi_roi_FwdThresh.push_back(
             m_histTool->bookJEMRoIEtaVsPhi(name.c_str(), title.c_str()));

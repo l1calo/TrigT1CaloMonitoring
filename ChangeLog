@@ -1,4 +1,8 @@
 2014-03-07  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+        * Tag as TrigT1CaloMonitoring-00-14-09
+        * Fix segmentation fault (ATLASRECTS-781) due to theresholds configuration changes
+
+2014-03-07  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
         * Tag as TrigT1CaloMonitoring-00-14-08
         * Fix compilation errors due to Jet changes.
 
