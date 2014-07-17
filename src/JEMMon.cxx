@@ -1,5 +1,5 @@
 // ===========================================================================
-// $Id:$
+// $Id$
 // ===========================================================================
 // @file
 // Monitoring of the JEP on JEM level
@@ -8,9 +8,9 @@
 // @author Sasha Mazurov (alexander.mazurov@cern.ch)
 //
 //  
-// $Revision:$
-// Last modification $Date:$
-// by  $Author:$
+// $Revision$
+// Last modification $Date$
+// by  $Author$
 // ============================================================================
 
 
@@ -313,7 +313,6 @@ StatusCode JEMMon::bookHistogramsRecurrent()
       name  = "jem_2d_etaPhi_roi_FwdThresh" + buffer.str();
       title = "#eta - #phi Map of Fwd Hits passing Threshold "+ jfNames[i];
       if (jfNames[i] != jbNames[i]) title += "/" + jbNames[i];
-      title = "name " + buffer.str();
       title +="  --  JEM RoI";
       m_v_jem_2d_etaPhi_roi_FwdThresh.push_back(
             m_histTool->bookJEMRoIEtaVsPhi(name.c_str(), title.c_str()));

@@ -1,4 +1,8 @@
-2014-03-07  Peter Faulkner <pjwf@hep.ph.bham.ac.uk>
+2014-07-17  Sasha Mazurov <alexander.mazurov@cern.ch>
+        * Tag as TrigT1CaloMonitoring-00-14-10
+        * Return back a histogram title for RUN1 configuration. 
+
+2014-07-16  Sasha Mazurov <alexander.mazurov@cern.ch>
         * Tag as TrigT1CaloMonitoring-00-14-09
         * Fix segmentation fault (ATLASRECTS-781) due to theresholds configuration changes
 
