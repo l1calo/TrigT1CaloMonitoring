@@ -1,3 +1,9 @@
+2014-10-07  Hanno Meyer zu Theenhausen <hanno.meyer.zu.theenhausen@cern.ch>
+	* Tag as TrigT1CaloMonitoring-00-14-11
+	* src/PPrMon.cxx, TrigT1CaloMonitoring/PPrMon.h
+	 - Add monitoring for LUT-JEP with dummy values
+	 - Rename LUT to LUT-CP
+
 2014-07-17  Sasha Mazurov <alexander.mazurov@cern.ch>
         * Tag as TrigT1CaloMonitoring-00-14-10
         * Return back a histogram title for RUN1 configuration. 
